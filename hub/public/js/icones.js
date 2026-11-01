@@ -259,7 +259,7 @@
       <circle cx="80" cy="62" r="9" fill="${C.escuro}"/>`,
   };
 
-  const NOMES = { 'remoto-io': 'Remoto de I/O (IP67)', inversor: 'Inversor', servo: 'Servo motor', visao: 'Visão (controlador + câmera)', processo: 'Processo', modbus: 'Modbus', clp: 'CLP', ihm: 'IHM', robo: 'Robô', sensor: 'Sensor', generico: 'Genérico' };
+  const NOMES = { 'remoto-io': 'Remoto de I/O (IP67)', inversor: 'Inversor', servo: 'Servomotor', visao: 'Visão (controlador + câmera)', processo: 'Processo', modbus: 'Modbus', clp: 'CLP', ihm: 'IHM', robo: 'Robô', sensor: 'Sensor', generico: 'Genérico' };
 
   let seq = 0;
   function svg(tipo, cor = '#2C6CB0', rotulo = '') {

@@ -47,7 +47,7 @@ Ao receber uma versão nova, o GitHub Actions (`.github/workflows/publicar.yml`)
 |---|---|---|---|
 | Inversor WEG CFW500 | EtherNet/IP adapter, Modbus TCP servidor | 192.168.100.20 | 8080 |
 | Visão Keyence CV-X400 | EtherNet/IP adapter | 192.168.100.21 | 3001 |
-| Servo motor WEG SCA06 | EtherNet/IP adapter, Modbus TCP servidor | 192.168.100.22 | 3000 |
+| Servomotor WEG SCA06 | EtherNet/IP adapter, Modbus TCP servidor | 192.168.100.22 | 3000 |
 | Processo com visão 3D | Modbus TCP cliente | (cliente) | 3000 → 3100 se ocupada |
 | Remoto IO-Link TBEN-L | PROFINET device, mestre IO-Link | IP via DCP (CODESYS) | 8081 |
 

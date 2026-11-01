@@ -1,8 +1,8 @@
 {
   "id": "sca06",
-  "nome": "Servo motor WEG SCA06",
+  "nome": "Servomotor WEG SCA06",
   "fabricante": "WEG",
-  "tipo": "Servo motor",
+  "tipo": "Servomotor",
   "descricao": "SCA06 com acessório ECO5 numa bancada 3D com servomotor, disco graduado, fins de curso e posicionamento pelo ladder DISCO_POS.",
   "protocolos": [
     "EtherNet/IP",
@@ -70,6 +70,6 @@
   ],
   "cor": "#5B4FA8",
   "icone": "icone.png",
-  "versao": "1.0.2",
+  "versao": "1.0.3",
   "pacote": "sca06-ethernetip-sim"
 }

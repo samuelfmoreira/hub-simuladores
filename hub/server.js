@@ -37,6 +37,8 @@ const arg = (n) => { const i = process.argv.indexOf(`--${n}`); return i > 0 ? pr
 
 const cfg = config.ler();
 if (arg('porta')) cfg.hubPorta = Number(arg('porta'));
+// o HUB do desenvolvedor usa outra porta, para poder ficar aberto junto com o HUB instalado pelo .exe
+else if (MODO === 'desenvolvedor' && cfg.hubPorta === 4000) cfg.hubPorta = 4010;
 // acabou de ser instalado pelo HUB-Simuladores.exe: nada de assistente, a rede é preparada sozinha
 const PRIMEIRA_INSTALACAO = process.argv.includes('--primeira-instalacao');
 if (PRIMEIRA_INSTALACAO) config.alterar((c) => { c.primeiraConfigFeita = true; });
@@ -320,7 +322,15 @@ servidor.on('error', (e) => {
     http.get({ host: '127.0.0.1', port: cfg.hubPorta, path: '/api/estado', timeout: 2000 }, (r) => {
       let corpoResp = ''; r.on('data', (d) => { corpoResp += d; });
       r.on('end', () => {
-        try { JSON.parse(corpoResp).hub.versao; console.log('O HUB já está aberto. Mostrando a tela dele.'); abrirTela(`http://localhost:${cfg.hubPorta}`); setTimeout(() => process.exit(0), 1500); }
+        let outro = null;
+        try { outro = JSON.parse(corpoResp).hub; } catch (_) { /* não é o HUB */ }
+        if (outro && (outro.modo || 'usuario') === MODO) { console.log('O HUB já está aberto. Mostrando a tela dele.'); abrirTela(`http://localhost:${cfg.hubPorta}`); setTimeout(() => process.exit(0), 1500); return; }
+        if (outro) {
+          console.error(`\n[ERRO] A porta ${cfg.hubPorta} está com o HUB ${outro.modo === 'desenvolvedor' ? 'do desenvolvedor' : 'do usuário'} ${outro.versao} aberto.`);
+          console.error('       Feche aquele HUB e abra este de novo, ou mude "hubPorta" no hub-config.json.\n');
+          setTimeout(() => process.exit(1), 15000); return;
+        }
+        try { throw new Error(); }
         catch (_) { console.error(`\n[ERRO] A porta ${cfg.hubPorta} está ocupada por outro programa. Mude "hubPorta" no hub-config.json.`); setTimeout(() => process.exit(1), 10000); }
       });
     }).on('error', () => process.exit(1));

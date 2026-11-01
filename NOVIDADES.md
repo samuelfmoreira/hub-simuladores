@@ -2,6 +2,9 @@
 
 As notas de cada versão aparecem no HUB quando a atualização é oferecida. Escreva a seção da versão nova antes do push.
 
+## 1.5.3
+- O simulador do SCA06 agora se chama "Servomotor WEG SCA06" (antes "Servo motor"), no cartão da Bancada e na ficha.
+
 ## 1.5.2
 - Servo SCA06: divisórias arrastáveis entre o drive, o painel do meio e a bancada 3D. Arraste para mudar a largura de cada painel; dois cliques voltam ao padrão. As larguras ficam guardadas.
 

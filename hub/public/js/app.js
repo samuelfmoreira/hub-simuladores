@@ -26,8 +26,8 @@
 
   async function carregar() {
     E.estado = await api('GET', '/api/estado');
-    $('#versao').textContent = `v${E.estado.hub.versao}`;
     E.dev = E.estado.hub.modo === 'desenvolvedor';
+    $('#versao').textContent = `v${E.estado.hub.versao}` + (E.dev ? ' · desenvolvedor' : '');
     document.querySelectorAll('[data-so-dev]').forEach((el) => { el.hidden = !E.dev; });
     $('#abrirAuto').checked = E.estado.config.abrirTelaAoIniciar !== false;
     E.atualizacao = E.estado.atualizacao; renderAtualizacao();
