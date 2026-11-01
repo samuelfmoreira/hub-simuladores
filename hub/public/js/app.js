@@ -423,7 +423,7 @@
             <dt>IPs extras</dt><dd id="redeExtras">${(E.estado.config.rede.ipsExtras || []).map((ip) => `<span class="etiq mono">${esc(ip)} <button class="btn peq" data-tirar="${esc(ip)}" aria-label="Tirar ${esc(ip)}">×</button></span>`).join('') || '<span style="color:var(--grafite-2)">nenhum</span>'}</dd>
             <dt></dt><dd><input class="campo ip" id="redeNovoExtra" placeholder="192.168.100.23" aria-label="Novo IP extra"><button class="btn peq" id="redeAddExtra">Adicionar</button></dd>
           </dl>
-          <p style="font-size:14px;color:var(--grafite-2)">IPs extras servem, por exemplo, para uma segunda câmera Keyence. O IP de cada simulador se muda na Bancada.</p>
+          <p style="font-size:14px;color:var(--grafite-2)">IPs extras servem, por exemplo, para uma segunda câmera Keyence. O IP de cada simulador se muda em Dispositivos.</p>
           <button class="btn" id="redeSalvar">Salvar endereços</button>
         </div>
         <div class="placa">
@@ -432,7 +432,7 @@
             <li>No dispositivo <em>Ethernet</em> (acima do scanner), escolha a placa <b>${esc(r.adaptador)}</b>.</li>
             <li>IP <b>${esc(r.ipClp)}</b>, máscara de ${r.prefixo} bits.</li>
             <li>Desmarque <em>Ajustar configurações do sistema operacional</em>. Se ficar marcado, o CODESYS apaga os IPs dos simuladores.</li>
-            <li>Em cada equipamento do scanner, use o IP mostrado na Bancada e conexão T→O <b>ponto a ponto</b>: multicast não circula numa placa virtual.</li>
+            <li>Em cada equipamento do scanner, use o IP mostrado em Dispositivos e conexão T→O <b>ponto a ponto</b>: multicast não circula numa placa virtual.</li>
           </ol>
           <p style="font-size:14px;color:var(--grafite-2)">Com CLP real, ligue o cabo numa placa física com IP fixo na mesma faixa e adicione os IPs dos simuladores nela.</p>
         </div>
@@ -504,9 +504,9 @@
     try {
       const r = await api('POST', '/api/importar', undefined, await arq.arrayBuffer());
       const itens = [{ c: 'ok', t: r.acao === 'novo' ? `${r.nome} entrou na bancada (versão ${r.versaoDepois}).` : `${r.nome} atualizado: ${r.versaoAntes} → ${r.versaoDepois}. A versão anterior ficou guardada.` }];
-      if (r.precisaInstalar) itens.push({ c: '', t: 'Baixando as dependências. Acompanhe nas mensagens do simulador, na Bancada.' });
+      if (r.precisaInstalar) itens.push({ c: '', t: 'Baixando as dependências. Acompanhe nas mensagens do simulador, em Dispositivos.' });
       for (const a of r.avisos || []) itens.push({ c: '', t: a });
-      out.innerHTML = itens.map((i) => `<li class="${i.c}">${esc(i.t)}</li>`).join('') + `<li class="ok"><a href="#/bancada" data-ir="${esc(r.id)}">Abrir na Bancada</a></li>`;
+      out.innerHTML = itens.map((i) => `<li class="${i.c}">${esc(i.t)}</li>`).join('') + `<li class="ok"><a href="#/bancada" data-ir="${esc(r.id)}">Abrir em Dispositivos</a></li>`;
       out.querySelector('[data-ir]').onclick = () => { E.sel = r.id; };
       await carregar();
     } catch (e) { out.innerHTML = `<li class="erro">${esc(e.message)}</li>`; }
@@ -672,7 +672,7 @@
     if (passo === 1) {
       a.innerHTML = `${barra}<h3 style="font-size:24px">Bem-vindo ao HUB</h3>
         <p>Aqui ficam os simuladores de equipamentos industriais para você treinar a integração com o CLP.</p>
-        <ul><li><b>Bancada</b>: escolha um equipamento, inicie e abra a tela dele.</li>
+        <ul><li><b>Dispositivos</b>: escolha um equipamento, inicie e abra a tela dele.</li>
         <li><b>Rede virtual</b>: coloca o CLP e cada simulador num IP próprio, no mesmo PC.</li>
         <li><b>Aprender</b>: aulas de Modbus TCP, EtherNet/IP e redes, com exercícios.</li></ul>
         <div class="acoes"><button class="btn prim" data-p="2">Próximo: rede virtual</button></div>`;
@@ -701,7 +701,7 @@
       };
     } else {
       a.innerHTML = `${barra}<h3 style="font-size:24px">Tudo pronto</h3>
-        <p>Na Bancada, clique num equipamento e em <b>Iniciar</b>. O IP dele aparece no cartão; use esse IP no seu CLP.</p>
+        <p>Em Dispositivos, clique num equipamento e em <b>Iniciar</b>. O IP dele aparece no cartão; use esse IP no seu CLP.</p>
         <p>Se for a primeira vez com EtherNet/IP, comece pela aula <a href="#/aprender/laboratorio" data-fim>Como o laboratório funciona</a>.</p>
         <div class="acoes"><button class="btn prim" data-fim>Ir para a bancada</button></div>`;
     }

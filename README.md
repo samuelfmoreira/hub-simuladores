@@ -21,7 +21,7 @@ Há duas formas de receber o HUB:
 
 **Atualizações:** quando o desenvolvedor publica uma versão nova, o HUB mostra ao abrir a mensagem **"Vamos atualizar o seu HUB"**, com o que muda. O usuário clica em **OK, atualizar agora** e em menos de um minuto o HUB volta atualizado, mantendo IPs, configurações e parâmetros salvos. Se clicar em **Depois**, o aviso fica no topo da tela até ele atualizar.
 
-O usuário vê só o uso do HUB (Bancada, Rede virtual e Aprender). As funções de desenvolvimento não existem na versão dele.
+O usuário vê só o uso do HUB (Dispositivos, Rede virtual e Aprender). As funções de desenvolvimento não existem na versão dele.
 
 **Avisos do Windows:** o `.exe` não tem assinatura digital de empresa. Na primeira vez pode aparecer "O Windows protegeu o computador": clique em **Mais informações** > **Executar assim mesmo**. Se o Firewall perguntar, clique em **Permitir acesso**.
 

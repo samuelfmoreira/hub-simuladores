@@ -21,7 +21,7 @@ Todo exercício da bancada tem as mesmas três peças:
 
 ## Quem chama quem
 
-Antes de configurar qualquer coisa, descubra o **papel** de cada lado. Ele está escrito na ficha de cada simulador, na Bancada.
+Antes de configurar qualquer coisa, descubra o **papel** de cada lado. Ele está escrito na ficha de cada simulador, em Dispositivos.
 
 | Protocolo | Quem inicia (chama) | Quem responde (atende) |
 |---|---|---|
@@ -35,7 +35,7 @@ No EtherNet/IP o CLP sempre é o scanner: é ele que abre a conexão com o CFW50
 ## Roteiro de um exercício
 
 1. **Rede virtual pronta** (aba Rede). Faça uma vez por PC.
-2. **Inicie o simulador** na Bancada. Anote o IP que aparece no cartão e confira que o indicador ao lado dele ficou verde.
+2. **Inicie o simulador** em Dispositivos. Anote o IP que aparece no cartão e confira que o indicador ao lado dele ficou verde.
 3. **Baixe o EDS** do simulador (botão em *Arquivos para o CLP*) e instale no repositório do CODESYS.
 4. **Configure o CLP**: placa SIM-HUB, IP do CLP, equipamento com o IP do simulador.
 5. **Faça o download e vá para RUN.** Acompanhe as *Mensagens do simulador*: a sessão, o Forward Open e o I/O aparecem ali.
@@ -43,7 +43,7 @@ No EtherNet/IP o CLP sempre é o scanner: é ele que abre a conexão com o CFW50
 
 ## Os indicadores dos cartões
 
-Cada equipamento da Bancada aparece num cartão com a ilustração do dispositivo e dois indicadores:
+Cada equipamento da aba Dispositivos aparece num cartão com a ilustração do dispositivo e dois indicadores:
 
 | Onde | Verde | Âmbar | Vermelho | Cinza |
 |---|---|---|---|---|

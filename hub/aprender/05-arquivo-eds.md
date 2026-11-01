@@ -6,7 +6,7 @@
 
 O **EDS** (Electronic Data Sheet) é um arquivo de texto que o fabricante entrega junto com o equipamento. Instalado no CODESYS, no Studio 5000 ou no MasterTool, ele faz o equipamento aparecer no catálogo já com as conexões, os tamanhos e os parâmetros certos. Sem EDS, dá para usar um *Generic Ethernet Module*, mas aí cada número é digitado à mão.
 
-Cada simulador do HUB traz o seu EDS no botão *Arquivos para o CLP*, na Bancada.
+Cada simulador do HUB traz o seu EDS no botão *Arquivos para o CLP*, em Dispositivos.
 
 ## As seções
 

@@ -96,7 +96,7 @@ Se o Windows mostrar **"O Windows protegeu o computador"** ao abrir um deles, cl
 1. Dê dois cliques no `HUB-DESENVOLVEDOR.bat`. O HUB abre com a aba **Desenvolvedor** no topo. Na primeira vez, ele baixa as dependências (leva alguns minutos).
 2. Na aba **Desenvolvedor**:
    - **1. Aplicar a versão que o Claude entregou:** solte o zip na caixa. Os arquivos são trocados; a chave, a ligação com o GitHub e os dados ficam.
-   - Se quiser testar antes: clique em **Reiniciar este HUB** e use a Bancada normalmente. Depois volte à aba Desenvolvedor.
+   - Se quiser testar antes: clique em **Reiniciar este HUB** e use a aba Dispositivos normalmente. Depois volte à aba Desenvolvedor.
    - **2. Versão e notas:** a versão normalmente já vem certa no zip. Se você mesmo mudou algo, clique em **correção** (ex.: 1.5.0 → 1.5.1) ou **novidade** (1.5.0 → 1.6.0), escreva o que muda (uma linha por item, começando com "- ") e clique em **Salvar versão e notas**. Esse texto é o que o usuário lê na mensagem de atualização.
    - **3. Publicar no GitHub:** clique em **Publicar versão**. O andamento aparece na caixa preta. Na primeira vez, o Git pode abrir uma janela para você entrar na conta do GitHub.
 3. Clique em **Ver no Actions** e espere a bolinha verde (5 a 10 minutos). Pronto: os HUBs instalados mostram a mensagem de atualização na próxima vez que forem abertos.

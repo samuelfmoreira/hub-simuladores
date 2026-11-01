@@ -4,7 +4,7 @@
 
 ## A escada do diagnóstico
 
-1. **O IP existe?** Na aba Rede, todos os pontos devem estar verdes. No cartão da Bancada, o indicador verde ao lado do IP mostra que o simulador está no IP próprio.
+1. **O IP existe?** Na aba Rede, todos os pontos devem estar verdes. No cartão em Dispositivos, o indicador verde ao lado do IP mostra que o simulador está no IP próprio.
 2. **O IP responde?** No Prompt de Comando: `ping 192.168.100.20`. Sem resposta, o problema é de rede: placa, máscara, IP digitado errado.
 3. **A porta está aberta?** No PowerShell: `Test-NetConnection 192.168.100.20 -Port 44818`. *TcpTestSucceeded: False* indica simulador parado, firewall ou outro programa ocupando a porta.
 4. **A conexão abre?** Nas *Mensagens do simulador*, procure o Forward Open. Se foi recusado, o código diz o motivo (tabela na aula de [EtherNet/IP](#/aprender/ethernetip-cip)).

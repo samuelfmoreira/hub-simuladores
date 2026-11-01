@@ -2,6 +2,9 @@
 
 As notas de cada versão aparecem no HUB quando a atualização é oferecida. Escreva a seção da versão nova antes do push.
 
+## 1.5.4
+- A tela "Bancada" agora se chama "Dispositivos", no menu, no título e nas aulas.
+
 ## 1.5.3
 - O simulador do SCA06 agora se chama "Servomotor WEG SCA06" (antes "Servo motor"), no cartão da Bancada e na ficha.
 

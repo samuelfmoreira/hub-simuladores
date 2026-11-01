@@ -119,7 +119,7 @@ function npmInstall(pasta, log) {
     const p = spawn(cmd.comando, cmd.args, { cwd: pasta, shell: cmd.shell, windowsHide: true });
     p.stdout.on('data', () => {}); p.stderr.on('data', () => {});
     p.on('error', () => ok(false));
-    p.on('exit', (c) => { if (c !== 0) log(`  [!] npm install falhou em ${path.basename(pasta)}: use "Instalar dependências" na Bancada.`); ok(c === 0); });
+    p.on('exit', (c) => { if (c !== 0) log(`  [!] npm install falhou em ${path.basename(pasta)}: use "Instalar dependências" em Dispositivos.`); ok(c === 0); });
   });
 }
 
