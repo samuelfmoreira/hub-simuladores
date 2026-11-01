@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simulador CV-X400</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ================= BARRA DO SIMULADOR (fora da tela do equipamento) ================= -->
+  <div class="sim-barra">
+    <span class="sim-titulo">Simulador CV-X400</span>
+    <div class="sim-sessoes" id="listaSessoes" role="tablist" aria-label="Câmeras simuladas"></div>
+    <button type="button" class="sim-btn sim-btn-mais" id="btnNovaCamera" title="Adicionar câmera">+ Câmera</button>
+    <div class="sim-eip" id="statusEip" data-estado="aguardando" role="status" aria-live="polite">
+      <span class="led" aria-hidden="true"></span>
+      <span>EtherNet/IP</span>
+      <strong id="statusEipTexto">AGUARDANDO CLP</strong>
+    </div>
+    <button type="button" class="sim-btn" id="btnGaveta" aria-expanded="false" aria-controls="gaveta">Painel do simulador</button>
+  </div>
+
+  <div class="corpo">
+    <!-- ================= TELA DO CV-X ================= -->
+    <div class="palco" id="palco">
+      <div class="tela" id="tela" data-modo="execucao" data-vazio="true">
+
+        <header class="cv-topo">
+          <div class="cv-prog">
+            <span class="cv-prog-num">1</span>
+            <button type="button" class="cv-prog-sel" id="btnPrograma" title="Programa">
+              <span id="txtPrograma">Conf. 041&nbsp;&nbsp;INSPECAO_ETIQUETA</span>
+              <span class="tri" aria-hidden="true"></span>
+            </button>
+          </div>
+          <div class="cv-cam" aria-label="Câmera 1">
+            <span class="cv-cam-ico" aria-hidden="true"></span><span>1</span>
+          </div>
+
+          <div class="cv-info">
+            <span id="txtData">--/--/----</span>
+            <span class="rot">Cont</span><span class="num" id="txtCont">0</span>
+            <span class="rot">Prog.&nbsp;&nbsp;Hora</span><span class="num" id="txtProgHora">---.-&nbsp;&nbsp;ms</span>
+            <span id="txtHora">--:--:--</span>
+            <span class="rot">Cont&nbsp;&nbsp;NG</span><span class="num" id="txtContNg">0</span>
+            <span class="rot">Interv</span><span class="num" id="txtInterv">---.-&nbsp;&nbsp;ms</span>
+          </div>
+
+          <button type="button" class="cv-util" id="btnUtil">
+            <svg viewBox="0 0 48 48" aria-hidden="true">
+              <rect x="4" y="4" width="40" height="40" rx="5" fill="#f4f4f4" stroke="#8a8a8a"/>
+              <path d="M13 11h10v5h-3v21h-4V16h-3z" fill="#4a4a4a"/>
+              <path d="M28 11h8v4l-2 2v20h-4V17l-2-2z" fill="#2f6fd0"/>
+            </svg>
+            <span>Utilidade</span>
+          </button>
+          <button type="button" class="cv-modo" id="btnModo">Modo<br>Programação</button>
+          <div class="cv-status" id="cvStatus" data-r="nenhum" role="status" aria-live="polite">
+            <small>Status&nbsp;&nbsp;Total</small>
+            <strong id="txtStatus">---</strong>
+          </div>
+        </header>
+
+        <div class="cv-faixa"><span class="cv-faixa-prog">MODO PROGRAMAÇÃO</span></div>
+
+        <!-- Ferramentas do programa -->
+        <section class="cv-ferramentas" aria-label="Ferramentas">
+          <div class="cv-thumbs" id="thumbs"></div>
+          <button type="button" class="cv-btn-icone cv-thumbs-exp" tabindex="-1" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7" fill="none" stroke="#fff" stroke-width="2.4"/></svg>
+          </button>
+          <div class="cv-rolagem" aria-hidden="true"><span>&#9664;</span><span class="trilho"></span><span>&#9654;</span></div>
+        </section>
+
+        <section class="cv-principal">
+          <!-- Imagem -->
+          <div class="cv-imagem-col">
+            <div class="cv-img-barra">
+              <select id="selBrt" class="cv-sel" aria-label="Imagem exibida">
+                <option value="0.82">Brt 1</option>
+                <option value="1" selected>Brt 2</option>
+                <option value="1.22">Brt 3</option>
+              </select>
+              <button type="button" class="cv-btn-barra" id="btnRoi" title="Mostrar região da ferramenta" aria-pressed="true">
+                <svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z M8 3v6 M16 15v6 M4 12h4 M16 12h4" fill="none" stroke="#e8e8e8" stroke-width="1.8"/></svg>
+              </button>
+              <span class="sep"></span>
+              <button type="button" class="cv-btn-barra" id="btnZoomMais" title="Aproximar">
+                <svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="6" fill="none" stroke="#e8e8e8" stroke-width="2"/><path d="M14.5 14.5L20 20M7 10h6M10 7v6" stroke="#e8e8e8" stroke-width="2"/></svg>
+              </button>
+              <button type="button" class="cv-btn-barra" id="btnZoomMenos" title="Afastar">
+                <svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="6" fill="none" stroke="#e8e8e8" stroke-width="2"/><path d="M14.5 14.5L20 20M7 10h6" stroke="#e8e8e8" stroke-width="2"/></svg>
+              </button>
+              <button type="button" class="cv-btn-barra" id="btnZoomAjuste" title="Ajustar à tela">
+                <svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" fill="none" stroke="#e8e8e8" stroke-width="2"/><rect x="7" y="9" width="10" height="6" fill="#e8e8e8"/></svg>
+              </button>
+              <span class="cv-zoom" id="txtZoom">49%</span>
+            </div>
+
+            <div class="cv-img" id="cvImg">
+              <div class="cv-img-cena" id="cena"></div>
+              <div class="cv-flash" id="cvFlash" aria-hidden="true"></div>
+              <div class="cv-carregando" aria-live="polite"><strong>Carregando programa...</strong><span id="txtCarregando"></span></div>
+              <div class="cv-img-vazio" id="imgVazio">
+                <strong>Sem CLP conectado</strong>
+                <span>Aguardando conexão EtherNet/IP</span>
+              </div>
+
+              <div class="cv-img-modos" role="group" aria-label="Exibição da imagem">
+                <button type="button" class="ativo" data-filtro="normal" title="Imagem">
+                  <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3" fill="#3b4c6b"/><circle cx="12" cy="12" r="6" fill="#9fb2d3"/></svg>
+                </button>
+                <button type="button" data-filtro="binaria" title="Imagem binarizada">
+                  <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3" fill="#111"/><path d="M12 5a7 7 0 0 1 0 14z" fill="#fff"/><circle cx="12" cy="12" r="7" fill="none" stroke="#fff" stroke-width="1.6"/></svg>
+                </button>
+                <button type="button" data-filtro="cor" title="Mapa de cor">
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="#2f80ff" stroke-width="3"/><circle cx="12" cy="12" r="4.5" fill="none" stroke="#ffd400" stroke-width="2.4"/></svg>
+                </button>
+              </div>
+              <div class="cv-img-onoff" role="group" aria-label="Gráficos">
+                <button type="button" class="ativo" data-graf="on"><span class="ico-graf"></span>ON</button>
+                <button type="button" data-graf="off"><span class="ico-graf"></span>OFF</button>
+              </div>
+              <button type="button" class="cv-btn-icone cv-img-exp" id="btnAmpliar" title="Ampliar imagem">
+                <svg viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5M4 4l6 6M20 4l-6 6M20 20l-6-6M4 20l6-6" fill="none" stroke="#fff" stroke-width="2"/></svg>
+              </button>
+              <button type="button" class="cv-btn-icone cv-img-eng" id="btnEngrenagem" title="Utilidade">
+                <svg viewBox="0 0 24 24"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zm8.4 4.9 1.6 1.2-1.7 3-1.9-.7a7.6 7.6 0 0 1-1.7 1l-.3 2h-3.4l-.3-2a7.6 7.6 0 0 1-1.7-1l-1.9.7-1.7-3 1.6-1.2a7.4 7.4 0 0 1 0-2l-1.6-1.2 1.7-3 1.9.7a7.6 7.6 0 0 1 1.7-1l.3-2h3.4l.3 2a7.6 7.6 0 0 1 1.7 1l1.9-.7 1.7 3-1.6 1.2a7.4 7.4 0 0 1 0 2z" fill="#e8e8e8"/></svg>
+              </button>
+            </div>
+            <div class="cv-rol-h" aria-hidden="true"><span>&#9664;</span><span class="trilho"></span><span>&#9654;</span></div>
+          </div>
+
+          <!-- Detalhe da ferramenta / configuração -->
+          <div class="cv-detalhe">
+            <div class="cv-det-corpo" id="detCorpo"></div>
+            <div class="cv-det-rodape">
+              <button type="button" class="cv-btn-rod" id="btnLista" title="Lista de resultados" aria-pressed="false">
+                <svg viewBox="0 0 32 24"><rect x="2" y="3" width="28" height="18" fill="none" stroke="#ddd" stroke-width="2"/><path d="M2 9h28M9 3v18M16 3v18M23 3v18" stroke="#ddd" stroke-width="2"/></svg>
+              </button>
+              <button type="button" class="cv-btn-rod" id="btnHistorico" title="Histórico" aria-pressed="false">
+                <svg viewBox="0 0 32 24"><path d="M4 21h24" stroke="#ddd" stroke-width="2"/><rect x="7" y="12" width="4" height="9" fill="#ddd"/><rect x="14" y="6" width="4" height="15" fill="#ddd"/><rect x="21" y="9" width="4" height="12" fill="#ddd"/></svg>
+              </button>
+              <button type="button" class="cv-exec" id="btnExec">
+                <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="1" y="1" width="18" height="18" fill="#fff"/><path d="M7 5l7 5-7 5z" fill="#1d4f9c"/></svg>
+                Exec
+              </button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- ================= PAINEL DO SIMULADOR ================= -->
+    <aside class="gaveta" id="gaveta" hidden aria-label="Painel do simulador">
+      <section class="sp">
+        <h2 id="tituloPeca">Peça na frente da câmera</h2>
+        <p class="ajuda" id="txtProgPainel"></p>
+        <div class="cenarios" id="listaCenarios" role="group" aria-label="Cenários de teste"></div>
+        <label class="opcao"><input type="checkbox" id="chkTodos"> Aplicar cenários em todas as câmeras com o mesmo tipo de programa</label>
+
+        <!-- Disco com furos -->
+        <form id="formDisco" class="form-etiqueta so-furos" autocomplete="off">
+          <div class="menores">
+            <label class="campo"><span>Ø externo real (mm)</span><input id="inpDiamExt" type="number" step="0.01" min="10" max="200"></label>
+            <label class="campo"><span>Ø interno real (mm)</span><input id="inpDiamInt" type="number" step="0.01" min="5" max="150"></label>
+            <label class="campo"><span>Nº de furos na peça</span><input id="inpFuros" type="number" step="1" min="0" max="12"></label>
+            <label class="campo"><span>Variação da medição (± mm)</span><input id="inpRuido" type="number" step="0.001" min="0" max="0.5"></label>
+          </div>
+          <label class="opcao"><input type="checkbox" id="chkPresente"> Peça presente</label>
+          <label class="opcao"><input type="checkbox" id="chkForaPos"> Peça fora de posição</label>
+          <div class="form-acoes">
+            <button type="submit" class="btn btn-primario">Aplicar peça</button>
+            <span class="aviso" id="avisoDisco" role="status"></span>
+          </div>
+        </form>
+
+        <!-- Etiqueta (validação de QR codes) -->
+        <form id="formEtiqueta" class="form-etiqueta so-etiqueta" autocomplete="off">
+          <label class="campo">
+            <span>QR maior (T100) <small id="contMaior">0/54</small></span>
+            <input id="inpMaior" type="text" maxlength="54" spellcheck="false">
+          </label>
+          <div class="menores" id="camposMenores"></div>
+          <div class="form-acoes">
+            <button type="submit" class="btn btn-primario">Aplicar etiqueta</button>
+            <span class="aviso" id="avisoEtiqueta" role="status"></span>
+          </div>
+        </form>
+      </section>
+
+      <section class="sp so-etiqueta">
+        <h2>Simular falhas</h2>
+        <p class="ajuda">Marque para a ferramenta dar NG na próxima inspeção (código coberto, peça fora de posição).</p>
+        <div class="falhas" id="listaFalhas"></div>
+      </section>
+
+      <section class="sp">
+        <h2>Disparo</h2>
+        <div class="linha">
+          <label class="opcao"><input type="checkbox" id="chkAuto"> Automático a cada</label>
+          <input type="number" id="inpAutoIntervalo" min="500" step="500" value="3000" aria-label="Intervalo em ms"> ms
+        </div>
+        <button type="button" class="btn" id="btnDispararTodos">Disparar em todas as câmeras</button>
+        <label class="opcao bloco"><input type="checkbox" id="chkFlash" checked> Efeito de flash da iluminação a cada trigger</label>
+      </section>
+
+      <section class="sp">
+        <h2>Sinais EtherNet/IP</h2>
+        <div class="grupo-sinais"><h3>Do CLP <small>assembly 101</small></h3><ul class="leds" id="ledsClp"></ul></div>
+        <div class="grupo-sinais"><h3>Para o CLP <small>assembly 100</small></h3><ul class="leds" id="ledsCam"></ul></div>
+        <div class="grupo-sinais"><h3>Atribuição de saída <small>bytes 4 a 11</small></h3><ul class="leds" id="ledsJulg"></ul></div>
+        <div class="conexao-io" id="conexaoIO"></div>
+      </section>
+
+      <section class="sp">
+        <h2>Assembly 100 (entrada do CLP)</h2>
+        <p class="ajuda" id="txtTamanho"></p>
+        <div class="legenda" id="legenda"></div>
+        <div class="hex-rolagem"><table class="hex" id="tabelaHex"></table></div>
+      </section>
+
+      <section class="sp">
+        <div class="sp-cab"><h2>Eventos</h2><button type="button" class="btn btn-pequeno" id="btnLimparLog">Limpar</button></div>
+        <ol class="log-lista" id="logLista"></ol>
+      </section>
+    </aside>
+  </div>
+
+  <!-- ================= PROGRAMAS (como o seletor de programas do CV-X) ================= -->
+  <div class="modal" id="modalProgramas" hidden>
+    <div class="modal-caixa modal-largo" role="dialog" aria-modal="true" aria-labelledby="tituloProgramas">
+      <div class="modal-cab">
+        <h2 id="tituloProgramas">Programas da câmera</h2>
+        <button type="button" class="modal-fechar" data-fechar aria-label="Fechar">×</button>
+      </div>
+      <div class="modal-corpo">
+        <table class="prog-lista">
+          <thead><tr><th>Nº</th><th>Nome</th><th>Inspeção</th><th></th></tr></thead>
+          <tbody id="listaProgramas"></tbody>
+        </table>
+
+        <h3>Novo programa</h3>
+        <form id="formNovoProg" class="form-novo" autocomplete="off">
+          <label class="campo"><span>Nº</span><input id="novoNum" type="number" min="0" max="999" required></label>
+          <label class="campo"><span>Nome</span><input id="novoNome" type="text" maxlength="24" required></label>
+          <label class="campo"><span>Tipo de inspeção</span><select id="novoTipo"></select></label>
+          <div class="form-novo-acoes">
+            <button type="submit" class="btn btn-primario">Criar</button>
+            <button type="button" class="btn" id="btnDuplicar">Duplicar o carregado</button>
+          </div>
+        </form>
+        <p class="ajuda">A troca de programa é feita somente aqui, na própria câmera. Durante a carga
+          o BUSY fica ligado e o READY1 desligado, e o CLP só lê os sinais.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= UTILIDADE (rede e sistema) ================= -->
+  <div class="modal" id="modalUtil" hidden>
+    <div class="modal-caixa" role="dialog" aria-modal="true" aria-labelledby="tituloUtil">
+      <div class="modal-cab">
+        <h2 id="tituloUtil">Utilidade</h2>
+        <button type="button" class="modal-fechar" data-fechar aria-label="Fechar">×</button>
+      </div>
+      <div class="modal-corpo">
+        <h3>Esta câmera (EtherNet/IP)</h3>
+        <p class="erro-rede" id="erroRede" hidden></p>
+        <dl class="dados" id="dadosRede"></dl>
+        <form id="formRede" class="form-rede">
+          <label class="campo">
+            <span>Nome</span>
+            <input id="inpNomeCam" type="text" maxlength="30">
+          </label>
+          <label class="campo">
+            <span>IP da câmera</span>
+            <select id="selEscuta"></select>
+          </label>
+          <label class="campo">
+            <span>IP do CLP (destino do T->O)</span>
+            <input id="inpIpClp" type="text" placeholder="automático" inputmode="decimal" spellcheck="false">
+          </label>
+          <label class="campo">
+            <span>Porta UDP de I/O (recebe o O->T)</span>
+            <input id="inpPortaUdp" type="number" min="1024" max="65535" value="2222">
+          </label>
+          <button type="submit" class="btn btn-primario">Aplicar e reiniciar comunicação</button>
+          <p class="ajuda">Cada câmera atende só no seu IP, com a sua porta TCP 44818 e a sua porta UDP de I/O.
+            No CLP, configure o CV_X400_Series com o IP da câmera que ele deve usar.
+            O IP do CLP só precisa ser preenchido quando o CODESYS roda neste mesmo PC.</p>
+        </form>
+
+        <h3 id="tituloNovaCamera">Adicionar câmera</h3>
+        <form id="formNovaCamera" class="form-rede">
+          <label class="campo"><span>Nome</span><input id="novaCamNome" type="text" maxlength="30" placeholder="Câmera 2"></label>
+          <label class="campo"><span>IP da nova câmera</span><select id="novaCamIp"></select></label>
+          <label class="campo"><span>IP do CLP (opcional)</span>
+            <input id="novaCamClp" type="text" placeholder="automático" inputmode="decimal" spellcheck="false"></label>
+          <button type="submit" class="btn btn-primario">Adicionar câmera</button>
+          <p class="ajuda">Só aparecem IPs livres deste PC. Para criar IPs, rode o configurar_rede_virtual.bat
+            como administrador e reinicie o simulador.</p>
+        </form>
+        <h3>Contadores</h3>
+        <button type="button" class="btn" id="btnZerar">Zerar Cont e Cont NG</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

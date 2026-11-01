@@ -1,0 +1,38 @@
+{
+  "id": "processo-visao-3d",
+  "nome": "Processo com visão 3D",
+  "fabricante": "Didático",
+  "tipo": "Máquina / processo",
+  "descricao": "Esteira com inspeção por visão, cilindro de rejeito e robô. A máquina escreve sensores e lê atuadores no CLP por Modbus TCP.",
+  "protocolos": [
+    "Modbus TCP"
+  ],
+  "papel": "Cliente Modbus TCP (conecta no servidor do CLP)",
+  "iniciar": {
+    "comando": "node",
+    "args": [
+      "server.js"
+    ]
+  },
+  "web": {
+    "porta": 3000,
+    "caminho": "/"
+  },
+  "rede": {
+    "precisaIp": false,
+    "portas": []
+  },
+  "arquivos": {
+    "guia": null
+  },
+  "preservarAoAtualizar": [
+    "config.json"
+  ],
+  "aprender": [
+    "modbus-tcp"
+  ],
+  "cor": "#2F8A57",
+  "icone": "processo",
+  "versao": "1.0.0",
+  "pacote": "simulador-processo-visao-3d"
+}

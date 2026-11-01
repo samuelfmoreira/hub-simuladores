@@ -1,0 +1,60 @@
+{
+  "id": "keyence-cvx400",
+  "nome": "Visão Keyence CV-X400",
+  "fabricante": "Keyence",
+  "tipo": "Sistema de visão",
+  "descricao": "Câmera CV-X lendo etiqueta com 6 QR codes ou medindo disco com furos. Várias câmeras independentes, cada uma no seu IP.",
+  "protocolos": [
+    "EtherNet/IP"
+  ],
+  "papel": "Adapter EtherNet/IP",
+  "iniciar": {
+    "comando": "node",
+    "args": [
+      "server.js"
+    ]
+  },
+  "web": {
+    "porta": 3001,
+    "caminho": "/"
+  },
+  "rede": {
+    "precisaIp": true,
+    "ipSugerido": "192.168.100.21",
+    "portas": [
+      {
+        "proto": "tcp",
+        "porta": 44818,
+        "uso": "EtherNet/IP explícito"
+      },
+      {
+        "proto": "udp",
+        "porta": 44818,
+        "uso": "ListIdentity"
+      },
+      {
+        "proto": "udp",
+        "porta": 2222,
+        "uso": "I/O cíclico"
+      }
+    ],
+    "observacao": "O IP do HUB vale para a câmera 1 enquanto não houver config_cameras.json. Câmeras extras pedem IPs extras (aba Rede)."
+  },
+  "arquivos": {
+    "guia": "LEIA-ME.md",
+    "eds": [
+      "Keyence_5005_0102.eds"
+    ]
+  },
+  "preservarAoAtualizar": [
+    "config_cameras.json"
+  ],
+  "aprender": [
+    "ethernetip-cip",
+    "arquivo-eds"
+  ],
+  "cor": "#D08A1E",
+  "icone": "visao",
+  "versao": "1.0.0",
+  "pacote": "simulador-visao-keyence"
+}

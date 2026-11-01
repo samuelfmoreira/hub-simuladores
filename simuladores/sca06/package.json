@@ -1,0 +1,18 @@
+{
+  "name": "sca06-ethernetip-sim",
+  "version": "1.0.2",
+  "description": "Simulador didático do servoconversor WEG SCA06 com acessório ECO5 (adapter EtherNet/IP) e bancada 3D com disco graduado",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "teste": "node tools/teste-scanner.js"
+  },
+  "author": "Samuel Felipe Moreira — CFP Janez Hlebanha (SENAI)",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

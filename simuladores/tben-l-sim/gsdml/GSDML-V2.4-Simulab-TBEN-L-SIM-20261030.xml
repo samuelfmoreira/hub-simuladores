@@ -1,0 +1,603 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<ISO15745Profile xmlns="http://www.profibus.com/GSDML/2003/11/DeviceProfile" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.profibus.com/GSDML/2003/11/DeviceProfile ..\xsd\GSDML-DeviceProfile-V2.4.xsd">
+   <!-- Gerado por tools/gen-gsdml.js a partir de src/core/portmap.js. Não edite à mão. -->
+   <ProfileHeader>
+      <ProfileIdentification>PROFINET Device Profile</ProfileIdentification>
+      <ProfileRevision>1.00</ProfileRevision>
+      <ProfileName>Device Profile for PROFINET Devices</ProfileName>
+      <ProfileSource>PROFIBUS Nutzerorganisation e. V. (PNO)</ProfileSource>
+      <ProfileClassID>Device</ProfileClassID>
+      <ISO15745Reference>
+         <ISO15745Part>4</ISO15745Part>
+         <ISO15745Edition>1</ISO15745Edition>
+         <ProfileTechnology>GSDML</ProfileTechnology>
+      </ISO15745Reference>
+   </ProfileHeader>
+   <ProfileBody>
+      <DeviceIdentity VendorID="0x0493" DeviceID="0x7B01">
+         <InfoText TextId="IDT_INFO_Device"/>
+         <VendorName Value="Simulab (p-net)"/>
+      </DeviceIdentity>
+      <DeviceFunction>
+         <Family MainFamily="I/O" ProductFamily="Simulab TBEN-L-SIM"/>
+      </DeviceFunction>
+      <ApplicationProcess>
+         <DeviceAccessPointList>
+            <DeviceAccessPointItem ID="IDD_1" PNIO_Version="V2.4" PhysicalSlots="0..8" ModuleIdentNumber="0x00000001" MinDeviceInterval="32" DNS_CompatibleName="tben-l-sim" FixedInSlots="0" ObjectUUID_LocalIndex="1" DeviceAccessSupported="false" MultipleWriteSupported="true" CheckDeviceID_Allowed="true" NameOfStationNotTransferable="false" LLDP_NoD_Supported="true" ResetToFactoryModes="1..2">
+               <ModuleInfo>
+                  <Name TextId="IDT_MODULE_NAME_DAP1"/>
+                  <InfoText TextId="IDT_INFO_DAP1"/>
+                  <VendorName Value="Simulab (p-net)"/>
+                  <OrderNumber Value="TBEN-L-SIM-8IOL"/>
+                  <HardwareRelease Value="A1.0"/>
+                  <SoftwareRelease Value="V0.1.0"/>
+               </ModuleInfo>
+               <CertificationInfo ConformanceClass="B" ApplicationClass="" NetloadClass="I"/>
+               <IOConfigData MaxInputLength="244" MaxOutputLength="244"/>
+               <UseableModules>
+                  <ModuleItemRef ModuleItemTarget="IDM_X0" AllowedInSlots="1" FixedInSlots="1"/>
+                  <ModuleItemRef ModuleItemTarget="IDM_X1" AllowedInSlots="2" FixedInSlots="2"/>
+                  <ModuleItemRef ModuleItemTarget="IDM_X2" AllowedInSlots="3" FixedInSlots="3"/>
+                  <ModuleItemRef ModuleItemTarget="IDM_X3" AllowedInSlots="4" FixedInSlots="4"/>
+                  <ModuleItemRef ModuleItemTarget="IDM_X4" AllowedInSlots="5" FixedInSlots="5"/>
+                  <ModuleItemRef ModuleItemTarget="IDM_X5" AllowedInSlots="6" FixedInSlots="6"/>
+                  <ModuleItemRef ModuleItemTarget="IDM_X6" AllowedInSlots="7" FixedInSlots="7"/>
+                  <ModuleItemRef ModuleItemTarget="IDM_X7" AllowedInSlots="8" FixedInSlots="8"/>
+               </UseableModules>
+               <VirtualSubmoduleList>
+                  <VirtualSubmoduleItem ID="IDS_1" SubmoduleIdentNumber="0x00000001" Writeable_IM_Records="1 2 3" MayIssueProcessAlarm="false">
+                     <IOData/>
+                     <ModuleInfo>
+                        <Name TextId="IDT_MODULE_NAME_DAP1"/>
+                        <InfoText TextId="IDT_INFO_DAP1"/>
+                     </ModuleInfo>
+                  </VirtualSubmoduleItem>
+               </VirtualSubmoduleList>
+               <SystemDefinedSubmoduleList>
+                  <InterfaceSubmoduleItem ID="IDS_I" SubmoduleIdentNumber="0x00008000" SubslotNumber="32768" TextId="IDT_NAME_IS" SupportedRT_Classes="RT_CLASS_1" SupportedProtocols="SNMP;LLDP" NetworkComponentDiagnosisSupported="false" PTP_BoundarySupported="true" DCP_BoundarySupported="true">
+                     <ApplicationRelations StartupMode="Advanced">
+                        <TimingProperties SendClock="32" ReductionRatio="1 2 4 8 16 32 64 128 256 512"/>
+                     </ApplicationRelations>
+                  </InterfaceSubmoduleItem>
+                  <PortSubmoduleItem ID="IDS_P1" SubmoduleIdentNumber="0x00008001" SubslotNumber="32769" TextId="IDT_NAME_PS1" MaxPortRxDelay="350" MaxPortTxDelay="160">
+                     <MAUTypeList>
+                        <MAUTypeItem Value="30"/>
+                        <MAUTypeItem Value="16"/>
+                        <MAUTypeItem Value="5"/>
+                     </MAUTypeList>
+                  </PortSubmoduleItem>
+               </SystemDefinedSubmoduleList>
+            </DeviceAccessPointItem>
+         </DeviceAccessPointList>
+         <ModuleList>
+            <ModuleItem ID="IDM_X0" ModuleIdentNumber="0x00000101">
+               <ModuleInfo>
+                  <Name TextId="X0_NAME"/>
+                  <InfoText TextId="X0_INFO"/>
+                  <HardwareRelease Value="1.0"/>
+                  <SoftwareRelease Value="1.0"/>
+               </ModuleInfo>
+               <VirtualSubmoduleList>
+                  <VirtualSubmoduleItem ID="IDSM_X0" SubmoduleIdentNumber="0x00000201" MayIssueProcessAlarm="false">
+                     <IOData>
+                        <Input Consistency="All items consistency">
+                           <DataItem DataType="Unsigned8" TextId="X0_IN_B0" UseAsBits="true">
+                              <BitDataItem BitOffset="0" TextId="X0_IN_B0_0"/>
+                              <BitDataItem BitOffset="1" TextId="X0_IN_B0_1"/>
+                           </DataItem>
+                           <DataItem DataType="Unsigned8" TextId="X0_IN_B1"/>
+                           <DataItem DataType="Unsigned8" TextId="X0_PQI" UseAsBits="true">
+                              <BitDataItem BitOffset="5" TextId="X0_PQI_5"/>
+                              <BitDataItem BitOffset="6" TextId="X0_PQI_6"/>
+                              <BitDataItem BitOffset="7" TextId="X0_PQI_7"/>
+                           </DataItem>
+                        </Input>
+                        <Output Consistency="All items consistency">
+                           <DataItem DataType="Unsigned8" TextId="X0_OUT_B0" UseAsBits="true">
+                              <BitDataItem BitOffset="0" TextId="X0_OUT_B0_0"/>
+                              <BitDataItem BitOffset="1" TextId="X0_OUT_B0_1"/>
+                              <BitDataItem BitOffset="2" TextId="X0_OUT_B0_2"/>
+                           </DataItem>
+                           <DataItem DataType="Unsigned8" TextId="X0_OUT_B1"/>
+                        </Output>
+                     </IOData>
+                     <RecordDataList>
+                        <ParameterRecordDataItem Index="512" Length="10">
+                           <Name TextId="T_PCFG"/>
+                           <Ref DataType="Unsigned8" ByteOffset="0" DefaultValue="1" AllowedValues="0..1" Changeable="true" Visible="true" TextId="T_PCFG_MODE" ValueItemTarget="VI_MODE"/>
+                           <Ref DataType="Unsigned8" ByteOffset="1" DefaultValue="2" AllowedValues="0..3" Changeable="true" Visible="true" TextId="T_PCFG_VDS" ValueItemTarget="VI_VDS"/>
+                           <Ref DataType="Unsigned8" ByteOffset="2" DefaultValue="0" AllowedValues="0..100" Changeable="true" Visible="true" TextId="T_PCFG_CYC"/>
+                           <Ref DataType="Unsigned8" ByteOffset="3" DefaultValue="0" Changeable="false" Visible="false" TextId="T_PCFG_RES"/>
+                           <Ref DataType="Unsigned16" ByteOffset="4" DefaultValue="1952" AllowedValues="0..65535" Changeable="true" Visible="true" TextId="T_PCFG_VID"/>
+                           <Ref DataType="Unsigned32" ByteOffset="6" DefaultValue="257" AllowedValues="0..16777215" Changeable="true" Visible="true" TextId="T_PCFG_DID"/>
+                        </ParameterRecordDataItem>
+                     </RecordDataList>
+                     <ModuleInfo>
+                        <Name TextId="X0_NAME"/>
+                        <InfoText TextId="X0_INFO"/>
+                     </ModuleInfo>
+                  </VirtualSubmoduleItem>
+               </VirtualSubmoduleList>
+            </ModuleItem>
+            <ModuleItem ID="IDM_X1" ModuleIdentNumber="0x00000102">
+               <ModuleInfo>
+                  <Name TextId="X1_NAME"/>
+                  <InfoText TextId="X1_INFO"/>
+                  <HardwareRelease Value="1.0"/>
+                  <SoftwareRelease Value="1.0"/>
+               </ModuleInfo>
+               <VirtualSubmoduleList>
+                  <VirtualSubmoduleItem ID="IDSM_X1" SubmoduleIdentNumber="0x00000202" MayIssueProcessAlarm="false">
+                     <IOData>
+                        <Input Consistency="All items consistency">
+                           <DataItem DataType="Unsigned16" TextId="X1_IN_B0"/>
+                           <DataItem DataType="Unsigned8" TextId="X1_IN_B2" UseAsBits="true">
+                              <BitDataItem BitOffset="0" TextId="X1_IN_B2_0"/>
+                              <BitDataItem BitOffset="1" TextId="X1_IN_B2_1"/>
+                           </DataItem>
+                           <DataItem DataType="Unsigned8" TextId="X1_IN_B3"/>
+                           <DataItem DataType="Unsigned8" TextId="X1_PQI" UseAsBits="true">
+                              <BitDataItem BitOffset="5" TextId="X1_PQI_5"/>
+                              <BitDataItem BitOffset="6" TextId="X1_PQI_6"/>
+                              <BitDataItem BitOffset="7" TextId="X1_PQI_7"/>
+                           </DataItem>
+                        </Input>
+                     </IOData>
+                     <RecordDataList>
+                        <ParameterRecordDataItem Index="512" Length="10">
+                           <Name TextId="T_PCFG"/>
+                           <Ref DataType="Unsigned8" ByteOffset="0" DefaultValue="1" AllowedValues="0..1" Changeable="true" Visible="true" TextId="T_PCFG_MODE" ValueItemTarget="VI_MODE"/>
+                           <Ref DataType="Unsigned8" ByteOffset="1" DefaultValue="2" AllowedValues="0..3" Changeable="true" Visible="true" TextId="T_PCFG_VDS" ValueItemTarget="VI_VDS"/>
+                           <Ref DataType="Unsigned8" ByteOffset="2" DefaultValue="0" AllowedValues="0..100" Changeable="true" Visible="true" TextId="T_PCFG_CYC"/>
+                           <Ref DataType="Unsigned8" ByteOffset="3" DefaultValue="0" Changeable="false" Visible="false" TextId="T_PCFG_RES"/>
+                           <Ref DataType="Unsigned16" ByteOffset="4" DefaultValue="1952" AllowedValues="0..65535" Changeable="true" Visible="true" TextId="T_PCFG_VID"/>
+                           <Ref DataType="Unsigned32" ByteOffset="6" DefaultValue="513" AllowedValues="0..16777215" Changeable="true" Visible="true" TextId="T_PCFG_DID"/>
+                        </ParameterRecordDataItem>
+                     </RecordDataList>
+                     <ModuleInfo>
+                        <Name TextId="X1_NAME"/>
+                        <InfoText TextId="X1_INFO"/>
+                     </ModuleInfo>
+                  </VirtualSubmoduleItem>
+               </VirtualSubmoduleList>
+            </ModuleItem>
+            <ModuleItem ID="IDM_X2" ModuleIdentNumber="0x00000103">
+               <ModuleInfo>
+                  <Name TextId="X2_NAME"/>
+                  <InfoText TextId="X2_INFO"/>
+                  <HardwareRelease Value="1.0"/>
+                  <SoftwareRelease Value="1.0"/>
+               </ModuleInfo>
+               <VirtualSubmoduleList>
+                  <VirtualSubmoduleItem ID="IDSM_X2" SubmoduleIdentNumber="0x00000203" MayIssueProcessAlarm="false">
+                     <IOData>
+                        <Input Consistency="All items consistency">
+                           <DataItem DataType="Unsigned8" TextId="X2_IN_B0" UseAsBits="true">
+                              <BitDataItem BitOffset="0" TextId="X2_IN_B0_0"/>
+                              <BitDataItem BitOffset="1" TextId="X2_IN_B0_1"/>
+                           </DataItem>
+                           <DataItem DataType="Unsigned8" TextId="X2_PQI" UseAsBits="true">
+                              <BitDataItem BitOffset="5" TextId="X2_PQI_5"/>
+                              <BitDataItem BitOffset="6" TextId="X2_PQI_6"/>
+                              <BitDataItem BitOffset="7" TextId="X2_PQI_7"/>
+                           </DataItem>
+                        </Input>
+                        <Output Consistency="All items consistency">
+                           <DataItem DataType="Unsigned8" TextId="X2_OUT_B0" UseAsBits="true">
+                              <BitDataItem BitOffset="0" TextId="X2_OUT_B0_0"/>
+                              <BitDataItem BitOffset="1" TextId="X2_OUT_B0_1"/>
+                           </DataItem>
+                        </Output>
+                     </IOData>
+                     <RecordDataList>
+                        <ParameterRecordDataItem Index="512" Length="10">
+                           <Name TextId="T_PCFG"/>
+                           <Ref DataType="Unsigned8" ByteOffset="0" DefaultValue="1" AllowedValues="0..1" Changeable="true" Visible="true" TextId="T_PCFG_MODE" ValueItemTarget="VI_MODE"/>
+                           <Ref DataType="Unsigned8" ByteOffset="1" DefaultValue="2" AllowedValues="0..3" Changeable="true" Visible="true" TextId="T_PCFG_VDS" ValueItemTarget="VI_VDS"/>
+                           <Ref DataType="Unsigned8" ByteOffset="2" DefaultValue="0" AllowedValues="0..100" Changeable="true" Visible="true" TextId="T_PCFG_CYC"/>
+                           <Ref DataType="Unsigned8" ByteOffset="3" DefaultValue="0" Changeable="false" Visible="false" TextId="T_PCFG_RES"/>
+                           <Ref DataType="Unsigned16" ByteOffset="4" DefaultValue="1952" AllowedValues="0..65535" Changeable="true" Visible="true" TextId="T_PCFG_VID"/>
+                           <Ref DataType="Unsigned32" ByteOffset="6" DefaultValue="769" AllowedValues="0..16777215" Changeable="true" Visible="true" TextId="T_PCFG_DID"/>
+                        </ParameterRecordDataItem>
+                     </RecordDataList>
+                     <ModuleInfo>
+                        <Name TextId="X2_NAME"/>
+                        <InfoText TextId="X2_INFO"/>
+                     </ModuleInfo>
+                  </VirtualSubmoduleItem>
+               </VirtualSubmoduleList>
+            </ModuleItem>
+            <ModuleItem ID="IDM_X3" ModuleIdentNumber="0x00000104">
+               <ModuleInfo>
+                  <Name TextId="X3_NAME"/>
+                  <InfoText TextId="X3_INFO"/>
+                  <HardwareRelease Value="1.0"/>
+                  <SoftwareRelease Value="1.0"/>
+               </ModuleInfo>
+               <VirtualSubmoduleList>
+                  <VirtualSubmoduleItem ID="IDSM_X3" SubmoduleIdentNumber="0x00000204" MayIssueProcessAlarm="false">
+                     <IOData>
+                        <Input Consistency="All items consistency">
+                           <DataItem DataType="Unsigned8" TextId="X3_IN_B0" UseAsBits="true">
+                              <BitDataItem BitOffset="0" TextId="X3_IN_B0_0"/>
+                              <BitDataItem BitOffset="1" TextId="X3_IN_B0_1"/>
+                              <BitDataItem BitOffset="2" TextId="X3_IN_B0_2"/>
+                              <BitDataItem BitOffset="3" TextId="X3_IN_B0_3"/>
+                              <BitDataItem BitOffset="4" TextId="X3_IN_B0_4"/>
+                              <BitDataItem BitOffset="5" TextId="X3_IN_B0_5"/>
+                              <BitDataItem BitOffset="6" TextId="X3_IN_B0_6"/>
+                              <BitDataItem BitOffset="7" TextId="X3_IN_B0_7"/>
+                           </DataItem>
+                           <DataItem DataType="Unsigned8" TextId="X3_IN_B1" UseAsBits="true">
+                              <BitDataItem BitOffset="0" TextId="X3_IN_B1_0"/>
+                              <BitDataItem BitOffset="1" TextId="X3_IN_B1_1"/>
+                           </DataItem>
+                           <DataItem DataType="Unsigned8" TextId="X3_PQI" UseAsBits="true">
+                              <BitDataItem BitOffset="5" TextId="X3_PQI_5"/>
+                              <BitDataItem BitOffset="6" TextId="X3_PQI_6"/>
+                              <BitDataItem BitOffset="7" TextId="X3_PQI_7"/>
+                           </DataItem>
+                        </Input>
+                     </IOData>
+                     <RecordDataList>
+                        <ParameterRecordDataItem Index="512" Length="10">
+                           <Name TextId="T_PCFG"/>
+                           <Ref DataType="Unsigned8" ByteOffset="0" DefaultValue="1" AllowedValues="0..1" Changeable="true" Visible="true" TextId="T_PCFG_MODE" ValueItemTarget="VI_MODE"/>
+                           <Ref DataType="Unsigned8" ByteOffset="1" DefaultValue="2" AllowedValues="0..3" Changeable="true" Visible="true" TextId="T_PCFG_VDS" ValueItemTarget="VI_VDS"/>
+                           <Ref DataType="Unsigned8" ByteOffset="2" DefaultValue="0" AllowedValues="0..100" Changeable="true" Visible="true" TextId="T_PCFG_CYC"/>
+                           <Ref DataType="Unsigned8" ByteOffset="3" DefaultValue="0" Changeable="false" Visible="false" TextId="T_PCFG_RES"/>
+                           <Ref DataType="Unsigned16" ByteOffset="4" DefaultValue="1952" AllowedValues="0..65535" Changeable="true" Visible="true" TextId="T_PCFG_VID"/>
+                           <Ref DataType="Unsigned32" ByteOffset="6" DefaultValue="1025" AllowedValues="0..16777215" Changeable="true" Visible="true" TextId="T_PCFG_DID"/>
+                        </ParameterRecordDataItem>
+                     </RecordDataList>
+                     <ModuleInfo>
+                        <Name TextId="X3_NAME"/>
+                        <InfoText TextId="X3_INFO"/>
+                     </ModuleInfo>
+                  </VirtualSubmoduleItem>
+               </VirtualSubmoduleList>
+            </ModuleItem>
+            <ModuleItem ID="IDM_X4" ModuleIdentNumber="0x00000105">
+               <ModuleInfo>
+                  <Name TextId="X4_NAME"/>
+                  <InfoText TextId="X4_INFO"/>
+                  <HardwareRelease Value="1.0"/>
+                  <SoftwareRelease Value="1.0"/>
+               </ModuleInfo>
+               <VirtualSubmoduleList>
+                  <VirtualSubmoduleItem ID="IDSM_X4" SubmoduleIdentNumber="0x00000205" MayIssueProcessAlarm="false">
+                     <IOData>
+                        <Input Consistency="All items consistency">
+                           <DataItem DataType="Unsigned8" TextId="X4_IN_B0" UseAsBits="true">
+                              <BitDataItem BitOffset="0" TextId="X4_IN_B0_0"/>
+                              <BitDataItem BitOffset="1" TextId="X4_IN_B0_1"/>
+                              <BitDataItem BitOffset="2" TextId="X4_IN_B0_2"/>
+                              <BitDataItem BitOffset="3" TextId="X4_IN_B0_3"/>
+                           </DataItem>
+                           <DataItem DataType="Unsigned8" TextId="X4_IN_B1"/>
+                           <DataItem DataType="Unsigned16" TextId="X4_IN_B2"/>
+                           <DataItem DataType="Unsigned8" TextId="X4_PQI" UseAsBits="true">
+                              <BitDataItem BitOffset="5" TextId="X4_PQI_5"/>
+                              <BitDataItem BitOffset="6" TextId="X4_PQI_6"/>
+                              <BitDataItem BitOffset="7" TextId="X4_PQI_7"/>
+                           </DataItem>
+                        </Input>
+                        <Output Consistency="All items consistency">
+                           <DataItem DataType="Unsigned8" TextId="X4_OUT_B0" UseAsBits="true">
+                              <BitDataItem BitOffset="0" TextId="X4_OUT_B0_0"/>
+                              <BitDataItem BitOffset="1" TextId="X4_OUT_B0_1"/>
+                              <BitDataItem BitOffset="2" TextId="X4_OUT_B0_2"/>
+                              <BitDataItem BitOffset="3" TextId="X4_OUT_B0_3"/>
+                           </DataItem>
+                           <DataItem DataType="Unsigned8" TextId="X4_OUT_B1"/>
+                           <DataItem DataType="Unsigned16" TextId="X4_OUT_B2"/>
+                        </Output>
+                     </IOData>
+                     <RecordDataList>
+                        <ParameterRecordDataItem Index="512" Length="10">
+                           <Name TextId="T_PCFG"/>
+                           <Ref DataType="Unsigned8" ByteOffset="0" DefaultValue="1" AllowedValues="0..1" Changeable="true" Visible="true" TextId="T_PCFG_MODE" ValueItemTarget="VI_MODE"/>
+                           <Ref DataType="Unsigned8" ByteOffset="1" DefaultValue="2" AllowedValues="0..3" Changeable="true" Visible="true" TextId="T_PCFG_VDS" ValueItemTarget="VI_VDS"/>
+                           <Ref DataType="Unsigned8" ByteOffset="2" DefaultValue="0" AllowedValues="0..100" Changeable="true" Visible="true" TextId="T_PCFG_CYC"/>
+                           <Ref DataType="Unsigned8" ByteOffset="3" DefaultValue="0" Changeable="false" Visible="false" TextId="T_PCFG_RES"/>
+                           <Ref DataType="Unsigned16" ByteOffset="4" DefaultValue="1952" AllowedValues="0..65535" Changeable="true" Visible="true" TextId="T_PCFG_VID"/>
+                           <Ref DataType="Unsigned32" ByteOffset="6" DefaultValue="1281" AllowedValues="0..16777215" Changeable="true" Visible="true" TextId="T_PCFG_DID"/>
+                        </ParameterRecordDataItem>
+                     </RecordDataList>
+                     <ModuleInfo>
+                        <Name TextId="X4_NAME"/>
+                        <InfoText TextId="X4_INFO"/>
+                     </ModuleInfo>
+                  </VirtualSubmoduleItem>
+               </VirtualSubmoduleList>
+            </ModuleItem>
+            <ModuleItem ID="IDM_X5" ModuleIdentNumber="0x00000106">
+               <ModuleInfo>
+                  <Name TextId="X5_NAME"/>
+                  <InfoText TextId="X5_INFO"/>
+                  <HardwareRelease Value="1.0"/>
+                  <SoftwareRelease Value="1.0"/>
+               </ModuleInfo>
+               <VirtualSubmoduleList>
+                  <VirtualSubmoduleItem ID="IDSM_X5" SubmoduleIdentNumber="0x00000206" MayIssueProcessAlarm="false">
+                     <IOData>
+                        <Input Consistency="All items consistency">
+                           <DataItem DataType="Unsigned16" TextId="X5_IN_B0"/>
+                           <DataItem DataType="Unsigned8" TextId="X5_IN_B2" UseAsBits="true">
+                              <BitDataItem BitOffset="0" TextId="X5_IN_B2_0"/>
+                              <BitDataItem BitOffset="1" TextId="X5_IN_B2_1"/>
+                           </DataItem>
+                           <DataItem DataType="Unsigned8" TextId="X5_IN_B3"/>
+                           <DataItem DataType="Unsigned8" TextId="X5_PQI" UseAsBits="true">
+                              <BitDataItem BitOffset="5" TextId="X5_PQI_5"/>
+                              <BitDataItem BitOffset="6" TextId="X5_PQI_6"/>
+                              <BitDataItem BitOffset="7" TextId="X5_PQI_7"/>
+                           </DataItem>
+                        </Input>
+                     </IOData>
+                     <RecordDataList>
+                        <ParameterRecordDataItem Index="512" Length="10">
+                           <Name TextId="T_PCFG"/>
+                           <Ref DataType="Unsigned8" ByteOffset="0" DefaultValue="1" AllowedValues="0..1" Changeable="true" Visible="true" TextId="T_PCFG_MODE" ValueItemTarget="VI_MODE"/>
+                           <Ref DataType="Unsigned8" ByteOffset="1" DefaultValue="2" AllowedValues="0..3" Changeable="true" Visible="true" TextId="T_PCFG_VDS" ValueItemTarget="VI_VDS"/>
+                           <Ref DataType="Unsigned8" ByteOffset="2" DefaultValue="0" AllowedValues="0..100" Changeable="true" Visible="true" TextId="T_PCFG_CYC"/>
+                           <Ref DataType="Unsigned8" ByteOffset="3" DefaultValue="0" Changeable="false" Visible="false" TextId="T_PCFG_RES"/>
+                           <Ref DataType="Unsigned16" ByteOffset="4" DefaultValue="1952" AllowedValues="0..65535" Changeable="true" Visible="true" TextId="T_PCFG_VID"/>
+                           <Ref DataType="Unsigned32" ByteOffset="6" DefaultValue="513" AllowedValues="0..16777215" Changeable="true" Visible="true" TextId="T_PCFG_DID"/>
+                        </ParameterRecordDataItem>
+                     </RecordDataList>
+                     <ModuleInfo>
+                        <Name TextId="X5_NAME"/>
+                        <InfoText TextId="X5_INFO"/>
+                     </ModuleInfo>
+                  </VirtualSubmoduleItem>
+               </VirtualSubmoduleList>
+            </ModuleItem>
+            <ModuleItem ID="IDM_X6" ModuleIdentNumber="0x00000107">
+               <ModuleInfo>
+                  <Name TextId="X6_NAME"/>
+                  <InfoText TextId="X6_INFO"/>
+                  <HardwareRelease Value="1.0"/>
+                  <SoftwareRelease Value="1.0"/>
+               </ModuleInfo>
+               <VirtualSubmoduleList>
+                  <VirtualSubmoduleItem ID="IDSM_X6" SubmoduleIdentNumber="0x00000207" MayIssueProcessAlarm="false">
+                     <IOData>
+                        <Input Consistency="All items consistency">
+                           <DataItem DataType="Unsigned8" TextId="X6_IN_B0" UseAsBits="true">
+                              <BitDataItem BitOffset="0" TextId="X6_IN_B0_0"/>
+                              <BitDataItem BitOffset="1" TextId="X6_IN_B0_1"/>
+                           </DataItem>
+                           <DataItem DataType="Unsigned8" TextId="X6_IN_B1"/>
+                           <DataItem DataType="Unsigned8" TextId="X6_PQI" UseAsBits="true">
+                              <BitDataItem BitOffset="5" TextId="X6_PQI_5"/>
+                              <BitDataItem BitOffset="6" TextId="X6_PQI_6"/>
+                              <BitDataItem BitOffset="7" TextId="X6_PQI_7"/>
+                           </DataItem>
+                        </Input>
+                        <Output Consistency="All items consistency">
+                           <DataItem DataType="Unsigned8" TextId="X6_OUT_B0" UseAsBits="true">
+                              <BitDataItem BitOffset="0" TextId="X6_OUT_B0_0"/>
+                              <BitDataItem BitOffset="1" TextId="X6_OUT_B0_1"/>
+                              <BitDataItem BitOffset="2" TextId="X6_OUT_B0_2"/>
+                           </DataItem>
+                           <DataItem DataType="Unsigned8" TextId="X6_OUT_B1"/>
+                        </Output>
+                     </IOData>
+                     <RecordDataList>
+                        <ParameterRecordDataItem Index="512" Length="10">
+                           <Name TextId="T_PCFG"/>
+                           <Ref DataType="Unsigned8" ByteOffset="0" DefaultValue="1" AllowedValues="0..1" Changeable="true" Visible="true" TextId="T_PCFG_MODE" ValueItemTarget="VI_MODE"/>
+                           <Ref DataType="Unsigned8" ByteOffset="1" DefaultValue="2" AllowedValues="0..3" Changeable="true" Visible="true" TextId="T_PCFG_VDS" ValueItemTarget="VI_VDS"/>
+                           <Ref DataType="Unsigned8" ByteOffset="2" DefaultValue="0" AllowedValues="0..100" Changeable="true" Visible="true" TextId="T_PCFG_CYC"/>
+                           <Ref DataType="Unsigned8" ByteOffset="3" DefaultValue="0" Changeable="false" Visible="false" TextId="T_PCFG_RES"/>
+                           <Ref DataType="Unsigned16" ByteOffset="4" DefaultValue="1952" AllowedValues="0..65535" Changeable="true" Visible="true" TextId="T_PCFG_VID"/>
+                           <Ref DataType="Unsigned32" ByteOffset="6" DefaultValue="257" AllowedValues="0..16777215" Changeable="true" Visible="true" TextId="T_PCFG_DID"/>
+                        </ParameterRecordDataItem>
+                     </RecordDataList>
+                     <ModuleInfo>
+                        <Name TextId="X6_NAME"/>
+                        <InfoText TextId="X6_INFO"/>
+                     </ModuleInfo>
+                  </VirtualSubmoduleItem>
+               </VirtualSubmoduleList>
+            </ModuleItem>
+            <ModuleItem ID="IDM_X7" ModuleIdentNumber="0x00000108">
+               <ModuleInfo>
+                  <Name TextId="X7_NAME"/>
+                  <InfoText TextId="X7_INFO"/>
+                  <HardwareRelease Value="1.0"/>
+                  <SoftwareRelease Value="1.0"/>
+               </ModuleInfo>
+               <VirtualSubmoduleList>
+                  <VirtualSubmoduleItem ID="IDSM_X7" SubmoduleIdentNumber="0x00000208" MayIssueProcessAlarm="false">
+                     <IOData>
+                        <Input Consistency="All items consistency">
+                           <DataItem DataType="Unsigned8" TextId="X7_PQI" UseAsBits="true">
+                              <BitDataItem BitOffset="5" TextId="X7_PQI_5"/>
+                              <BitDataItem BitOffset="6" TextId="X7_PQI_6"/>
+                              <BitDataItem BitOffset="7" TextId="X7_PQI_7"/>
+                           </DataItem>
+                        </Input>
+                        <Output Consistency="All items consistency">
+                           <DataItem DataType="Unsigned8" TextId="X7_OUT_B0" UseAsBits="true">
+                              <BitDataItem BitOffset="0" TextId="X7_OUT_B0_0"/>
+                              <BitDataItem BitOffset="1" TextId="X7_OUT_B0_1"/>
+                              <BitDataItem BitOffset="2" TextId="X7_OUT_B0_2"/>
+                              <BitDataItem BitOffset="3" TextId="X7_OUT_B0_3"/>
+                           </DataItem>
+                        </Output>
+                     </IOData>
+                     <RecordDataList>
+                        <ParameterRecordDataItem Index="512" Length="10">
+                           <Name TextId="T_PCFG"/>
+                           <Ref DataType="Unsigned8" ByteOffset="0" DefaultValue="1" AllowedValues="0..1" Changeable="true" Visible="true" TextId="T_PCFG_MODE" ValueItemTarget="VI_MODE"/>
+                           <Ref DataType="Unsigned8" ByteOffset="1" DefaultValue="2" AllowedValues="0..3" Changeable="true" Visible="true" TextId="T_PCFG_VDS" ValueItemTarget="VI_VDS"/>
+                           <Ref DataType="Unsigned8" ByteOffset="2" DefaultValue="0" AllowedValues="0..100" Changeable="true" Visible="true" TextId="T_PCFG_CYC"/>
+                           <Ref DataType="Unsigned8" ByteOffset="3" DefaultValue="0" Changeable="false" Visible="false" TextId="T_PCFG_RES"/>
+                           <Ref DataType="Unsigned16" ByteOffset="4" DefaultValue="1952" AllowedValues="0..65535" Changeable="true" Visible="true" TextId="T_PCFG_VID"/>
+                           <Ref DataType="Unsigned32" ByteOffset="6" DefaultValue="1537" AllowedValues="0..16777215" Changeable="true" Visible="true" TextId="T_PCFG_DID"/>
+                        </ParameterRecordDataItem>
+                     </RecordDataList>
+                     <ModuleInfo>
+                        <Name TextId="X7_NAME"/>
+                        <InfoText TextId="X7_INFO"/>
+                     </ModuleInfo>
+                  </VirtualSubmoduleItem>
+               </VirtualSubmoduleList>
+            </ModuleItem>
+         </ModuleList>
+         <ValueList>
+            <ValueItem ID="VI_MODE">
+               <Assignments>
+                  <Assign Content="0" TextId="T_MODE_0"/>
+                  <Assign Content="1" TextId="T_MODE_1"/>
+               </Assignments>
+            </ValueItem>
+            <ValueItem ID="VI_VDS">
+               <Assignments>
+                  <Assign Content="0" TextId="T_VDS_0"/>
+                  <Assign Content="1" TextId="T_VDS_1"/>
+                  <Assign Content="2" TextId="T_VDS_2"/>
+                  <Assign Content="3" TextId="T_VDS_3"/>
+               </Assignments>
+            </ValueItem>
+         </ValueList>
+         <ExternalTextList>
+            <PrimaryLanguage>
+               <Text TextId="X0_NAME" Value="X0 C1 Esteira de entrada"/>
+               <Text TextId="X0_INFO" Value="Porta IO-Link X0: Controlador de rolo motorizado MDR-24-IOL. Entrada com 2 byte(s) de dados + PQI, saída com 2 byte(s)."/>
+               <Text TextId="X0_IN_B0_0" Value="Rodando"/>
+               <Text TextId="X0_IN_B0_1" Value="Falha"/>
+               <Text TextId="X0_IN_B0" Value="Byte 0"/>
+               <Text TextId="X0_IN_B1" Value="Velocidade atual (%)"/>
+               <Text TextId="X0_PQI" Value="PQI (Port Qualifier Information)"/>
+               <Text TextId="X0_PQI_5" Value="DevErr: device com erro ou aviso"/>
+               <Text TextId="X0_PQI_6" Value="DevCom: device comunicando"/>
+               <Text TextId="X0_PQI_7" Value="PQ: dados de processo válidos"/>
+               <Text TextId="X0_OUT_B0_0" Value="Liga motor"/>
+               <Text TextId="X0_OUT_B0_1" Value="Sentido reverso"/>
+               <Text TextId="X0_OUT_B0_2" Value="Reset de falha"/>
+               <Text TextId="X0_OUT_B0" Value="Byte 0"/>
+               <Text TextId="X0_OUT_B1" Value="Velocidade (%)"/>
+               <Text TextId="X1_NAME" Value="X1 B1 Sensor de altura da caixa"/>
+               <Text TextId="X1_INFO" Value="Porta IO-Link X1: Sensor laser LDS-3000-IOL (alcance 3000 mm). Entrada com 4 byte(s) de dados + PQI, saída com 0 byte(s)."/>
+               <Text TextId="X1_IN_B0" Value="Distância (mm)"/>
+               <Text TextId="X1_IN_B2_0" Value="Medição válida"/>
+               <Text TextId="X1_IN_B2_1" Value="Saída SP1"/>
+               <Text TextId="X1_IN_B2" Value="Byte 2"/>
+               <Text TextId="X1_IN_B3" Value="Qualidade do sinal (%)"/>
+               <Text TextId="X1_PQI" Value="PQI (Port Qualifier Information)"/>
+               <Text TextId="X1_PQI_5" Value="DevErr: device com erro ou aviso"/>
+               <Text TextId="X1_PQI_6" Value="DevCom: device comunicando"/>
+               <Text TextId="X1_PQI_7" Value="PQ: dados de processo válidos"/>
+               <Text TextId="X2_NAME" Value="X2 Y1 Válvulas do empurrador"/>
+               <Text TextId="X2_INFO" Value="Porta IO-Link X2: Terminal de válvulas VT4-IOL. Entrada com 1 byte(s) de dados + PQI, saída com 1 byte(s)."/>
+               <Text TextId="X2_IN_B0_0" Value="Pressão de ar OK"/>
+               <Text TextId="X2_IN_B0_1" Value="Falha de bobina"/>
+               <Text TextId="X2_IN_B0" Value="Byte 0"/>
+               <Text TextId="X2_PQI" Value="PQI (Port Qualifier Information)"/>
+               <Text TextId="X2_PQI_5" Value="DevErr: device com erro ou aviso"/>
+               <Text TextId="X2_PQI_6" Value="DevCom: device comunicando"/>
+               <Text TextId="X2_PQI_7" Value="PQ: dados de processo válidos"/>
+               <Text TextId="X2_OUT_B0_0" Value="Y1 avançar empurrador"/>
+               <Text TextId="X2_OUT_B0_1" Value="Y2 recuar empurrador"/>
+               <Text TextId="X2_OUT_B0" Value="Byte 0"/>
+               <Text TextId="X3_NAME" Value="X3 K1 Hub de entradas digitais"/>
+               <Text TextId="X3_INFO" Value="Porta IO-Link X3: Hub de entradas DI16-IOL. Entrada com 2 byte(s) de dados + PQI, saída com 0 byte(s)."/>
+               <Text TextId="X3_IN_B0_0" Value="I0 empurrador recuado"/>
+               <Text TextId="X3_IN_B0_1" Value="I1 empurrador avançado"/>
+               <Text TextId="X3_IN_B0_2" Value="I2 elevador no fim de curso inferior"/>
+               <Text TextId="X3_IN_B0_3" Value="I3 elevador no fim de curso superior"/>
+               <Text TextId="X3_IN_B0_4" Value="I4 pallet no elevador"/>
+               <Text TextId="X3_IN_B0_5" Value="I5 pallet no fim da saída"/>
+               <Text TextId="X3_IN_B0_6" Value="I6 botão partir"/>
+               <Text TextId="X3_IN_B0_7" Value="I7 botão parar (NF)"/>
+               <Text TextId="X3_IN_B0" Value="Byte 0"/>
+               <Text TextId="X3_IN_B1_0" Value="I8 botão rearmar"/>
+               <Text TextId="X3_IN_B1_1" Value="I9 emergência OK (NF)"/>
+               <Text TextId="X3_IN_B1" Value="Byte 1"/>
+               <Text TextId="X3_PQI" Value="PQI (Port Qualifier Information)"/>
+               <Text TextId="X3_PQI_5" Value="DevErr: device com erro ou aviso"/>
+               <Text TextId="X3_PQI_6" Value="DevCom: device comunicando"/>
+               <Text TextId="X3_PQI_7" Value="PQ: dados de processo válidos"/>
+               <Text TextId="X4_NAME" Value="X4 M1 Inversor do elevador"/>
+               <Text TextId="X4_INFO" Value="Porta IO-Link X4: Inversor VFD-0K75-IOL. Entrada com 4 byte(s) de dados + PQI, saída com 4 byte(s)."/>
+               <Text TextId="X4_IN_B0_0" Value="Pronto"/>
+               <Text TextId="X4_IN_B0_1" Value="Em movimento"/>
+               <Text TextId="X4_IN_B0_2" Value="Falha"/>
+               <Text TextId="X4_IN_B0_3" Value="Freio liberado"/>
+               <Text TextId="X4_IN_B0" Value="Byte 0"/>
+               <Text TextId="X4_IN_B1" Value="Código de falha"/>
+               <Text TextId="X4_IN_B2" Value="Velocidade atual (mm/s)"/>
+               <Text TextId="X4_PQI" Value="PQI (Port Qualifier Information)"/>
+               <Text TextId="X4_PQI_5" Value="DevErr: device com erro ou aviso"/>
+               <Text TextId="X4_PQI_6" Value="DevCom: device comunicando"/>
+               <Text TextId="X4_PQI_7" Value="PQ: dados de processo válidos"/>
+               <Text TextId="X4_OUT_B0_0" Value="Habilita"/>
+               <Text TextId="X4_OUT_B0_1" Value="Subir"/>
+               <Text TextId="X4_OUT_B0_2" Value="Descer"/>
+               <Text TextId="X4_OUT_B0_3" Value="Reset de falha"/>
+               <Text TextId="X4_OUT_B0" Value="Byte 0"/>
+               <Text TextId="X4_OUT_B1" Value="Reservado"/>
+               <Text TextId="X4_OUT_B2" Value="Velocidade (mm/s)"/>
+               <Text TextId="X5_NAME" Value="X5 B2 Sensor de posição do elevador"/>
+               <Text TextId="X5_INFO" Value="Porta IO-Link X5: Sensor laser LDS-3000-IOL (alcance 3000 mm). Entrada com 4 byte(s) de dados + PQI, saída com 0 byte(s)."/>
+               <Text TextId="X5_IN_B0" Value="Distância (mm)"/>
+               <Text TextId="X5_IN_B2_0" Value="Medição válida"/>
+               <Text TextId="X5_IN_B2_1" Value="Saída SP1"/>
+               <Text TextId="X5_IN_B2" Value="Byte 2"/>
+               <Text TextId="X5_IN_B3" Value="Qualidade do sinal (%)"/>
+               <Text TextId="X5_PQI" Value="PQI (Port Qualifier Information)"/>
+               <Text TextId="X5_PQI_5" Value="DevErr: device com erro ou aviso"/>
+               <Text TextId="X5_PQI_6" Value="DevCom: device comunicando"/>
+               <Text TextId="X5_PQI_7" Value="PQ: dados de processo válidos"/>
+               <Text TextId="X6_NAME" Value="X6 C2 Esteira de saída de pallets"/>
+               <Text TextId="X6_INFO" Value="Porta IO-Link X6: Controlador de rolo motorizado MDR-24-IOL. Entrada com 2 byte(s) de dados + PQI, saída com 2 byte(s)."/>
+               <Text TextId="X6_IN_B0_0" Value="Rodando"/>
+               <Text TextId="X6_IN_B0_1" Value="Falha"/>
+               <Text TextId="X6_IN_B0" Value="Byte 0"/>
+               <Text TextId="X6_IN_B1" Value="Velocidade atual (%)"/>
+               <Text TextId="X6_PQI" Value="PQI (Port Qualifier Information)"/>
+               <Text TextId="X6_PQI_5" Value="DevErr: device com erro ou aviso"/>
+               <Text TextId="X6_PQI_6" Value="DevCom: device comunicando"/>
+               <Text TextId="X6_PQI_7" Value="PQ: dados de processo válidos"/>
+               <Text TextId="X6_OUT_B0_0" Value="Liga motor"/>
+               <Text TextId="X6_OUT_B0_1" Value="Sentido reverso"/>
+               <Text TextId="X6_OUT_B0_2" Value="Reset de falha"/>
+               <Text TextId="X6_OUT_B0" Value="Byte 0"/>
+               <Text TextId="X6_OUT_B1" Value="Velocidade (%)"/>
+               <Text TextId="X7_NAME" Value="X7 H1 Torre sinaleira"/>
+               <Text TextId="X7_INFO" Value="Porta IO-Link X7: Torre sinaleira SL4-IOL. Entrada com 0 byte(s) de dados + PQI, saída com 1 byte(s)."/>
+               <Text TextId="X7_PQI" Value="PQI (Port Qualifier Information)"/>
+               <Text TextId="X7_PQI_5" Value="DevErr: device com erro ou aviso"/>
+               <Text TextId="X7_PQI_6" Value="DevCom: device comunicando"/>
+               <Text TextId="X7_PQI_7" Value="PQ: dados de processo válidos"/>
+               <Text TextId="X7_OUT_B0_0" Value="Verde"/>
+               <Text TextId="X7_OUT_B0_1" Value="Amarelo"/>
+               <Text TextId="X7_OUT_B0_2" Value="Vermelho"/>
+               <Text TextId="X7_OUT_B0_3" Value="Sirene"/>
+               <Text TextId="X7_OUT_B0" Value="Byte 0"/>
+               <Text TextId="T_PCFG" Value="Configuração da porta IO-Link"/>
+               <Text TextId="T_PCFG_MODE" Value="Modo da porta (0 desativada, 1 IO-Link)"/>
+               <Text TextId="T_PCFG_VDS" Value="Validação e Data Storage (0 sem verificação, 1 tipo compatível, 2 compatível com Backup + Restore, 3 compatível com Restore)"/>
+               <Text TextId="T_PCFG_CYC" Value="Tempo de ciclo em ms (0 = mínimo do device)"/>
+               <Text TextId="T_PCFG_RES" Value="Reservado"/>
+               <Text TextId="T_PCFG_VID" Value="Vendor ID esperado (decimal; 1952 = 0x07A0)"/>
+               <Text TextId="T_PCFG_DID" Value="Device ID esperado (decimal)"/>
+               <Text TextId="T_MODE_0" Value="Desativada"/>
+               <Text TextId="T_MODE_1" Value="IO-Link"/>
+               <Text TextId="T_VDS_0" Value="Sem verificação"/>
+               <Text TextId="T_VDS_1" Value="Tipo compatível"/>
+               <Text TextId="T_VDS_2" Value="Tipo compatível com Backup + Restore"/>
+               <Text TextId="T_VDS_3" Value="Tipo compatível com Restore"/>
+               <Text TextId="IDT_INFO_Device" Value="Simulador de remoto IO-Link 8 portas (laboratório) baseado na pilha p-net"/>
+               <Text TextId="IDT_MODULE_NAME_DAP1" Value="TBEN-L-SIM 8IOL"/>
+               <Text TextId="IDT_INFO_DAP1" Value="Remoto IO-Link virtual com 8 portas para treinamento. Não é um produto Turck."/>
+               <Text TextId="IDT_NAME_IS" Value="X1"/>
+               <Text TextId="IDT_NAME_PS1" Value="X1 P1"/>
+            </PrimaryLanguage>
+         </ExternalTextList>
+      </ApplicationProcess>
+   </ProfileBody>
+</ISO15745Profile>

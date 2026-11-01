@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Bancada SCA06 EtherNet/IP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="rail" id="rail">
+  <div class="brand"><strong>SCA06</strong><span>+ ECO5 · adapter EtherNet/IP</span></div>
+  <div class="ind" id="indNs" title="LED NS do acessório (Manual Ethernet, Tabela 8.1)"><i class="led"></i><span>NS</span></div>
+  <div class="ind" title="P00801 – Estado da comunicação Ethernet"><span class="k">P0801</span><b id="indP801">–</b></div>
+  <div class="ind opt" title="P00006 – Estado do servoconversor"><span class="k">P0006</span><b id="indP006">–</b></div>
+  <div class="ind opt" title="P00202 – Modo de operação"><span class="k">P0202</span><b id="indMode">–</b></div>
+  <div class="ind num"><span class="k">n</span><b id="indRpm">0</b><span class="u">rpm</span></div>
+  <div class="ind num"><span class="k">θ</span><b id="indAng">0,0</b><span class="u">°</span></div>
+  <div class="ind num opt"><span class="k">Iq</span><b id="indIq">0,0</b><span class="u">A</span></div>
+  <div class="ind wide" id="indMsg"></div>
+  <div class="ind src" id="indSrc" title="Origem dos dados"></div>
+</header>
+
+<main class="layout">
+  <section class="stage" id="stage">
+    <div class="views" role="toolbar" aria-label="Câmera">
+      <button data-view="geral">Bancada</button><button data-view="drive">Drive e HMI</button><button data-view="disco">Disco</button><button data-view="motor">Motor</button><button data-view="rede">Rede</button>
+      <span class="rigtools" title="Arraste o motor ou a base para mover a bancada sobre a mesa"><button data-rot="15" aria-label="Girar bancada do motor 15° anti-horário">⟲ 15°</button><button data-rot="-15" aria-label="Girar bancada do motor 15° horário">⟳ 15°</button><button data-rig="reset">Posição original</button></span>
+    </div>
+    <div class="legend">Arraste para girar · pinça/roda para zoom · arraste o motor para movê-lo na mesa · clique nas peças: teclas da HMI, cabo XA171, ECO5, emergência, STOP, disjuntor, peso, chaves de fim de curso</div>
+  </section>
+
+  <section class="front" aria-label="Vista frontal do SCA06">
+    <div id="frontHost"></div>
+    <p class="hmiState" id="hmiStateF"></p>
+    <p class="hint keyhint">Clique nas teclas como no drive: segure ▲▼ para rolar. Teclado: ↑ ↓ Enter ←.</p>
+  </section>
+
+  <aside class="side">
+    <nav class="tabs" role="tablist">
+      <button role="tab" data-tab="scanner" aria-selected="true">Mestre</button>
+      <button role="tab" data-tab="hmi">SCA06</button>
+      <button role="tab" data-tab="params">Parâmetros</button>
+      <button role="tab" data-tab="missions">Missões</button>
+      <button role="tab" data-tab="net">Rede</button>
+      <button role="tab" data-tab="bench">Bancada</button>
+    </nav>
+
+    <!-- ===================== MESTRE (SCANNER) ===================== -->
+    <div class="pane" data-pane="scanner">
+      <p class="lead">O CLP da bancada é o <em>scanner</em> (originator). Ele abre a conexão com o SCA06, que é o <em>adapter</em> (target), e troca palavras de I/O a cada RPI.</p>
+      <div class="step">
+        <h3>Sessão TCP 44818</h3>
+        <div class="row"><button id="scConnect" class="primary">Conectar (RegisterSession)</button><button id="scDisconnect">Desconectar</button></div>
+        <dl class="ident" id="scIdent"></dl>
+      </div>
+      <div class="step">
+        <h3>Conexão de I/O — Forward Open</h3>
+        <div class="grid3">
+          <label>Palavras de entrada<input type="number" id="scIn" min="4" max="16" value="4"></label>
+          <label>Palavras de saída<input type="number" id="scOut" min="4" max="16" value="4"></label>
+          <label>RPI (ms)<input type="number" id="scRpi" min="2" max="1000" value="20"></label>
+        </div>
+        <p class="hint" id="scSizeHint"></p>
+        <div class="row"><button id="scOpen" class="primary">Forward Open</button><button id="scClose">Forward Close</button>
+          <label class="switch"><input type="checkbox" id="scRun" checked><span>CLP em RUN</span></label></div>
+        <p class="err" id="scErr" role="alert"></p>
+      </div>
+
+      <div class="step io">
+        <h3>Saídas O→T (assembly 150)</h3>
+        <div class="word">
+          <div class="wh"><span>1ª Palavra de controle</span><code id="cwHex">0000h</code></div>
+          <div class="bits">
+            <label><input type="checkbox" id="cwB3"> bit 3 Habilita</label>
+            <label><input type="checkbox" id="cwB2"> bit 2 Aciona STOP</label>
+            <button id="cwB7" class="small">bit 7 Reset de falhas (pulso)</button>
+          </div>
+        </div>
+        <div class="word">
+          <div class="wh"><span>2ª Referência de velocidade</span><code id="w2Hex">0000h</code></div>
+          <div class="row"><input type="range" id="spdSlider" min="-3000" max="3000" step="10" value="0"><input type="number" id="spdRpm" value="0" step="1" class="num"> rpm</div>
+          <p class="hint" id="spdCalc">0 rpm × 32767 / 18750 = 0</p>
+        </div>
+        <div class="word">
+          <div class="wh"><span>3ª Referência de torque (A × 10)</span><code id="w3Hex">0000h</code></div>
+          <div class="row"><input type="range" id="tqSlider" min="-80" max="80" step="1" value="0"><input type="number" id="tqA" value="0.0" step="0.1" class="num"> A</div>
+        </div>
+        <div class="word">
+          <div class="wh"><span>4ª Modo de controle</span><code id="w4Hex">0001h</code></div>
+          <div class="seg" id="modeSeg"><button data-m="0">0 · Torque</button><button data-m="1" class="on">1 · Velocidade</button></div>
+        </div>
+        <div id="extraOut"></div>
+      </div>
+
+      <div class="step io">
+        <h3>Entradas T→O (assembly 100)</h3>
+        <div class="word">
+          <div class="wh"><span>1ª Palavra de estado</span><code id="swHex">0000h</code></div>
+          <div class="statusbits" id="statusBits"></div>
+        </div>
+        <div class="kv" id="inDecode"></div>
+      </div>
+
+      <div class="step">
+        <h3>Mensagem explícita (classe 0xA2, atributo 5)</h3>
+        <div class="row"><label class="inline">P<input type="number" id="exN" value="2" min="0" max="9999" class="num"></label>
+          <button id="exGet">Get_Attribute_Single</button></div>
+        <div class="row"><label class="inline">valor<input type="number" id="exV" value="0" class="num"></label><button id="exSet">Set_Attribute_Single</button></div>
+        <p class="hint" id="exRes">Instância = número do parâmetro. O valor trafega inteiro, sem casas decimais.</p>
+      </div>
+    </div>
+
+    <!-- ===================== HMI ===================== -->
+    <div class="pane" data-pane="hmi" hidden>
+      <div id="paneHost"></div>
+      <p class="hmiState" id="hmiState"></p>
+      <div class="howto">
+        <p><b>Modo busca</b> mostra P + número: ▲▼ navegam (segure para rolar rápido). <b>P</b> entra no parâmetro. Em alteração, <b>◄ SHIFT</b> escolhe o dígito que pisca e ▲▼ mudam o valor; <b>P</b> grava.</p>
+        <p>Para alterar parâmetros, primeiro programe a senha: P00000 = 5 (P00200 = 1).</p>
+        <p>Alarme aparece como <b>A00147</b>, falha como <b>F00047</b>; qualquer tecla apaga a mensagem.</p>
+        <p class="hint">No teclado do computador: ↑ ↓ navegam, Enter = P, ← = SHIFT.</p>
+      </div>
+    </div>
+
+    <!-- ===================== PARÂMETROS ===================== -->
+    <div class="pane" data-pane="params" hidden>
+      <div class="row"><input type="search" id="pSearch" placeholder="Buscar: 202, rampa, Ethernet, ladder…" aria-label="Buscar parâmetro">
+        <select id="pGroup"><option value="">Todos</option><option value="read">Leitura</option><option value="cfg">Configuração</option><option value="eth">Ethernet</option><option value="lad">Ladder/usuário (1100–1113)</option><option value="changed">Diferentes do padrão</option></select></div>
+      <p class="hint">Fonte: <span class="src ETH">ETH</span> manual Ethernet · <span class="src PROG">PROG</span> manual de programação V2.1X · <span class="src SIM">SIM</span> valor do simulador, confira no equipamento. Escrever aqui equivale a usar o WPS pela USB.</p>
+      <div class="ptable" id="ptable"></div>
+    </div>
+
+    <!-- ===================== MISSÕES ===================== -->
+    <div class="pane" data-pane="missions" hidden>
+      <div class="progress"><div id="mBar"></div></div>
+      <p class="lead" id="mScore"></p>
+      <ol class="missions" id="missions"></ol>
+      <button id="mReset" class="small">Recomeçar missões</button>
+    </div>
+
+    <!-- ===================== REDE ===================== -->
+    <div class="pane" data-pane="net" hidden>
+      <div class="netinfo" id="netInfo"></div>
+      <h3>Conexões abertas no adapter</h3>
+      <div id="connList" class="conns"></div>
+      <h3>Monitor de pacotes</h3>
+      <div class="row filters">
+        <label><input type="checkbox" data-f="TCP" checked> TCP</label><label><input type="checkbox" data-f="UDP" checked> UDP I/O</label>
+        <label><input type="checkbox" data-f="MBTCP" checked> Modbus</label><label><input type="checkbox" data-f="drv" checked> Drive</label>
+        <button id="logPause" class="small">Pausar</button><button id="logClear" class="small">Limpar</button>
+      </div>
+      <div class="log" id="log"></div>
+    </div>
+
+    <!-- ===================== BANCADA ===================== -->
+    <div class="pane" data-pane="bench" hidden>
+      <div class="toggles" id="benchToggles"></div>
+      <h3>Ligação da bancada</h3>
+      <table class="wiring">
+        <tr><td>DI1</td><td>Botoeira STOP com retenção</td><td>P00300 = 2 (STOP nível alto)</td></tr>
+        <tr><td>DI2</td><td>Chave fim de curso horário (+170°)</td><td>P00301 = 12</td></tr>
+        <tr><td>DI3</td><td>Chave fim de curso anti-horário (−170°)</td><td>P00302 = 14</td></tr>
+        <tr><td>X7</td><td>Emergência → STO (cartão SSC)</td><td>P00095 = 0010</td></tr>
+        <tr><td>Slot 2</td><td>ECO5 EtherNet/IP, XA171 → switch → CLP</td><td>P00092 = 00257</td></tr>
+        <tr><td>Carga</td><td>Disco Al Ø250×4 mm (4,14 g·m²) + peso 300 g a 100 mm (3,00 g·m²)</td><td>P00421 sugerido: 7,14</td></tr>
+      </table>
+      <p class="hint">O disco tem cerca de 8× a inércia do rotor (0,497 g·m²): bom tema para discutir relação de inércia carga/motor.</p>
+    </div>
+  </aside>
+</main>
+
+<script src="vendor/three.min.js"></script>
+<script>window.THREE || document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>')</script>
+<script src="core/sca06-core.js"></script>
+<script src="bench3d.js"></script>
+<script src="drive2d.js"></script>
+<script src="demo.js"></script>
+<script src="app.js"></script>
+<script src="divisorias.js"></script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+#!/bin/sh
+# LEDs físicos não existem na VM: grava o estado para o painel web ler, se quiser.
+# Uso: set_profinet_leds <numero> <0|1>
+[ $# -eq 2 ] || exit 1
+echo "$2" > "/tmp/tben-sim-led$1" 2>/dev/null
+exit 0

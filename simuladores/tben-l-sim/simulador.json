@@ -1,0 +1,79 @@
+{
+  "id": "tben-l-sim",
+  "nome": "Remoto IO-Link TBEN-L",
+  "fabricante": "Turck (simulado)",
+  "tipo": "Remoto IO-Link, 8 portas",
+  "versao": "0.2.0",
+  "pacote": "tben-l-sim",
+  "descricao": "Remoto IO-Link de 8 portas no estilo TBEN-L comandando uma célula 3D de paletização com elevador. Mestre IO-Link simulado: estados de porta, PQI, validação, Data Storage, eventos e ISDU (IOL_CALL).",
+  "protocolos": [
+    "PROFINET RT",
+    "IO-Link"
+  ],
+  "papel": "Device PROFINET e mestre IO-Link",
+  "iniciar": {
+    "comando": "node",
+    "args": [
+      "src/server.js",
+      "--sem-profinet"
+    ]
+  },
+  "modos": [
+    {
+      "id": "demo",
+      "nome": "Demonstração (sem PROFINET)",
+      "args": [
+        "src/server.js",
+        "--sem-profinet"
+      ],
+      "observacao": "Planta 3D, mestre IO-Link, CLP demo e modo manual. Roda em qualquer PC."
+    },
+    {
+      "id": "profinet",
+      "nome": "PROFINET real (p-net)",
+      "args": [
+        "src/server.js"
+      ],
+      "plataformas": [
+        "linux"
+      ],
+      "requerRoot": true,
+      "observacao": "Só na VM Linux, como root, com o driver compilado (npm run build:driver) e a placa host-only configurada no config.json. Veja o guia."
+    }
+  ],
+  "remoto": {
+    "titulo": "PROFINET real na VM Linux",
+    "texto": "O PROFINET de verdade roda na VM Linux (p-net, Ethernet bruta). Inicie lá com sudo npm start e acompanhe por aqui. No CODESYS, o adaptador PROFINET é a placa host-only do VirtualBox, não a SIM-HUB.",
+    "urlPadrao": "http://192.168.56.101:8080"
+  },
+  "web": {
+    "porta": 8081,
+    "caminho": "/"
+  },
+  "rede": {
+    "precisaIp": false,
+    "descricaoIp": "IP gravado pelo CLP via DCP",
+    "portas": [],
+    "observacao": "Device PROFINET: o CLP encontra o simulador pelo nome de estação tben-l-sim e grava o IP via DCP, na rede da VM (placa host-only), não na SIM-HUB. No modo Demonstração não há PROFINET, só a tela."
+  },
+  "arquivos": {
+    "guia": "README.md",
+    "eds": [],
+    "downloads": [
+      "gsdml/GSDML-V2.4-Simulab-TBEN-L-SIM-20261030.xml",
+      "codesys/LEIA-ME.md",
+      "codesys/GVL_TBEN.st",
+      "codesys/Tipos_e_Funcoes.st",
+      "codesys/PRG_Paletizador.st"
+    ]
+  },
+  "preservarAoAtualizar": [
+    "config.json"
+  ],
+  "aprender": [
+    "profinet",
+    "io-link"
+  ],
+  "cor": "#B5482E",
+  "icone": "remoto-io"
+}

@@ -1,0 +1,670 @@
+$ EZ-EDS Version 3.31.1.20220811 Generated Electronic Data Sheet
+
+[File]
+        DescText = "CFW500 EtherNet/IP";
+        CreateDate = 11-16-2022;
+        CreateTime = 13:58:44;
+        ModDate = 09-13-2024;
+        ModTime = 13:58:42;
+        Revision = 1.0;
+        HomeURL = "http://www.weg.net";
+
+[Device]
+        VendCode = 853;
+        VendName = "WEG";
+        ProdType = 43;
+        ProdTypeStr = "Generic Device";
+        ProdCode = 6656;
+        MajRev = 1;
+        MinRev = 10;
+        ProdName = "CFW500";
+        Catalog = "CFW500";
+        Icon = "CFW500.ico";
+        IconContents =
+                "AAABAAMAMDAQAAEABABoBgAANgAAACAgEAABAAQA6AIAAJ4GAAAQEBAAAQAE"
+                "ACgBAACGCQAAKAAAADAAAABgAAAAAQAEAAAAAAAABgAAAAAAAAAAAAAAAAAA"
+                "AAAAAAAAAAAAAIAAAIAAAACAgACAAAAAgACAAICAAADAwMAAgICAAAAA/wAA"
+                "/wAAAP//AP8AAAD/AP8A//8AAP///wAAAAAAAAAAd4iAAACHAAAAAAAAAAAA"
+                "AAAAAAAAAAd4gAAAAAAIcAAAAAAAAAAAAAAAAAAAAHgAAAAABodwiHAAAAAA"
+                "AAAAAAAAAAAAAAeAAACIiId3AIcAAAAAAAAAAAAAAAAAAAB4iIiIiId3eAhw"
+                "AAAAAAAAAAAAAAAAAAeIiIiIiId3d4CHAAAAAAAAAAAAAAAAAAiIiIiIiId3"
+                "d3eHdwAAAAAAAAAAAAAAAAiIiIiIiId3d3d3iHAAAAAAAAAAAAAAAAiIiIiI"
+                "iId3d3d3gIcAAAAAAAAAAAAAAAiLuIiIiId3d3d3eAhwAAAAAAAAAAAAAAiL"
+                "iIiIiId3d3d3d4CHAAAAAAAAAAAAAAiIgICAuId3d3d3d3hIgAAAAAAAAAAA"
+                "AAiIiLuLuIf4d3d3d3d3gAAAAAAAAAAAAAiLu4uIiId4d3d3d3d3gAAAAAAA"
+                "AAAAAAiLiIiIiHd4f3d3d3d3gAAAAAAAAAAAAAiIiIRERHd4d4d3d3d3gAAA"
+                "AAAAAAAAAAiIRERERHd4d493d3d3gAAAAAAAAAAAAAhERHmXdHd4d4d3d3d3"
+                "gAAAAAAAAAAAAAhEd/mapHd4d4d3d3d3gAAAAAAAAAAAAAhHdH96pHd4d4d4"
+                "d3d3gAAAAAAAAAAAAAhHR/f3dHd4d4d4d/d3gAAAAAAAAAAAAAhHf3d3ZHd4"
+                "d4d4d3d3gAAAAAAAAAAAAAhHd2ZmZHd4d4d4d4d3gAAAAAAAAAAAAAhmZmZm"
+                "ZHd4d4d4d4d4cAAAAAAAAAAAAAhmZmZmZHd4d4d494d4cAAAAAAAAAAAAAhm"
+                "ZmZmZHd4d4d4d4d4cAAAAAAAAAAAAAdmZmZkRHd4d4d4d4d4cAAAAAAAAAAA"
+                "AAdmZEZIh4d3d4d4d4d4cAAAAAAAAAAAAAdESHd3d3h/d4d4d4d4cAAAAAAA"
+                "AAAAAAiHd3d3d3eHd3d494d4cAAAAAAAAAAAAAh3d3d3d3d3d3d4d4d4cAAA"
+                "AAAAAAAAAACHd3d3eIiIiHd3d4d4cAAAAAAAAAAAAAAIeIiIh4iIiIf3d4d4"
+                "cAAAAAAAAAAAAAAAh4iIiIh3d4h/d3d4cAAAAAAAAAAAAAAACHd3d3eIiIiH"
+                "93d48AAAAAAAAAAAAAAAAIeIiIh4h3d3j3d4cAAAAAAAAAAAAAAAAAh4iId3"
+                "h3d3h/d3cAAAAAAAAAAAAAAAAACHd3d3d3eHeH/3gAAAAAAAAAAAAAAAAAAI"
+                "h3d3d4d4d4f3gAAAAAAAAAAAAAAAAAAACHd3h3h3h3h/gAAAAAAAAAAAAAAA"
+                "AAAAAIeHeHeHeHd/gAAAAAAAAAAAAAAAAAAAAIf4d4d4d3B38AAAAAAAAAAA"
+                "AAAAAAAAAAh/h3d4h4AHgAAAAAAAAAAAAAAAAAAAAACHcHh3eIiIgAAAAAAA"
+                "AAAAAAAAAAAAAACHcAhwCHgAAAAAAAAAAAAAAAAAAAAAAAAIeIiIgAAAAAAA"
+                "AAAAAAAAAAAAAAAAAAAAh4gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                "AAAAAAD//AA///8AAP/gAB///wAA/8AAB///AAD/4AAD//8AAP/wAAH//wAA"
+                "/+AAAP//AAD/4AAAP/8AAP/gAAAf/wAA/+AAAA//AAD/4AAAB/8AAP/gAAAD"
+                "/wAA/+AAAAH/AAD/4AAAAf8AAP/gAAAB/wAA/+AAAAH/AAD/4AAAAf8AAP/g"
+                "AAAB/wAA/+AAAAH/AAD/4AAAAf8AAP/gAAAB/wAA/+AAAAH/AAD/4AAAAf8A"
+                "AP/gAAAB/wAA/+AAAAH/AAD/4AAAAf8AAP/gAAAB/wAA/+AAAAH/AAD/4AAA"
+                "Af8AAP/gAAAB/wAA/+AAAAH/AAD/4AAAAf8AAP/wAAAB/wAA//gAAAH/AAD/"
+                "/AAAAf8AAP/+AAAB/wAA//8AAAH/AAD//4AAAf8AAP//wAAB/wAA///gAAH/"
+                "AAD///gAAf8AAP///AAB/wAA///8ABH/AAD///4AGf8AAP///xAB/wAA////"
+                "GY//AAD///+Af/8AAP///8P//wAA////////AAAoAAAAIAAAAEAAAAABAAQA"
+                "AAAAAIACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAgAAAAICAAIAAAACA"
+                "AIAAgIAAAMDAwACAgIAAAAD/AAD/AAAA//8A/wAAAP8A/wD//wAA////AAAA"
+                "AAAAAIiIAAAAAAAAAAAAAAAACIiIiIAAAAAAAAAAAAAACIiIiIh4AAAAAAAA"
+                "AAAAAAiIiIiId4AAAAAAAAAAAAAIiIiIiHd3gAAAAAAAAAAACIiIiIh3d3gA"
+                "AAAAAAAAAAiLiIiId3d3gAAAAAAAAAAIiASDiHd3d3gAAAAAAAAACIiLi4h3"
+                "d3d3iAAAAAAAAAiLiIiId3d3d3iAAAAAAAAIiIRESHd3d3d4gAAAAAAACERF"
+                "V0h3h3d3eIAAAAAAAAhHdzpId4eHd3iAAAAAAAAISId3SHeHh3d4gAAAAAAA"
+                "CEd4dkh3h4eHeIAAAAAAAAhmZmZId4eHh4eAAAAAAAAIZmZmSHeHh4eHgAAA"
+                "AAAACGZmZEh3h4eHh4AAAAAAAAhmRoh4d4eHh4eAAAAAAAAIiHd3d4eHh4eH"
+                "gAAAAAAACHd3d3d4d4eHh4AAAAAAAACHiIiIiIf3h4eAAAAAAAAACHiIiHeI"
+                "d4eHgAAAAAAAAACHiIiId3j3h4AAAAAAAAAACHiHeHd3h3eAAAAAAAAAAACH"
+                "d3d3d3j4gAAAAAAAAAAACId3d3d3h4AAAAAAAAAAAACH93d3d3iAAAAAAAAA"
+                "AAAACHd4iIB4gAAAAAAAAAAAAAiHB3eACAAAAAAAAAAAAAAAhwCIiIAAAAAA"
+                "AAAAAAAAAIiIgAAAAAAA//D///+Af//+AD///gAf//4AB//+AAP//gAB//4A"
+                "AP/+AAA//gAAH/4AAB/+AAAf/gAAH/4AAB/+AAAf/gAAH/4AAB/+AAAf/gAA"
+                "H/4AAB/+AAAf/wAAH/+AAB//wAAf/+AAH//wAB//+AAf//wAH//+AR///iG/"
+                "//8wf///B/8oAAAAEAAAACAAAAABAAQAAAAAAMAAAAAAAAAAAAAAAAAAAAAA"
+                "AAAAAAAAAAAAgAAAgAAAAICAAIAAAACAAIAAgIAAAMDAwACAgIAAAAD/AAD/"
+                "AAAA//8A/wAAAP8A/wD//wAA////AABEREREREQAAERHd3d0RAAARHd0R3dE"
+                "AABHdEd5l3QAAIRHd3maqAAAh3d/93qoAACIj3d3+IgAAAf3f/d/cAAAiIeI"
+                "iHiIAACHd3d3d3gAAId3d3d3eAAAh3d3d3d4AACHd3d3d3gAAAiHiIh4gAAA"
+                "h3d4h3d4AABEREREREQAwAMAAMADAADAAwAAwAMAAMADAADAAwAAwAMAAMAD"
+                "AADAAwAAwAMAAMADAADAAwAAwAMAAMADAADAAwAAwAMAAA==";
+
+[Device Classification]
+        Class1 = EtherNetIP;
+
+
+[Params]
+        Param1 =
+                0,                      $ reserved, shall equal 0
+                ,,                      $ Link Path Size, Link Path
+                0x0000,                 $ Descriptor
+                0xD2,                   $ Data Type
+                2,                      $ Data Size in bytes
+                "Control Word",         $ name
+                "",                     $ units
+                "Control Word",         $ help string
+                ,,0,                    $ min, max, default data values
+                ,,,,                    $ mult, div, base, offset scaling
+                ,,,,                    $ mult, div, base, offset links
+                ;                       $ decimal places
+        Param2 =
+                0,                      $ reserved, shall equal 0
+                ,,                      $ Link Path Size, Link Path
+                0x0000,                 $ Descriptor
+                0xD2,                   $ Data Type
+                2,                      $ Data Size in bytes
+                "Speed Ref",            $ name
+                "",                     $ units
+                "Speed Ref",            $ help string
+                ,,0,                    $ min, max, default data values
+                ,,,,                    $ mult, div, base, offset scaling
+                ,,,,                    $ mult, div, base, offset links
+                ;                       $ decimal places
+        Param3 =
+                0,                      $ reserved, shall equal 0
+                ,,                      $ Link Path Size, Link Path
+                0x0000,                 $ Descriptor
+                0xD2,                   $ Data Type
+                2,                      $ Data Size in bytes
+                "Status Word",          $ name
+                "",                     $ units
+                "Status Word",          $ help string
+                ,,0,                    $ min, max, default data values
+                ,,,,                    $ mult, div, base, offset scaling
+                ,,,,                    $ mult, div, base, offset links
+                ;                       $ decimal places
+        Param4 =
+                0,                      $ reserved, shall equal 0
+                ,,                      $ Link Path Size, Link Path
+                0x0000,                 $ Descriptor
+                0xD2,                   $ Data Type
+                2,                      $ Data Size in bytes
+                "Motor Speed",          $ name
+                "",                     $ units
+                "Motor Speed",          $ help string
+                ,,0,                    $ min, max, default data values
+                ,,,,                    $ mult, div, base, offset scaling
+                ,,,,                    $ mult, div, base, offset links
+                ;                       $ decimal places
+        Param5 =
+                0,                      $ reserved, shall equal 0
+                ,,                      $ Link Path Size, Link Path
+                0x0000,                 $ Descriptor
+                0xC7,                   $ Data Type
+                2,                      $ Data Size in bytes
+                "Output Size",          $ name
+                "bytes",                $ units
+                "",                     $ help string
+                0,28,4,                 $ min, max, default data values
+                ,,,,                    $ mult, div, base, offset scaling
+                ,,,,                    $ mult, div, base, offset links
+                ;                       $ decimal places
+        Param6 =
+                0,                      $ reserved, shall equal 0
+                ,,                      $ Link Path Size, Link Path
+                0x0000,                 $ Descriptor
+                0xC7,                   $ Data Type
+                2,                      $ Data Size in bytes
+                "Input Size",           $ name
+                "bytes",                $ units
+                "",                     $ help string
+                0,28,4,                 $ min, max, default data values
+                ,,,,                    $ mult, div, base, offset scaling
+                ,,,,                    $ mult, div, base, offset links
+                ;                       $ decimal places
+        Param7 =
+                0,                      $ reserved, shall equal 0
+                ,,                      $ Link Path Size, Link Path
+                0x0000,                 $ Descriptor
+                0xC8,                   $ Data Type
+                4,                      $ Data Size in bytes
+                "RPI Range",            $ name
+                "",                     $ units
+                "",                     $ help string
+                4000,3200000,10000,     $ min, max, default data values
+                ,,,,                    $ mult, div, base, offset scaling
+                ,,,,                    $ mult, div, base, offset links
+                ;                       $ decimal places
+
+[Assembly]
+        Revision = 2;
+        Object_Name = "Assembly Object";
+        Object_Class_Code = 0x04;
+        MaxInst = 0;
+        Number_Of_Static_Instances = 0;
+        Max_Number_Of_Dynamic_Instances = 0;
+        Assem100 =
+                "100 -  Manufacturer Speed + I/O data",
+                ,
+                28,
+                0x0000,
+                ,,
+                16,Param1,
+                16,Param2;
+        Assem120 =
+                "120 - CIP Basic Speed + I/O data",
+                ,
+                28,
+                0x0000,
+                ,,
+                16,Param1,
+                16,Param2;
+        Assem121 =
+                "121 - CIP Ext. Speed + I/O data",
+                ,
+                28,
+                0x0000,
+                ,,
+                16,Param1,
+                16,Param2;
+        Assem150 =
+                "150 -  Manufacturer Speed + I/O data",
+                ,
+                28,
+                0x0000,
+                ,,
+                16,Param3,
+                16,Param4;
+        Assem170 =
+                "170 - CIP Basic Speed + I/O data",
+                ,
+                28,
+                0x0000,
+                ,,
+                16,Param3,
+                16,Param4;
+        Assem171 =
+                "171 - CIP Ext. Speed + I/O data",
+                ,
+                28,
+                0x0000,
+                ,,
+                16,Param3,
+                16,Param4;
+
+[Connection Manager]
+        Revision = 1;
+        Object_Name = "Connection Manager Object";
+        Object_Class_Code = 0x06;
+        MaxInst = 1;
+        Number_Of_Static_Instances = 1;
+        Max_Number_Of_Dynamic_Instances = 0;
+        Class_Attributes =
+                0x1,
+                0x2,
+                0x3,
+                0x4,
+                0x6,
+                0x7;                    $ "Standard" class attributes
+        Instance_Attributes =
+                0x1,
+                0x2,
+                0x3,
+                0x4,
+                0x5,
+                0x6,
+                0x7,
+                0x8;                    $ statistics attributes
+        Class_Services =
+                0x01,                   $ GetAttributeAll supported
+                0x0E;                   $ GetAttributeSingle supported
+        Instance_Services =
+                0x01,
+                0x02,                   $ Get/SetAttributeAll supported
+                0x0E,
+                0x10,                   $ Get/SetAttributeSingle supported
+                0x4E,
+                0x54,
+                0x5A,
+                0x5B;                   $ FwdOpen, LargeFwdOpen supported
+
+        Connection1 =
+                0x04030003,             $ trigger & transport
+                                        $ 	0-15	= supported transport classes (class 0+1)
+                                        $ 	16	= cyclic (1 = supported)
+                                        $ 	17	= change of state (1 = supported)
+                                        $ 	18	= on demand (1 = supported)
+                                        $ 	19-23	= reserved (must be zero)
+                                        $ 	24-27	= exclusive owner
+                                        $ 	28-30	= reserved (must be zero)
+                                        $ 	31	= client 0 (don't care for classes 0 and 1)
+                0xFF640405,             $ connection parameters
+                                        $ 	0	= O=>T fixed (1 = supported)
+                                        $ 	1	= O=>T variable (1 = supported)
+                                        $ 	2	= T=>O fixed (1 = supported)
+                                        $ 	3	= T=>O variable (1 = supported)
+                                        $ 	4-7	= reserved (must be zero)
+                                        $ 	8-11	= O=>T header (4 byte run/idle)
+                                        $ 	12-15	= T=>O header (modeless)
+                                        $ 16-19	= O=>T connection type (multicast & point-to-point)
+                                        $ 20-23	= T=>O connection type (multicast & point-to-point)
+                                        $ 24-27	= O=>T priority (scheduled)
+                                        $ 28-31	= T=>O priority (scheduled)
+                Param7,Param5,Assem100, $ O=>T RPI,Size,Format
+                Param7,Param6,Assem150, $ T=>O RPI,Size,Format
+                ,,                      $ config part 1 (not used)
+                ,,                      $ config part 2 (not used)
+                "100/150 Manufacturer Speed + I/O data",    $ connection name
+                "",                     $ Help string
+                "20 04 24 01 2C 64 2C 96";
+
+        Connection2 =
+                0x04030003,             $ trigger & transport
+                                        $ 	0-15	= supported transport classes (class 0+1)
+                                        $ 	16	= cyclic (1 = supported)
+                                        $ 	17	= change of state (1 = supported)
+                                        $ 	18	= on demand (1 = supported)
+                                        $ 	19-23	= reserved (must be zero)
+                                        $ 	24-27	= exclusive owner
+                                        $ 	28-30	= reserved (must be zero)
+                                        $ 	31	= client 0 (don't care for classes 0 and 1)
+                0xFF640405,             $ connection parameters
+                                        $ 	0	= O=>T fixed (1 = supported)
+                                        $ 	1	= O=>T variable (1 = supported)
+                                        $ 	2	= T=>O fixed (1 = supported)
+                                        $ 	3	= T=>O variable (1 = supported)
+                                        $ 	4-7	= reserved (must be zero)
+                                        $ 	8-11	= O=>T header (4 byte run/idle)
+                                        $ 	12-15	= T=>O header (modeless)
+                                        $ 16-19	= O=>T connection type (multicast & point-to-point)
+                                        $ 20-23	= T=>O connection type (multicast & point-to-point)
+                                        $ 24-27	= O=>T priority (scheduled)
+                                        $ 28-31	= T=>O priority (scheduled)
+                Param7,Param5,Assem120, $ O=>T RPI,Size,Format
+                Param7,Param6,Assem170, $ T=>O RPI,Size,Format
+                ,,                      $ config part 1 (not used)
+                ,,                      $ config part 2 (not used)
+                "120/170 CIP Basic Speed + I/O data",    $ connection name
+                "",                     $ Help string
+                "20 04 24 01 2C 78 2C AA";
+
+        Connection3 =
+                0x04030003,             $ trigger & transport
+                                        $ 	0-15	= supported transport classes (class 0+1)
+                                        $ 	16	= cyclic (1 = supported)
+                                        $ 	17	= change of state (1 = supported)
+                                        $ 	18	= on demand (1 = supported)
+                                        $ 	19-23	= reserved (must be zero)
+                                        $ 	24-27	= exclusive owner
+                                        $ 	28-30	= reserved (must be zero)
+                                        $ 	31	= client 0 (don't care for classes 0 and 1)
+                0xFF640405,             $ connection parameters
+                                        $ 	0	= O=>T fixed (1 = supported)
+                                        $ 	1	= O=>T variable (1 = supported)
+                                        $ 	2	= T=>O fixed (1 = supported)
+                                        $ 	3	= T=>O variable (1 = supported)
+                                        $ 	4-7	= reserved (must be zero)
+                                        $ 	8-11	= O=>T header (4 byte run/idle)
+                                        $ 	12-15	= T=>O header (modeless)
+                                        $ 16-19	= O=>T connection type (multicast & point-to-point)
+                                        $ 20-23	= T=>O connection type (multicast & point-to-point)
+                                        $ 24-27	= O=>T priority (scheduled)
+                                        $ 28-31	= T=>O priority (scheduled)
+                Param7,Param5,Assem121, $ O=>T RPI,Size,Format
+                Param7,Param6,Assem171, $ T=>O RPI,Size,Format
+                ,,                      $ config part 1 (not used)
+                ,,                      $ config part 2 (not used)
+                "121/171 CIP Ext. Speed + I/O data",    $ connection name
+                "",                     $ Help string
+                "20 04 24 01 2C 79 2C AB";
+
+        Connection4 =
+                0x01030003,             $ trigger & transport
+                                        $  0-15  = supported transport classes (class 0+1)
+                                        $  16 = cyclic (1 = supported)
+                                        $  17 = change of state (1 = supported)
+                                        $  18 = on demand (1 = supported)
+                                        $  19-23 = reserved (must be zero)
+                                        $  24-27 = input only
+                                        $  28-30 = reserved (must be zero)
+                                        $  31 = client 0 (don't care for classes 0 and 1)
+                0xFF640305,             $ connection parameters
+                                        $ 	0	= O=>T fixed (1 = supported)
+                                        $ 	1	= O=>T variable (1 = supported)
+                                        $ 	2	= T=>O fixed (1 = supported)
+                                        $ 	3	= T=>O variable (1 = supported)
+                                        $ 4-7 = reserved (must be zero)
+                                        $ 8-11  = O=>T header (heartbeat)
+                                        $ 12-15 = T=>O header (modeless)
+                                        $ 16-19	= O=>T connection type (multicast & point-to-point)
+                                        $ 20-23	= T=>O connection type (multicast & point-to-point)
+                                        $ 24-27 = O=>T priority (scheduled)
+                                        $ 28-31 = T=>O priority (scheduled)
+                Param7,0,,              $ O=>T RPI,Size,Format
+                Param7,Param6,Assem150, $ T=>O RPI,Size,Format
+                ,,                      $ config part 1 (not used)
+                ,,                      $ config part 2 (not used)
+                "Listen Only Connection",    $ connection name
+                "",                     $ Help string
+                "20 04 24 01 2C C7 2C 96";    $ listen only path
+
+[Port]
+        Revision = 2;
+        Object_Name = "Port Object";
+        Object_Class_Code = 0xF4;
+        MaxInst = 1;
+        Number_Of_Static_Instances = 1;
+        Max_Number_Of_Dynamic_Instances = 0;
+        Class_Attributes =
+                0x01,
+                0x02,
+                0x03,
+                0x06,
+                0x07,
+                0x08,
+                0x09;
+        Instance_Attributes =
+                0x01,
+                0x02,
+                0x03,
+                0x04,
+                0x07,
+                0x0A;
+        Class_Services =
+                0x01,                   $ GetAttributeAll supported
+                0x0E;                   $ GetAttributeSingle supported
+        Instance_Services =
+                0x01,                   $ GetAttributeAll supported
+                0x0E;                   $ GetAttributeSingle supported
+        Port1 =
+                TCP,
+                "TCP/IP",
+                "20 F5 24 01",
+                2,
+                0x00,
+                ;
+
+[Capacity]
+        MaxCIPConnections = 128;
+        TSpec1 = TxRx, 4, 1000;
+        TSpec2 = TxRx, 500, 1000;
+
+[DLR Class]
+        Revision = 3;
+        Object_Name = "Device Level Ring Object";
+        Object_Class_Code = 0x47;
+        MaxInst = 1;
+        Number_Of_Static_Instances = 1;
+        Max_Number_Of_Dynamic_Instances = 0;
+        Ring_Supervisor_Capable = No;
+        Class_Attributes =
+                0x01,
+                0x02,
+                0x03,
+                0x06,
+                0x07;
+        Instance_Attributes =
+                0x01,
+                0x02,
+                0x0A,
+                0x0C;
+        Class_Services =
+                0x01,                   $ GetAttributeAll supported
+                0x0E;                   $ GetAttributeSingle supported
+        Instance_Services =
+                0x01,                   $ GetAttributeAll supported
+                0x0E;                   $ GetAttributeSingle supported
+
+
+[TCP/IP Interface Class]
+        Revision = 3;
+        Object_Name = "TCP/IP Interface Object";
+        Object_Class_Code = 0xF5;
+        MaxInst = 1;
+        Number_Of_Static_Instances = 1;
+        Max_Number_Of_Dynamic_Instances = 0;
+        Class_Attributes =
+                0x01,
+                0x02,
+                0x03,
+                0x04,
+                0x06,
+                0x07;
+        Instance_Attributes =
+                0x01,
+                0x02,
+                0x03,
+                0x04,
+                0x05,
+                0x06,
+                0x08,
+                0x09,
+                0x0D,
+                0x10,
+                0x11;
+        Class_Services =
+                0x01,                   $ GetAttributeAll supported
+                0x0E;                   $ GetAttributeSingle supported
+        Instance_Services =
+                0x01,                   $ GetAttributeAll supported
+                0x0E,                   $ GetAttributeSingle supported
+                0x10;                   $ SetAttributeSingle supported
+
+[Ethernet Link Class]
+        Revision = 3;
+        Object_Name = "Ethernet Link Object";
+        Object_Class_Code = 0xF6;
+        MaxInst = 1;
+        Number_Of_Static_Instances = 1;
+        Max_Number_Of_Dynamic_Instances = 0;
+        Class_Attributes =
+                0x01,
+                0x02,
+                0x03,
+                0x04,
+                0x06,
+                0x07;
+        Instance_Attributes =
+                0x01,
+                0x02,
+                0x03,
+                0x04,
+                0x05,
+                0x06,
+                0x07,
+                0x08,
+                0x09,
+                0x0A,
+                0x0B;
+        Class_Services =
+                0x01,                   $ GetAttributeAll supported
+                0x0E;                   $ GetAttributeSingle supported
+        Instance_Services =
+                0x01,                   $ GetAttributeAll supported
+                0x0E,                   $ GetAttributeSingle supported
+                0x10,                   $ SetAttributeSingle supported
+                0x4C;                   $ GetAndClear supported
+        InterfaceLabel1 = "Port1";
+        InterfaceLabel2 = "Port2";
+        InterfaceType1 = 2;
+        InterfaceType2 = 2;
+
+[Identity Class]
+        Revision = 2;
+        Object_Name = "Identity Object";
+        Object_Class_Code = 0x01;
+        MaxInst = 1;
+        Number_Of_Static_Instances = 7;
+        Max_Number_Of_Dynamic_Instances = 0;
+        Class_Attributes =
+                0x01,
+                0x02,
+                0x03,
+                0x06,
+                0x07;
+        Instance_Attributes =
+                0x01,
+                0x02,
+                0x03,
+                0x04,
+                0x05,
+                0x06,
+                0x07;
+        Class_Services =
+                0x01,                   $ GetAttributeAll supported
+                0x0E;                   $ GetAttributeSingle supported
+        Instance_Services =
+                0x01,                   $ GetAttributeAll supported
+                0x05,                   $ Reset supported
+                0x0E;                   $ GetAttributeSingle supported
+
+[Message Router Class]
+        Revision = 1;
+        Object_Name = "Message Router Object";
+        Object_Class_Code = 0x02;
+        MaxInst = 1;
+        Number_Of_Static_Instances = 1;
+        Max_Number_Of_Dynamic_Instances = 0;
+        Class_Attributes =
+                0x01,
+                0x02,
+                0x03,
+                0x04,
+                0x05,
+                0x06,
+                0x07;
+        Instance_Attributes =
+                0x01,
+                0x02,
+                0x03;
+        Class_Services =
+                0x01,                   $ GetAttributeAll supported
+                0x0E;                   $ GetAttributeSingle supported
+        Instance_Services =
+                0x01,                   $ GetAttributeAll supported
+                0x0E,                   $ GetAttributeSingle supported
+                0x0A;                   $ MultipleServicePacket supported
+
+[QoS Class]
+        Revision = 1;
+        Object_Name = "QoS Object";
+        Object_Class_Code = 0x48;
+        MaxInst = 1;
+        Number_Of_Static_Instances = 1;
+        Max_Number_Of_Dynamic_Instances = 0;
+        Class_Attributes =
+                0x01,
+                0x02,
+                0x03,
+                0x06,
+                0x07;
+        Instance_Attributes =
+                0x04,
+                0x05,
+                0x06,
+                0x07,
+                0x08;
+        Class_Services = 0x0E;          $ GetAttributeSingle supported
+        Instance_Services =
+                0x0E,                   $ GetAttributeSingle supported
+                0x10;                   $ SetAttributeSingle supported
+
+[SNMP Class]
+        Revision = 1;
+        Object_Name = "SNMP Object";
+        Object_Class_Code = 0x52;
+        MaxInst = 1;
+        Number_Of_Static_Instances = 1;
+        Max_Number_Of_Dynamic_Instances = 0;
+        Class_Attributes =
+                0x01,
+                0x02,
+                0x03,
+                0x06,
+                0x07;
+        Instance_Attributes =
+                0x01,
+                0x02,
+                0x03,
+                0x04,
+                0x05,
+                0x06;
+        Class_Services =
+                0x01,                   $ GetAttributeAll supported
+                0x0E;                   $ GetAttributeSingle supported
+        Instance_Services =
+                0x01,                   $ GetAttributeAll supported
+                0x0E,                   $ GetAttributeSingle supported
+                0x10;                   $ SetAttributeSingle supported
+
+[LLDP Management Class]
+        Revision = 1;
+        Object_Name = "LLDP Management Object";
+        Object_Class_Code = 0x109;
+        MaxInst = 1;
+        Number_Of_Static_Instances = 1;
+        Max_Number_Of_Dynamic_Instances = 0;
+        Class_Attributes =
+                0x01,
+                0x02,
+                0x03,
+                0x04,
+                0x05;
+        Instance_Attributes =
+                0x01,
+                0x02,
+                0x03,
+                0x04,
+                0x05;
+        Class_Services =
+                0x01,                   $ GetAttributeAll supported
+                0x0E;                   $ GetAttributeSingle supported
+        Instance_Services =
+                0x01,                   $ GetAttributeAll supported
+                0x0E,                   $ GetAttributeSingle supported
+                0x10;                   $ SetAttributeSingle supported
+

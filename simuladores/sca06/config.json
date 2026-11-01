@@ -1,0 +1,25 @@
+{
+  "_comentario": "Configuração do simulador SCA06 + ECO5. Portas < 1024 (502) podem exigir administrador no Linux/macOS.",
+  "httpPort": 3000,
+  "enip": {
+    "tcpPort": 44818,
+    "udpPort": 2222,
+    "bindAddress": "0.0.0.0",
+    "minRpiUs": 1000,
+    "otRunIdleHeader": true,
+    "toRunIdleHeader": false,
+    "hostIp": null,
+    "identity": {
+      "_comentario": "Vendor 853 = WEG (ODVA). Device Type, Product Code e revisão: CONFIRA no arquivo EDS oficial do SCA06 (weg.net) e ajuste aqui.",
+      "vendor": 853,
+      "deviceType": 43,
+      "productCode": 6,
+      "major": 2,
+      "minor": 10,
+      "serial": 10596035,
+      "name": "SCA06 ECO5 (simulador)"
+    }
+  },
+  "modbus": { "enabled": true, "port": 502, "fallbackPort": 5020, "maxConnections": 2 },
+  "persistParams": true
+}

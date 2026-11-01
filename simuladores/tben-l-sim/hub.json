@@ -1,0 +1,13 @@
+{
+  "id": "tben-l-sim",
+  "nome": "TBEN-L-SIM: remoto IO-Link 8 portas com paletização 3D",
+  "versao": "0.2.0",
+  "fabricanteReferencia": "Turck TBEN-L (comportamento simulado, não oficial)",
+  "protocolos": ["PROFINET RT", "IO-Link"],
+  "plataforma": "linux (VM com rede host-only); interface web acessível do Windows",
+  "requerRoot": true,
+  "iniciar": "sudo npm start",
+  "iniciarSemProfinet": "npm run start:demo",
+  "url": "http://localhost:8080",
+  "gsdml": "gsdml/"
+}

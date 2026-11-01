@@ -1,0 +1,19 @@
+# nunca vai para o repositório
+construir/chave-privada.pem
+# gerados
+node_modules/
+construir/.cache/
+construir/dist/
+canal.json
+# dados de uso de quem roda o HUB a partir do código
+hub-config.json
+canal.local.json
+backups/
+_atualizando-*/
+_hub-antigo-*/
+_importando-*/
+simuladores/*/data/
+simuladores/keyence-cvx400/config_cameras.json
+simuladores/keyence-cvx400/eventos.log
+simuladores/processo-visao-3d/config.json
+simuladores/tben-l-sim/config.json

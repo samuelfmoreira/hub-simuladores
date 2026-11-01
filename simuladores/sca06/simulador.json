@@ -1,0 +1,75 @@
+{
+  "id": "sca06",
+  "nome": "Servo motor WEG SCA06",
+  "fabricante": "WEG",
+  "tipo": "Servo motor",
+  "descricao": "SCA06 com acessório ECO5 numa bancada 3D com servomotor, disco graduado, fins de curso e posicionamento pelo ladder DISCO_POS.",
+  "protocolos": [
+    "EtherNet/IP",
+    "Modbus TCP"
+  ],
+  "papel": "Adapter EtherNet/IP e servidor Modbus TCP",
+  "iniciar": {
+    "comando": "node",
+    "args": [
+      "server.js"
+    ]
+  },
+  "web": {
+    "porta": 3000,
+    "caminho": "/"
+  },
+  "rede": {
+    "precisaIp": true,
+    "ipSugerido": "192.168.100.22",
+    "portas": [
+      {
+        "proto": "tcp",
+        "porta": 44818,
+        "uso": "EtherNet/IP explícito"
+      },
+      {
+        "proto": "udp",
+        "porta": 44818,
+        "uso": "ListIdentity"
+      },
+      {
+        "proto": "udp",
+        "porta": 2222,
+        "uso": "I/O cíclico"
+      },
+      {
+        "proto": "tcp",
+        "porta": "{modbus}",
+        "uso": "Modbus TCP"
+      }
+    ],
+    "seSemIp": {
+      "modbus": 5020
+    }
+  },
+  "variaveis": {
+    "modbus": 502
+  },
+  "arquivos": {
+    "guia": "README.md",
+    "eds": [
+      "docs/0355002B00060200_SCA06_SIM_4x4.eds"
+    ],
+    "downloads": [
+      "dist/bancada-sca06-demo.html"
+    ]
+  },
+  "preservarAoAtualizar": [
+    "data/"
+  ],
+  "aprender": [
+    "ethernetip-cip",
+    "modbus-tcp",
+    "arquivo-eds"
+  ],
+  "cor": "#5B4FA8",
+  "icone": "icone.png",
+  "versao": "1.0.2",
+  "pacote": "sca06-ethernetip-sim"
+}

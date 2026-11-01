@@ -1,0 +1,77 @@
+# =====================================================================
+#  Publicação automática do HUB de Simuladores
+#  A cada push na branch principal: se ainda não existe o release
+#  v<versão de hub/package.json>, monta, assina e publica o release.
+#  Os HUBs instalados encontram a versão nova ao abrir e se atualizam.
+#
+#  Secrets (Settings > Secrets and variables > Actions):
+#    HUB_CHAVE_PRIVADA  obrigatório, gerado por construir/gerar-chaves.js
+#    HUB_TOKEN_LEITURA  só se o repositório for privado (token fine-grained, Contents: Read-only)
+#
+#  A versão do Node precisa existir também como node.exe no npm
+#  (pacote node-win-x64): é com ela que o .exe do Windows é montado.
+# =====================================================================
+name: Publicar HUB
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publicar-hub
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.2'
+
+      - name: Versão do HUB
+        id: v
+        run: echo "versao=$(node -p "require('./hub/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Já publicada?
+        id: existe
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "v${{ steps.v.outputs.versao }}" > /dev/null 2>&1; then
+            echo "sim=1" >> "$GITHUB_OUTPUT"
+            echo "A versão ${{ steps.v.outputs.versao }} já foi publicada. Para publicar, aumente a versão em hub/package.json."
+          fi
+
+      - uses: actions/cache@v4
+        if: steps.existe.outputs.sim != '1'
+        with:
+          path: construir/.cache
+          key: node-win-x64-22.22.2
+
+      - name: Montar e assinar
+        if: steps.existe.outputs.sim != '1'
+        env:
+          HUB_CHAVE_PRIVADA: ${{ secrets.HUB_CHAVE_PRIVADA }}
+          HUB_TOKEN_LEITURA: ${{ secrets.HUB_TOKEN_LEITURA }}
+        run: |
+          cd construir
+          npm install --no-audit --no-fund --loglevel=error
+          node publicar.js --github
+
+      - name: Criar o release
+        if: steps.existe.outputs.sim != '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          V="${{ steps.v.outputs.versao }}"
+          gh release create "v$V" construir/dist/publicar/* \
+            --title "HUB de Simuladores $V" \
+            --notes-file construir/dist/NOTAS.md \
+            --latest

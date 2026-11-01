@@ -1,0 +1,14 @@
+#!/bin/sh
+# Chamado pelo p-net quando o CLP atribui IP via DCP.
+# Uso: set_network_parameters <iface> <ip> <mascara> <gateway> <hostname> <permanente>
+# Diferente do script original do p-net, NUNCA altera a rota padrão da VM:
+# a interface PROFINET é dedicada e não deve roubar a rota da rede de gerência.
+[ $# -eq 6 ] || { echo "Uso: $0 iface ip mascara gateway hostname permanente"; exit 1; }
+IFACE=$1; IP=$2; MASK=$3
+echo "TBEN-L-SIM: IP ${IP}/${MASK} em ${IFACE} (gateway ignorado de propósito)"
+ip address flush dev "$IFACE" || exit 1
+if [ "$IP" != "0.0.0.0" ]; then
+  ip address add "$IP/$MASK" dev "$IFACE" || exit 1
+fi
+ip link set dev "$IFACE" up || exit 1
+exit 0

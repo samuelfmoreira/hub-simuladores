@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simulador de Processo · Sistema de Visão 3D</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Three.js servido de node_modules (funciona sem internet) -->
+  <script type="importmap">
+    { "imports": { "three": "/vendor/three/build/three.module.js", "three/addons/": "/vendor/three/examples/jsm/" } }
+  </script>
+</head>
+<body>
+<div id="app">
+
+  <main id="viewport">
+    <div id="cena"></div>
+    <div id="flash"></div>
+
+    <header class="hud">
+      <div class="hud-titulo">
+        <span class="marca"></span>
+        <div>
+          <strong>Simulador de Processo com Sistema de Visão 3D</strong>
+          <small>Esteira de inspeção · cliente Modbus TCP</small>
+        </div>
+      </div>
+      <div class="hud-chips">
+        <span class="chip" id="chipModo">—</span>
+        <span class="chip" id="chipConexao">—</span>
+        <span class="chip" id="chipEstado">—</span>
+      </div>
+    </header>
+
+    <div class="vistas">
+      <button data-vista="geral" class="ativo">Geral</button>
+      <button data-vista="entrada">Entrada</button>
+      <button data-vista="inspecao">Inspeção</button>
+      <button data-vista="robo">Robô</button>
+      <button data-vista="topo">Topo</button>
+      <span class="sep-vistas"></span>
+      <label class="rotulos-toggle cam-din" title="Segue a peça: entrada (S1), inspeção (S2) e robô (S3)"><input type="checkbox" id="chkCamDin"> Câmera dinâmica</label>
+      <label class="rotulos-toggle"><input type="checkbox" id="chkRotulos" checked> Rótulos</label>
+    </div>
+
+    <div class="card-camera">
+      <div class="card-camera-topo">
+        <span>Câmera de inspeção</span>
+        <select id="selCamModo" title="O que a câmera mostra">
+          <option value="auto">Auto</option>
+          <option value="vivo">Ao vivo</option>
+          <option value="captura">Captura</option>
+        </select>
+      </div>
+      <canvas id="canvasVisao" width="320" height="220"></canvas>
+    </div>
+  </main>
+
+  <aside id="lateral">
+
+    <section class="card">
+      <h2>Painel de comando</h2>
+      <div class="botoeira">
+        <div class="botao-ind verde">
+          <button id="btLiga" aria-label="Liga">I</button>
+          <span class="plaqueta">LIGA</span>
+        </div>
+        <div class="botao-ind vermelho">
+          <button id="btDesliga" aria-label="Desliga">O</button>
+          <span class="plaqueta">DESLIGA</span>
+        </div>
+        <div class="botao-ind emergencia">
+          <div class="placa-amarela"><button id="btEmerg" aria-label="Emergência"></button></div>
+          <span class="plaqueta">EMERGÊNCIA</span>
+        </div>
+      </div>
+      <p class="dica">Clique no cogumelo para travar. Clique de novo para destravar (girar).</p>
+      <div class="lampadas">
+        <div class="lampada" id="lpSistema" style="--cor:#3b82f6"><i></i>Sistema<br>ligado</div>
+        <div class="lampada" id="lpOk" style="--cor:#22c55e"><i></i>Peça<br>OK</div>
+        <div class="lampada" id="lpNg" style="--cor:#ef4444"><i></i>Peça<br>NG</div>
+        <div class="lampada" id="lpAlarme" style="--cor:#facc15"><i></i>Alarme<br>emergência</div>
+        <div class="lampada" id="lpSirene" style="--cor:#f97316"><i></i>Sirene<br><label class="som"><input type="checkbox" id="chkSom" checked> som</label></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Produção</h2>
+      <div class="contadores">
+        <div><b id="cTotal">0</b><span>alimentadas</span></div>
+        <div class="ok"><b id="cOk">0</b><span>aprovadas</span></div>
+        <div class="ng"><b id="cNg">0</b><span>rejeitadas</span></div>
+        <div><b id="cRend">—</b><span>aprovação</span></div>
+      </div>
+      <div class="linha-form unica">
+        <label class="switch"><input type="checkbox" id="chkAuto"><span></span> Alimentação automática</label>
+      </div>
+      <div class="linha-form">
+        <label for="rngIntervalo">Intervalo</label>
+        <input type="range" id="rngIntervalo" min="1" max="10" step="0.5">
+        <output id="outIntervalo">—</output>
+      </div>
+      <div class="linha-form">
+        <label for="rngDefeito">Peças com defeito</label>
+        <input type="range" id="rngDefeito" min="0" max="100" step="5">
+        <output id="outDefeito">—</output>
+      </div>
+      <div class="grupo-botoes">
+        <button id="btPecaBoa" class="btn">+ Peça boa</button>
+        <button id="btPecaRuim" class="btn">+ Peça ruim</button>
+        <button id="btZerar" class="btn fantasma">Zerar contadores</button>
+      </div>
+      <button id="btResetar" class="btn resetar">↺ Resetar simulador</button>
+      <p class="dica">Esvazia a esteira e as caixas, zera contadores, recolhe o cilindro e leva o robô para a posição inicial.</p>
+    </section>
+
+    <section class="card">
+      <h2>Comunicação Modbus TCP <span class="led-status" id="ledConexao"></span></h2>
+      <div class="grade-conexao">
+        <label>IP do CLP<input id="inIp" type="text" spellcheck="false" placeholder="127.0.0.1"></label>
+        <label>Porta<input id="inPorta" type="number" min="1" max="65535" value="502"></label>
+      </div>
+      <p class="dica">Unit ID 1 · timeout 1000 ms</p>
+      <div class="grupo-botoes">
+        <button id="btConectar" class="btn primario">Conectar</button>
+        <button id="btDesconectar" class="btn fantasma" disabled>Desconectar</button>
+      </div>
+      <div class="linha-polling">
+        <label for="inPolling">Taxa de polling</label>
+        <input id="inPolling" type="number" min="50" step="10" value="200">
+        <span>ms</span>
+        <button id="btPolling" class="btn">Aplicar</button>
+      </div>
+      <div class="estat">
+        <span>Ciclos <b id="stCiclos">0</b></span>
+        <span>Leituras <b id="stLeit">0</b></span>
+        <span>Escritas <b id="stEscr">0</b></span>
+        <span>Ciclo <b id="stCiclo">—</b></span>
+      </div>
+      <div class="linha-sim">
+        <label class="switch"><input type="checkbox" id="chkSim"><span></span> Simulação (CLP virtual)</label>
+        <small>só sem CLP conectado</small>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Mapa de endereços <small>base 0</small></h2>
+      <table class="tabela-coils">
+        <tbody id="corpoCoils"></tbody>
+      </table>
+      <div class="grupo-botoes">
+        <button id="btSalvarMapa" class="btn">Salvar mapa</button>
+        <button id="btPadraoMapa" class="btn fantasma">Restaurar padrão</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Eventos</h2>
+      <ul id="log" class="log"></ul>
+    </section>
+  </aside>
+</div>
+
+<div id="toast"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script type="module" src="script.js"></script>
+</body>
+</html>

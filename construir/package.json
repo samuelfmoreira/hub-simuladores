@@ -1,0 +1,11 @@
+{
+  "name": "hub-simuladores-construir",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Ferramentas para gerar o HUB Simuladores.exe e o Setup.exe",
+  "devDependencies": {
+    "postject": "^1.0.0-alpha.6",
+    "resedit": "^2.0.2",
+    "adm-zip": "^0.5.16"
+  }
+}

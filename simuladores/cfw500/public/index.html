@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulador CFW500 EtherNet/IP</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="css/app.css">
+<script type="importmap">
+{ "imports": {
+  "three": "/vendor/three/build/three.module.js",
+  "three/addons/": "/vendor/three/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<header class="topo">
+  <div class="marca">
+    <span class="modelo">CFW500</span>
+    <span class="sub">Simulador do inversor WEG · Adapter EtherNet/IP · Esteira 3D</span>
+  </div>
+  <div class="topo-status" id="topoStatus">
+    <span class="chip" id="chipP0801" title="P0801 – Estado da comunicação Ethernet">P0801 —</span>
+    <span class="chip" id="chipLocRem" title="Situação de comando">—</span>
+    <span class="chip" id="chipIp" title="IP onde o adapter responde">IP —</span>
+  </div>
+  <button class="btn-energia" id="btnEnergia" aria-pressed="true" title="Ligar/desligar a alimentação do inversor">Desenergizar</button>
+</header>
+
+<main class="bancada">
+  <!-- ===================== INVERSOR ===================== -->
+  <section class="coluna-inversor" aria-label="Inversor CFW500">
+    <div class="inversor" id="inversor">
+      <div class="inv-topo" aria-hidden="true"><span class="furo e"></span><span class="trava"></span><span class="furo d"></span></div>
+      <div class="inv-grade" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="inv-frente">
+        <div class="hmi">
+          <div class="lcd" id="lcd" aria-live="polite">
+            <div class="lcd-menu" id="lcdMenu"></div>
+            <div class="lcd-estados">
+              <span data-st="loc">LOC</span><span data-st="conf">CONF</span>
+              <span data-st="rem">REM</span><span data-st="sub">SUB</span>
+              <span data-st="giro" class="giro">↻</span><span data-st="run">RUN</span>
+            </div>
+            <svg class="seg seg-sec" id="lcdSec" viewBox="0 0 150 40"></svg>
+            <svg class="seg seg-pri" id="lcdPri" viewBox="0 0 230 64"></svg>
+            <div class="lcd-un" id="lcdUn"></div>
+            <div class="lcd-barra" id="lcdBarra"></div>
+            <div class="lcd-escala"><span>0</span><span>50</span><span>100</span></div>
+          </div>
+          <div class="teclado">
+            <button class="tc tc-back" data-k="back">BACK<br>ESC</button>
+            <div class="tc-setas">
+              <button class="tc tc-up" data-k="up" aria-label="Seta para cima">▲</button>
+              <button class="tc tc-down" data-k="down" aria-label="Seta para baixo">▼</button>
+            </div>
+            <button class="tc tc-enter" data-k="enter">MENU<br>ENTER</button>
+            <button class="tc tc-red tc-giro" data-k="giro" aria-label="Sentido de giro">↻</button>
+            <button class="tc tc-red tc-locrem" data-k="locrem">LOC<br>REM</button>
+            <button class="tc tc-red tc-jog" data-k="jog">JOG</button>
+            <button class="tc tc-stop" data-k="stop" aria-label="Para (O)">O</button>
+            <button class="tc tc-start" data-k="start" aria-label="Gira (I)">I</button>
+          </div>
+        </div>
+        <div class="inv-tampa">
+          <div class="inv-marca"><span class="fab">WEG</span><span class="mod">CFW500<small>VECTOR INVERTER</small></span></div>
+          <div class="inv-aviso">
+            <svg class="tri" viewBox="0 0 40 36" aria-hidden="true"><path d="M20 2 38 34H2Z" fill="none" stroke="#6c7686" stroke-width="2.4" stroke-linejoin="round"/><path d="M22 11l-7 11h6l-3 9 8-12h-6z" fill="#6c7686"/></svg>
+            <div>Remova a tampa frontal somente 10 min após desenergizar o equipamento. Leia o manual de instruções.<b>ATENÇÃO · WARNING · ATENCIÓN</b></div>
+          </div>
+        </div>
+      </div>
+      <div class="inv-base" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    </div>
+    <div class="hmi-ajuda" id="hmiAjuda"></div>
+    <div class="plugin">
+      <div class="plugin-rot">Módulo plug-in CFW500-CETH-IP (encaixado atrás da tampa frontal)</div>
+      <div class="plugin-corpo">
+        <div class="rj45" title="Porta Ethernet"><span class="led-link" id="ledLink"></span></div>
+        <div class="leds-eth">
+          <span><i class="led" id="ledMS"></i>MS</span>
+          <span><i class="led" id="ledNS"></i>NS</span>
+        </div>
+        <label class="cabo"><input type="checkbox" id="chkCabo" checked> cabo conectado</label>
+      </div>
+    </div>
+
+    <div class="bornes" aria-label="Bornes de controle">
+      <h3>Bornes</h3>
+      <div class="borne-lista" id="borneDI"></div>
+      <div class="borne-ai">
+        <label for="ai1">AI1 <span id="ai1Val">0,0 V</span></label>
+        <input type="range" id="ai1" min="0" max="10" step="0.1" value="0">
+        <small id="ai1Func">P0018 = 0,0 %</small>
+      </div>
+      <div class="borne-lista" id="borneDO"></div>
+      <div class="borne-ao" id="borneAO"></div>
+    </div>
+  </section>
+
+  <!-- ===================== ESTEIRA 3D ===================== -->
+  <section class="coluna-esteira" aria-label="Esteira 3D">
+    <div class="cena" id="cena">
+      <div class="hud" id="hud">
+        <div class="hud-num"><b id="hudVel">0,00</b><span>m/s correia</span></div>
+        <div class="hud-num"><b id="hudRpm">0</b><span>rpm motor</span></div>
+        <div class="hud-num"><b id="hudI">0,0</b><span>A</span></div>
+        <div class="hud-num"><b id="hudCx">0</b><span>caixas entregues</span></div>
+      </div>
+      <div class="cena-vistas" role="group" aria-label="Câmera e IHM">
+        <button id="btnVerIHM" title="Aproxima a câmera da IHM do painel QC-01">IHM do painel</button>
+        <button id="btnAmpliar" class="sec" title="Abre a IHM numa janela que pode ser arrastada e redimensionada">IHM em janela</button>
+        <button id="btnVistaGeral" class="sec" title="Volta para a vista geral da esteira">Vista geral</button>
+      </div>
+      <div class="cena-ctrl">
+        <button id="btnCaixa">Colocar caixa</button>
+        <label class="tg"><input type="checkbox" id="chkAuto"> Alimentador automático</label>
+        <label>Massa <input type="range" id="massa" min="2" max="80" value="20"><span id="massaV">20 kg</span></label>
+        <label>Inclinação <input type="range" id="incl" min="-10" max="10" value="0"><span id="inclV">0°</span></label>
+        <label class="tg perigo"><input type="checkbox" id="chkTrava"> Travar esteira</label>
+        <button id="btnLimpar" class="sec">Retirar caixas</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ===================== ABAS ===================== -->
+<nav class="abas" role="tablist">
+  <button role="tab" data-aba="rede" aria-selected="true">Rede EtherNet/IP</button>
+  <button role="tab" data-aba="ihm">IHM Modbus</button>
+  <button role="tab" data-aba="clp">CLP virtual</button>
+  <button role="tab" data-aba="param">Parâmetros</button>
+  <button role="tab" data-aba="falhas">Falhas e alarmes</button>
+  <button role="tab" data-aba="graf">Gráficos</button>
+  <button role="tab" data-aba="log">Log de protocolo</button>
+</nav>
+
+<section class="painel" id="aba-rede">
+  <div class="topologia">
+    <svg id="topo" viewBox="0 0 900 160" role="img" aria-label="Topologia: scanner, switch e adapter"></svg>
+  </div>
+  <div class="grade-rede">
+    <div class="caixa">
+      <h3>Configure no seu CLP</h3>
+      <p class="nota">Módulo genérico (Generic Ethernet Module / dispositivo do EDS). Os tamanhos dependem de P0820…P0846 <em>ativos</em>.</p>
+      <table class="kv" id="cfgClp"></table>
+      <p class="aviso" id="avisoPend" hidden>Há mudanças em P0820…P0846 ainda não aplicadas. Programe <b>P0849 = 1</b> (ou desenergize) para atualizar a interface.</p>
+      <p><a href="/eds/eip_cfw500_ceth2_v11x.eds" download>Baixar arquivo EDS (v1.1x)</a></p>
+    </div>
+    <div class="caixa">
+      <h3>Endereço IP do inversor</h3>
+      <p class="nota">Igual ao CFW500 real: <b>P0810 = 0</b> (Parâmetros), IP em <b>P0811…P0814</b>, máscara em <b>P0815</b> e <b>P0849 = 1</b> para aplicar (ou desenergizar/energizar). No simulador o IP precisa existir neste computador. Com P0810 = DHCP o inversor usa o IP de inicialização.</p>
+      <p class="estado-sc" id="ipAtual">—</p>
+      <div class="form-ip">
+        <label class="ip-lista" for="ipLista">IP deste computador</label>
+        <div class="ip-linha">
+          <select id="ipLista" aria-describedby="ipDica"></select>
+          <button id="ipAtualizar" class="sec icone" title="Reler as placas de rede do computador" aria-label="Atualizar lista de IPs">↻</button>
+        </div>
+        <label>Ou digite o IP <input id="ipManual" placeholder="ex.: 192.168.100.20" spellcheck="false" inputmode="decimal"></label>
+        <label>Máscara (P0815) <input id="ipCidr" type="number" min="1" max="31" value="24" title="CIDR: 24 = 255.255.255.0"></label>
+      </div>
+      <p class="nota" id="ipDica">Com a rede virtual, o inversor usa <b>192.168.100.20</b>. O <b>192.168.100.10</b> é do CODESYS: não use os dois iguais.</p>
+      <div class="botoes">
+        <button id="ipAplicar">Aplicar IP</button>
+        <button id="ipPadrao" class="sec">Voltar ao IP de inicialização</button>
+      </div>
+      <p class="nota" id="ipMsg"></p>
+    </div>
+    <div class="caixa">
+      <h3>Identidade do adapter</h3>
+      <table class="kv" id="identidade"></table>
+    </div>
+    <div class="caixa larga">
+      <h3>Conexões CIP abertas</h3>
+      <div class="rolagem"><table class="tab" id="tabConexoes"></table></div>
+    </div>
+    <div class="caixa">
+      <h3>Saídas do CLP → inversor (O→T, assembly 100)</h3>
+      <table class="tab" id="tabSaidas"></table>
+      <div class="bits" id="bits684"></div>
+    </div>
+    <div class="caixa">
+      <h3>Entradas do CLP ← inversor (T→O, assembly 150)</h3>
+      <table class="tab" id="tabEntradas"></table>
+      <div class="bits" id="bits680"></div>
+    </div>
+  </div>
+</section>
+
+<section class="painel" id="aba-ihm" hidden>
+  <div class="ihm-arq" aria-label="Arquitetura">
+    <div class="no-arq ihm"><b>IHM do painel</b><span>cliente Modbus TCP</span></div>
+    <div class="seta-arq"><span>Modbus TCP</span><i></i><small id="arqMb">→ 192.168.100.10:502</small></div>
+    <div class="no-arq clp"><b>Seu CLP</b><span>servidor Modbus + scanner EtherNet/IP</span></div>
+    <div class="seta-arq"><span>EtherNet/IP</span><i></i><small>P0684/P0685 · P0680/P0681</small></div>
+    <div class="no-arq inv"><b>CFW500</b><span>adapter EtherNet/IP</span></div>
+  </div>
+  <div class="grade-rede">
+    <div class="caixa">
+      <h3>Servidor Modbus (o CLP)</h3>
+      <div class="form">
+        <label>IP do CLP <input id="ihmIp" spellcheck="false"></label>
+        <label>Porta TCP <input id="ihmPorta" type="number" min="1" max="65535"></label>
+        <label>Unit ID <input id="ihmUnit" type="number" min="0" max="255"></label>
+        <label>Varredura (ms) <input id="ihmVarr" type="number" min="20" max="5000"></label>
+        <label>Timeout (ms) <input id="ihmTimeout" type="number" min="100" max="10000"></label>
+        <label>Ordem 32 bits <select id="ihmOrdem"><option value="baixaPrimeiro">Palavra baixa primeiro (CODESYS)</option><option value="altaPrimeiro">Palavra alta primeiro</option></select></label>
+        <label>Título da tela <input id="ihmTitulo" maxlength="24"></label>
+      </div>
+      <div class="botoes">
+        <button id="ihmSalvar">Salvar configuração</button>
+        <button id="ihmLigar">Ativar comunicação</button>
+        <button id="ihmPadrao" class="sec">Restaurar mapa padrão</button>
+      </div>
+      <p class="estado-sc" id="ihmEstado">Comunicação desativada.</p>
+      <p class="aviso" id="ihmSujo" hidden>Há alterações não salvas. Clique em <b>Salvar configuração</b> para aplicar.</p>
+    </div>
+    <div class="caixa">
+      <h3>Diagnóstico do cliente</h3>
+      <div class="palavras" id="ihmStats"></div>
+      <p class="nota">Erros comuns: <b>conexão recusada</b> (servidor Modbus do CLP parado, porta ou IP errados, firewall) · <b>exceção 2</b> (endereço fora da área configurada no CLP) · <b>timeout</b> (Unit ID errado ou CLP em STOP sem responder).</p>
+    </div>
+    <div class="caixa larga">
+      <h3>Tags da IHM</h3>
+      <p class="nota">Endereços no padrão do protocolo, começando em 0. A coluna <b>Ref.</b> mostra a referência “Modicon” (ex.: Holding Register 0 = 400001) que alguns softwares usam. Coil e Discrete Input são sempre BOOL.</p>
+      <div class="rolagem"><table class="tab tab-tags" id="ihmTags"></table></div>
+    </div>
+    <div class="caixa larga">
+      <h3>Como ligar no CODESYS (mapa padrão)</h3>
+      <div class="dica-grade">
+        <div>
+          <ol class="passos">
+            <li>Em <b>Ethernet</b> do CLP adicione <b>ModbusTCP Slave Device</b> (servidor). Porta 502, Unit ID 1. <b>Ative as áreas de bit</b> (Coils e Discrete Inputs, ≥ 3 cada) e deixe <b>Holding Registers ≥ 1</b> e <b>Input Registers ≥ 2</b>.</li>
+            <li>No <b>I/O Mapping</b> do Slave Device, ligue as variáveis: Coils e Holding Registers chegam como entradas do CLP (%IX / %IW, a IHM escreve); Discrete Inputs e Input Registers saem como saídas do CLP (%QX / %QW, a IHM lê). Se o mapeamento recusar o tipo (UINT/INT num canal WORD), declare a variável como WORD e converta no programa (WORD_TO_UINT, INT_TO_WORD…).</li>
+            <li>No mesmo Ethernet, o <b>Scanner EtherNet/IP</b> com o CFW500 (EDS): saída palavra 1 = P0684, palavra 2 = P0685; entrada palavra 1 = P0680, palavra 2 = P0681.</li>
+            <li>No inversor: <b>P0220 = 1, P0222 = 11, P0226 = 9, P0227 = 4</b> (aba CLP virtual → "Parametrizar inversor para comando via rede").</li>
+            <li>Para mostrar a corrente: <b>P0820 = 3</b> (3ª palavra de leitura = P0003), <b>P0849 = 1</b> e entrada do scanner com 3 palavras.</li>
+          </ol>
+          <table class="tab mapa-cds" id="ihmMapa"></table>
+        </div>
+        <div class="codigo"><button class="sec copiar" id="ihmCopiar">Copiar</button><pre id="ihmST"></pre></div>
+      </div>
+    </div>
+    <div class="caixa larga">
+      <h3>Telegramas Modbus TCP da IHM</h3>
+      <div class="filtros">
+        <label class="tg"><input type="checkbox" id="ihmLogLeitura"> Mostrar leituras cíclicas</label>
+        <label class="tg"><input type="checkbox" id="ihmLogPausa"> Pausar</label>
+        <button id="ihmLogLimpar" class="sec">Limpar</button>
+      </div>
+      <div class="log curto" id="ihmLog"></div>
+    </div>
+  </div>
+</section>
+
+<section class="painel" id="aba-clp" hidden>
+  <div class="grade-rede">
+    <div class="caixa">
+      <h3>Conexão</h3>
+      <p class="nota">Um scanner (originator) dentro do próprio simulador, para usar quando não há CLP. Ele faz exatamente o que um CLP faz: RegisterSession, lê P0403 por mensagem explícita e abre a conexão de I/O com Forward Open.</p>
+      <div class="form">
+        <label>IP do adapter <input id="scHost" value="127.0.0.1"></label>
+        <label>RPI (ms) <input id="scRpi" type="number" value="10" min="4" max="3200"></label>
+        <label>Palavras extras de saída <input id="scExS" type="number" value="0" min="0" max="12"></label>
+        <label>Palavras extras de entrada <input id="scExE" type="number" value="0" min="0" max="12"></label>
+        <label class="tg"><input type="checkbox" id="scMc"> T→O multicast</label>
+      </div>
+      <div class="botoes">
+        <button id="scCon">Conectar (Forward Open)</button>
+        <button id="scDes" class="sec">Desconectar (Forward Close)</button>
+        <button id="scCut" class="sec perigo">Cortar cabo do CLP</button>
+      </div>
+      <p class="estado-sc" id="scEstado">Desconectado.</p>
+      <div class="botoes">
+        <button id="btnPreset" class="sec">Parametrizar inversor para comando via rede</button>
+        <button id="btnFabrica" class="sec perigo">Restaurar padrão de fábrica</button>
+      </div>
+      <p class="nota">O preset aplica P0220 = 1, P0222 = 11, P0226 = 9, P0227 = 4, P0228 = 5, P0105 = 5 e P0313 = 1 (motor parado). Para desfazer: <b>Restaurar padrão de fábrica</b> ou, na HMI do inversor, <b>P0204 = 5</b> (padrão WEG 60 Hz).</p>
+    </div>
+    <div class="caixa">
+      <h3>Palavra de controle P0684</h3>
+      <div class="cw" id="scBits"></div>
+      <label class="tg"><input type="checkbox" id="scRun" checked> Scanner em RUN (bit Run/Idle)</label>
+      <div class="ref">
+        <label for="scRef">Referência <b id="scRefHz">0,0 Hz</b> → P0685 = <b id="scRef13">0</b></label>
+        <input type="range" id="scRef" min="-66" max="66" step="0.5" value="0">
+      </div>
+      <div class="palavras" id="scPalavras"></div>
+    </div>
+    <div class="caixa">
+      <h3>Dados recebidos (T→O)</h3>
+      <div class="palavras" id="scEntradas"></div>
+      <div class="bits" id="scBits680"></div>
+    </div>
+  </div>
+</section>
+
+<section class="painel" id="aba-param" hidden>
+  <div class="filtros">
+    <input id="pBusca" placeholder="Buscar por número ou nome (ex.: 684, rampa)" aria-label="Buscar parâmetro">
+    <select id="pGrupo" aria-label="Grupo">
+      <option value="">Todos</option><option>READ</option><option>MODIF</option><option>BASIC</option><option>MOTOR</option>
+      <option>I/O</option><option>NET</option><option>HMI</option><option>SPLC</option><option>STARTUP</option>
+    </select>
+    <button id="btnFabrica2" class="sec perigo" title="P0204 = 5: carrega o padrão WEG 60 Hz">Restaurar padrão de fábrica</button>
+    <span class="nota" id="pMsg"></span>
+  </div>
+  <div class="rolagem alta"><table class="tab tab-param" id="tabParam"></table></div>
+</section>
+
+<section class="painel" id="aba-falhas" hidden>
+  <div class="grade-rede">
+    <div class="caixa">
+      <h3>Situação atual</h3>
+      <div id="falhaAtual" class="falha-atual"></div>
+      <p class="nota">Reset: tecla O da HMI, DI com função 20, bit 7 da P0684 pela rede ou auto-reset (P0340).</p>
+    </div>
+    <div class="caixa">
+      <h3>Histórico (P0050, P0060, P0070)</h3>
+      <table class="tab" id="tabHist"></table>
+    </div>
+    <div class="caixa">
+      <h3>Provocar defeitos</h3>
+      <label>Tensão da rede de alimentação <b id="redeV">380 V</b>
+        <input type="range" id="redeVac" min="150" max="560" step="5" value="380"></label>
+      <label class="tg"><input type="checkbox" data-inj="faltaTerra"> Falta à terra na saída (F0074)</label>
+      <label class="tg"><input type="checkbox" data-inj="curto"> Curto-circuito entre fases (F0070)</label>
+      <label class="tg"><input type="checkbox" data-inj="faltaFaseMotor"> Motor com fase aberta (F0076 se P0343 bit 4)</label>
+      <label class="tg"><input type="checkbox" data-inj="moduloEth"> Defeito no módulo Ethernet (A0148/F0248)</label>
+      <p class="nota">Também: “Travar esteira” na cena 3D (sobrecarga → limitação de corrente → A0046 → F0072), rampa de desaceleração curta com carga (regulação do barramento CC) e cabo de rede desconectado no plug-in.</p>
+    </div>
+  </div>
+</section>
+
+<section class="painel" id="aba-graf" hidden>
+  <div class="legenda" id="legenda"></div>
+  <canvas id="grafico" height="320"></canvas>
+</section>
+
+<section class="painel" id="aba-log" hidden>
+  <div class="filtros">
+    <label class="tg"><input type="checkbox" data-f="ENCAP" checked> Encapsulamento</label>
+    <label class="tg"><input type="checkbox" data-f="CIP" checked> CIP</label>
+    <label class="tg"><input type="checkbox" data-f="IO" checked> I/O (amostra 1/s)</label>
+    <label class="tg"><input type="checkbox" data-f="EVT" checked> Eventos do inversor</label>
+    <label class="tg"><input type="checkbox" id="logPausa"> Pausar</label>
+    <button id="logLimpar" class="sec">Limpar</button>
+  </div>
+  <div class="log" id="log"></div>
+</section>
+
+<div class="janela-ihm" id="janelaIhm" hidden role="dialog" aria-label="IHM do painel QC-01">
+  <div class="janela-barra" id="janelaBarra" title="Arraste para mover a janela">
+    <span class="janela-titulo">IHM do painel QC-01 · Modbus TCP</span>
+    <span class="janela-acoes">
+      <button id="ihmMin" class="jb" title="Minimizar / restaurar" aria-label="Minimizar">–</button>
+      <button id="fecharIhm" class="jb" title="Fechar" aria-label="Fechar a janela da IHM">✕</button>
+    </span>
+  </div>
+  <div class="janela-corpo">
+    <div class="ihm-fisica">
+      <div class="ihm-moldura" id="ihmMoldura"></div>
+      <div class="ihm-rodape"><span>IHM 10,1" · Modbus TCP</span><i class="led-ihm" id="ledIhm2d"></i></div>
+    </div>
+  </div>
+  <div class="janela-alca" id="janelaAlca" title="Arraste para mudar o tamanho" aria-hidden="true"></div>
+</div>
+
+<dialog class="dlg" id="dlg" aria-labelledby="dlgTitulo">
+  <div class="dlg-cab"><span class="dlg-icone" id="dlgIcone" aria-hidden="true"></span><h3 id="dlgTitulo"></h3></div>
+  <div class="dlg-texto" id="dlgTexto"></div>
+  <ul class="dlg-itens" id="dlgItens"></ul>
+  <div class="dlg-botoes"><button id="dlgCancelar" class="sec">Cancelar</button><button id="dlgOk">OK</button></div>
+</dialog>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

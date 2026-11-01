@@ -1,0 +1,1582 @@
+$ EZ-EDS Version 3.23.1.20171205 Generated Electronic Data Sheet
+
+[File]
+        DescText = "CV-X400 Series Vision System";
+        CreateDate = 04-01-2016;
+        CreateTime = 00:00:00;
+        ModDate = 06-01-2019;
+        ModTime = 00:00:00;
+        Revision = 1.2;
+        HomeURL = "http://www.keyence.com";
+
+[Device]
+        VendCode = 367;
+        VendName = "Keyence Corporation";
+        ProdType = 43;
+        ProdTypeStr = "Generic Device";
+        ProdCode = 5005;
+        MajRev = 1;
+        MinRev = 1;
+        ProdName = "CV-X400 Series";
+        Catalog = "CV-X400 Series ";
+        Icon = "CV-X400Series.ico";
+
+[Device Classification]
+        Class1 = EtherNetIP;
+
+[Params]
+        Param1 =
+                0,
+                ,,
+                0x0000,
+                0xC7,
+                2,
+                "Input Size",
+                "Bytes",
+                "",
+                2,1436,496,
+                ,,,,
+                ,,,,
+                ;
+        Param2 =
+                0,
+                ,,
+                0x0000,
+                0xC7,
+                2,
+                "Output Size",
+                "Bytes",
+                "",
+                2,1436,496,
+                ,,,,
+                ,,,,
+                ;
+        Param3 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Command request flag",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param4 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Result ack flag",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param5 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Error reset request flag",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param6 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "TRG1",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param7 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "TRG2",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param8 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "TRG3",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param9 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "TRG4",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param10 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "RESET",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param11 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "EXT",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param12 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "TEST",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param13 =
+                0,
+                ,,
+                0x0000,
+                0xC7,
+                2,
+                "ExecCondNo",
+                "",
+                "",
+                0,65535,0,
+                ,,,,
+                ,,,,
+                ;
+        Param14 =
+                0,
+                ,,
+                0x0000,
+                0xC8,
+                4,
+                "Command Number",
+                "",
+                "",
+                0,4294967295,0,
+                ,,,,
+                ,,,,
+                ;
+        Param15 =
+                0,
+                ,,
+                0x0000,
+                0xD1,
+                1,
+                "User defined output data",
+                "",
+                "",
+                0,255,0,
+                ,,,,
+                ,,,,
+                ;
+        Param16 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Command complete flag",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param17 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Command error flag",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param18 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Command ready flag",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param19 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Result ready flag",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param20 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Result OR flag",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param21 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "READY1",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param22 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "READY2",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param23 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "READY3",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param24 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "READY4",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param25 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "ACK1",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param26 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "ACK2",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param27 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "ACK3",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param28 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "ACK4",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param29 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "BUSY",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param30 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "ERROR",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param31 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "RUN",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param32 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value0",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param33 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value1",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param34 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value2",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param35 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value3",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param36 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value4",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param37 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value5",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param38 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value6",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param39 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value7",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param40 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value8",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param41 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value9",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param42 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value10",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param43 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value11",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param44 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value12",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param45 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value13",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param46 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value14",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param47 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value15",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param48 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value16",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param49 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value17",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param50 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value18",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param51 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value19",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param52 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value20",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param53 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value21",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param54 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value22",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param55 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value23",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param56 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value24",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param57 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value25",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param58 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value26",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param59 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value27",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param60 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value28",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param61 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value29",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param62 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value30",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param63 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value31",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param64 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value32",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param65 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value33",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param66 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value34",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param67 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value35",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param68 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value36",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param69 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value37",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param70 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value38",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param71 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value39",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param72 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value40",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param73 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value41",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param74 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value42",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param75 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value43",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param76 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value44",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param77 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value45",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param78 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value46",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param79 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value47",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param80 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value48",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param81 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value49",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param82 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value50",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param83 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value51",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param84 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value52",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param85 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value53",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param86 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value54",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param87 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value55",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param88 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value56",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param89 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value57",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param90 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value58",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param91 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value59",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param92 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value60",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param93 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value61",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param94 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value62",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param95 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "Tool Judge Value63",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param96 =
+                0,
+                ,,
+                0x0000,
+                0xC7,
+                2,
+                "Error code",
+                "",
+                "",
+                0,65535,0,
+                ,,,,
+                ,,,,
+                ;
+        Param97 =
+                0,
+                ,,
+                0x0000,
+                0xC8,
+                4,
+                "Total count",
+                "",
+                "",
+                0,4294967295,0,
+                ,,,,
+                ,,,,
+                ;
+        Param98 =
+                0,
+                ,,
+                0x0000,
+                0xC8,
+                4,
+                "Command Result",
+                "",
+                "",
+                0,4294967295,0,
+                ,,,,
+                ,,,,
+                ;
+        Param99 =
+                0,
+                ,,
+                0x0000,
+                0xD1,
+                1,
+                "User defined input data",
+                "",
+                "",
+                0,255,0,
+                ,,,,
+                ,,,,
+                ;
+        Param100 =
+                0,                      $ reserved, shall equal 0
+                ,,                      $ Link Path Size, Link Path
+                0x0000,                 $ Descriptor
+                0xC8,                   $ Data Type
+                4,                      $ Data Size in bytes
+                "RPI",                  $ name
+                "",                     $ units
+                "",                     $ help string
+                1000,10000000,10000,    $ min, max, default data values
+                ,,,,                    $ mult, div, base, offset scaling
+                ,,,,                    $ mult, div, base, offset links
+                ;                       $ decimal places
+        Param101 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "OUTPUT_IMG_BUSY",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+        Param102 =
+                0,
+                ,,
+                0x0000,
+                0xC1,
+                1,
+                "OUTPUT_IMG_STAUTS",
+                "",
+                "",
+                0,1,0,
+                ,,,,
+                ,,,,
+                ;
+
+[Assembly]
+        Object_Name = "Assembly Object";
+        Object_Class_Code = 0x04;
+        Assem100 =
+                "input format",
+                ,
+                1436,
+                0x0000,
+                ,,
+                1,Param16,              $ Command complete flag
+                1,Param17,              $ Command error flag
+                1,Param18,              $ Command ready flag
+                1,Param19,              $ Result ready flag
+                1,Param20,              $ Result OR flag
+                3,,                     $ Reserved
+
+                1,Param21,              $ READY1
+                1,Param22,              $ READY2
+                1,Param23,              $ READY3
+                1,Param24,              $ READY4
+                4,,                     $ Reserved
+
+                1,Param25,              $ ACK1
+                1,Param26,              $ ACK2
+                1,Param27,              $ ACK3
+                1,Param28,              $ ACK4
+                4,,                     $ Reserved
+
+                1,Param29,              $ BUSY
+                1,Param30,              $ ERROR
+                1,,                     $ Reserved
+                1,Param31,              $ RUN
+                2,,                     $ Reserved
+                1,Param101,             $ OUTPUT_IMG_BUSY
+                1,Param102,             $ OUTPUT_IMG_STAUTS
+
+                1,Param32,              $ Tool Judge Value0
+                1,Param33,              $ Tool Judge Value1
+                1,Param34,              $ Tool Judge Value2
+                1,Param35,              $ Tool Judge Value3
+                1,Param36,              $ Tool Judge Value4
+                1,Param37,              $ Tool Judge Value5
+                1,Param98,              $ Tool Judge Value6
+                1,Param39,              $ Tool Judge Value7
+
+                1,Param40,              $ Tool Judge Value8
+                1,Param41,              $ Tool Judge Value9
+                1,Param42,              $ Tool Judge Value10
+                1,Param43,              $ Tool Judge Value11
+                1,Param44,              $ Tool Judge Value12
+                1,Param45,              $ Tool Judge Value13
+                1,Param46,              $ Tool Judge Value14
+                1,Param47,              $ Tool Judge Value15
+
+                1,Param48,              $ Tool Judge Value16
+                1,Param49,              $ Tool Judge Value17
+                1,Param50,              $ Tool Judge Value18
+                1,Param51,              $ Tool Judge Value19
+                1,Param52,              $ Tool Judge Value20
+                1,Param53,              $ Tool Judge Value21
+                1,Param54,              $ Tool Judge Value22
+                1,Param55,              $ Tool Judge Value23
+
+                1,Param56,              $ Tool Judge Value24
+                1,Param57,              $ Tool Judge Value25
+                1,Param58,              $ Tool Judge Value26
+                1,Param59,              $ Tool Judge Value27
+                1,Param60,              $ Tool Judge Value28
+                1,Param61,              $ Tool Judge Value29
+                1,Param62,              $ Tool Judge Value30
+                1,Param63,              $ Tool Judge Value31
+
+                1,Param64,              $ Tool Judge Value32
+                1,Param65,              $ Tool Judge Value33
+                1,Param66,              $ Tool Judge Value34
+                1,Param67,              $ Tool Judge Value35
+                1,Param68,              $ Tool Judge Value36
+                1,Param69,              $ Tool Judge Value37
+                1,Param70,              $ Tool Judge Value38
+                1,Param71,              $ Tool Judge Value39
+
+                1,Param72,              $ Tool Judge Value40
+                1,Param73,              $ Tool Judge Value41
+                1,Param74,              $ Tool Judge Value42
+                1,Param75,              $ Tool Judge Value43
+                1,Param76,              $ Tool Judge Value44
+                1,Param77,              $ Tool Judge Value45
+                1,Param78,              $ Tool Judge Value46
+                1,Param79,              $ Tool Judge Value47
+
+                1,Param80,              $ Tool Judge Value48
+                1,Param81,              $ Tool Judge Value49
+                1,Param82,              $ Tool Judge Value50
+                1,Param83,              $ Tool Judge Value51
+                1,Param84,              $ Tool Judge Value52
+                1,Param85,              $ Tool Judge Value53
+                1,Param86,              $ Tool Judge Value54
+                1,Param87,              $ Tool Judge Value55
+
+                1,Param88,              $ Tool Judge Value56
+                1,Param89,              $ Tool Judge Value57
+                1,Param90,              $ Tool Judge Value58
+                1,Param91,              $ Tool Judge Value59
+                1,Param92,              $ Tool Judge Value60
+                1,Param93,              $ Tool Judge Value61
+                1,Param94,              $ Tool Judge Value62
+                1,Param95,              $ Tool Judge Value63
+
+                16,Param96,             $ Error code
+                16,,                    $ Reserved
+                32,Param97,             $ Total count
+                32,Param98,             $ Command Result
+
+                11296,Param99;          $ User defined input data
+
+        Assem101 =
+                "output format",
+                ,
+                1436,
+                0x0000,
+                ,,
+                1,Param3,               $ Command request flag
+                2,,                     $ Reserved
+                1,Param4,               $ Result ack flag
+                1,Param5,               $ Error reset request flag
+                3,,                     $ Reserved
+
+                1,Param6,               $ TRG1
+                1,Param7,               $ TRG2
+                1,Param8,               $ TRG3
+                1,Param9,               $ TRG4
+                4,,                     $ Reserved
+
+                1,Param10,              $ RESET
+                1,Param11,              $ EXT
+                1,Param12,              $ TEST
+                5,,                     $ Reserved
+
+                72,,                    $ Reserved
+
+                16,Param13,             $ ExecCondNo
+                16,,                    $ Reserved
+                32,Param14,             $ Command Number
+
+                11328,Param15;          $ User defined output data
+
+[Connection Manager]
+        Object_Name = "Connection Manager Object";
+        Object_Class_Code = 0x06;
+
+        Connection1 =
+                0x04030002,             $ trigger & transport
+                                        $  0-15  = supported transport classes (class 1)
+                                        $  16    = cyclic (1 = supported)
+                                        $  17    = change of state (1 = supported)
+                                        $  18    = on demand (0 = not supported)
+                                        $  19-23 = reserved (must be zero)
+                                        $  24-27 = exclusive owner
+                                        $  28-30 = reserved (must be zero)
+                                        $  31    = client 0 (don't care for classes 0 and 1)
+                0x44640405,             $ connection parameters
+                                        $  0     = O=>T fixed (1 = supported)
+                                        $  1     = O=>T variable (0 = not supported)
+                                        $  2     = T=>O fixed (1 = supported)
+                                        $  3     = T=>O variable (0 = not supported)
+                                        $  4-7   = reserved (must be zero)
+                                        $  8-11  = O=>T header (4 byte run/idle)
+                                        $  12-15 = T=>O header (no header)
+                                        $  16-19 = O=>T connection type (point-to-point)
+                                        $  20-23 = T=>O connection type (multicast, point-to-point)
+                                        $  24-27 = O=>T priority (scheduled)
+                                        $  28-31 = T=>O priority (scheduled)
+                Param100,Param2,Assem101,    $ O=>T RPI,Size,Format
+                Param100,Param1,Assem100,    $ T=>O RPI,Size,Format
+                ,,                      $ config part 1 (not used)
+                ,,                      $ config part 2 (not used)
+                "Class1",               $ connection name
+                "",                     $ Help string
+                "20 04 24 01 2C 65 2C 64";    $ inputs only path
+        Connection2 =
+                0x02030002,             $ trigger & transport
+                                        $  0-15  = supported transport classes (class 1)
+                                        $  16    = cyclic (1 = supported)
+                                        $  17    = change of state (1 = supported)
+                                        $  18    = on demand (0 = not supported)
+                                        $  19-23 = reserved (must be zero)
+                                        $  24-27 = input only
+                                        $  28-30 = reserved (must be zero)
+                                        $  31    = client 0 (don't care for classes 0 and 1)
+                0x44640305,             $ connection parameters
+                                        $  0     = O=>T fixed (1 = supported)
+                                        $  1     = O=>T variable (0 = not supported)
+                                        $  2     = T=>O fixed (1 = supported)
+                                        $  3     = T=>O variable (0 = not supported)
+                                        $  4-7   = reserved (must be zero)
+                                        $  8-11  = O=>T header (0 byte heartbeat)
+                                        $  12-15 = T=>O header (no header)
+                                        $  16-19 = O=>T connection type (point-to-point)
+                                        $  20-23 = T=>O connection type (multicast,point-to-point)
+                                        $  24-27 = O=>T priority (scheduled)
+                                        $  28-31 = T=>O priority (scheduled)
+                Param100,0,,            $ O=>T RPI,Size,Format
+                Param100,Param1,Assem100,    $ T=>O RPI,Size,Format
+                ,,                      $ config part 1 (not used)
+                ,,                      $ config part 2 (not used)
+                "Class1 (Input-Only)",  $ connection name
+                "",                     $ Help string
+                "20 04 24 01 2C FE 2C 64";    $ inputs only path
+
+[Port]
+        Object_Name = "Port Object";
+        Object_Class_Code = 0xF4;
+        Port1 =
+                TCP,
+                "Ethernet Port",
+                "20 F5 24 01",
+                1,
+                0,
+                ;
+
+[Capacity]
+        MaxIOConnections = 32;
+        MaxMsgConnections = 32;
+        MaxConsumersPerMcast = 32;
+        TSpec1 = TxRx, 2, 400;
+        TSpec2 = TxRx, 496, 400;
+        TSpec3 = TxRx, 1436, 400;
+

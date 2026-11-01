@@ -1,0 +1,79 @@
+{
+  "id": "cfw500",
+  "nome": "Inversor WEG CFW500",
+  "fabricante": "WEG",
+  "tipo": "Inversor de frequência",
+  "descricao": "CFW500 com módulo CFW500-CETH-IP acionando uma esteira 3D com carga, sensores e proteções. HMI, parâmetros, falhas e CLP virtual.",
+  "protocolos": [
+    "EtherNet/IP",
+    "Modbus TCP"
+  ],
+  "papel": "Adapter EtherNet/IP e servidor Modbus TCP",
+  "iniciar": {
+    "comando": "node",
+    "args": [
+      "server.js",
+      "--ip",
+      "{ip}",
+      "--http",
+      "{http}",
+      "--modbus",
+      "{modbus}"
+    ]
+  },
+  "web": {
+    "porta": 8080,
+    "caminho": "/"
+  },
+  "rede": {
+    "precisaIp": true,
+    "ipSugerido": "192.168.100.20",
+    "portas": [
+      {
+        "proto": "tcp",
+        "porta": 44818,
+        "uso": "EtherNet/IP explícito"
+      },
+      {
+        "proto": "udp",
+        "porta": 44818,
+        "uso": "ListIdentity"
+      },
+      {
+        "proto": "udp",
+        "porta": 2222,
+        "uso": "I/O cíclico"
+      },
+      {
+        "proto": "tcp",
+        "porta": "{modbus}",
+        "uso": "Modbus TCP"
+      }
+    ],
+    "seSemIp": {
+      "modbus": 5020
+    }
+  },
+  "variaveis": {
+    "modbus": 502
+  },
+  "arquivos": {
+    "guia": "README.md",
+    "eds": [
+      "eds/eip_cfw500_ceth2_v11x.eds",
+      "eds/eip_cfw500_ceth2_v10x.eds"
+    ]
+  },
+  "preservarAoAtualizar": [
+    "data/"
+  ],
+  "aprender": [
+    "ethernetip-cip",
+    "modbus-tcp",
+    "arquivo-eds"
+  ],
+  "cor": "#2C6CB0",
+  "icone": "icone.png",
+  "versao": "1.0.1",
+  "pacote": "cfw500-ethernetip-sim"
+}

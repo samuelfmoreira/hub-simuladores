@@ -1,0 +1,17 @@
+{
+  "name": "cfw500-ethernetip-sim",
+  "version": "1.0.1",
+  "description": "Simulador didático do inversor WEG CFW500 como Adapter EtherNet/IP, com esteira 3D",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "teste": "node tools/scanner-test.js",
+    "clp-teste": "node tools/clp-modbus-teste.js 127.0.0.1 1502"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.22.3",
+    "socket.io": "^4.8.4",
+    "three": "^0.160.0"
+  }
+}
