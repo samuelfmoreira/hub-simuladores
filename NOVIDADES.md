@@ -2,6 +2,9 @@
 
 As notas de cada versão aparecem no HUB quando a atualização é oferecida. Escreva a seção da versão nova antes do push.
 
+## 1.5.8
+- A busca por versões novas não usa mais respostas guardadas em cache, e o HUB confere de novo 3 minutos depois de abrir. A mensagem de atualização aparece sem precisar clicar em "Procurar atualização".
+
 ## 1.5.7
 - O HUB procura versões novas com mais frequência: a cada 30 minutos (antes, 6 horas) e também quando você volta para a janela dele.
 

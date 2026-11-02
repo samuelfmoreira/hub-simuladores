@@ -73,7 +73,7 @@ async function assetGithub(canal, release, nome) {
 /** Baixa um endereço http(s) ou lê um caminho de arquivo / pasta de rede. */
 async function obter(alvo, canal) {
   if (/^https?:\/\//i.test(alvo)) {
-    const cabecalhos = {};
+    const cabecalhos = { 'Cache-Control': 'no-cache', Pragma: 'no-cache' };
     if (canal?.token) cabecalhos[canal.cabecalhoToken || 'DEPLOY-TOKEN'] = canal.token;
     const r = await fetch(alvo, { headers: cabecalhos, redirect: 'follow', signal: AbortSignal.timeout(120000) });
     if (!r.ok) throw new Error(`${r.status} ${r.statusText} em ${alvo}`);
@@ -81,6 +81,9 @@ async function obter(alvo, canal) {
   }
   return fs.readFileSync(alvo.replace(/^file:\/\//i, ''));
 }
+
+/** Endereço com uma marca de horário: o cache do GitHub não devolve um versao.json antigo. */
+const semCache = (u) => (/^https?:/i.test(u) ? `${u}${u.includes('?') ? '&' : '?'}t=${Date.now()}` : u);
 
 const resolver = (base, rel) => (/^(https?:|file:|\\\\|[a-zA-Z]:|\/)/.test(rel) ? rel
   : /^https?:/i.test(base) ? new URL(rel, base).toString() : path.join(path.dirname(base), rel));
@@ -93,7 +96,7 @@ async function verificar() {
   if (!fs.existsSync(CHAVE)) return { configurado: false, atual, motivo: 'hub/chave-publica.pem ausente: sem ela nenhuma atualização é aceita.' };
   const bruto = canal.github && canal.token
     ? await assetGithub(canal, await releaseGithub(canal), 'versao.json')
-    : await obter(canal.manifesto, canal);
+    : await obter(semCache(canal.manifesto), canal);
   const manifesto = JSON.parse(bruto.toString('utf8'));
   if (!manifesto.versao || !manifesto.pacote || !manifesto.sha256 || !manifesto.assinatura) throw new Error('versao.json incompleto.');
   return {

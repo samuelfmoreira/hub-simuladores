@@ -372,9 +372,11 @@ servidor.listen(cfg.hubPorta, () => {
       enviar('catalogo', {});
     }, 1500);
   }
-  // procura versão nova logo depois de abrir e a cada 6 horas
+  // procura versão nova logo depois de abrir, de novo 3 minutos depois (cobre uma versão que acabou de ser publicada)
+  // e a cada 30 minutos
   setTimeout(() => verificarAtualizacao({ automatica: true }), 4000);
-  setInterval(() => verificarAtualizacao(), 30 * 60 * 1000);   // procura versão nova a cada 30 minutos
+  setTimeout(() => verificarAtualizacao({ automatica: true }), 3 * 60 * 1000);
+  setInterval(() => verificarAtualizacao(), 30 * 60 * 1000);
 });
 
 /** Abre uma tela (do HUB ou de um simulador). No Windows, em modo "janela": Edge sem barra de endereço, com cara de programa. */
