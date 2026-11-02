@@ -221,3 +221,7 @@ body.arrastando canvas, body.arrastando iframe { pointer-events: none; }
 /* atalho de configuração de rede (aba Parâmetros) */
 .preset-rede { margin: 0 0 12px; padding: 10px 12px; border: 1px solid var(--line-2, #ccc); border-radius: 8px; }
 .preset-rede .row { gap: 8px; flex-wrap: wrap; }
+
+/* botão do assistente de comunicação com o CLP (barra do topo) */
+.assist-btn { margin-left: 8px; background: #2E6FB0; color: #fff; border: 1px solid #2E6FB0; border-radius: 6px; padding: 6px 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.assist-btn:hover { filter: brightness(1.1); }

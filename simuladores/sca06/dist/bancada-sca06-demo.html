@@ -231,6 +231,10 @@ body.arrastando canvas, body.arrastando iframe { pointer-events: none; }
 .preset-rede { margin: 0 0 12px; padding: 10px 12px; border: 1px solid var(--line-2, #ccc); border-radius: 8px; }
 .preset-rede .row { gap: 8px; flex-wrap: wrap; }
 
+/* botão do assistente de comunicação com o CLP (barra do topo) */
+.assist-btn { margin-left: 8px; background: #2E6FB0; color: #fff; border: 1px solid #2E6FB0; border-radius: 6px; padding: 6px 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.assist-btn:hover { filter: brightness(1.1); }
+
 </style>
 </head>
 <body>
@@ -245,6 +249,7 @@ body.arrastando canvas, body.arrastando iframe { pointer-events: none; }
   <div class="ind num opt"><span class="k">Iq</span><b id="indIq">0,0</b><span class="u">A</span></div>
   <div class="ind wide" id="indMsg"></div>
   <div class="ind src" id="indSrc" title="Origem dos dados"></div>
+  <button class="assist-btn" data-assistente title="Configura o drive para conversar com o CLP pela EtherNet/IP, etapa por etapa">Comunicação com o CLP</button>
 </header>
 
 <main class="layout">
@@ -352,8 +357,8 @@ body.arrastando canvas, body.arrastando iframe { pointer-events: none; }
     <!-- ===================== PARÂMETROS ===================== -->
     <div class="pane" data-pane="params" hidden>
       <div class="preset-rede">
-        <div class="row"><button id="pPresetEip">Preparar: velocidade e torque pela rede</button><button id="pPresetPos">Preparar: posição pela rede</button><button id="pFabrica" class="small">Restaurar padrão de fábrica</button></div>
-        <p class="hint">O drive sai de fábrica comandado pela HMI. Os botões gravam de uma vez o que cada modo precisa, como você faria parâmetro por parâmetro (nesta lista ou pela HMI do drive; o passo a passo está no Guia). <b>Velocidade e torque</b>: P0202 = 6, conexão de 4 palavras. <b>Posição</b>: P0202 = 4 (aplicativo Ladder de posicionamento), conexão de 8 palavras. O drive precisa estar desabilitado.</p>
+        <div class="row"><button data-assistente>Assistente de comunicação com o CLP</button><button id="pFabrica" class="small">Restaurar padrão de fábrica</button></div>
+        <p class="hint">O drive sai de fábrica comandado pela HMI. O <b>assistente</b> configura a comunicação com o CLP pela EtherNet/IP em 6 etapas (senha, IP, quem manda, palavras de troca, segurança e aplicar), para <b>velocidade e torque</b> ou para <b>posição</b>, explicando cada parâmetro, e mostra no fim o que configurar no CLP. Prefere fazer como na vida real? Altere um por um nesta lista ou pela HMI do drive: o passo a passo está no Guia.</p>
         <p class="hint" id="pPresetRes" aria-live="polite"></p>
       </div>
       <div class="row"><input type="search" id="pSearch" placeholder="Buscar: 202, rampa, Ethernet, ladder…" aria-label="Buscar parâmetro">
@@ -1162,6 +1167,12 @@ body.arrastando canvas, body.arrastando iframe { pointer-events: none; }
         const c = cells('      '); c[5] = { ch: H.busyChar, dp: false, blink: true }; if (H.busyChar === '8') return cells('888888', [0, 1, 2, 3, 4, 5]);
         return c;
       }
+      if (H.flash && this.now < H.flash.until) {           // gravação do assistente: número do parâmetro, depois o valor
+        const fn = H.flash.n, fd = DEF_MAP.get(fn);
+        if (H.flash.until - this.now > 0.8) return cells('P' + pad5(fn));
+        const fv = this.p.get(fn), fa = String(Math.abs(fv)).padStart(5, '0').slice(-5);
+        const fc = cells((fv < 0 ? '-' : ' ') + fa); if (fd.dec > 0) fc[5 - fd.dec].dp = true; return fc;
+      }
       if (this.stoActive()) return cells('   Sto');
       // nova falha/alarme → mensagem (some com qualquer tecla)
       if (this.fault && this.fault !== H.ackFault) H.overlay = 'F';
@@ -1180,6 +1191,8 @@ body.arrastando canvas, body.arrastando iframe { pointer-events: none; }
     }
     hmiLeds() { return { usb: false, power: this.powerOK(), fault: !!this.fault }; }
     hmiParam() { return PARAM_LIST[this.hmi.idx]; }
+    /** O assistente de comunicação gravou um parâmetro: o display mostra o número e o valor por um instante. */
+    hmiFlash(n) { if (DEF_MAP.has(n)) this.hmi.flash = { n, until: this.now + 1.6 }; }
 
     // ------------------------------------------------------------- snapshot p/ interface
     view() {
@@ -2224,7 +2237,7 @@ body.arrastando canvas, body.arrastando iframe { pointer-events: none; }
     async request(m) {
       const d = this.drive, sc = this.sc;
       const needLink = () => { if (!this.online()) throw new Error('Timeout (sem resposta do adapter) — cabo desconectado ou interface reiniciando'); };
-      if (m.t === 'param') return { result: d.write(m.n, m.v, 'ui') };
+      if (m.t === 'param') { const r = d.write(m.n, m.v, 'ui'); if (r.ok && m.hmi) d.hmiFlash(m.n); return { result: r }; }
       if (m.t === 'bench') { d.benchSet(m.key, !!m.value); return {}; }
       if (m.t === 'hmi') { d.hmiKey(m.key); return {}; }
       if (m.t !== 'scanner') return {};
@@ -2311,6 +2324,8 @@ body.arrastando canvas, body.arrastando iframe { pointer-events: none; }
   function useDemo() { S.demo = true; const d = new window.DemoBackend(onMessage); return { demo: true, request: (m) => d.request(m) }; }
   // os comandos esperam a conexão ficar pronta (a bancada 3D pode segurar a página alguns segundos ao abrir)
   let backendPronto = null;
+  // o assistente de comunicação (assistente-sca06.js) grava parâmetros e lê o estado por aqui
+  window.SCA06App = { req: (m) => req(m), S, buildParams: () => buildParams() };
   const req = (m) => backend ? backend.request(m) : (backendPronto ? backendPronto.then((b) => b.request(m)) : Promise.reject(new Error('Iniciando…')));
 
   function onMessage(m) {
@@ -2598,7 +2613,7 @@ body.arrastando canvas, body.arrastando iframe { pointer-events: none; }
       hint: 'P1103 escolhe o caminho: 0 menor, 1 horário, 2 anti-horário, 3 relativo. Leia P1111 mapeando P0820 = 1111.', target: [135, 0.5],
       live: c => `posição = ${fmtN(c.v.userPosDeg, 1)}°`, check: c => c.P[202] === 4 && c.v.applied && c.v.applied.wrWords.includes(1100) && c.v.applied.wrWords.includes(1101) && c.v.lad.inPos && c.v.lad.count > 0 && Math.abs(c.v.userPosDeg - 135) < 0.3 },
     { id: 'm13', title: 'Posição pela rede: conexão de 8 palavras', text: 'Prepare o drive para posição: P0202 = 4 (aplicativo Ladder de posicionamento), P0820…P0823 = 1110…1113 e P0835…P0838 = 1100…1103, aplicados com P0849 = 1. Abra a conexão de 8 palavras e chegue a Data Active.',
-      hint: 'O botão "Preparar: posição pela rede" (aba Parâmetros) faz a configuração. No CODESYS, escolha a conexão "Exclusive Owner, 8 palavras (posicao)". Sem o P0849 = 1 o mapeamento não vale e a conexão é recusada (0x0109).',
+      hint: 'O assistente "Comunicação com o CLP" (topo da tela), na opção Posição, faz a configuração explicando cada etapa. No CODESYS, escolha a conexão "Exclusive Owner, 8 palavras (posicao)". Sem o P0849 = 1 o mapeamento não vale e a conexão é recusada (0x0109).',
       check: c => c.P[202] === 4 && c.v.applied && c.v.applied.rdWords.length >= 4 && [1100, 1101, 1102, 1103].every(n => c.v.applied.wrWords.includes(n)) && c.v.p801 === 4 && c.v.ioRun },
     { id: 'm14', title: 'Pulso: cada pulso gira 45°', text: 'Com o movimento relativo (P1103 = 3) e incremento de 45,0° (P1101 = 450), dê 4 pulsos no bit 1 do comando (P1100): o disco deve dar meia volta, em 4 passos de 45°.',
       hint: 'O movimento começa na borda de subida do bit 1 (0 → 1): desligue o bit entre um pulso e outro. Cada movimento concluído soma 1 em P1113.',
@@ -2712,6 +2727,393 @@ body.arrastando canvas, body.arrastando iframe { pointer-events: none; }
 })();
 
 </script>
-<script src="divisorias.js"></script>
+<script>
+/* Assistente de comunicação com o CLP (componente comum ao CFW500 e ao SCA06).
+ *
+ * Percorre, na ordem em que um técnico faria em campo, as etapas para o equipamento conversar com o
+ * CLP pela rede: cada etapa explica o porquê, mostra "valor atual → valor novo" de cada parâmetro e
+ * como seria na HMI, e grava parâmetro por parâmetro (a HMI do equipamento mostra cada gravação).
+ * Dois ritmos: passo a passo (o aluno lê e grava cada etapa) ou "fazer tudo".
+ *
+ * Uso: AssistenteCLP.abrir({
+ *   titulo, subtitulo,
+ *   modos: [{ id, nome, texto }]            (opcional: escolha antes das etapas)
+ *   etapas(modo) -> [{ titulo, porque, hmi, itens: [{ n, v, nome, faz }] }],
+ *   ler(n) -> valor atual,  gravar(n, v) -> Promise<{ ok, msg }>,
+ *   fmt(n, v) -> texto do valor (opcional),  bloqueio() -> texto | null (opcional),
+ *   resumo(modo) -> html do "o que configurar no CLP"
+ * });
+ */
+(function () {
+  'use strict';
+  const CSS = `
+  dialog.aclp { width: min(900px, 95vw); max-height: 92vh; border: 0; border-radius: 12px; padding: 0; background: #1E2327; color: #E6EAE7;
+    font: 15px/1.45 'Barlow', system-ui, sans-serif; box-shadow: 0 18px 60px rgba(0,0,0,.55); }
+  dialog.aclp::backdrop { background: rgba(10,12,14,.6); }
+  .aclp * { box-sizing: border-box; }
+  .aclp-cab { display: flex; align-items: flex-start; gap: 12px; padding: 16px 20px 12px; border-bottom: 1px solid #343B40; }
+  .aclp-cab h2 { margin: 0; font: 600 22px/1.15 'Barlow Condensed', 'Arial Narrow', sans-serif; }
+  .aclp-cab p { margin: 2px 0 0; color: #A7B0B3; font-size: 14px; }
+  .aclp-x { margin-left: auto; background: none; border: 1px solid #485055; color: #E6EAE7; border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+  .aclp-trilha { display: flex; gap: 6px; flex-wrap: wrap; padding: 12px 20px 0; }
+  .aclp-trilha span { font-size: 12.5px; padding: 3px 10px; border-radius: 999px; background: #2A3136; color: #A7B0B3; border: 1px solid #3A4247; }
+  .aclp-trilha span.atual { background: #2E5D8C; color: #fff; border-color: #2E5D8C; }
+  .aclp-trilha span.feita { background: #1F4D33; color: #BFE8CC; border-color: #2C6B47; }
+  .aclp-corpo { padding: 14px 20px; overflow: auto; max-height: calc(92vh - 190px); }
+  .aclp-corpo h3 { margin: 0 0 6px; font: 600 20px/1.2 'Barlow Condensed', 'Arial Narrow', sans-serif; }
+  .aclp-porque { margin: 0 0 12px; }
+  .aclp table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 4px 0 12px; }
+  .aclp th, .aclp td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #343B40; vertical-align: top; }
+  .aclp th { color: #A7B0B3; font-weight: 600; font-size: 12.5px; text-transform: uppercase; letter-spacing: .03em; }
+  .aclp td.pn { font: 600 14px ui-monospace, Consolas, monospace; white-space: nowrap; }
+  .aclp td.val { font-family: ui-monospace, Consolas, monospace; white-space: nowrap; }
+  .aclp td.st { width: 120px; font-size: 13px; color: #A7B0B3; }
+  .aclp tr.gravando td { background: #2B3A48; }
+  .aclp tr.ok td.st { color: #7FD69B; }
+  .aclp tr.igual td.st { color: #9FC4AE; }
+  .aclp tr.erro td.st { color: #FF8A80; }
+  .aclp-hmi { border-left: 4px solid #C98A2B; background: #262C30; padding: 8px 12px; border-radius: 6px; font-size: 14px; }
+  .aclp-hmi b { color: #F0C27A; }
+  .aclp-aviso { margin: 10px 0 0; padding: 8px 12px; border-radius: 6px; background: #4A2A27; color: #FFD0CB; font-size: 14px; }
+  .aclp-ok { margin: 10px 0 0; padding: 8px 12px; border-radius: 6px; background: #1F4D33; color: #CFF1DA; font-size: 14px; }
+  .aclp-modos { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .aclp-modos button { text-align: left; padding: 12px 14px; border-radius: 8px; border: 1px solid #485055; background: #262C30; color: #E6EAE7; cursor: pointer; font: inherit; }
+  .aclp-modos button:hover { border-color: #5B8FC2; }
+  .aclp-modos b { display: block; font-size: 16px; margin-bottom: 4px; }
+  .aclp-rodape { display: flex; gap: 8px; align-items: center; padding: 12px 20px 16px; border-top: 1px solid #343B40; flex-wrap: wrap; }
+  .aclp-rodape .esp { flex: 1; }
+  .aclp-b { font: 600 14px 'Barlow', system-ui, sans-serif; padding: 8px 14px; border-radius: 6px; border: 1px solid #485055; background: #2A3136; color: #E6EAE7; cursor: pointer; }
+  .aclp-b.prim { background: #2E6FB0; border-color: #2E6FB0; color: #fff; }
+  .aclp-b:disabled { opacity: .45; cursor: default; }
+  .aclp-resumo table td:first-child { color: #A7B0B3; width: 38%; }
+  `;
+  const esc = (t) => String(t ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const pn = (n) => 'P' + String(n).padStart(4, '0');
+  const dorme = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  function abrir(cfg) {
+    if (!document.getElementById('aclpCss')) { const st = document.createElement('style'); st.id = 'aclpCss'; st.textContent = CSS; document.head.appendChild(st); }
+    let dlg = document.getElementById('aclpDlg');
+    if (!dlg) { dlg = document.createElement('dialog'); dlg.id = 'aclpDlg'; dlg.className = 'aclp'; document.body.appendChild(dlg); }
+    const fmt = cfg.fmt || ((n, v) => String(v));
+    const E = { modo: null, etapas: [], i: 0, feitas: new Set(), linhas: {}, ocupado: false, tudo: false, aviso: '', fim: false };
+    if (!cfg.modos || cfg.modos.length < 2) { E.modo = cfg.modos && cfg.modos[0] ? cfg.modos[0].id : null; E.etapas = cfg.etapas(E.modo); }
+
+    function cabecalho() {
+      return `<div class="aclp-cab"><div><h2>${esc(cfg.titulo)}</h2><p>${esc(cfg.subtitulo || '')}</p></div>
+        <button class="aclp-x" data-a="fechar" aria-label="Fechar o assistente">Fechar</button></div>`;
+    }
+    function trilha() {
+      if (!E.etapas.length) return '';
+      return `<div class="aclp-trilha">${E.etapas.map((et, k) => `<span class="${E.fim ? 'feita' : k === E.i ? 'atual' : E.feitas.has(k) ? 'feita' : ''}">${k + 1}. ${esc(et.titulo)}</span>`).join('')}
+        <span class="${E.fim ? 'atual' : ''}">✓ No CLP</span></div>`;
+    }
+    function telaModos() {
+      return `${cabecalho()}<div class="aclp-corpo"><h3>O que você vai comandar pela rede?</h3>
+        <p class="aclp-porque">A configuração muda conforme o modo. Escolha um para ver as etapas.</p>
+        <div class="aclp-modos">${cfg.modos.map((m) => `<button data-modo="${esc(m.id)}"><b>${esc(m.nome)}</b>${esc(m.texto)}</button>`).join('')}</div></div>
+        <div class="aclp-rodape"><span class="esp"></span><button class="aclp-b" data-a="fechar">Cancelar</button></div>`;
+    }
+    function telaEtapa() {
+      const et = E.etapas[E.i], feita = E.feitas.has(E.i), ult = E.i === E.etapas.length - 1;
+      const linhas = et.itens.map((it, k) => {
+        const atual = cfg.ler(it.n);
+        const marca = E.linhas[E.i + ':' + k];   // 'ok' (gravado) ou 'igual' (já estava assim)
+        return `<tr id="aclpL${k}" class="${marca || ''}"><td class="pn">${pn(it.n)}</td><td>${esc(it.nome)}<br><small style="color:#A7B0B3">${esc(it.faz)}</small></td>
+          <td class="val">${esc(atual === undefined ? '—' : fmt(it.n, atual))}</td><td class="val"><b>${esc(fmt(it.n, it.v))}</b></td>
+          <td class="st">${marca === 'ok' ? '✓ gravado' : marca === 'igual' ? '✓ já estava assim' : ''}</td></tr>`;
+      }).join('');
+      return `${cabecalho()}${trilha()}<div class="aclp-corpo">
+        <h3>Etapa ${E.i + 1} de ${E.etapas.length}: ${esc(et.titulo)}</h3>
+        <p class="aclp-porque">${et.porque}</p>
+        <table><thead><tr><th>Parâmetro</th><th>O que faz</th><th>Atual</th><th>Novo</th><th></th></tr></thead><tbody>${linhas}</tbody></table>
+        <div class="aclp-hmi"><b>Como seria na HMI:</b> ${et.hmi}</div>
+        ${E.aviso ? `<div class="aclp-aviso">${E.aviso}</div>` : feita ? `<div class="aclp-ok">Etapa gravada. ${ult ? 'Falta só ver o que configurar no CLP.' : 'Siga para a próxima.'}</div>` : ''}
+        </div>
+        <div class="aclp-rodape">
+          <button class="aclp-b" data-a="voltar" ${E.i === 0 && !(cfg.modos && cfg.modos.length > 1) ? 'disabled' : ''}>Voltar</button>
+          <span class="esp"></span>
+          <button class="aclp-b" data-a="tudo" ${E.ocupado ? 'disabled' : ''} title="Grava esta etapa e as seguintes, uma depois da outra">Fazer tudo</button>
+          ${feita ? `<button class="aclp-b prim" data-a="proxima" ${E.ocupado ? 'disabled' : ''}>${ult ? 'Ver o que configurar no CLP' : 'Próxima etapa'}</button>`
+            : `<button class="aclp-b prim" data-a="gravar" ${E.ocupado ? 'disabled' : ''}>Gravar esta etapa</button>`}
+        </div>`;
+    }
+    function telaFim() {
+      return `${cabecalho()}${trilha()}<div class="aclp-corpo aclp-resumo"><h3>Pronto. Agora, no CLP:</h3>${cfg.resumo(E.modo)}</div>
+        <div class="aclp-rodape"><button class="aclp-b" data-a="voltar">Voltar</button><span class="esp"></span><button class="aclp-b prim" data-a="fechar">Concluir</button></div>`;
+    }
+    function desenhar() {
+      const escolher = cfg.modos && cfg.modos.length > 1 && !E.modo;   // só o SCA06 tem escolha de modo
+      dlg.innerHTML = escolher ? telaModos() : E.fim ? telaFim() : telaEtapa();
+      dlg.querySelectorAll('[data-a]').forEach((b) => { b.onclick = () => acao(b.dataset.a); });
+      dlg.querySelectorAll('[data-modo]').forEach((b) => { b.onclick = () => { E.modo = b.dataset.modo; E.etapas = cfg.etapas(E.modo); E.i = 0; E.feitas.clear(); E.linhas = {}; E.fim = false; desenhar(); }; });
+    }
+    async function gravarEtapa() {
+      const bloq = cfg.bloqueio ? cfg.bloqueio() : null;
+      if (bloq) { E.aviso = bloq; desenhar(); return false; }
+      E.aviso = ''; E.ocupado = true; desenhar();
+      const et = E.etapas[E.i];
+      for (let k = 0; k < et.itens.length; k++) {
+        const it = et.itens[k], tr = dlg.querySelector('#aclpL' + k), st = tr && tr.querySelector('.st');
+        if (tr) tr.className = 'gravando';
+        if (st) st.textContent = 'gravando…';
+        if (cfg.ler(it.n) === it.v) {
+          await dorme(350);
+          if (tr) tr.className = 'igual'; if (st) st.textContent = '✓ já estava assim';
+          E.linhas[E.i + ':' + k] = 'igual';
+          continue;
+        }
+        let r;
+        try { r = await cfg.gravar(it.n, it.v); } catch (e) { r = { ok: false, msg: e.message }; }
+        await dorme(450);
+        if (!r || !r.ok) {
+          if (tr) tr.className = 'erro'; if (st) st.textContent = '✕ recusado';
+          E.aviso = `${pn(it.n)} não foi gravado: ${esc((r && r.msg) || 'erro')}.`; E.ocupado = false; E.tudo = false; desenhar(); return false;
+        }
+        if (tr) { tr.className = 'ok'; tr.querySelector('td:nth-child(3)').textContent = fmt(it.n, cfg.ler(it.n) ?? it.v); }
+        if (st) st.textContent = '✓ gravado';
+        E.linhas[E.i + ':' + k] = 'ok';
+      }
+      E.feitas.add(E.i); E.ocupado = false; desenhar(); return true;
+    }
+    async function acao(a) {
+      if (a === 'fechar') { if (!E.ocupado) { E.tudo = false; dlg.close(); } return; }
+      if (E.ocupado) return;
+      if (a === 'voltar') { E.aviso = ''; if (E.fim) E.fim = false; else if (E.i > 0) E.i--; else if (cfg.modos && cfg.modos.length > 1) E.modo = null; desenhar(); return; }
+      if (a === 'gravar') { await gravarEtapa(); return; }
+      if (a === 'proxima') { E.aviso = ''; if (E.i < E.etapas.length - 1) E.i++; else E.fim = true; desenhar(); return; }
+      if (a === 'tudo') {
+        E.tudo = true;
+        while (E.tudo) {
+          if (!E.feitas.has(E.i)) { const ok = await gravarEtapa(); if (!ok) return; }
+          await dorme(700);
+          if (E.i < E.etapas.length - 1) { E.i++; desenhar(); await dorme(500); } else { E.fim = true; E.tudo = false; desenhar(); }
+        }
+      }
+    }
+    dlg.oncancel = (e) => { if (E.ocupado) e.preventDefault(); else E.tudo = false; };   // Esc não interrompe uma gravação
+    desenhar();
+    if (!dlg.open) dlg.showModal();
+  }
+  window.AssistenteCLP = { abrir };
+})();
+
+</script>
+<script>
+/* Assistente de comunicação com o CLP — etapas do SCA06 + ECO5 (EtherNet/IP).
+ * Dois modos: velocidade e torque (P0202 = 6, conexão de 4 palavras) ou posição pelo aplicativo
+ * Ladder DISCO_POS (P0202 = 4, conexão de 8 palavras). Usa assistente-clp.js e window.SCA06App. */
+(function () {
+  'use strict';
+  const A = () => window.SCA06App;
+  const ler = (n) => { const a = A(); return a && a.S.P ? a.S.P[n] : undefined; };
+
+  const OPC = {
+    0: { 0: 'bloqueada', 5: 'liberada' },
+    202: { 1: 'Modo Torque', 2: 'Modo Velocidade (HMI)', 3: 'Função Posicionador', 4: 'Ladder', 5: 'CANopen/DeviceNet/EtherCAT', 6: 'Profibus DP/Ethernet' },
+    662: { 0: 'Mostra alarme', 1: 'Gera falha', 2: 'Executa função STOP', 3: 'Desabilita drive' },
+    810: { 0: 'Parâmetros', 1: 'DHCP' },
+    849: { 0: 'Operação normal', 1: 'Atualiza configuração' },
+    1020: { 0: 'Para programa', 1: 'Executa programa' },
+  };
+  const MAPA = { 1100: 'comando', 1101: 'alvo/incremento', 1102: 'velocidade', 1103: 'tipo de movimento', 1110: 'status', 1111: 'posição atual', 1112: 'erro de posição', 1113: 'posicionamentos' };
+  const fmt = (n, v) => {
+    if (OPC[n] && OPC[n][v] !== undefined) return `${v} (${OPC[n][v]})`;
+    if ((n >= 820 && n <= 823) || (n >= 835 && n <= 838)) return v ? `${v} (${MAPA[v] || 'P' + v})` : '0 (nenhuma)';
+    return String(v);
+  };
+
+  function ipDoDrive() {
+    const a = A(); const ip = String((a && (a.S.deviceIp || (a.S.info && a.S.info.deviceIp))) || '');
+    return /^\d+\.\d+\.\d+\.\d+$/.test(ip) && ip !== '0.0.0.0' && !ip.startsWith('127.') ? ip : '192.168.100.22';
+  }
+
+  function etapas(modo) {
+    const ip = ipDoDrive(), o = ip.split('.').map(Number), pos = modo === 'pos';
+    const mudam = ['P0810', ...[192, 168, 0, 10].map((f, k) => (o[k] !== f ? 'P081' + (k + 1) : null)).filter(Boolean)].join(', ');
+    const extras = pos
+      ? [[820, 1110, 'Palavra de entrada #5', 'o drive manda o status do posicionamento (P1110)'], [821, 1111, 'Palavra de entrada #6', 'a posição atual (P1111)'],
+        [822, 1112, 'Palavra de entrada #7', 'o erro de posição (P1112)'], [823, 1113, 'Palavra de entrada #8', 'quantos movimentos terminaram (P1113)'],
+        [835, 1100, 'Palavra de saída #5', 'o CLP escreve o comando: habilita, pulso, STOP… (P1100)'], [836, 1101, 'Palavra de saída #6', 'o destino ou o incremento (P1101)'],
+        [837, 1102, 'Palavra de saída #7', 'a velocidade do movimento (P1102)'], [838, 1103, 'Palavra de saída #8', 'o tipo de movimento (P1103)']]
+      : [[820, 0, 'Palavra de entrada #5', 'sem palavra extra'], [821, 0, 'Palavra de entrada #6', 'sem palavra extra'], [822, 0, 'Palavra de entrada #7', 'sem palavra extra'],
+        [823, 0, 'Palavra de entrada #8', 'sem palavra extra'], [835, 0, 'Palavra de saída #5', 'sem palavra extra'], [836, 0, 'Palavra de saída #6', 'sem palavra extra'],
+        [837, 0, 'Palavra de saída #7', 'sem palavra extra'], [838, 0, 'Palavra de saída #8', 'sem palavra extra']];
+    return [
+      { titulo: 'Liberar a senha',
+        porque: 'O SCA06 protege os parâmetros com <b>senha</b>: sem ela, a HMI só mostra os valores e recusa alterações. Com <b>P0000 = 5</b> os parâmetros podem ser alterados.',
+        hmi: 'display em <b>P00000</b> → <b>P</b> → <b>▲ 5 vezes</b> → <b>P</b>.',
+        itens: [{ n: 0, v: 5, nome: 'Acesso aos parâmetros', faz: 'a senha: 5 libera a alteração' }] },
+      { titulo: 'Endereço IP',
+        porque: `O CLP encontra o drive pelo <b>endereço IP</b> do módulo ECO5. De fábrica ele vem em <b>DHCP</b>: pede um IP a um servidor da rede. Numa máquina, normalmente não há esse servidor e o CLP precisa saber o IP de antemão, por isso se usa <b>IP fixo, programado nos parâmetros</b>. Ele precisa estar na mesma rede do CLP e ser único: aqui, <b>${ip}</b> (o CODESYS é o 192.168.100.10).`,
+        hmi: `<b>▲</b> até <b>P00810</b> → 0 · P00811…P00814 = ${ip} · P00815 = 24. Partindo da fábrica (192.168.0.10), mudam: ${mudam}.`,
+        itens: [
+          { n: 810, v: 0, nome: 'Configuração do endereço IP', faz: 'de onde vem o IP: dos parâmetros ou de um servidor DHCP' },
+          { n: 811, v: o[0], nome: 'IP, 1º número', faz: `${o[0]}.x.x.x` },
+          { n: 812, v: o[1], nome: 'IP, 2º número', faz: `x.${o[1]}.x.x` },
+          { n: 813, v: o[2], nome: 'IP, 3º número', faz: `x.x.${o[2]}.x` },
+          { n: 814, v: o[3], nome: 'IP, 4º número', faz: `x.x.x.${o[3]}: o número do drive na rede` },
+          { n: 815, v: 24, nome: 'Máscara (CIDR)', faz: '24 = 255.255.255.0: a rede é a dos três primeiros números' },
+        ] },
+      pos
+        ? { titulo: 'Quem manda no drive',
+          porque: 'De fábrica, o SCA06 vem com <b>P0202 = 2</b>: a velocidade vem da própria HMI. Para posicionar pela rede, o manual Ethernet manda usar o <b>modo Ladder (P0202 = 4)</b>: um aplicativo de posicionamento roda dentro do drive (aqui, o DISCO_POS) e o CLP conversa com ele por parâmetros do usuário. O <b>P1020 = 1</b> mantém esse aplicativo em execução. O drive precisa estar desabilitado.',
+          hmi: '<b>P00202</b> → <b>P</b> → <b>P</b> → ▲ 2 vezes (00004) → <b>P</b> · <b>P01020</b>: confira que vale 1.',
+          itens: [
+            { n: 202, v: 4, nome: 'Modo de operação', faz: 'Ladder: o aplicativo de posicionamento comanda o motor' },
+            { n: 1020, v: 1, nome: 'Comando da PLC (Ladder)', faz: 'mantém o aplicativo em execução (já vem 1 de fábrica)' },
+          ] }
+        : { titulo: 'Quem manda no drive',
+          porque: 'De fábrica, o SCA06 vem com <b>P0202 = 2</b>: a velocidade vem da própria HMI. Com <b>P0202 = 6</b> ele passa a obedecer às <b>palavras de saída do CLP</b>: palavra de controle, referência de velocidade, referência de torque e modo de controle. Sem isso, o CLP conecta, mas o drive ignora o que ele manda. O drive precisa estar desabilitado.',
+          hmi: '<b>▲ 37 vezes</b> até <b>P00202</b> → <b>P</b> (mostra o valor) → <b>P</b> (o dígito pisca) → ▲ 4 vezes (00006) → <b>P</b>.',
+          itens: [{ n: 202, v: 6, nome: 'Modo de operação', faz: 'Profibus DP/Ethernet: quem manda é o CLP pela rede' }] },
+      { titulo: 'O que vai nas palavras de troca',
+        porque: pos
+          ? 'A conexão sempre troca <b>4 palavras fixas</b> em cada sentido. Para posicionar, o CLP precisa de mais 4 em cada sentido, que conversam com o aplicativo de posicionamento: nas <b>entradas</b> (P0820…P0823) o drive manda status, posição, erro e contador; nas <b>saídas</b> (P0835…P0838) o CLP escreve comando, destino, velocidade e tipo de movimento. A conexão no CLP passa a ter <b>8 palavras (16 bytes) em cada sentido</b>.'
+          : 'A conexão troca <b>4 palavras fixas</b> em cada sentido: no CLP, 8 bytes de entrada e 8 de saída. As palavras extras (P0820…P0823 e P0835…P0838) ficam <b>zeradas</b>: assim, se o drive já tinha sido configurado para posição, a conexão volta a ter 4 palavras.',
+        hmi: pos ? '<b>P00820</b> = 1110 (◄ ▲ ◄ ▲ ◄ ▲), P00821 = 1111, P00822 = 1112, P00823 = 1113 · <b>P00835</b> = 1100 (◄ ◄ ▲ ◄ ▲), P00836 = 1101, P00837 = 1102, P00838 = 1103.'
+          : 'confira <b>P00820</b>…P00823 e <b>P00835</b>…P00838 = 0 (de fábrica já vêm zerados).',
+        itens: extras.map(([n, v, nome, faz]) => ({ n, v, nome, faz })) },
+      { titulo: 'Segurança se a comunicação cair',
+        porque: 'Se o cabo romper ou o CLP parar, o que o drive faz? De fábrica (<b>P0662 = 0</b>) ele só mostra o alarme e o motor <b>continua girando</b> com a última referência: perigoso numa máquina. Com <b>P0662 = 3</b> ele <b>desabilita</b> o motor.',
+        hmi: '<b>▲</b> até <b>P00662</b> → <b>P</b> → ▲ 3 vezes → <b>P</b>.',
+        itens: [{ n: 662, v: 3, nome: 'Ação para erro de comunicação', faz: 'o que fazer se a rede cair: desabilitar o drive' }] },
+      { titulo: 'Aplicar',
+        porque: 'As mudanças de rede (o IP e as palavras de troca) só passam a valer depois de <b>aplicadas</b>, como no drive real. <b>P0849 = 1</b> reinicia a interface Ethernet: se o CLP estiver conectado, a conexão cai e volta. O P0849 volta sozinho para 0.',
+        hmi: '<b>▲</b> até <b>P00849</b> → <b>P</b> → ▲ → <b>P</b>.',
+        itens: [{ n: 849, v: 1, nome: 'Atualiza a configuração Ethernet', faz: 'aplica o IP e as palavras de troca' }] },
+    ];
+  }
+
+  function resumo(modo) {
+    const ip = ipDoDrive(), pos = modo === 'pos';
+    const l = (a, b) => `<tr><td>${a}</td><td>${b}</td></tr>`;
+    return `<p class="aclp-porque">O drive está pronto. No CODESYS, configure o SCA06 com estes valores (o passo a passo completo está no <b>Guia</b> do HUB, ${pos ? 'Parte 8' : 'Partes 2 e 3'}):</p>
+      <table><tbody>
+      ${l('Placa de rede do CLP (Ethernet)', '<b>SIM-HUB (192.168.100.10)</b>')}
+      ${l('Arquivo EDS', '<b>0355002B00060200_SCA06_SIM.eds</b> (no HUB: Dispositivos → Servomotor → Arquivos para o CLP)')}
+      ${l('IP do SCA06 (aba General)', `<b>${ip}</b>`)}
+      ${l('Conexão', pos ? '<b>Exclusive Owner, 8 palavras (posicao)</b>' : '<b>Exclusive Owner, 4 palavras (velocidade e torque)</b>')}
+      ${l('O→T e T→O', pos ? '<b>16 bytes</b> em cada sentido' : '<b>8 bytes</b> em cada sentido')}
+      ${l('RPI', '10 a 30 ms')}
+      ${pos ? l('Para habilitar', 'bit 0 da 5ª palavra de saída (P1100)') + l('O pulso', 'bit 1 da 5ª palavra de saída: cada subida 0 → 1 inicia um movimento')
+        : l('Para habilitar', 'bit 3 da 1ª palavra de saída (palavra de controle)') + l('Modo de controle (4ª palavra de saída)', '<b>1 = velocidade</b>, 0 = torque')}
+      </tbody></table>
+      <p class="aclp-porque">Como conferir aqui no simulador: o chip <b>P0202</b> do topo mostra <b>${pos ? 4 : 6}</b> e, quando o CODESYS entrar em RUN, o chip <b>P0801</b> fica em <b>Data Active</b>.</p>`;
+  }
+
+  function abrir() {
+    if (!A()) return;
+    window.AssistenteCLP.abrir({
+      titulo: 'Assistente de comunicação com o CLP',
+      subtitulo: 'SCA06 + ECO5 · EtherNet/IP · o mesmo que você faria parâmetro por parâmetro na HMI',
+      modos: [
+        { id: 'vel', nome: 'Velocidade e torque', texto: 'O CLP manda a velocidade (rpm) ou a força (A). Conexão de 4 palavras.' },
+        { id: 'pos', nome: 'Posição (absoluta e por pulso)', texto: 'O CLP manda para onde ir, ou um ângulo a cada pulso. Conexão de 8 palavras.' },
+      ],
+      etapas, ler, fmt, resumo,
+      gravar: async (n, v) => {
+        const r = (await A().req({ t: 'param', n, v, hmi: true })).result;
+        const MOT = { RO: 'parâmetro somente leitura', RANGE: 'valor fora da faixa', ENABLED: 'desabilite o drive antes (A00124)', NOEXIST: 'parâmetro inexistente', LOCKED: 'senha não liberada (P0000 = 5)' };
+        if (r && r.ok && A().buildParams) A().buildParams();
+        return r && r.ok ? { ok: true } : { ok: false, msg: MOT[r && r.code] || (r && r.code) || 'erro' };
+      },
+      bloqueio: () => {
+        const v = A().S.v || {};
+        if (v.enabled) return 'O drive está habilitado. Desabilite-o antes (pelo CLP ou pela aba Mestre): o modo de operação só muda com o drive desabilitado.';
+        return null;
+      },
+    });
+  }
+  document.querySelectorAll('[data-assistente]').forEach((b) => { b.addEventListener('click', abrir); });
+})();
+
+</script>
+<script>
+/* Divisórias arrastáveis entre os painéis (drive | painel do meio | bancada 3D).
+   Arraste para mudar a largura; dois cliques voltam ao padrão. As larguras ficam guardadas neste PC. */
+(() => {
+  const layout = document.querySelector('.layout');
+  if (!layout) return;
+  const largo = matchMedia('(min-width: 1200px)');
+  const medio = matchMedia('(min-width: 901px)');
+  const CHAVE = 'sca06.paineis';
+  const MIN = { front: 220, side: 340, stage: 360 };
+  let salvo = {};
+  try { salvo = JSON.parse(localStorage.getItem(CHAVE) || '{}'); } catch (_) { salvo = {}; }
+  const front = () => layout.querySelector('.front');
+  const side = () => layout.querySelector('.side');
+
+  const criar = (id, titulo) => {
+    const d = document.createElement('div');
+    d.className = 'splitter'; d.id = id; d.title = titulo;
+    d.setAttribute('role', 'separator'); d.setAttribute('aria-orientation', 'vertical');
+    layout.appendChild(d);
+    return d;
+  };
+  const spFront = criar('spFront', 'Arraste para mudar a largura do drive. Dois cliques voltam ao padrão.');
+  const spSide = criar('spSide', 'Arraste para mudar a largura do painel. Dois cliques voltam ao padrão.');
+
+  let pedido = 0;
+  const avisar3D = () => { cancelAnimationFrame(pedido); pedido = requestAnimationFrame(() => window.dispatchEvent(new Event('resize'))); };
+
+  function posicionar() {
+    if (!medio.matches) { spFront.hidden = true; spSide.hidden = true; return; }
+    const base = layout.getBoundingClientRect().left;
+    const s = side().getBoundingClientRect();
+    spSide.hidden = false;
+    spSide.style.left = (s.right - base) + 'px';
+    if (largo.matches) {
+      spFront.hidden = false;
+      spFront.style.left = (front().getBoundingClientRect().right - base) + 'px';
+    } else spFront.hidden = true;
+  }
+  function aplicar() {
+    if (salvo.front) layout.style.setProperty('--col-front', salvo.front + 'px'); else layout.style.removeProperty('--col-front');
+    if (salvo.side) layout.style.setProperty('--col-side', salvo.side + 'px'); else layout.style.removeProperty('--col-side');
+    requestAnimationFrame(() => { posicionar(); avisar3D(); });
+  }
+  const guardar = () => { try { localStorage.setItem(CHAVE, JSON.stringify(salvo)); } catch (_) { /* sem armazenamento: só nesta sessão */ } };
+
+  function arrastar(sp, qual) {
+    sp.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      sp.setPointerCapture(e.pointerId);
+      sp.classList.add('drag'); document.body.classList.add('arrastando');
+      const total = layout.getBoundingClientRect();
+      const mover = (ev) => {
+        if (qual === 'front') {
+          const f = front().getBoundingClientRect();
+          const maxF = total.width - side().getBoundingClientRect().width - MIN.stage;
+          salvo.front = Math.round(Math.max(MIN.front, Math.min(maxF, ev.clientX - f.left)));
+          layout.style.setProperty('--col-front', salvo.front + 'px');
+        } else {
+          const s = side().getBoundingClientRect();
+          const antes = largo.matches ? front().getBoundingClientRect().width : 0;
+          const maxS = total.width - antes - MIN.stage;
+          salvo.side = Math.round(Math.max(MIN.side, Math.min(maxS, ev.clientX - s.left)));
+          layout.style.setProperty('--col-side', salvo.side + 'px');
+        }
+        posicionar(); avisar3D();
+      };
+      const soltar = () => {
+        sp.classList.remove('drag'); document.body.classList.remove('arrastando');
+        sp.removeEventListener('pointermove', mover); sp.removeEventListener('pointerup', soltar); sp.removeEventListener('pointercancel', soltar);
+        guardar();
+      };
+      sp.addEventListener('pointermove', mover); sp.addEventListener('pointerup', soltar); sp.addEventListener('pointercancel', soltar);
+    });
+    sp.addEventListener('dblclick', () => { delete salvo[qual]; guardar(); aplicar(); });
+  }
+  arrastar(spFront, 'front');
+  arrastar(spSide, 'side');
+
+  window.addEventListener('resize', posicionar);
+  largo.addEventListener('change', aplicar);
+  medio.addEventListener('change', aplicar);
+  aplicar();
+})();
+
+</script>
 </body>
 </html>

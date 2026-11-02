@@ -52,7 +52,7 @@
     async request(m) {
       const d = this.drive, sc = this.sc;
       const needLink = () => { if (!this.online()) throw new Error('Timeout (sem resposta do adapter) — cabo desconectado ou interface reiniciando'); };
-      if (m.t === 'param') return { result: d.write(m.n, m.v, 'ui') };
+      if (m.t === 'param') { const r = d.write(m.n, m.v, 'ui'); if (r.ok && m.hmi) d.hmiFlash(m.n); return { result: r }; }
       if (m.t === 'bench') { d.benchSet(m.key, !!m.value); return {}; }
       if (m.t === 'hmi') { d.hmiKey(m.key); return {}; }
       if (m.t !== 'scanner') return {};

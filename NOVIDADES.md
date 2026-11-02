@@ -2,6 +2,10 @@
 
 As notas de cada versão aparecem no HUB quando a atualização é oferecida. Escreva a seção da versão nova antes do push.
 
+## 1.7.1
+- Inversor CFW500 e Servomotor SCA06: novo "Assistente de comunicação com o CLP" (botão no topo de cada simulador). Ele configura o equipamento para a rede EtherNet/IP em etapas, na ordem de campo (IP, quem manda, palavras de troca, segurança e aplicar), explicando cada parâmetro, e a HMI do equipamento mostra cada gravação. No fim, mostra o que configurar no CLP.
+- O assistente substitui os botões automáticos anteriores. Os guias explicam o assistente e o caminho parâmetro por parâmetro, lado a lado.
+
 ## 1.7.0
 - Servomotor SCA06: os três modos de controle pela rede, velocidade, torque e posição. Na posição, o CLP manda o ângulo de destino ou faz o disco andar um ângulo a cada pulso.
 - SCA06: botões "Preparar: velocidade e torque pela rede" e "Preparar: posição pela rede", na aba Parâmetros.

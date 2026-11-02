@@ -103,16 +103,22 @@ O simulador sai **de fábrica**, como um drive novo: com **P0202 = 2**, ou seja,
 
 **Sobre o P0662:** de fábrica ele vale **0** (só mostra alarme). Nesse caso, se a comunicação cair, o motor **continua girando** com a última referência. Numa máquina real isso é perigoso, por isso a recomendação de usar 3 (desabilita) ou 2 (função STOP).
 
-#### Caminho A: automático, um clique
+#### Caminho A: pelo assistente de comunicação
 
-1. No simulador, abra a aba **Parâmetros**.
-2. No topo, clique em **Preparar: velocidade e torque pela rede**.
-3. Confirme com **OK**.
-4. Aparece em verde: **"Pronto para velocidade e torque: P0202 = 6, conexão de 4 palavras"**, e o chip **P0202** do topo passa a mostrar **6**.
+O assistente faz o mesmo que você faria na HMI, **na mesma ordem e explicando cada parâmetro**.
 
-Além dos 3 parâmetros da tabela, o botão zera as palavras extras (P0820…P0823 e P0835…P0838) e aplica com P0849 = 1. Isso só importa se o drive estava configurado para posição (Parte 8): assim a conexão volta a ter 4 palavras.
+1. Clique em **Comunicação com o CLP**, no topo da tela do simulador (o mesmo botão aparece na aba **Parâmetros**).
+2. Escolha o que vai comandar: **Velocidade e torque** (conexão de 4 palavras) ou **Posição** (conexão de 8 palavras, Parte 8).
+3. O assistente mostra **6 etapas**: Liberar a senha → Endereço IP → Quem manda no drive → O que vai nas palavras de troca → Segurança se a comunicação cair → Aplicar.
+4. Em cada etapa você vê **para que ela serve**, uma tabela com cada parâmetro (**o que faz**, valor **atual** e valor **novo**) e **como seria na HMI**.
+5. Clique em **Gravar esta etapa**. Os parâmetros são gravados um por um: cada linha fica com **✓ gravado** (ou **✓ já estava assim**), e o **display da HMI do drive mostra o parâmetro** que acabou de ser gravado (primeiro o número, depois o valor). Depois, **Próxima etapa**.
+6. No fim, o assistente mostra **o que configurar no CLP**: IP, arquivo EDS, conexão, tamanhos e como habilitar.
 
-Se aparecer em vermelho "desabilite o drive antes", o drive está habilitado: desabilite e clique de novo.
+Quer só testar o CODESYS? **Fazer tudo** grava a etapa atual e as seguintes, uma depois da outra.
+
+Se o drive estiver habilitado, o assistente avisa e não grava: o modo de operação só muda com o drive desabilitado.
+
+O assistente também configura o **IP fixo** do drive (P0810 = 0, P0811…P0815), que de fábrica vem em DHCP. Os caminhos B e C abaixo cobrem só os 3 parâmetros essenciais da tabela; para o IP pela HMI, a técnica é a mesma da Parte 8.2 (valores de vários dígitos com ◄).
 
 #### Caminho B: pela HMI do drive, como na vida real
 
@@ -175,7 +181,7 @@ Se aparecer "Desabilite o drive antes (A00124)", o drive está habilitado.
 
 #### Voltar ao padrão de fábrica (para treinar de novo)
 
-- Botão **Restaurar padrão de fábrica**, no topo da aba **Parâmetros**; ou
+- Botão **Restaurar padrão de fábrica**, no topo da aba **Parâmetros** (desfaz também tudo o que o assistente gravou); ou
 - pela HMI, como no drive real: libere a senha (**P0000 = 5**), vá até o **P00204** (1 toque depois do P00202), aperte **P** duas vezes, **▲ 5 vezes** e **P**. O display pisca e o drive volta ao padrão: P0202 = 2.
 
 ## Parte 2: No CODESYS, o projeto
@@ -426,10 +432,13 @@ O que precisa mudar (o drive **desabilitado**):
 | **P0662** | **3** | se a comunicação cair: desabilita o drive |
 | **P0849** | **1** | aplica a configuração de rede (volta sozinho para 0) |
 
-#### Caminho A: automático, um clique
+#### Caminho A: pelo assistente de comunicação
 
-1. Aba **Parâmetros** do simulador → **Preparar: posição pela rede** → **OK**.
-2. Aparece em verde: **"Pronto para posição: P0202 = 4, conexão de 8 palavras"**.
+Clique em **Comunicação com o CLP** (topo da tela) e escolha **Posição (absoluta e por pulso)**. As 6 etapas são as da Parte 1.3, e nesta escolha:
+
+- a etapa **Quem manda no drive** grava **P0202 = 4** e confere o **P1020 = 1**;
+- a etapa **O que vai nas palavras de troca** grava o mapeamento das 8 palavras (P0820…P0823 = 1110…1113 e P0835…P0838 = 1100…1103), explicando o que cada palavra carrega;
+- o resumo final mostra a conexão **Exclusive Owner, 8 palavras (posicao)**, como habilitar e como dar o pulso.
 
 #### Caminho B: pela HMI do drive
 
@@ -562,7 +571,7 @@ O pulso tem 200 ms, e não um ciclo só, de propósito: a comunicação manda os
 
 ### 8.7 Voltar para velocidade ou torque
 
-1. Aba **Parâmetros** → **Preparar: velocidade e torque pela rede** (ou, pelos outros caminhos: P0202 = 6, P0820 e P0835 = 0 e P0849 = 1).
+1. **Comunicação com o CLP** → **Velocidade e torque** (ou, pelos outros caminhos: P0202 = 6, P0820…P0823 e P0835…P0838 = 0 e P0849 = 1).
 2. No CODESYS, troque a conexão de volta para **Exclusive Owner, 4 palavras (velocidade e torque)**.
 
 ## Extra: As missões da bancada

@@ -756,6 +756,12 @@
         const c = cells('      '); c[5] = { ch: H.busyChar, dp: false, blink: true }; if (H.busyChar === '8') return cells('888888', [0, 1, 2, 3, 4, 5]);
         return c;
       }
+      if (H.flash && this.now < H.flash.until) {           // gravação do assistente: número do parâmetro, depois o valor
+        const fn = H.flash.n, fd = DEF_MAP.get(fn);
+        if (H.flash.until - this.now > 0.8) return cells('P' + pad5(fn));
+        const fv = this.p.get(fn), fa = String(Math.abs(fv)).padStart(5, '0').slice(-5);
+        const fc = cells((fv < 0 ? '-' : ' ') + fa); if (fd.dec > 0) fc[5 - fd.dec].dp = true; return fc;
+      }
       if (this.stoActive()) return cells('   Sto');
       // nova falha/alarme → mensagem (some com qualquer tecla)
       if (this.fault && this.fault !== H.ackFault) H.overlay = 'F';
@@ -774,6 +780,8 @@
     }
     hmiLeds() { return { usb: false, power: this.powerOK(), fault: !!this.fault }; }
     hmiParam() { return PARAM_LIST[this.hmi.idx]; }
+    /** O assistente de comunicação gravou um parâmetro: o display mostra o número e o valor por um instante. */
+    hmiFlash(n) { if (DEF_MAP.has(n)) this.hmi.flash = { n, until: this.now + 1.6 }; }
 
     // ------------------------------------------------------------- snapshot p/ interface
     view() {

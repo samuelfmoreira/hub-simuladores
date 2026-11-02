@@ -53,6 +53,8 @@ const pedir = (evento, ...args) => new Promise((res) => {
 
 const meta = { params: [], map: new Map(), falhas: {}, alarmes: {} };
 let ultimo = null;
+// o assistente de comunicação (js/assistente-cfw500.js) grava parâmetros e lê o estado por aqui
+window.CFW = { pedir: (...a) => pedir(...a), estado: () => ultimo };
 let abaAtiva = 'rede';
 
 const NOMES_P0801 = ['Setup', 'Init', 'Wait Comm', 'Idle', 'Data Active', 'Error', 'Reservado', 'Exception', 'Erro de Acesso'];

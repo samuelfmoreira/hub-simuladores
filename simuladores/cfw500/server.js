@@ -165,6 +165,12 @@ io.on('connection', (sock) => {
   sock.on('di', ({ i, v }) => { if (i >= 0 && i < 4) drive.di[i] = !!v; });   // DI5/DI6 = sensores da esteira
   sock.on('ai1', (v) => { drive.ai1Volts = Math.max(0, Math.min(10, +v || 0)); });
   sock.on('param', ({ n, valor }, cb) => { const r = drive.escrever(+n, Math.round(+valor), 'ui'); if (cb) cb(r); });
+  // gravação feita pelo assistente de comunicação: a HMI do inversor mostra o parâmetro gravado
+  sock.on('paramAssistente', ({ n, valor }, cb) => {
+    const r = drive.escrever(+n, Math.round(+valor), 'ui');
+    if (!r) { hmi.mostrarEscrita(+n); evento('param', `Assistente: P${String(n).padStart(4, '0')} = ${valor}`); }
+    if (cb) cb(r ? { ok: false, msg: r.msg } : { ok: true });
+  });
   sock.on('energia', (lig) => { if (lig && !drive.ligado) drive.ligar(); else if (!lig && drive.ligado) drive.desligar(); });
   sock.on('injecao', ({ nome, v }) => {
     if (nome === 'rede') drive.redeVac = +v;

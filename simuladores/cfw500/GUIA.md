@@ -65,10 +65,19 @@ Antes de o CLP conversar com o inversor, o inversor precisa de um **endereço IP
 
 Motor parado: parâmetros de configuração não mudam com o motor girando.
 
-#### Caminho A: automático
+#### Caminho A: pelo assistente de comunicação
 
-- **Só o IP:** aba **Rede EtherNet/IP** → quadro **Endereço IP do inversor** → escolha **192.168.100.20** na lista (ou digite), máscara **24** → **Aplicar IP**. O simulador grava P0810 = 0, P0811…P0815 e P0849 = 1 por você.
-- **Tudo de uma vez:** o botão **Preparar para o tutorial (CODESYS)** da seção 1.3 também grava o IP.
+O assistente faz o mesmo que você faria na HMI, **na mesma ordem e explicando cada parâmetro**. Ele configura o IP (esta seção) e o resto da comunicação (seção 1.3) numa sequência só.
+
+1. Clique em **Comunicação com o CLP**, no topo da tela do simulador (o mesmo botão aparece na aba Rede EtherNet/IP e na aba CLP virtual).
+2. O assistente mostra **5 etapas**: Endereço IP → Quem manda no inversor → O que vai nas palavras de troca → Segurança se a comunicação cair → Aplicar.
+3. Em cada etapa você vê **para que ela serve**, uma tabela com cada parâmetro (**o que faz**, valor **atual** e valor **novo**) e **como seria na HMI**.
+4. Clique em **Gravar esta etapa**. Os parâmetros são gravados um por um: cada linha fica com **✓ gravado** (ou **✓ já estava assim**, quando o valor de fábrica já é o certo), e o **display da HMI do inversor mostra o parâmetro** que acabou de ser gravado. Depois, **Próxima etapa**.
+5. No fim, o assistente mostra **o que configurar no CLP**: IP, arquivo EDS, conexão e tamanhos.
+
+Quer só testar o CODESYS? **Fazer tudo** grava a etapa atual e as seguintes, uma depois da outra, com a mesma explicação na tela.
+
+Se o motor estiver girando, o assistente avisa e não grava: parâmetros de configuração só mudam com o motor parado.
 
 #### Caminho B: pela HMI do inversor
 
@@ -113,14 +122,9 @@ O simulador sai **de fábrica**, como um inversor novo: comandado pela própria 
 
 Antes de qualquer caminho: **motor parado**. Parâmetros de configuração não mudam com o motor girando (a HMI mostra **CONF**).
 
-#### Caminho A: automático, um clique
+#### Caminho A: pelo assistente de comunicação
 
-1. No simulador, abra a aba **CLP virtual**.
-2. Clique em **Preparar para o tutorial (CODESYS)**.
-3. Confira a lista e clique em **Aplicar**.
-4. Aparece **"Pronto para o tutorial"** com os parâmetros gravados: os 9 da tabela e também o **IP fixo** da seção 1.2.
-
-O botão **Parametrizar inversor para comando via rede**, ao lado, grava só os 7 primeiros (sem a corrente na 3ª palavra). Ele serve para os exercícios com o CLP virtual.
+É o mesmo assistente da seção 1.2: as etapas **2 a 5** (Quem manda no inversor, O que vai nas palavras de troca, Segurança se a comunicação cair e Aplicar) gravam exatamente os parâmetros da tabela acima, explicando cada um. Se você já fez o IP pelo assistente, é só seguir com **Próxima etapa**.
 
 #### Caminho B: pela HMI do inversor, como na vida real
 
@@ -181,7 +185,7 @@ O botão **Parametrizar inversor para comando via rede**, ao lado, grava só os 
 
 #### Voltar ao padrão de fábrica (para treinar de novo)
 
-- Botão **Restaurar padrão de fábrica**, na aba **CLP virtual** ou na aba **Parâmetros**; ou
+- Botão **Restaurar padrão de fábrica**, na aba **CLP virtual** ou na aba **Parâmetros** (desfaz também o IP e tudo o que o assistente gravou); ou
 - pela HMI, como no inversor real: grupo **PARAM**, segure **▲** até o **P0204** e grave **5** (carrega o padrão WEG de 60 Hz).
 
 ### 1.4 Tags da IHM (aba IHM Modbus)

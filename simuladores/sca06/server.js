@@ -105,7 +105,7 @@ wss.on('connection', (ws) => {
     let m; try { m = JSON.parse(raw); } catch (_) { return; }
     const reply = (o) => ws.readyState === 1 && ws.send(JSON.stringify(Object.assign({ t: 'reply', id: m.id }, o)));
     try {
-      if (m.t === 'param') reply({ result: drive.write(m.n, m.v, 'ui') });
+      if (m.t === 'param') { const r = drive.write(m.n, m.v, 'ui'); if (r.ok && m.hmi) drive.hmiFlash(m.n); reply({ result: r }); }
       else if (m.t === 'bench') drive.benchSet(m.key, !!m.value);
       else if (m.t === 'hmi') drive.hmiKey(m.key);
       else if (m.t === 'scanner') reply({ result: await scannerOp(m) });

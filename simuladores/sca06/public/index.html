@@ -20,6 +20,7 @@
   <div class="ind num opt"><span class="k">Iq</span><b id="indIq">0,0</b><span class="u">A</span></div>
   <div class="ind wide" id="indMsg"></div>
   <div class="ind src" id="indSrc" title="Origem dos dados"></div>
+  <button class="assist-btn" data-assistente title="Configura o drive para conversar com o CLP pela EtherNet/IP, etapa por etapa">Comunicação com o CLP</button>
 </header>
 
 <main class="layout">
@@ -127,8 +128,8 @@
     <!-- ===================== PARÂMETROS ===================== -->
     <div class="pane" data-pane="params" hidden>
       <div class="preset-rede">
-        <div class="row"><button id="pPresetEip">Preparar: velocidade e torque pela rede</button><button id="pPresetPos">Preparar: posição pela rede</button><button id="pFabrica" class="small">Restaurar padrão de fábrica</button></div>
-        <p class="hint">O drive sai de fábrica comandado pela HMI. Os botões gravam de uma vez o que cada modo precisa, como você faria parâmetro por parâmetro (nesta lista ou pela HMI do drive; o passo a passo está no Guia). <b>Velocidade e torque</b>: P0202 = 6, conexão de 4 palavras. <b>Posição</b>: P0202 = 4 (aplicativo Ladder de posicionamento), conexão de 8 palavras. O drive precisa estar desabilitado.</p>
+        <div class="row"><button data-assistente>Assistente de comunicação com o CLP</button><button id="pFabrica" class="small">Restaurar padrão de fábrica</button></div>
+        <p class="hint">O drive sai de fábrica comandado pela HMI. O <b>assistente</b> configura a comunicação com o CLP pela EtherNet/IP em 6 etapas (senha, IP, quem manda, palavras de troca, segurança e aplicar), para <b>velocidade e torque</b> ou para <b>posição</b>, explicando cada parâmetro, e mostra no fim o que configurar no CLP. Prefere fazer como na vida real? Altere um por um nesta lista ou pela HMI do drive: o passo a passo está no Guia.</p>
         <p class="hint" id="pPresetRes" aria-live="polite"></p>
       </div>
       <div class="row"><input type="search" id="pSearch" placeholder="Buscar: 202, rampa, Ethernet, ladder…" aria-label="Buscar parâmetro">
@@ -183,6 +184,8 @@
 <script src="drive2d.js"></script>
 <script src="demo.js"></script>
 <script src="app.js"></script>
+<script src="assistente-clp.js"></script>
+<script src="assistente-sca06.js"></script>
 <script src="divisorias.js"></script>
 </body>
 </html>

@@ -124,7 +124,11 @@ class HMI {
   }
 
   /** Autorrepetição das setas mantidas pressionadas (acelera com o tempo) */
+  /** O assistente de comunicação gravou um parâmetro: o display mostra o número e o valor por um instante. */
+  mostrarEscrita(n) { if (MAP.has(n)) this.escrita = { n, t: 1.6 }; }
+
   passo(dt) {
+    if (this.escrita) { this.escrita.t -= dt; if (this.escrita.t <= 0) this.escrita = null; }
     if (this.tRef > 0) this.tRef -= dt;
     if (this.msg) { this.msg.t -= dt; if (this.msg.t <= 0) this.msg = null; }
     const r = this.repeticao;
@@ -210,6 +214,12 @@ class HMI {
     } else if (d.get(48)) {
       const t = 'A' + String(d.get(48)).padStart(4, '0');
       if (this.alarmeVisto !== d.get(48)) { est.principal = t; est.unidade = ''; est.piscar = true; } else est.secundario = t;
+    }
+    if (this.escrita && d.ligado && !(d.tBoot > 0)) {
+      const n = this.escrita.n, p = MAP.get(n), v = d.get(n);
+      est.menu = (p.g && p.g[0]) || 'PARAM'; est.principal = this.formatarValor(n, v); est.unidade = p.un || '';
+      est.secundario = pn(n); est.piscar = false; est.barra = 0;
+      if (p.op && p.op[v] !== undefined) est.opcao = p.op[v];
     }
     if (this.msg) { est.secundario = this.msg.txt; est.msgDet = this.msg.det; }
     // texto auxiliar (fora do LCD) para ajudar o aluno

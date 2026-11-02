@@ -24,6 +24,7 @@
     <span class="chip" id="chipLocRem" title="Situação de comando">—</span>
     <span class="chip" id="chipIp" title="IP onde o adapter responde">IP —</span>
   </div>
+  <button class="btn-assistente" data-assistente title="Configura o inversor para conversar com o CLP pela EtherNet/IP, etapa por etapa">Comunicação com o CLP</button>
   <button class="btn-energia" id="btnEnergia" aria-pressed="true" title="Ligar/desligar a alimentação do inversor">Desenergizar</button>
 </header>
 
@@ -149,8 +150,10 @@
     </div>
     <div class="caixa">
       <h3>Endereço IP do inversor</h3>
-      <p class="nota">Igual ao CFW500 real: <b>P0810 = 0</b> (Parâmetros), IP em <b>P0811…P0814</b>, máscara em <b>P0815</b> e <b>P0849 = 1</b> para aplicar (ou desenergizar/energizar). No simulador o IP precisa existir neste computador. Com P0810 = DHCP o inversor usa o IP de inicialização.</p>
       <p class="estado-sc" id="ipAtual">—</p>
+      <p class="nota">Igual ao CFW500 real: <b>P0810 = 0</b> (Parâmetros), IP em <b>P0811…P0814</b>, máscara em <b>P0815</b> e <b>P0849 = 1</b> para aplicar. De fábrica o inversor vem em DHCP (P0810 = 1): no simulador ele usa o IP de inicialização. Configure pela HMI, pela aba Parâmetros ou pelo assistente, que explica cada etapa.</p>
+      <div class="botoes"><button data-assistente>Abrir o assistente de comunicação com o CLP</button></div>
+      <div hidden>
       <div class="form-ip">
         <label class="ip-lista" for="ipLista">IP deste computador</label>
         <div class="ip-linha">
@@ -166,6 +169,7 @@
         <button id="ipPadrao" class="sec">Voltar ao IP de inicialização</button>
       </div>
       <p class="nota" id="ipMsg"></p>
+      </div>
     </div>
     <div class="caixa">
       <h3>Identidade do adapter</h3>
@@ -273,12 +277,12 @@
       </div>
       <p class="estado-sc" id="scEstado">Desconectado.</p>
       <div class="botoes">
-        <button id="btnPresetTutorial">Preparar para o tutorial (CODESYS)</button>
-        <button id="btnPreset" class="sec">Parametrizar inversor para comando via rede</button>
+        <button data-assistente>Assistente de comunicação com o CLP</button>
+        <button id="btnPresetTutorial" hidden>Preparar para o tutorial (CODESYS)</button>
+        <button id="btnPreset" class="sec" hidden>Parametrizar inversor para comando via rede</button>
         <button id="btnFabrica" class="sec perigo">Restaurar padrão de fábrica</button>
       </div>
-      <p class="nota"><b>Preparar para o tutorial</b> grava tudo o que o projeto do Guia precisa: os parâmetros de rede abaixo, mais P0820 = 3 (corrente na 3ª palavra), o IP fixo por parâmetro (P0810 = 0, P0811…P0815) e P0849 = 1. Prefere fazer como na vida real? Altere um por um pela HMI do inversor ou pela aba Parâmetros: o passo a passo está no Guia.</p>
-      <p class="nota">O preset de rede aplica P0220 = 1, P0222 = 11, P0226 = 9, P0227 = 4, P0228 = 5, P0105 = 5 e P0313 = 1 (motor parado). Para desfazer: <b>Restaurar padrão de fábrica</b> ou, na HMI do inversor, <b>P0204 = 5</b> (padrão WEG 60 Hz).</p>
+      <p class="nota">O <b>assistente</b> configura o inversor para conversar com o CLP pela EtherNet/IP em 5 etapas (IP, quem manda, palavras de troca, segurança e aplicar), explicando cada parâmetro, e mostra no fim o que configurar no CLP. Prefere fazer como na vida real? Altere parâmetro por parâmetro pela HMI ou pela aba Parâmetros: o passo a passo está no Guia.</p>
     </div>
     <div class="caixa">
       <h3>Palavra de controle P0684</h3>
@@ -379,5 +383,7 @@
 
 <script src="/socket.io/socket.io.js"></script>
 <script type="module" src="js/app.js"></script>
+<script src="js/assistente-clp.js"></script>
+<script src="js/assistente-cfw500.js"></script>
 </body>
 </html>

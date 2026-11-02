@@ -359,3 +359,7 @@ table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nu
 .ip-linha select { flex: 1; text-overflow: ellipsis; }
 button.icone { width: 2.2rem; height: 2.2rem; padding: 0; flex: none; font-size: 1.1rem; line-height: 1; }
 @media (max-width: 420px) { .form-ip { grid-template-columns: 1fr; } }
+
+/* botão do assistente de comunicação com o CLP (topo) */
+.btn-assistente { margin-left: auto; margin-right: 8px; background: #2E6FB0; color: #fff; border: 1px solid #2E6FB0; border-radius: 6px; padding: 7px 12px; font-weight: 600; cursor: pointer; }
+.btn-assistente:hover { filter: brightness(1.1); }
