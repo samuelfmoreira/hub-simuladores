@@ -175,7 +175,13 @@ const a = process.argv.slice(inicio);
 
 if (a[0] === '--rodar' && a[1]) rodar(a[1], a.slice(2));
 else if (a[0] && /\.(c?js)$/i.test(a[0]) && fs.existsSync(a[0])) rodar(a[0], a.slice(1));
-else if (fs.existsSync(path.join(base, 'hub', 'server.js'))) rodar(path.join(base, 'hub', 'server.js'), a);
+else if (fs.existsSync(path.join(base, 'hub', 'server.js'))) {
+  if (WIN && !a.includes('--oculto') && !a.includes('--com-janela')) {
+    // abre o motor do HUB sem a janela preta e encerra este processo (a tela do HUB abre sozinha)
+    spawn(process.execPath, ['--oculto', ...a], { cwd: base, detached: true, stdio: 'ignore', windowsHide: true }).unref();
+    process.exit(0);
+  } else rodar(path.join(base, 'hub', 'server.js'), a);
+}
 else {
   const pacote = pacoteEmbutido();
   if (!pacote) { console.error('Este executável não tem o HUB embutido nem a pasta hub ao lado.'); process.exit(1); }

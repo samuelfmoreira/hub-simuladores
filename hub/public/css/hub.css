@@ -338,3 +338,6 @@ dialog .dlg-corpo.texto { border: 0; border-radius: 0; }
 .tema-btn { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid var(--borda); background: var(--chapa); color: var(--grafite); cursor: pointer; padding: 0; }
 .tema-btn:hover { background: var(--chapa-2); }
 .tema-btn svg { width: 18px; height: 18px; }
+
+/* imagens dos guias */
+.md-img { display: block; max-width: 100%; height: auto; margin: 14px 0; border: 1px solid var(--borda); border-radius: var(--raio); }

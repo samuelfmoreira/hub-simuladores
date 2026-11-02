@@ -52,7 +52,7 @@
     "modbus": 502
   },
   "arquivos": {
-    "guia": "README.md",
+    "guia": "GUIA.md",
     "eds": [
       "docs/0355002B00060200_SCA06_SIM_4x4.eds"
     ],
@@ -70,6 +70,6 @@
   ],
   "cor": "#5B4FA8",
   "icone": "icone.png",
-  "versao": "1.0.3",
+  "versao": "1.0.4",
   "pacote": "sca06-ethernetip-sim"
 }

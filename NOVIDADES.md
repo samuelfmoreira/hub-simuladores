@@ -2,6 +2,16 @@
 
 As notas de cada versão aparecem no HUB quando a atualização é oferecida. Escreva a seção da versão nova antes do push.
 
+## 1.6.1
+- Guia novo do Inversor CFW500: tutorial completo IHM Modbus + CODESYS + EtherNet/IP, com os prints do projeto funcionando.
+- Guia novo do Servomotor SCA06: tutorial completo CODESYS + EtherNet/IP, com mapa de dados, Ladder, ST, roteiro de teste, problemas comuns e controle por torque.
+- Os guias dos simuladores agora mostram imagens.
+
+## 1.6.0
+- A janela preta do HUB não fica mais aberta: o HUB roda por trás e você vê só a tela dele.
+- Ao fechar a janela do HUB, ele se encerra sozinho em 20 segundos (se houver simulador aberto, espera o simulador ser parado).
+- Novo botão "Sair", no topo, para encerrar o HUB e os simuladores de uma vez.
+
 ## 1.5.10
 - "Procurar atualização" agora sempre responde: mostra "Procurando…" durante a busca e, depois, "Você já está na versão mais recente" com o horário, a mensagem de atualização ou o motivo do erro.
 

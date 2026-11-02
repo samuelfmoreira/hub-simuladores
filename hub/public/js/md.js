@@ -1,6 +1,6 @@
 /* Markdown simples para as aulas e os guias (funciona offline).
    Suporta: títulos, parágrafos, listas, tabelas, blocos de código, citações, regra,
-   negrito, itálico, código, links e o bloco ":::widget nome" das aulas. */
+   negrito, itálico, código, links, imagens internas e o bloco ":::widget nome" das aulas. */
 (function () {
   'use strict';
   const esc = (t) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -9,6 +9,7 @@
     const codigos = [];
     t = t.replace(/`([^`]+)`/g, (_, c) => { codigos.push(c); return `\u0000${codigos.length - 1}\u0000`; });
     t = esc(t)
+      .replace(/!\[([^\]]*)\]\((\/[^)\s]+)\)/g, (_, alt, url) => `<img class="md-img" src="${url}" alt="${alt}" loading="lazy">`)
       .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
       .replace(/(^|[^*\w])\*([^*\n]+)\*(?!\w)/g, '$1<em>$2</em>')
       .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, txt, url) => {

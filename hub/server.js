@@ -36,6 +36,21 @@ const AULAS = path.join(__dirname, 'aprender');
 const arg = (n) => { const i = process.argv.indexOf(`--${n}`); return i > 0 ? process.argv[i + 1] : undefined; };
 
 const cfg = config.ler();
+// motor escondido (versão do usuário no Windows): as mensagens vão para hub.log, na pasta do HUB
+const OCULTO = process.argv.includes('--oculto');
+// versão do usuário no Windows aberta com a janela preta (atalho ou .exe antigo): reabre escondido e fecha esta.
+// As atualizações não trocam o .exe, então quem só atualizou também passa a abrir sem a janela.
+if (!OCULTO && process.platform === 'win32' && MODO === 'usuario' && runtime.sea && !process.argv.includes('--com-janela')) {
+  spawn(process.execPath, [...process.argv.slice(2), '--oculto'], { cwd: config.RAIZ, detached: true, stdio: 'ignore', windowsHide: true }).unref();
+  process.exit(0);
+}
+if (OCULTO) {
+  const arqLog = path.join(config.RAIZ, 'hub.log');
+  try { if (fs.statSync(arqLog).size > 2 * 1024 * 1024) fs.renameSync(arqLog, `${arqLog}.1`); } catch (_) { /* ainda não existe */ }
+  const fluxo = fs.createWriteStream(arqLog, { flags: 'a' });
+  const escrever = (...x) => fluxo.write(`[${new Date().toLocaleString('pt-BR')}] ${x.map((v) => (typeof v === 'string' ? v : String(v))).join(' ')}\n`);
+  console.log = escrever; console.error = escrever; console.warn = escrever;
+}
 if (arg('porta')) cfg.hubPorta = Number(arg('porta'));
 // o HUB do desenvolvedor usa outra porta, para poder ficar aberto junto com o HUB instalado pelo .exe
 else if (MODO === 'desenvolvedor' && cfg.hubPorta === 4000) cfg.hubPorta = 4010;
@@ -81,6 +96,7 @@ function listarAulas() {
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon',
+  '.webp': 'image/webp', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif',
   '.woff2': 'font/woff2', '.md': 'text/markdown; charset=utf-8', '.eds': 'text/plain; charset=utf-8', '.txt': 'text/plain; charset=utf-8',
 };
 
@@ -123,8 +139,8 @@ async function rotear(req, res) {
   if (p === '/api/eventos') {
     res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' });
     res.write('retry: 2000\n\n');
-    clientes.add(res);
-    req.on('close', () => clientes.delete(res));
+    clientes.add(res); avaliarSaida();
+    req.on('close', () => { clientes.delete(res); avaliarSaida(); });
     return;
   }
 
@@ -187,7 +203,17 @@ async function rotear(req, res) {
     if (acao === 'guia' && m === 'GET') {
       const arq = ficha.arquivos.guia && dentro(ficha.pasta, ficha.arquivos.guia);
       if (!arq || !fs.existsSync(arq)) return json(res, 404, { erro: 'Este simulador não tem guia.' });
-      return json(res, 200, { texto: fs.readFileSync(arq, 'utf8') });
+      // imagens do guia com endereço relativo (ex.: guia/print.webp) passam pela rota de imagens do simulador
+      const texto = fs.readFileSync(arq, 'utf8').replace(/!\[([^\]]*)\]\((?!https?:|\/)([^)\s]+)\)/g,
+        (_, alt, rel) => `![${alt}](/api/sim/${encodeURIComponent(id)}/imagem/${rel.split('/').map(encodeURIComponent).join('/')})`);
+      return json(res, 200, { texto });
+    }
+    if (acao === 'imagem' && m === 'GET' && resto) {
+      // só imagens de dentro da pasta do simulador (usadas pelos guias)
+      if (!/\.(png|jpe?g|webp|gif|svg)$/i.test(resto)) return json(res, 403, { erro: 'Só imagens.' });
+      const arq = dentro(ficha.pasta, decodeURIComponent(resto));
+      if (!arq || !fs.existsSync(arq)) return json(res, 404, { erro: 'Imagem não encontrada.' });
+      return servirArquivo(res, arq, { 'Cache-Control': 'max-age=3600' });
     }
     if (acao === 'icone' && m === 'GET') {
       // desenho próprio do simulador (ficha "icone": "arquivo.svg")
@@ -229,6 +255,7 @@ async function rotear(req, res) {
   }
 
   if (p === '/api/parar-todos' && m === 'POST') { await ger.pararTodos(); return json(res, 200, { ok: true }); }
+  if (p === '/api/sair' && m === 'POST') { json(res, 200, { ok: true }); console.log('Sair do HUB pedido na tela.'); setTimeout(encerrar, 300); return; }
 
   // ---------- atualização do HUB ----------
   if (p === '/api/atualizacao' && m === 'GET') return json(res, 200, resumoAtualizacao());
@@ -426,7 +453,7 @@ async function aplicarAtualizacao(motivo) {
 /** Inicia uma nova instância do HUB (com o código novo) e encerra esta. */
 function reiniciar() {
   const args = runtime.sea ? [] : [path.join(__dirname, 'server.js')];
-  const filho = spawn(process.execPath, [...args, '--reiniciando', '--sem-navegador'], { cwd: config.RAIZ, detached: true, stdio: 'ignore', windowsHide: false });
+  const filho = spawn(process.execPath, [...args, '--reiniciando', '--sem-navegador', ...(OCULTO ? ['--oculto'] : [])], { cwd: config.RAIZ, detached: true, stdio: 'ignore', windowsHide: OCULTO });
   filho.unref();
   enviar('reiniciando', {});
   setTimeout(() => process.exit(0), 300);
@@ -448,5 +475,22 @@ async function encerrar() {
   await Promise.race([ger.pararTodos(), new Promise((ok) => setTimeout(ok, 4000))]);
   process.exit(0);
 }
+/**
+ * Versão do usuário: quando a janela do HUB é fechada (nenhuma tela conectada), o motor espera 20 s
+ * (tempo de um F5 ou do reinício de uma atualização) e, sem simuladores rodando, encerra sozinho.
+ */
+let timerSaida = null;
+function avaliarSaida() {
+  if (MODO !== 'usuario') return;
+  clearTimeout(timerSaida); timerSaida = null;
+  if (clientes.size > 0) return;
+  timerSaida = setTimeout(() => {
+    if (clientes.size > 0) return;
+    if (ATU.aplicando || ger.emExecucao().length > 0) { avaliarSaida(); return; }   // espera o simulador ser parado
+    console.log('A janela do HUB foi fechada: encerrando.');
+    encerrar();
+  }, 20000);
+}
+setTimeout(avaliarSaida, 60000);   // se a tela nunca chegar a abrir, o motor não fica esquecido rodando
 process.on('SIGINT', encerrar);
 process.on('SIGTERM', encerrar);

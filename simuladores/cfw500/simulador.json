@@ -58,7 +58,7 @@
     "modbus": 502
   },
   "arquivos": {
-    "guia": "README.md",
+    "guia": "GUIA.md",
     "eds": [
       "eds/eip_cfw500_ceth2_v11x.eds",
       "eds/eip_cfw500_ceth2_v10x.eds"
@@ -74,6 +74,6 @@
   ],
   "cor": "#2C6CB0",
   "icone": "icone.png",
-  "versao": "1.0.1",
+  "versao": "1.0.2",
   "pacote": "cfw500-ethernetip-sim"
 }

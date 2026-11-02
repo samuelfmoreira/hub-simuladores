@@ -17,3 +17,6 @@ simuladores/keyence-cvx400/config_cameras.json
 simuladores/keyence-cvx400/eventos.log
 simuladores/processo-visao-3d/config.json
 simuladores/tben-l-sim/config.json
+
+hub.log
+hub.log.1
