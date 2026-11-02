@@ -127,8 +127,8 @@
     <!-- ===================== PARÂMETROS ===================== -->
     <div class="pane" data-pane="params" hidden>
       <div class="preset-rede">
-        <div class="row"><button id="pPresetEip">Preparar para EtherNet/IP</button><button id="pFabrica" class="small">Restaurar padrão de fábrica</button></div>
-        <p class="hint">O drive sai de fábrica comandado pela HMI. <b>Preparar para EtherNet/IP</b> grava de uma vez: <b>P0000 = 5</b> (senha), <b>P0202 = 6</b> (comando pela rede) e <b>P0662 = 3</b> (erro de comunicação desabilita o drive). Prefere fazer como na vida real? Altere um por um nesta lista ou pela HMI do drive: o passo a passo está no Guia. O drive precisa estar desabilitado.</p>
+        <div class="row"><button id="pPresetEip">Preparar: velocidade e torque pela rede</button><button id="pPresetPos">Preparar: posição pela rede</button><button id="pFabrica" class="small">Restaurar padrão de fábrica</button></div>
+        <p class="hint">O drive sai de fábrica comandado pela HMI. Os botões gravam de uma vez o que cada modo precisa, como você faria parâmetro por parâmetro (nesta lista ou pela HMI do drive; o passo a passo está no Guia). <b>Velocidade e torque</b>: P0202 = 6, conexão de 4 palavras. <b>Posição</b>: P0202 = 4 (aplicativo Ladder de posicionamento), conexão de 8 palavras. O drive precisa estar desabilitado.</p>
         <p class="hint" id="pPresetRes" aria-live="polite"></p>
       </div>
       <div class="row"><input type="search" id="pSearch" placeholder="Buscar: 202, rampa, Ethernet, ladder…" aria-label="Buscar parâmetro">

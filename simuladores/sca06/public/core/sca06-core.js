@@ -218,6 +218,7 @@
       this.prev = { ctrl: 0, p219: 0, lad: 0, di: [0, 0, 0], enableReq: false, ioRun: false };
       this.out = [0, 0, 0, 0];             // palavras de saída 1..4 recebidas do mestre
       this.outExtra = [];
+      this.volatil = new Set();   // parâmetros escritos pelo I/O cíclico: ficam só na memória (como no drive real)
       this.lad = { active: false, target: 0, moving: false, inPos: true, count: 0, nCmd: 0 };
       this.comm = {
         phase: 'setup', phaseT: 0, applied: null,
@@ -252,11 +253,13 @@
       const old = this.p.get(n);
       this.p.set(n, raw); this.dirty.add(n);
       if (old !== raw) this.onWrite(n, raw, old, source);
-      const persist = !(source === 'modbus' && this.p.get(664) === 0) && !(n === 99 && raw === 2);
+      if (source === 'io') this.volatil.add(n); else this.volatil.delete(n);
+      const persist = source !== 'io' && !(source === 'modbus' && this.p.get(664) === 0) && !(n === 99 && raw === 2);
       if (persist && this.onPersist && old !== raw) this.onPersist(this.savedParams());
       return { ok: true };
     }
-    savedParams() { const o = {}; for (const d of DEFS) if (!d.ro && this.p.get(d.n) !== d.def) o[d.n] = this.p.get(d.n); return o; }
+    // não salva: parâmetros escritos pelo I/O cíclico (voláteis) e parâmetros de comando, que voltam sozinhos para 0
+    savedParams() { const COMANDO = [204, 219, 849]; const o = {}; for (const d of DEFS) if (!d.ro && !this.volatil.has(d.n) && !COMANDO.includes(d.n) && this.p.get(d.n) !== d.def) o[d.n] = this.p.get(d.n); return o; }
 
     onWrite(n, raw, old, source) {
       if (n === 849 && raw === 1) { this.log('P00849 = 1 → reinicializando a interface Ethernet.'); this.pendingReinit = this.now + 0.05; }
@@ -340,7 +343,7 @@
         const v = extra[i];
         const d = DEF_MAP.get(pn);
         if (!d || d.ro) return;                      // ignorado (o mestre não recebe erro no I/O cíclico)
-        if (this.p.get(pn) !== v) this.write(pn, clampInt(v, d.min, d.max), 'net');
+        if (this.p.get(pn) !== v) this.write(pn, clampInt(v, d.min, d.max), 'io');   // I/O cíclico: não grava na memória permanente
       });
     }
 
@@ -632,6 +635,7 @@
           else delta = wrap180(t - cur);
         }
         L.target = posDeg + delta; L.moving = true; L.inPos = false;
+        if (mode === 3) { L.relSeq = (L.relInc === tgt ? (L.relSeq || 0) : 0); L.relInc = tgt; L.relPend = true; } else { L.relSeq = 0; L.relInc = null; L.relPend = false; }
         this.log(`Ladder: movimento iniciado (${delta >= 0 ? '+' : ''}${delta.toFixed(1)}°).`);
       }
       const errDeg = L.target - posDeg;
@@ -642,7 +646,7 @@
       const kp = this.p.get(159) * 0.4;                         // 1/s [SIM]
       let n = Math.sign(errDeg) * Math.min(vmax, vProfile, Math.abs(errDeg) * kp / 6);
       L.nCmd = approach(L.nCmd, n, acc * h);
-      if (L.moving && Math.abs(errDeg) < 0.05 && Math.abs(this.rpmUser()) < 3) { L.moving = false; L.inPos = true; L.count++; this.log('Ladder: em posição.'); }
+      if (L.moving && Math.abs(errDeg) < 0.05 && Math.abs(this.rpmUser()) < 3) { L.moving = false; L.inPos = true; L.count++; if (L.relPend) { L.relSeq = (L.relSeq || 0) + 1; L.relPend = false; } this.log('Ladder: em posição.'); }
       if (!L.moving) L.inPos = Math.abs(errDeg) < 0.2;
       return L.nCmd;
     }
@@ -786,7 +790,7 @@
         sizes: this.ioSizes(), applied: c.applied, owner: c.owner, ioConnected: c.ioConnected, ioRun: c.ioRun, commErr: c.commErr,
         bench: Object.assign({}, this.bench), fc: this.fcState || { h: false, a: false }, di: this.diStates(),
         hmi: { cells: this.hmiDisplay(), leds: this.hmiLeds(), mode: this.hmi.mode, param: this.hmiParam() },
-        lad: { target: this.lad.target, moving: this.lad.moving, inPos: this.lad.inPos, count: this.lad.count },
+        lad: { target: this.lad.target, moving: this.lad.moving, inPos: this.lad.inPos, count: this.lad.count, relSeq: this.lad.relSeq || 0, relInc: this.lad.relInc },
         userPosDeg: wrapDeg(this.posUserRad() * 180 / Math.PI)
       };
     }

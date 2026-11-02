@@ -364,7 +364,7 @@ $('#btnPreset').addEventListener('click', async () => {
 });
 $('#btnPresetTutorial').addEventListener('click', async () => {
   const sim = await confirmar({ titulo: 'Preparar o inversor para o tutorial?', texto: 'Grava tudo o que o projeto do Guia (IHM Modbus + CODESYS) precisa. O motor precisa estar parado.',
-    itens: ['P0220 = 1 · P0222 = 11 · P0226 = 9 · P0227 = 4', 'P0228 = 5 · P0105 = 5 · P0313 = 1', 'P0820 = 3 (corrente na 3ª palavra de entrada) · P0849 = 1 (aplica)'], ok: 'Aplicar' });
+    itens: ['P0220 = 1 · P0222 = 11 · P0226 = 9 · P0227 = 4', 'P0228 = 5 · P0105 = 5 · P0313 = 1', 'P0820 = 3 (corrente na 3ª palavra de entrada)', 'P0810 = 0 e P0811…P0815: IP fixo (o IP reservado pelo HUB, máscara 24)', 'P0849 = 1 (aplica a configuração Ethernet)'], ok: 'Aplicar' });
   if (!sim) return;
   const r = await pedir('presetTutorial');
   if (r.erro) dialogo({ tipo: 'erro', titulo: 'Configuração não aplicada', texto: esc(r.erro) });

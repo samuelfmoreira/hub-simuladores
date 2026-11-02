@@ -64,7 +64,7 @@ Dentro de `[Connection Manager]`, cada conexão ocupa vários campos: gatilho e 
 | Simulador | EDS | Observação |
 |---|---|---|
 | CFW500 | `eip_cfw500_ceth2_v11x.eds` (e `v10x`) | arquivo oficial WEG |
-| SCA06 | `0355002B00060200_SCA06_SIM_4x4.eds` | gerado pelo simulador, **não** é o oficial |
+| SCA06 | `0355002B00060200_SCA06_SIM.eds` | gerado pelo simulador, **não** é o oficial; conexões de 4 palavras (velocidade e torque) e de 8 (posição) |
 | Keyence CV-X | `Keyence_5005_0102.eds` | arquivo oficial Keyence |
 
 > **Nota:** no EDS da Keyence, o canal "Tool Judge Value6" aponta para o parâmetro errado. O guia do simulador explica como contornar no CODESYS.

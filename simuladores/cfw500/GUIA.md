@@ -40,7 +40,62 @@ Os endereços %IX/%QX são os do projeto dos prints; no seu podem ser outros.
 
 Fora do HUB, os mesmos passos são feitos pelos arquivos **2-criar-rede-virtual.bat** e **3-iniciar-simulador.bat**, na pasta do simulador.
 
-### 1.2 Configurar o inversor para obedecer à rede
+### 1.2 Endereço IP do inversor
+
+Antes de o CLP conversar com o inversor, o inversor precisa de um **endereço IP**. No CFW500, ele é configurado por parâmetros, no grupo **NET**.
+
+**Como sai de fábrica:**
+
+| Parâmetro | O que é | Fábrica | Para a rede do HUB |
+| --- | --- | --- | --- |
+| P0810 | de onde vem o IP: 0 = parâmetros · 1 = DHCP · 2 = DCP | **1 (DHCP)** | **0 (parâmetros)** |
+| P0811 | IP, 1º número | 192 | 192 (já está certo) |
+| P0812 | IP, 2º número | 168 | 168 (já está certo) |
+| P0813 | IP, 3º número | **0** | **100** |
+| P0814 | IP, 4º número | **14** | **20** |
+| P0815 | máscara, em CIDR (24 = 255.255.255.0) | 24 | 24 (já está certo) |
+| P0816…P0819 | gateway | 0.0.0.0 | 0.0.0.0 (o CLP está na mesma rede) |
+| P0849 | aplica a configuração Ethernet | 0 | **1** (volta sozinho para 0) |
+
+**Por que mudar o P0810:** com **DHCP**, o inversor pede um IP a um servidor DHCP da rede. Numa máquina industrial normalmente não há esse servidor, e o CLP precisa saber o IP do inversor de antemão. Por isso se usa **IP fixo pelos parâmetros**.
+
+**No simulador:** dentro do HUB, mesmo em DHCP, o inversor responde no IP que o HUB reservou para ele (192.168.100.20), para facilitar. O quadro **Endereço IP do inversor**, na aba **Rede EtherNet/IP**, mostra **"origem: inicialização"**. Mas treine o caminho real: depois da configuração, ele passa a mostrar **"origem: parâmetros"**.
+
+**Regras do IP:** ele precisa estar na **mesma rede** do CLP (192.168.100.x, máscara 24) e ser **único**. O 192.168.100.10 é do CODESYS: nunca use o mesmo nos dois. No simulador, o IP também precisa existir no computador, e a rede virtual do HUB já cria o 192.168.100.20. Se você programar um IP que não existe, o simulador avisa e continua no IP de inicialização.
+
+Motor parado: parâmetros de configuração não mudam com o motor girando.
+
+#### Caminho A: automático
+
+- **Só o IP:** aba **Rede EtherNet/IP** → quadro **Endereço IP do inversor** → escolha **192.168.100.20** na lista (ou digite), máscara **24** → **Aplicar IP**. O simulador grava P0810 = 0, P0811…P0815 e P0849 = 1 por você.
+- **Tudo de uma vez:** o botão **Preparar para o tutorial (CODESYS)** da seção 1.3 também grava o IP.
+
+#### Caminho B: pela HMI do inversor
+
+**Resumo das teclas** (explicação completa na seção 1.3, Caminho B): **ENTER** entra no grupo, entra no parâmetro e grava; **BACK** volta sem gravar; nos grupos, **▼** vai para o próximo; na lista, **▲** vai para o próximo parâmetro e **▼** volta; na edição, **▲ ▼** mudam o valor (segure para andar rápido). Comece na monitoração:
+
+1. **ENTER** → aparece **PARAM**. Aperte **▼ 6 vezes** até **NET** e **ENTER**. A lista começa no **P0308**.
+2. Segure **▲** (são 28 toques) até **P0810** → **ENTER** (mostra **1**) → **▼ 1 vez** (**0**) → **ENTER**.
+3. **▲ 1 vez** → **P0811**: confira que vale **192**. **▲ 1 vez** → **P0812**: confira **168**. Não precisa mudar.
+4. **▲ 1 vez** → **P0813** → **ENTER** → segure **▲** até **100** → **ENTER**.
+5. **▲ 1 vez** → **P0814** → **ENTER** → **▲ 6 vezes** (de 14 para **20**) → **ENTER**.
+6. **▲ 1 vez** → **P0815**: confira que vale **24**.
+7. **BACK** e **ENTER** de novo: a lista volta ao começo. **▼ 1 vez** → **P0849** → **ENTER** → **▲** (**1**) → **ENTER**. A interface reinicia com o IP novo.
+
+Se for seguir para a seção 1.3 pela HMI, dá para continuar daqui mesmo, no grupo NET.
+
+#### Caminho C: pela aba Parâmetros
+
+Busque cada número e grave: **P0810 = 0**, **P0813 = 100**, **P0814 = 20** e, por último, **P0849 = 1**. Confira de passagem P0811 = 192, P0812 = 168 e P0815 = 24.
+
+#### Como saber que deu certo
+
+- Aba **Rede EtherNet/IP**, quadro **Endereço IP do inversor**: **"Respondendo em 192.168.100.20 · origem: parâmetros"**.
+- No CODESYS, o IP que você coloca no CFW500 (seção 3.1) é esse mesmo: **192.168.100.20**.
+
+O **Restaurar padrão de fábrica** volta o P0810 para **1 (DHCP)** e o IP para 192.168.0.14.
+
+### 1.3 Configurar o inversor para obedecer à rede
 
 O simulador sai **de fábrica**, como um inversor novo: comandado pela própria HMI e pelas entradas digitais. Para o CLP comandar pela EtherNet/IP, **9 parâmetros** precisam mudar. Você escolhe o caminho; o resultado é o mesmo.
 
@@ -63,7 +118,7 @@ Antes de qualquer caminho: **motor parado**. Parâmetros de configuração não 
 1. No simulador, abra a aba **CLP virtual**.
 2. Clique em **Preparar para o tutorial (CODESYS)**.
 3. Confira a lista e clique em **Aplicar**.
-4. Aparece **"Pronto para o tutorial"** com os 9 parâmetros gravados.
+4. Aparece **"Pronto para o tutorial"** com os parâmetros gravados: os 9 da tabela e também o **IP fixo** da seção 1.2.
 
 O botão **Parametrizar inversor para comando via rede**, ao lado, grava só os 7 primeiros (sem a corrente na 3ª palavra). Ele serve para os exercícios com o CLP virtual.
 
@@ -129,7 +184,7 @@ O botão **Parametrizar inversor para comando via rede**, ao lado, grava só os 
 - Botão **Restaurar padrão de fábrica**, na aba **CLP virtual** ou na aba **Parâmetros**; ou
 - pela HMI, como no inversor real: grupo **PARAM**, segure **▲** até o **P0204** e grave **5** (carrega o padrão WEG de 60 Hz).
 
-### 1.3 Tags da IHM (aba IHM Modbus)
+### 1.4 Tags da IHM (aba IHM Modbus)
 
 | Elemento | Área | End. | Tipo | Fator | Dec. | Botão |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -371,6 +426,7 @@ Os cálculos são feitos em REAL de propósito: em INT, 900 × 8192 estoura o li
 | Tudo certo, mas nada muda | programa fora da MainTask | Add Call na MainTask (Parte 2) |
 | Motor não gira com LIGAR | inversor em LOC ou CW.1 = 0 | display em REM; linha 2 do Ladder |
 | A0149 no inversor | CLP em STOP ou conexão perdida | Start no CODESYS |
+| Depois de P0810 = 0, o inversor não responde no 192.168.100.20 | IP dos parâmetros diferente (P0813/P0814) ou falta o P0849 = 1 | confira P0811…P0814 = 192.168.100.20 e faça P0849 = 1 (seção 1.2) |
 | Interface SIM-HUB não aparece no CODESYS | rede virtual não criada | aba **Rede virtual** do HUB → criar a rede |
 
 ## Extra 1: Rampas de aceleração e desaceleração pelo CLP

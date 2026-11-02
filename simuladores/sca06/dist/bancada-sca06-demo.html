@@ -56,8 +56,8 @@ button, input, select { font: inherit; color: inherit; }
 .tip3d { position: absolute; pointer-events: none; background: #f2f3f0; color: var(--ink); border: 1px solid var(--line-2); padding: 3px 8px; font-size: 12px; border-radius: 3px; opacity: 0; transition: opacity .12s; max-width: 280px; z-index: 3; }
 
 .side { display: flex; flex-direction: column; min-height: 0; border-left: 1px solid var(--line-2); background: var(--panel); }
-.tabs { display: flex; background: var(--panel-2); border-bottom: 1px solid var(--line-2); overflow-x: auto; scrollbar-width: none; }
-.tabs button { flex: 1 0 auto; background: none; border: 0; border-right: 1px solid var(--line); padding: 10px 12px 8px; cursor: pointer; font-weight: 500; color: var(--ink-2); border-bottom: 3px solid transparent; }
+.tabs { display: flex; flex-wrap: wrap; background: var(--panel-2); border-bottom: 1px solid var(--line-2); }
+.tabs button { flex: 1 1 auto; white-space: nowrap; background: none; border: 0; border-right: 1px solid var(--line); padding: 10px 9px 8px; cursor: pointer; font-weight: 500; color: var(--ink-2); border-bottom: 3px solid transparent; }
 .tabs button[aria-selected="true"] { color: var(--navy); border-bottom-color: var(--navy); background: var(--panel); font-weight: 600; }
 .pane { flex: 1; overflow-y: auto; padding: 14px 16px 40px; }
 h3 { font-size: 15px; margin: 0 0 8px; font-weight: 600; color: var(--navy); }
@@ -207,16 +207,29 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
 
 /* Drive e configurações à esquerda, bancada 3D à direita */
 @media (min-width: 901px) {
-  .layout { grid-template-columns: 440px minmax(0, 1fr); }
+  .layout { grid-template-columns: var(--col-side, 440px) minmax(0, 1fr); }
   .side { order: 1; border-left: 0; border-right: 1px solid var(--line-2); }
   .stage { order: 2; }
 }
 @media (min-width: 1200px) {
-  .layout { grid-template-columns: 300px 420px minmax(0, 1fr); }
+  .layout { grid-template-columns: var(--col-front, 300px) var(--col-side, 460px) minmax(0, 1fr); }
   .front { order: 0; border-left: 0; border-right: 1px solid var(--line-2); }
   .side { order: 1; }
   .stage { order: 2; }
 }
+
+/* ---------- divisórias arrastáveis entre os painéis ---------- */
+.layout { position: relative; }
+.splitter { position: absolute; top: 0; bottom: 0; width: 12px; margin-left: -6px; cursor: col-resize; z-index: 30; touch-action: none; }
+.splitter::after { content: ""; position: absolute; left: 5px; top: 0; bottom: 0; width: 2px; background: transparent; transition: background .12s; }
+.splitter:hover::after, .splitter.drag::after { background: var(--navy); }
+.splitter[hidden] { display: none; }
+body.arrastando, body.arrastando * { cursor: col-resize !important; user-select: none !important; }
+body.arrastando canvas, body.arrastando iframe { pointer-events: none; }
+
+/* atalho de configuração de rede (aba Parâmetros) */
+.preset-rede { margin: 0 0 12px; padding: 10px 12px; border: 1px solid var(--line-2, #ccc); border-radius: 8px; }
+.preset-rede .row { gap: 8px; flex-wrap: wrap; }
 
 </style>
 </head>
@@ -338,6 +351,11 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
 
     <!-- ===================== PARÂMETROS ===================== -->
     <div class="pane" data-pane="params" hidden>
+      <div class="preset-rede">
+        <div class="row"><button id="pPresetEip">Preparar: velocidade e torque pela rede</button><button id="pPresetPos">Preparar: posição pela rede</button><button id="pFabrica" class="small">Restaurar padrão de fábrica</button></div>
+        <p class="hint">O drive sai de fábrica comandado pela HMI. Os botões gravam de uma vez o que cada modo precisa, como você faria parâmetro por parâmetro (nesta lista ou pela HMI do drive; o passo a passo está no Guia). <b>Velocidade e torque</b>: P0202 = 6, conexão de 4 palavras. <b>Posição</b>: P0202 = 4 (aplicativo Ladder de posicionamento), conexão de 8 palavras. O drive precisa estar desabilitado.</p>
+        <p class="hint" id="pPresetRes" aria-live="polite"></p>
+      </div>
       <div class="row"><input type="search" id="pSearch" placeholder="Buscar: 202, rampa, Ethernet, ladder…" aria-label="Buscar parâmetro">
         <select id="pGroup"><option value="">Todos</option><option value="read">Leitura</option><option value="cfg">Configuração</option><option value="eth">Ethernet</option><option value="lad">Ladder/usuário (1100–1113)</option><option value="changed">Diferentes do padrão</option></select></div>
       <p class="hint">Fonte: <span class="src ETH">ETH</span> manual Ethernet · <span class="src PROG">PROG</span> manual de programação V2.1X · <span class="src SIM">SIM</span> valor do simulador, confira no equipamento. Escrever aqui equivale a usar o WPS pela USB.</p>
@@ -606,6 +624,7 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
       this.prev = { ctrl: 0, p219: 0, lad: 0, di: [0, 0, 0], enableReq: false, ioRun: false };
       this.out = [0, 0, 0, 0];             // palavras de saída 1..4 recebidas do mestre
       this.outExtra = [];
+      this.volatil = new Set();   // parâmetros escritos pelo I/O cíclico: ficam só na memória (como no drive real)
       this.lad = { active: false, target: 0, moving: false, inPos: true, count: 0, nCmd: 0 };
       this.comm = {
         phase: 'setup', phaseT: 0, applied: null,
@@ -640,11 +659,13 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
       const old = this.p.get(n);
       this.p.set(n, raw); this.dirty.add(n);
       if (old !== raw) this.onWrite(n, raw, old, source);
-      const persist = !(source === 'modbus' && this.p.get(664) === 0) && !(n === 99 && raw === 2);
+      if (source === 'io') this.volatil.add(n); else this.volatil.delete(n);
+      const persist = source !== 'io' && !(source === 'modbus' && this.p.get(664) === 0) && !(n === 99 && raw === 2);
       if (persist && this.onPersist && old !== raw) this.onPersist(this.savedParams());
       return { ok: true };
     }
-    savedParams() { const o = {}; for (const d of DEFS) if (!d.ro && this.p.get(d.n) !== d.def) o[d.n] = this.p.get(d.n); return o; }
+    // não salva: parâmetros escritos pelo I/O cíclico (voláteis) e parâmetros de comando, que voltam sozinhos para 0
+    savedParams() { const COMANDO = [204, 219, 849]; const o = {}; for (const d of DEFS) if (!d.ro && !this.volatil.has(d.n) && !COMANDO.includes(d.n) && this.p.get(d.n) !== d.def) o[d.n] = this.p.get(d.n); return o; }
 
     onWrite(n, raw, old, source) {
       if (n === 849 && raw === 1) { this.log('P00849 = 1 → reinicializando a interface Ethernet.'); this.pendingReinit = this.now + 0.05; }
@@ -728,7 +749,7 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
         const v = extra[i];
         const d = DEF_MAP.get(pn);
         if (!d || d.ro) return;                      // ignorado (o mestre não recebe erro no I/O cíclico)
-        if (this.p.get(pn) !== v) this.write(pn, clampInt(v, d.min, d.max), 'net');
+        if (this.p.get(pn) !== v) this.write(pn, clampInt(v, d.min, d.max), 'io');   // I/O cíclico: não grava na memória permanente
       });
     }
 
@@ -1020,6 +1041,7 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
           else delta = wrap180(t - cur);
         }
         L.target = posDeg + delta; L.moving = true; L.inPos = false;
+        if (mode === 3) { L.relSeq = (L.relInc === tgt ? (L.relSeq || 0) : 0); L.relInc = tgt; L.relPend = true; } else { L.relSeq = 0; L.relInc = null; L.relPend = false; }
         this.log(`Ladder: movimento iniciado (${delta >= 0 ? '+' : ''}${delta.toFixed(1)}°).`);
       }
       const errDeg = L.target - posDeg;
@@ -1030,7 +1052,7 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
       const kp = this.p.get(159) * 0.4;                         // 1/s [SIM]
       let n = Math.sign(errDeg) * Math.min(vmax, vProfile, Math.abs(errDeg) * kp / 6);
       L.nCmd = approach(L.nCmd, n, acc * h);
-      if (L.moving && Math.abs(errDeg) < 0.05 && Math.abs(this.rpmUser()) < 3) { L.moving = false; L.inPos = true; L.count++; this.log('Ladder: em posição.'); }
+      if (L.moving && Math.abs(errDeg) < 0.05 && Math.abs(this.rpmUser()) < 3) { L.moving = false; L.inPos = true; L.count++; if (L.relPend) { L.relSeq = (L.relSeq || 0) + 1; L.relPend = false; } this.log('Ladder: em posição.'); }
       if (!L.moving) L.inPos = Math.abs(errDeg) < 0.2;
       return L.nCmd;
     }
@@ -1174,7 +1196,7 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
         sizes: this.ioSizes(), applied: c.applied, owner: c.owner, ioConnected: c.ioConnected, ioRun: c.ioRun, commErr: c.commErr,
         bench: Object.assign({}, this.bench), fc: this.fcState || { h: false, a: false }, di: this.diStates(),
         hmi: { cells: this.hmiDisplay(), leds: this.hmiLeds(), mode: this.hmi.mode, param: this.hmiParam() },
-        lad: { target: this.lad.target, moving: this.lad.moving, inPos: this.lad.inPos, count: this.lad.count },
+        lad: { target: this.lad.target, moving: this.lad.moving, inPos: this.lad.inPos, count: this.lad.count, relSeq: this.lad.relSeq || 0, relInc: this.lad.relInc },
         userPosDeg: wrapDeg(this.posUserRad() * 180 / Math.PI)
       };
     }
@@ -2258,25 +2280,38 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
   function connectBackend() {
     return new Promise((resolve) => {
       if (location.protocol === 'file:' || window.FORCE_DEMO) return resolve(useDemo());
-      let done = false;
-      const ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
-      const pending = new Map(); let seq = 1;
-      const t = setTimeout(() => { if (!done) { done = true; try { ws.close(); } catch (_) { } resolve(useDemo()); } }, 1800);
-      ws.onopen = () => {
-        if (done) return; done = true; clearTimeout(t);
-        resolve({ demo: false, request: (m) => new Promise((res, rej) => { const id = seq++; pending.set(id, { res, rej }); ws.send(JSON.stringify(Object.assign({ id }, m))); setTimeout(() => { if (pending.has(id)) { pending.delete(id); rej(new Error('Sem resposta do servidor')); } }, 4000); }) });
+      // Página servida pelo simulador: sempre conversa com o servidor (o drive que o CLP enxerga).
+      // O modo demonstração é só para o arquivo aberto direto no navegador: aqui ele nunca entra,
+      // mesmo que a bancada 3D demore para carregar; se a conexão falhar, tenta de novo.
+      let resolvido = false, tentativas = 0;
+      const tentar = () => {
+        tentativas++;
+        const ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
+        const pending = new Map(); let seq = 1; let aberto = false;
+        ws.onopen = () => {
+          aberto = true;
+          if (tentativas > 1) setMsg('Conectado ao simulador.', false);
+          if (resolvido) return;   // reconexão: a página já estava usando o servidor
+          resolvido = true;
+          resolve({ demo: false, request: (m) => new Promise((res, rej) => { const id = seq++; pending.set(id, { res, rej }); ws.send(JSON.stringify(Object.assign({ id }, m))); setTimeout(() => { if (pending.has(id)) { pending.delete(id); rej(new Error('Sem resposta do servidor')); } }, 4000); }) });
+        };
+        ws.onmessage = (e) => {
+          const m = JSON.parse(e.data);
+          if (m.t === 'reply') { const p = pending.get(m.id); if (p) { pending.delete(m.id); m.error ? p.rej(new Error(m.error)) : p.res(m); } return; }
+          onMessage(m);
+        };
+        ws.onclose = () => {
+          if (!aberto) { setMsg('Conectando ao simulador…', false); setTimeout(tentar, 1000); return; }
+          setMsg('Servidor desconectado. Recarregue a página depois de iniciar o simulador.', true);
+        };
       };
-      ws.onmessage = (e) => {
-        const m = JSON.parse(e.data);
-        if (m.t === 'reply') { const p = pending.get(m.id); if (p) { pending.delete(m.id); m.error ? p.rej(new Error(m.error)) : p.res(m); } return; }
-        onMessage(m);
-      };
-      ws.onerror = () => { if (!done) { done = true; clearTimeout(t); resolve(useDemo()); } };
-      ws.onclose = () => { if (done && !S.demo) setMsg('Servidor desconectado. Recarregue a página após reiniciar o `npm start`.', true); };
+      tentar();
     });
   }
   function useDemo() { S.demo = true; const d = new window.DemoBackend(onMessage); return { demo: true, request: (m) => d.request(m) }; }
-  const req = (m) => backend ? backend.request(m) : Promise.reject(new Error('Iniciando…'));
+  // os comandos esperam a conexão ficar pronta (a bancada 3D pode segurar a página alguns segundos ao abrir)
+  let backendPronto = null;
+  const req = (m) => backend ? backend.request(m) : (backendPronto ? backendPronto.then((b) => b.request(m)) : Promise.reject(new Error('Iniciando…')));
 
   function onMessage(m) {
     if (m.t === 'init') {
@@ -2464,6 +2499,41 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
     return val + (d.unit ? ' ' + d.unit : '');
   }
   let openParam = null;
+  // ---- Preparar para EtherNet/IP (atalho) e padrão de fábrica: o mesmo que o aluno faria parâmetro por parâmetro
+  const MOTIVO = { RO: 'somente leitura (A00122)', RANGE: 'fora da faixa (A00126)', ENABLED: 'desabilite o drive antes (A00124)', NOEXIST: 'parâmetro inexistente (A00125)' };
+  const resPreset = (txt, ok) => { const el = $('#pPresetRes'); if (el) { el.textContent = txt; el.style.color = ok ? 'var(--ok, #2F9E44)' : 'var(--bad, #C0392B)'; el.style.fontWeight = '600'; } };
+  async function gravarEmSequencia(passos) {
+    for (const [n, v] of passos) {
+      const r = (await req({ t: 'param', n, v })).result;
+      if (!r.ok) return `P${pad4(n)} não foi gravado: ${MOTIVO[r.code] || r.code}.`;
+    }
+    return null;
+  }
+  // palavras extras: zeradas para velocidade/torque (conexão de 4 palavras), mapeadas no aplicativo de posição (8 palavras)
+  const SEM_EXTRAS = [[820, 0], [821, 0], [822, 0], [823, 0], [835, 0], [836, 0], [837, 0], [838, 0]];
+  const EXTRAS_POS = [[820, 1110], [821, 1111], [822, 1112], [823, 1113], [835, 1100], [836, 1101], [837, 1102], [838, 1103]];
+  const btnPreset = $('#pPresetEip');
+  if (btnPreset) btnPreset.onclick = async () => {
+    if (!confirm('Preparar o SCA06 para velocidade e torque pela EtherNet/IP?\n\nGrava:\n  P0000 = 5  (senha)\n  P0202 = 6  (comando pela rede)\n  P0662 = 3  (erro de comunicação desabilita o drive)\n  P0820…P0823 e P0835…P0838 = 0  (sem palavras extras: conexão de 4 palavras)\n  P0849 = 1  (aplica a configuração de rede)\n\nO drive precisa estar desabilitado.')) return;
+    const erro = await gravarEmSequencia([[0, 5], [202, 6], [662, 3], ...SEM_EXTRAS, [849, 1]]);
+    resPreset(erro || 'Pronto para velocidade e torque: P0202 = 6, conexão de 4 palavras. No CODESYS, use a conexão "Exclusive Owner, 4 palavras".', !erro);
+    buildParams();
+  };
+  const btnPos = $('#pPresetPos');
+  if (btnPos) btnPos.onclick = async () => {
+    if (!confirm('Preparar o SCA06 para posição pela EtherNet/IP?\n\nGrava:\n  P0000 = 5  (senha)\n  P0202 = 4  (modo Ladder: aplicativo de posicionamento)\n  P1020 = 1  (aplicativo em execução)\n  P0820…P0823 = 1110…1113  (status, posição, erro e contador nas palavras de entrada 5 a 8)\n  P0835…P0838 = 1100…1103  (comando, alvo, velocidade e tipo nas palavras de saída 5 a 8)\n  P0662 = 3  (erro de comunicação desabilita o drive)\n  P0849 = 1  (aplica a configuração de rede)\n\nO drive precisa estar desabilitado.')) return;
+    const erro = await gravarEmSequencia([[0, 5], [202, 4], [1020, 1], ...EXTRAS_POS, [662, 3], [849, 1]]);
+    resPreset(erro || 'Pronto para posição: P0202 = 4, conexão de 8 palavras. No CODESYS, use a conexão "Exclusive Owner, 8 palavras (posicao)".', !erro);
+    buildParams();
+  };
+  const btnFab = $('#pFabrica');
+  if (btnFab) btnFab.onclick = async () => {
+    if (!confirm('Restaurar o padrão de fábrica do SCA06?\n\nEquivale a P0204 = 5: todos os parâmetros voltam ao valor de fábrica (P0202 = 2, comando pela HMI). O drive precisa estar desabilitado.')) return;
+    const erro = await gravarEmSequencia([[0, 5], [204, 5]]);
+    resPreset(erro || 'Padrão de fábrica carregado (P0204 = 5). O drive voltou a ser comandado pela HMI.', !erro);
+    buildParams();
+  };
+
   function buildParams() {
     const q = ($('#pSearch').value || '').toLowerCase().trim(), grp = $('#pGroup').value;
     const rows = [];
@@ -2527,13 +2597,36 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
     { id: 'm12', title: 'Posicionar em 135,0° pelo Ladder', text: 'O manual Ethernet manda usar o modo Ladder (P0202 = 4) para posicionamento. Mapeie P0835 = 1100 e P0836 = 1101, aplique com P0849 e comande: 5ª palavra = 1 (habilita), 6ª = 1350, depois 5ª = 3 (inicia).',
       hint: 'P1103 escolhe o caminho: 0 menor, 1 horário, 2 anti-horário, 3 relativo. Leia P1111 mapeando P0820 = 1111.', target: [135, 0.5],
       live: c => `posição = ${fmtN(c.v.userPosDeg, 1)}°`, check: c => c.P[202] === 4 && c.v.applied && c.v.applied.wrWords.includes(1100) && c.v.applied.wrWords.includes(1101) && c.v.lad.inPos && c.v.lad.count > 0 && Math.abs(c.v.userPosDeg - 135) < 0.3 },
+    { id: 'm13', title: 'Posição pela rede: conexão de 8 palavras', text: 'Prepare o drive para posição: P0202 = 4 (aplicativo Ladder de posicionamento), P0820…P0823 = 1110…1113 e P0835…P0838 = 1100…1103, aplicados com P0849 = 1. Abra a conexão de 8 palavras e chegue a Data Active.',
+      hint: 'O botão "Preparar: posição pela rede" (aba Parâmetros) faz a configuração. No CODESYS, escolha a conexão "Exclusive Owner, 8 palavras (posicao)". Sem o P0849 = 1 o mapeamento não vale e a conexão é recusada (0x0109).',
+      check: c => c.P[202] === 4 && c.v.applied && c.v.applied.rdWords.length >= 4 && [1100, 1101, 1102, 1103].every(n => c.v.applied.wrWords.includes(n)) && c.v.p801 === 4 && c.v.ioRun },
+    { id: 'm14', title: 'Pulso: cada pulso gira 45°', text: 'Com o movimento relativo (P1103 = 3) e incremento de 45,0° (P1101 = 450), dê 4 pulsos no bit 1 do comando (P1100): o disco deve dar meia volta, em 4 passos de 45°.',
+      hint: 'O movimento começa na borda de subida do bit 1 (0 → 1): desligue o bit entre um pulso e outro. Cada movimento concluído soma 1 em P1113.',
+      live: c => `posição = ${fmtN(c.v.userPosDeg, 1)}° · pulsos seguidos de ${c.v.lad.relInc == null ? '—' : fmtN(c.v.lad.relInc, 1) + '°'}: ${c.v.lad.relSeq}`,
+      check: c => c.P[202] === 4 && c.v.lad.relInc === 45 && c.v.lad.relSeq >= 4 && c.v.lad.inPos },
+    { id: 'm15', title: 'Posição absoluta: 90° e depois 270°', text: 'Com o tipo menor caminho (P1103 = 0), mande o disco para 90,0° (P1101 = 900) e, depois de parar, para 270,0° (P1101 = 2700).',
+      hint: 'No modo absoluto, P1101 é a posição final, e não um incremento. Leia a posição atual em P1111 (décimos de grau).', target: [270, 0.5],
+      live: c => `posição = ${fmtN(c.v.userPosDeg, 1)}°`,
+      check: c => {
+        const pos = c.v.userPosDeg, ok = c.P[202] === 4 && c.P[1103] === 0 && c.v.lad.inPos;
+        if (ok && Math.abs(pos - 90) < 0.3) mem.p90 = true;
+        return !!mem.p90 && ok && Math.abs(pos - 270) < 0.3;
+      } },
+    { id: 'm16', title: 'Sentido forçado: de 270° para 0° pelo anti-horário', text: 'Parado em 270,0°, mande o disco para 0,0° com P1103 = 2 (anti-horário): ele deve girar 270° para trás, e não 90° para a frente.',
+      hint: 'Com P1103 = 0 o drive escolheria o menor caminho (90° no sentido horário). O sentido forçado serve para máquinas que não podem girar ao contrário.',
+      live: c => `posição = ${fmtN(c.v.userPosDeg, 1)}°`,
+      check: c => {
+        const pos = c.v.userPosDeg;
+        if (c.P[202] === 4 && c.v.lad.inPos && Math.abs(pos - 270) < 0.3) mem.c270 = c.v.lad.count;
+        return mem.c270 !== undefined && c.P[202] === 4 && c.P[1103] === 2 && c.v.lad.inPos && c.v.lad.count > mem.c270 && (pos < 0.3 || pos > 359.7);
+      } },
   ];
   let done = {}; try { done = JSON.parse(localStorage.getItem('sca06-missoes') || '{}'); } catch (_) { }
   function buildMissions() {
     $('#missions').innerHTML = MISSIONS.map(m => `<li id="${m.id}"><h4>${m.title}</h4><p>${m.text}</p><div class="live" id="${m.id}l"></div><details><summary>Dica</summary>${m.hint}</details></li>`).join('');
   }
   buildMissions();
-  $('#mReset').onclick = () => { done = {}; mem.f47 = false; mem.spun = 0; try { localStorage.removeItem('sca06-missoes'); } catch (_) { } };
+  $('#mReset').onclick = () => { done = {}; mem.f47 = false; mem.spun = 0; mem.p90 = false; mem.c270 = undefined; try { localStorage.removeItem('sca06-missoes'); } catch (_) { } };
   function runMissions() {
     const c = { v: S.v, P: S.P, sc: S.sc };
     let current = null, n = 0;
@@ -2615,9 +2708,10 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
   }
 
   S.tab = 'scanner';
-  connectBackend().then(b => { backend = b; });
+  backendPronto = connectBackend().then(b => { backend = b; return b; });
 })();
 
 </script>
+<script src="divisorias.js"></script>
 </body>
 </html>

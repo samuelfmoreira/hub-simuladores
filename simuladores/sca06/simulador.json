@@ -54,7 +54,7 @@
   "arquivos": {
     "guia": "GUIA.md",
     "eds": [
-      "docs/0355002B00060200_SCA06_SIM_4x4.eds"
+      "docs/0355002B00060200_SCA06_SIM.eds"
     ],
     "downloads": [
       "dist/bancada-sca06-demo.html"
@@ -70,6 +70,6 @@
   ],
   "cor": "#5B4FA8",
   "icone": "icone.png",
-  "versao": "1.0.5",
+  "versao": "1.1.0",
   "pacote": "sca06-ethernetip-sim"
 }

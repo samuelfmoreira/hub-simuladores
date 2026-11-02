@@ -2,6 +2,15 @@
 
 As notas de cada versão aparecem no HUB quando a atualização é oferecida. Escreva a seção da versão nova antes do push.
 
+## 1.7.0
+- Servomotor SCA06: os três modos de controle pela rede, velocidade, torque e posição. Na posição, o CLP manda o ângulo de destino ou faz o disco andar um ângulo a cada pulso.
+- SCA06: botões "Preparar: velocidade e torque pela rede" e "Preparar: posição pela rede", na aba Parâmetros.
+- SCA06: EDS novo, com duas conexões para escolher no CODESYS (4 palavras para velocidade e torque, 8 palavras para posição).
+- SCA06: 4 missões novas de posição pela rede, incluindo "cada pulso gira 45°".
+- SCA06: guia com as partes de torque e de posição, passo a passo.
+- SCA06: a tela do simulador sempre conversa com o drive que o CLP enxerga, mesmo em computadores mais lentos.
+- Inversor CFW500: o guia ensina a configurar o endereço IP pelos parâmetros (P0810 a P0815 e P0849), como no inversor real, pelo botão, pela HMI ou pela aba Parâmetros. O botão "Preparar para o tutorial" também grava o IP.
+
 ## 1.6.3
 - Inversor CFW500 e Servomotor SCA06 saem de fábrica e podem ser configurados para a rede de dois jeitos: parâmetro por parâmetro (pela HMI ou pela aba Parâmetros, como na vida real) ou com um botão que faz tudo de uma vez.
 - CFW500: novo botão "Preparar para o tutorial (CODESYS)", na aba CLP virtual.

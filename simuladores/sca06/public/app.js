@@ -17,25 +17,38 @@
   function connectBackend() {
     return new Promise((resolve) => {
       if (location.protocol === 'file:' || window.FORCE_DEMO) return resolve(useDemo());
-      let done = false;
-      const ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
-      const pending = new Map(); let seq = 1;
-      const t = setTimeout(() => { if (!done) { done = true; try { ws.close(); } catch (_) { } resolve(useDemo()); } }, 1800);
-      ws.onopen = () => {
-        if (done) return; done = true; clearTimeout(t);
-        resolve({ demo: false, request: (m) => new Promise((res, rej) => { const id = seq++; pending.set(id, { res, rej }); ws.send(JSON.stringify(Object.assign({ id }, m))); setTimeout(() => { if (pending.has(id)) { pending.delete(id); rej(new Error('Sem resposta do servidor')); } }, 4000); }) });
+      // Página servida pelo simulador: sempre conversa com o servidor (o drive que o CLP enxerga).
+      // O modo demonstração é só para o arquivo aberto direto no navegador: aqui ele nunca entra,
+      // mesmo que a bancada 3D demore para carregar; se a conexão falhar, tenta de novo.
+      let resolvido = false, tentativas = 0;
+      const tentar = () => {
+        tentativas++;
+        const ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
+        const pending = new Map(); let seq = 1; let aberto = false;
+        ws.onopen = () => {
+          aberto = true;
+          if (tentativas > 1) setMsg('Conectado ao simulador.', false);
+          if (resolvido) return;   // reconexão: a página já estava usando o servidor
+          resolvido = true;
+          resolve({ demo: false, request: (m) => new Promise((res, rej) => { const id = seq++; pending.set(id, { res, rej }); ws.send(JSON.stringify(Object.assign({ id }, m))); setTimeout(() => { if (pending.has(id)) { pending.delete(id); rej(new Error('Sem resposta do servidor')); } }, 4000); }) });
+        };
+        ws.onmessage = (e) => {
+          const m = JSON.parse(e.data);
+          if (m.t === 'reply') { const p = pending.get(m.id); if (p) { pending.delete(m.id); m.error ? p.rej(new Error(m.error)) : p.res(m); } return; }
+          onMessage(m);
+        };
+        ws.onclose = () => {
+          if (!aberto) { setMsg('Conectando ao simulador…', false); setTimeout(tentar, 1000); return; }
+          setMsg('Servidor desconectado. Recarregue a página depois de iniciar o simulador.', true);
+        };
       };
-      ws.onmessage = (e) => {
-        const m = JSON.parse(e.data);
-        if (m.t === 'reply') { const p = pending.get(m.id); if (p) { pending.delete(m.id); m.error ? p.rej(new Error(m.error)) : p.res(m); } return; }
-        onMessage(m);
-      };
-      ws.onerror = () => { if (!done) { done = true; clearTimeout(t); resolve(useDemo()); } };
-      ws.onclose = () => { if (done && !S.demo) setMsg('Servidor desconectado. Recarregue a página após reiniciar o `npm start`.', true); };
+      tentar();
     });
   }
   function useDemo() { S.demo = true; const d = new window.DemoBackend(onMessage); return { demo: true, request: (m) => d.request(m) }; }
-  const req = (m) => backend ? backend.request(m) : Promise.reject(new Error('Iniciando…'));
+  // os comandos esperam a conexão ficar pronta (a bancada 3D pode segurar a página alguns segundos ao abrir)
+  let backendPronto = null;
+  const req = (m) => backend ? backend.request(m) : (backendPronto ? backendPronto.then((b) => b.request(m)) : Promise.reject(new Error('Iniciando…')));
 
   function onMessage(m) {
     if (m.t === 'init') {
@@ -233,11 +246,21 @@
     }
     return null;
   }
+  // palavras extras: zeradas para velocidade/torque (conexão de 4 palavras), mapeadas no aplicativo de posição (8 palavras)
+  const SEM_EXTRAS = [[820, 0], [821, 0], [822, 0], [823, 0], [835, 0], [836, 0], [837, 0], [838, 0]];
+  const EXTRAS_POS = [[820, 1110], [821, 1111], [822, 1112], [823, 1113], [835, 1100], [836, 1101], [837, 1102], [838, 1103]];
   const btnPreset = $('#pPresetEip');
   if (btnPreset) btnPreset.onclick = async () => {
-    if (!confirm('Preparar o SCA06 para ser comandado pela EtherNet/IP?\n\nGrava, nesta ordem:\n  P0000 = 5  (senha)\n  P0202 = 6  (comando pela rede)\n  P0662 = 3  (erro de comunicação desabilita o drive)\n\nO drive precisa estar desabilitado.')) return;
-    const erro = await gravarEmSequencia([[0, 5], [202, 6], [662, 3]]);
-    resPreset(erro || 'Pronto: P0000 = 5 · P0202 = 6 · P0662 = 3. O SCA06 agora obedece ao CLP pela rede.', !erro);
+    if (!confirm('Preparar o SCA06 para velocidade e torque pela EtherNet/IP?\n\nGrava:\n  P0000 = 5  (senha)\n  P0202 = 6  (comando pela rede)\n  P0662 = 3  (erro de comunicação desabilita o drive)\n  P0820…P0823 e P0835…P0838 = 0  (sem palavras extras: conexão de 4 palavras)\n  P0849 = 1  (aplica a configuração de rede)\n\nO drive precisa estar desabilitado.')) return;
+    const erro = await gravarEmSequencia([[0, 5], [202, 6], [662, 3], ...SEM_EXTRAS, [849, 1]]);
+    resPreset(erro || 'Pronto para velocidade e torque: P0202 = 6, conexão de 4 palavras. No CODESYS, use a conexão "Exclusive Owner, 4 palavras".', !erro);
+    buildParams();
+  };
+  const btnPos = $('#pPresetPos');
+  if (btnPos) btnPos.onclick = async () => {
+    if (!confirm('Preparar o SCA06 para posição pela EtherNet/IP?\n\nGrava:\n  P0000 = 5  (senha)\n  P0202 = 4  (modo Ladder: aplicativo de posicionamento)\n  P1020 = 1  (aplicativo em execução)\n  P0820…P0823 = 1110…1113  (status, posição, erro e contador nas palavras de entrada 5 a 8)\n  P0835…P0838 = 1100…1103  (comando, alvo, velocidade e tipo nas palavras de saída 5 a 8)\n  P0662 = 3  (erro de comunicação desabilita o drive)\n  P0849 = 1  (aplica a configuração de rede)\n\nO drive precisa estar desabilitado.')) return;
+    const erro = await gravarEmSequencia([[0, 5], [202, 4], [1020, 1], ...EXTRAS_POS, [662, 3], [849, 1]]);
+    resPreset(erro || 'Pronto para posição: P0202 = 4, conexão de 8 palavras. No CODESYS, use a conexão "Exclusive Owner, 8 palavras (posicao)".', !erro);
     buildParams();
   };
   const btnFab = $('#pFabrica');
@@ -311,13 +334,36 @@
     { id: 'm12', title: 'Posicionar em 135,0° pelo Ladder', text: 'O manual Ethernet manda usar o modo Ladder (P0202 = 4) para posicionamento. Mapeie P0835 = 1100 e P0836 = 1101, aplique com P0849 e comande: 5ª palavra = 1 (habilita), 6ª = 1350, depois 5ª = 3 (inicia).',
       hint: 'P1103 escolhe o caminho: 0 menor, 1 horário, 2 anti-horário, 3 relativo. Leia P1111 mapeando P0820 = 1111.', target: [135, 0.5],
       live: c => `posição = ${fmtN(c.v.userPosDeg, 1)}°`, check: c => c.P[202] === 4 && c.v.applied && c.v.applied.wrWords.includes(1100) && c.v.applied.wrWords.includes(1101) && c.v.lad.inPos && c.v.lad.count > 0 && Math.abs(c.v.userPosDeg - 135) < 0.3 },
+    { id: 'm13', title: 'Posição pela rede: conexão de 8 palavras', text: 'Prepare o drive para posição: P0202 = 4 (aplicativo Ladder de posicionamento), P0820…P0823 = 1110…1113 e P0835…P0838 = 1100…1103, aplicados com P0849 = 1. Abra a conexão de 8 palavras e chegue a Data Active.',
+      hint: 'O botão "Preparar: posição pela rede" (aba Parâmetros) faz a configuração. No CODESYS, escolha a conexão "Exclusive Owner, 8 palavras (posicao)". Sem o P0849 = 1 o mapeamento não vale e a conexão é recusada (0x0109).',
+      check: c => c.P[202] === 4 && c.v.applied && c.v.applied.rdWords.length >= 4 && [1100, 1101, 1102, 1103].every(n => c.v.applied.wrWords.includes(n)) && c.v.p801 === 4 && c.v.ioRun },
+    { id: 'm14', title: 'Pulso: cada pulso gira 45°', text: 'Com o movimento relativo (P1103 = 3) e incremento de 45,0° (P1101 = 450), dê 4 pulsos no bit 1 do comando (P1100): o disco deve dar meia volta, em 4 passos de 45°.',
+      hint: 'O movimento começa na borda de subida do bit 1 (0 → 1): desligue o bit entre um pulso e outro. Cada movimento concluído soma 1 em P1113.',
+      live: c => `posição = ${fmtN(c.v.userPosDeg, 1)}° · pulsos seguidos de ${c.v.lad.relInc == null ? '—' : fmtN(c.v.lad.relInc, 1) + '°'}: ${c.v.lad.relSeq}`,
+      check: c => c.P[202] === 4 && c.v.lad.relInc === 45 && c.v.lad.relSeq >= 4 && c.v.lad.inPos },
+    { id: 'm15', title: 'Posição absoluta: 90° e depois 270°', text: 'Com o tipo menor caminho (P1103 = 0), mande o disco para 90,0° (P1101 = 900) e, depois de parar, para 270,0° (P1101 = 2700).',
+      hint: 'No modo absoluto, P1101 é a posição final, e não um incremento. Leia a posição atual em P1111 (décimos de grau).', target: [270, 0.5],
+      live: c => `posição = ${fmtN(c.v.userPosDeg, 1)}°`,
+      check: c => {
+        const pos = c.v.userPosDeg, ok = c.P[202] === 4 && c.P[1103] === 0 && c.v.lad.inPos;
+        if (ok && Math.abs(pos - 90) < 0.3) mem.p90 = true;
+        return !!mem.p90 && ok && Math.abs(pos - 270) < 0.3;
+      } },
+    { id: 'm16', title: 'Sentido forçado: de 270° para 0° pelo anti-horário', text: 'Parado em 270,0°, mande o disco para 0,0° com P1103 = 2 (anti-horário): ele deve girar 270° para trás, e não 90° para a frente.',
+      hint: 'Com P1103 = 0 o drive escolheria o menor caminho (90° no sentido horário). O sentido forçado serve para máquinas que não podem girar ao contrário.',
+      live: c => `posição = ${fmtN(c.v.userPosDeg, 1)}°`,
+      check: c => {
+        const pos = c.v.userPosDeg;
+        if (c.P[202] === 4 && c.v.lad.inPos && Math.abs(pos - 270) < 0.3) mem.c270 = c.v.lad.count;
+        return mem.c270 !== undefined && c.P[202] === 4 && c.P[1103] === 2 && c.v.lad.inPos && c.v.lad.count > mem.c270 && (pos < 0.3 || pos > 359.7);
+      } },
   ];
   let done = {}; try { done = JSON.parse(localStorage.getItem('sca06-missoes') || '{}'); } catch (_) { }
   function buildMissions() {
     $('#missions').innerHTML = MISSIONS.map(m => `<li id="${m.id}"><h4>${m.title}</h4><p>${m.text}</p><div class="live" id="${m.id}l"></div><details><summary>Dica</summary>${m.hint}</details></li>`).join('');
   }
   buildMissions();
-  $('#mReset').onclick = () => { done = {}; mem.f47 = false; mem.spun = 0; try { localStorage.removeItem('sca06-missoes'); } catch (_) { } };
+  $('#mReset').onclick = () => { done = {}; mem.f47 = false; mem.spun = 0; mem.p90 = false; mem.c270 = undefined; try { localStorage.removeItem('sca06-missoes'); } catch (_) { } };
   function runMissions() {
     const c = { v: S.v, P: S.P, sc: S.sc };
     let current = null, n = 0;
@@ -399,5 +445,5 @@
   }
 
   S.tab = 'scanner';
-  connectBackend().then(b => { backend = b; });
+  backendPronto = connectBackend().then(b => { backend = b; return b; });
 })();

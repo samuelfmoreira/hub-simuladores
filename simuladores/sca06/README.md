@@ -86,8 +86,9 @@ Se o tamanho não bater, o Forward Open é recusado com **0x0109** e o adapter i
 
 ### CODESYS — EtherNet/IP Scanner
 1. *Ferramentas → Repositório de dispositivos → Instalar* o arquivo
-   `docs/0355002B00060200_SCA06_SIM_4x4.eds` (gerado pelo simulador, **não é o EDS oficial WEG**).
-   Para outros tamanhos: `node tools/gera-eds.js 6 5` (6 palavras de entrada, 5 de saída).
+   `docs/0355002B00060200_SCA06_SIM.eds` (gerado pelo simulador, **não é o EDS oficial WEG**).
+   O EDS tem duas conexões: **4 palavras** (velocidade e torque, P0202 = 6) e **8 palavras** (posição pelo Ladder,
+   P0202 = 4 com P0820…P0823 e P0835…P0838 mapeados). Para gerar de novo: `node tools/gera-eds.js`.
 2. Adicione *Ethernet → EtherNet/IP Scanner → SCA06 ECO5 (simulador)*, informe o IP e escolha a
    conexão *Exclusive Owner*.
 
@@ -193,7 +194,8 @@ módulo ECO5 (desencaixa) · emergência (STO) · botoeira STOP (DI1) · disjunt
 peso de desbalanceamento · chaves de fim de curso (monta/retira as cames) · CLP (abre o painel do mestre).
 O sinaleiro mostra verde = habilitado, âmbar = alarme/STOP, vermelho = falha.
 
-**12 missões** guiam a aula: abrir sessão, P0202 = 6, Data Active, habilitar, 300 rpm, inversão em
+**16 missões** guiam a aula (as 4 últimas comandam a posição pela rede: 8 palavras, pulsos de 45°, posição absoluta
+e sentido forçado): abrir sessão, P0202 = 6, Data Active, habilitar, 300 rpm, inversão em
 complemento de dois, função STOP, mapear P0003 na 5ª palavra, equilibrar o peso em modo torque,
 diagnosticar F00047 com cabo rompido, fim de curso e posicionamento em 135,0° pelo Ladder.
 

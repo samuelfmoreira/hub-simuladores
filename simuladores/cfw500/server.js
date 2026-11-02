@@ -195,7 +195,15 @@ io.on('connection', (sock) => {
     // Tudo o que o projeto do Guia (IHM Modbus + CODESYS) precisa: comando pela rede + corrente na 3ª palavra de entrada
     const lista = [[220, 1, 'Sempre Remoto'], [222, 11, 'Referência pela rede'], [226, 9, 'Sentido pela rede'], [227, 4, 'Gira/Para pela rede'],
       [228, 5, 'JOG pela rede'], [105, 5, '1ª/2ª rampa pela rede'], [313, 1, 'Erro de rede: para por rampa'],
-      [820, 3, '3ª palavra de entrada = corrente (P0003)'], [849, 1, 'Aplica a configuração Ethernet']];
+      [820, 3, '3ª palavra de entrada = corrente (P0003)']];
+    // IP fixo por parâmetro (como no inversor real): o IP que o HUB reservou para o inversor
+    const ipIni = String(eip.bindIni || '');
+    if (/^\d+\.\d+\.\d+\.\d+$/.test(ipIni) && ipIni !== '0.0.0.0') {
+      const oct = ipIni.split('.').map(Number);
+      lista.push([810, 0, 'IP pelos parâmetros'], [811, oct[0], 'IP, 1º número'], [812, oct[1], 'IP, 2º número'],
+        [813, oct[2], 'IP, 3º número'], [814, oct[3], 'IP, 4º número'], [815, 24, 'Máscara 255.255.255.0']);
+    }
+    lista.push([849, 1, 'Aplica a configuração Ethernet']);
     const erros = lista.map(([n, v]) => [n, drive.escrever(n, v, 'ui')]).filter(([, r]) => r);
     evento('param', erros.length ? `Preparar para o tutorial: ${erros.map(([n, r]) => `P${n}: ${r.msg}`).join('; ')}` : 'Preparado para o tutorial: rede + P0820 = 3 + P0849 = 1');
     if (typeof cb === 'function') cb(erros.length ? { erro: erros.map(([n, r]) => `P${String(n).padStart(4, '0')}: ${r.msg}`).join(' · ') }

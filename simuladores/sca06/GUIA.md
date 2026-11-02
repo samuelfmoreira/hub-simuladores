@@ -2,7 +2,15 @@
 
 Tutorial completo
 
-O CODESYS é o **mestre** (scanner) e o SCA06 com o módulo ECO5 é o **escravo** (adapter) EtherNet/IP. Ao final, o CLP habilita o servomotor, manda a velocidade em rpm, para pela função STOP, reseta falhas e lê de volta velocidade, corrente e estados, inclusive emergência (STO) e fins de curso. No extra, o mesmo motor passa a ser controlado por torque.
+O CODESYS é o **mestre** (scanner) e o SCA06 com o módulo ECO5 é o **escravo** (adapter) EtherNet/IP. O guia passa pelos **três modos de controle pela rede**:
+
+| Modo | O CLP manda | Parte |
+| --- | --- | --- |
+| **Velocidade** | rpm (o drive mantém a velocidade, com qualquer carga) | Partes 1 a 6 |
+| **Torque** | força, em ampères (o drive não controla a velocidade) | Parte 7 |
+| **Posição** | ângulo de destino, ou **um ângulo por pulso** | Parte 8 |
+
+Nas Partes 1 a 6, o CLP habilita o servomotor, manda a velocidade em rpm, para pela função STOP, reseta falhas e lê de volta velocidade, corrente e estados, inclusive emergência (STO) e fins de curso.
 
 ## Arquitetura
 
@@ -98,9 +106,11 @@ O simulador sai **de fábrica**, como um drive novo: com **P0202 = 2**, ou seja,
 #### Caminho A: automático, um clique
 
 1. No simulador, abra a aba **Parâmetros**.
-2. No topo, clique em **Preparar para EtherNet/IP**.
+2. No topo, clique em **Preparar: velocidade e torque pela rede**.
 3. Confirme com **OK**.
-4. Aparece em verde: **"Pronto: P0000 = 5 · P0202 = 6 · P0662 = 3"**, e o chip **P0202** do topo passa a mostrar **6**.
+4. Aparece em verde: **"Pronto para velocidade e torque: P0202 = 6, conexão de 4 palavras"**, e o chip **P0202** do topo passa a mostrar **6**.
+
+Além dos 3 parâmetros da tabela, o botão zera as palavras extras (P0820…P0823 e P0835…P0838) e aplica com P0849 = 1. Isso só importa se o drive estava configurado para posição (Parte 8): assim a conexão volta a ter 4 palavras.
 
 Se aparecer em vermelho "desabilite o drive antes", o drive está habilitado: desabilite e clique de novo.
 
@@ -179,16 +189,16 @@ Os dois programas precisam estar na **MainTask**: senão compilam, mas nunca rod
 
 ### 2.1 Adicionar o SCA06
 
-- Baixe o EDS no HUB: **Dispositivos** → **Servomotor WEG SCA06** → **Arquivos para o CLP** → `0355002B00060200_SCA06_SIM_4x4.eds`.
+- Baixe o EDS no HUB: **Dispositivos** → **Servomotor WEG SCA06** → **Arquivos para o CLP** → `0355002B00060200_SCA06_SIM.eds`.
 - **Tools → Device Repository → Install** → escolha o EDS baixado.
 - Botão direito em **EtherNet_IP_Scanner** → Add Device → **SCA06 ECO5 (simulador)**.
 - Dois cliques no SCA06 → General → **IP Address = 192.168.100.22**.
 
-Esse EDS foi gerado pelo simulador e descreve 4 palavras de entrada e 4 de saída. Ele não é o EDS oficial da WEG.
+Esse EDS foi gerado pelo simulador e traz **duas conexões**: **4 palavras** em cada sentido (velocidade e torque) e **8 palavras** (posição, Parte 8). Ele não é o EDS oficial da WEG.
 
 ### 2.2 Conexão e tamanhos
 
-Aba **Connections** → conexão **Exclusive Owner**:
+Aba **Connections** → escolha a conexão **Exclusive Owner, 4 palavras (velocidade e torque)**. O mesmo EDS traz também a conexão de 8 palavras, usada só no modo posição (Parte 8).
 
 | Campo | Valor | Por quê |
 | --- | --- | --- |
@@ -338,9 +348,9 @@ Repita o teste do cabo com **P0662 = 0**: o alarme aparece, mas o motor **contin
 | Tudo certo, mas nada muda | programa fora da MainTask | Add Call na MainTask (Parte 2) |
 | Interface SIM-HUB não aparece no CODESYS | rede virtual não criada | aba **Rede virtual** do HUB → criar a rede |
 
-## Extra 1: Controle por torque
+## Parte 7: Controle por torque
 
-No modo torque, o CLP não pede velocidade: pede **força** (corrente). É ótimo para sentir o efeito do peso de desbalanceamento.
+No modo torque, o CLP não pede velocidade: pede **força** (corrente). É ótimo para sentir o efeito do peso de desbalanceamento. A configuração do drive e a conexão são as mesmas da velocidade (P0202 = 6, 4 palavras): só muda a 4ª palavra de saída.
 
 - No ST, troque a linha 1 por `GVL_SCA.MODO := 0;` e acrescente:
 
@@ -355,6 +365,216 @@ GVL_SCA.REF_TORQUE := REAL_TO_INT(LIMIT(-5.0, rTorqueA, 5.0) * 10.0);
 
 Os fins de curso não atuam no modo torque. Cuidado com o disco solto: use valores pequenos.
 
-## Extra 2: As missões da bancada
+## Parte 8: Controle por posição (absoluta e por pulso)
 
-A aba **Missões** do simulador traz 12 desafios em sequência, do básico ao avançado: abrir a sessão, P0202 = 6, Data Active, habilitar, 300 rpm, inversão em complemento de dois, função STOP, mapear a corrente numa palavra extra, equilibrar o peso em modo torque, diagnosticar F00047 com o cabo rompido, fim de curso e posicionamento em 135,0°. Cada missão confere sozinha quando é cumprida. Faça-as pelo CLP virtual da aba **Mestre** ou, as que couberem, pelo seu projeto no CODESYS.
+No modo posição, o CLP manda **para onde** o disco deve ir, e o drive cuida da aceleração, da velocidade e da parada exata. Dá para comandar de dois jeitos:
+
+- **Posição absoluta:** "vá para 90,0°". O drive escolhe o caminho (o menor, ou um sentido forçado).
+- **Por pulso (relativo):** "a cada pulso, ande 45,0°". Cada vez que um BOOL do CLP vai de 0 para 1, o disco anda o ângulo programado, a partir de onde está.
+
+### 8.1 Como funciona no SCA06
+
+O manual Ethernet do SCA06 manda fazer posicionamento pelo **modo Ladder** (P0202 = 4): um aplicativo roda dentro do drive e o CLP conversa com ele por **parâmetros do usuário**. O simulador traz esse aplicativo pronto, o **DISCO_POS**:
+
+| Parâmetro | O que é | Unidade |
+| --- | --- | --- |
+| **P1100** | comando (bits, tabela abaixo) | — |
+| **P1101** | posição de destino, ou o incremento no modo relativo | décimos de grau (450 = 45,0°) |
+| **P1102** | velocidade do movimento | rpm |
+| **P1103** | tipo de movimento: **0** menor caminho · **1** horário · **2** anti-horário · **3** relativo (pulso) | — |
+| P1104 | rampa do movimento (padrão 500) | ms/krpm |
+| **P1110** | status (bits, tabela abaixo) | — |
+| **P1111** | posição atual, de 0 a 3599 | décimos de grau |
+| **P1112** | erro de posição (quanto falta para o destino) | décimos de grau |
+| **P1113** | quantos movimentos já foram concluídos | — |
+
+| Bit | P1100 (comando) | P1110 (status) |
+| --- | --- | --- |
+| 0 | habilita o drive | drive habilitado |
+| 1 | **inicia o movimento, na borda 0 → 1** (é o "pulso") | movendo |
+| 2 | STOP | **em posição** |
+| 3 | reset de falhas | falha |
+| 4 | a posição atual passa a ser 0,0° | fim de curso atuado |
+| 5 | — | STOP ativo |
+
+No modo posição, **quem habilita é o bit 0 do P1100**. A palavra de controle (OUT1) e a referência de velocidade (OUT2) não são usadas.
+
+Para o CLP enxergar esses parâmetros, eles são **mapeados nas palavras extras** da conexão EtherNet/IP, que passa a ter **8 palavras** em cada sentido:
+
+| Palavra | Mapeada por | Carrega | Canal no CODESYS |
+| --- | --- | --- | --- |
+| IN5 | P0820 = 1110 | status | IN5 P0820 (posicao: status P1110) |
+| IN6 | P0821 = 1111 | posição atual | IN6 P0821 (posicao atual P1111) |
+| IN7 | P0822 = 1112 | erro de posição | IN7 P0822 (erro de posicao P1112) |
+| IN8 | P0823 = 1113 | movimentos concluídos | IN8 P0823 (posicionamentos P1113) |
+| OUT5 | P0835 = 1100 | comando | OUT5 P0835 (posicao: comando P1100) |
+| OUT6 | P0836 = 1101 | destino ou incremento | OUT6 P0836 (alvo ou incremento P1101) |
+| OUT7 | P0837 = 1102 | velocidade | OUT7 P0837 (velocidade P1102) |
+| OUT8 | P0838 = 1103 | tipo de movimento | OUT8 P0838 (tipo de movimento P1103) |
+
+### 8.2 Configurar o drive para posição
+
+O que precisa mudar (o drive **desabilitado**):
+
+| Parâmetro | Valor | O que faz |
+| --- | --- | --- |
+| **P0000** | **5** | senha |
+| **P0202** | **4** | modo Ladder: o aplicativo de posicionamento comanda o motor |
+| P1020 | 1 | aplicativo em execução (já vem 1 de fábrica: só confira) |
+| **P0820…P0823** | **1110, 1111, 1112, 1113** | o que vai nas palavras de entrada 5 a 8 |
+| **P0835…P0838** | **1100, 1101, 1102, 1103** | onde as palavras de saída 5 a 8 escrevem |
+| **P0662** | **3** | se a comunicação cair: desabilita o drive |
+| **P0849** | **1** | aplica a configuração de rede (volta sozinho para 0) |
+
+#### Caminho A: automático, um clique
+
+1. Aba **Parâmetros** do simulador → **Preparar: posição pela rede** → **OK**.
+2. Aparece em verde: **"Pronto para posição: P0202 = 4, conexão de 8 palavras"**.
+
+#### Caminho B: pela HMI do drive
+
+As teclas e o jeito de ler o display são os da Parte 1.3. O que é novo aqui são os valores de **4 dígitos**: na alteração, **◄** passa para o dígito ao lado (unidades → dezenas → centenas → milhar) e **▲** soma 1 naquele dígito. Exemplo: para formar **1110** a partir de 00000, aperte **◄ ▲ ◄ ▲ ◄ ▲** (dezena, centena e milhar valendo 1).
+
+Comece com o display em **P00000** e o drive desabilitado:
+
+1. **Senha:** **P**, **▲ 5 vezes**, **P**.
+2. **P0202 = 4:** **▲ 37 vezes** (P00202) → **P** → **P** → **▲ 2 vezes** (00004) → **P**.
+3. **P0662 = 3:** **▲ 13 vezes** (P00662) → **P** → **▲ 3 vezes** → **P**.
+4. **P0820 = 1110:** **▲ 16 vezes** (P00820) → **P** → **◄ ▲ ◄ ▲ ◄ ▲** → **P**.
+5. **P0821 = 1111:** **▲** → **P** → **▲** → **◄ ▲ ◄ ▲ ◄ ▲** → **P**.
+6. **P0822 = 1112:** **▲** → **P** → **▲ ▲** → **◄ ▲ ◄ ▲ ◄ ▲** → **P**.
+7. **P0823 = 1113:** **▲** → **P** → **▲ ▲ ▲** → **◄ ▲ ◄ ▲ ◄ ▲** → **P**.
+8. **P0835 = 1100:** **▲ 9 vezes** (P00835) → **P** → **◄ ◄ ▲ ◄ ▲** → **P**.
+9. **P0836 = 1101:** **▲** → **P** → **▲** → **◄ ◄ ▲ ◄ ▲** → **P**.
+10. **P0837 = 1102:** **▲** → **P** → **▲ ▲** → **◄ ◄ ▲ ◄ ▲** → **P**.
+11. **P0838 = 1103:** **▲** → **P** → **▲ ▲ ▲** → **◄ ◄ ▲ ◄ ▲** → **P**.
+12. **P0849 = 1:** **▲ 9 vezes** (P00849) → **P** → **▲** → **P**. A interface de rede reinicia e passa a esperar 8 palavras.
+13. **Confira o P1020:** **▲ 3 vezes** (P01020) → **P** mostra o valor: deve ser **1**. **◄** volta sem alterar.
+
+Para conferir tudo, use o filtro **Diferentes do padrão** na aba Parâmetros.
+
+#### Caminho C: pela aba Parâmetros
+
+Busque cada número, clique na linha, digite o valor e clique em **Gravar**, na ordem da tabela. Deixe o **P0849 = 1** por último.
+
+### 8.3 No CODESYS: a conexão de 8 palavras
+
+1. Dois cliques no SCA06 → aba **Connections**. Apague a conexão de 4 palavras e adicione **Exclusive Owner, 8 palavras (posicao)**. Os tamanhos ficam **16 bytes** em cada sentido.
+2. Acrescente na **GVL_SCA**:
+
+```
+    // modo posição: palavras extras (entradas)
+    POS_STATUS : INT;   // IN5  P1110 status
+    POS_ATUAL  : INT;   // IN6  P1111 posição atual (décimos de grau)
+    POS_ERRO   : INT;   // IN7  P1112 erro de posição
+    POS_CONT   : INT;   // IN8  P1113 movimentos concluídos
+    // modo posição: palavras extras (saídas)
+    POS_CMD    : INT;   // OUT5 P1100 comando
+    POS_ALVO   : INT;   // OUT6 P1101 destino ou incremento (décimos de grau)
+    POS_VEL    : INT;   // OUT7 P1102 velocidade (rpm)
+    POS_TIPO   : INT;   // OUT8 P1103 tipo de movimento
+
+    // comandos e leituras do modo posição (use no online ou numa visualização)
+    xPulso         : BOOL;            // cada FALSE -> TRUE inicia um movimento
+    xZerarPosicao  : BOOL;            // a posição atual passa a ser 0,0°
+    rAnguloGraus   : REAL := 45.0;    // destino (absoluto) ou incremento (relativo)
+    rVelPosRpm     : REAL := 60.0;    // velocidade do movimento
+    iTipoMovimento : INT := 3;        // 0 menor caminho, 1 horário, 2 anti-horário, 3 relativo (pulso)
+    rPosAtualGraus : REAL;
+    xEmPosicao, xMovendo : BOOL;
+```
+
+3. No **I/O Mapping**, ligue os 8 canais novos (IN5…IN8 e OUT5…OUT8) às variáveis POS_ acima, na mesma ordem.
+
+### 8.4 Programa ST (Posicao_SCA)
+
+Crie o programa e coloque-o na **MainTask** (Add Call). No modo posição, os programas PLC_PRG e Velocidade_SCA podem continuar na tarefa: o drive ignora o que eles mandam.
+
+```
+PROGRAM Posicao_SCA
+
+// 1) comando P1100: um bit para cada função
+GVL_SCA.POS_CMD.0 := GVL_SCA.xHabilita;       // habilita o drive
+GVL_SCA.POS_CMD.1 := GVL_SCA.xPulso;          // inicia o movimento na borda FALSE -> TRUE
+GVL_SCA.POS_CMD.2 := GVL_SCA.xStop;           // STOP
+GVL_SCA.POS_CMD.3 := GVL_SCA.xReset;          // reset de falhas
+GVL_SCA.POS_CMD.4 := GVL_SCA.xZerarPosicao;   // a posição atual vira 0,0°
+
+// 2) destino ou incremento, velocidade e tipo
+GVL_SCA.POS_ALVO := REAL_TO_INT(GVL_SCA.rAnguloGraus * 10.0);   // graus -> décimos de grau
+GVL_SCA.POS_VEL  := REAL_TO_INT(LIMIT(1.0, GVL_SCA.rVelPosRpm, 3000.0));
+GVL_SCA.POS_TIPO := GVL_SCA.iTipoMovimento;
+
+// 3) leituras
+GVL_SCA.rPosAtualGraus := INT_TO_REAL(GVL_SCA.POS_ATUAL) / 10.0;
+GVL_SCA.xMovendo   := GVL_SCA.POS_STATUS.1;
+GVL_SCA.xEmPosicao := GVL_SCA.POS_STATUS.2;
+```
+
+| Trecho | O que faz |
+| --- | --- |
+| `POS_CMD.1 := xPulso` | o drive reage à **subida** do bit: para dar outro pulso, o xPulso precisa voltar a FALSE antes |
+| `* 10.0` | o drive trabalha em décimos de grau: 45,0° viram 450 |
+| `LIMIT(1.0, …, 3000.0)` | a velocidade do movimento vai de 1 a 3000 rpm |
+| `POS_STATUS.2` | "em posição": o movimento terminou e o disco está no destino |
+
+**Pulso automático (opcional):** para o disco andar sozinho de tempos em tempos, troque a linha do `POS_CMD.1` por dois temporizadores: um marca o tempo (a cada 2 segundos) e o outro gera o pulso, com 200 ms de duração:
+
+```
+VAR
+    tCiclo : TON;   // marca o intervalo entre os pulsos
+    tPulso : TP;    // gera um pulso de duração fixa
+END_VAR
+
+tCiclo(IN := GVL_SCA.xHabilita AND NOT tCiclo.Q, PT := T#2S);
+tPulso(IN := tCiclo.Q, PT := T#200MS);
+GVL_SCA.POS_CMD.1 := tPulso.Q;   // 200 ms em TRUE a cada 2 s = um pulso
+```
+
+O pulso tem 200 ms, e não um ciclo só, de propósito: a comunicação manda os dados a cada RPI (20 ms, por exemplo), e um bit que fica TRUE por menos tempo que isso pode não chegar ao drive.
+
+### 8.5 Testar
+
+**Build**, **Login** e **Start**. O chip **P0801** deve ficar em **Data Active**. Altere os valores no online (**Ctrl+F7**):
+
+| Ação no CODESYS | Resultado esperado |
+| --- | --- |
+| `xHabilita := TRUE` | o drive habilita e segura o disco parado; `POS_STATUS` com os bits 0 e 2 |
+| `xZerarPosicao` TRUE e FALSE | a posição atual passa a ser 0,0° |
+| `iTipoMovimento := 3`, `rAnguloGraus := 45` | modo pulso, de 45° em 45° |
+| `xPulso` TRUE e FALSE | o disco anda 45°; `rPosAtualGraus` = 45,0 |
+| `xPulso` TRUE e FALSE mais 3 vezes | 90° → 135° → **180°**: meia volta; `POS_CONT` conta os movimentos |
+| `iTipoMovimento := 0`, `rAnguloGraus := 90`, pulso | vai para **90,0°** pelo menor caminho |
+| `rAnguloGraus := 270`, pulso | vai para **270,0°** |
+| `iTipoMovimento := 2`, `rAnguloGraus := 0`, pulso | volta a 0,0° **girando 270° no anti-horário**, e não 90° no horário |
+| `xStop := TRUE` no meio de um movimento | o disco para pela rampa; `xStop := FALSE` e um novo pulso retomam |
+
+### 8.6 Problemas comuns
+
+| Sintoma | Causa provável | Solução |
+| --- | --- | --- |
+| Forward Open recusado (0x0109), P0801 em Wait Comm | a conexão no CODESYS é a de 4 palavras, ou o P0849 = 1 não foi feito | conexão **8 palavras (posicao)**; aplique com P0849 = 1 |
+| Conecta, mas o drive não habilita | habilitando pela OUT1 (palavra de controle) | no modo posição quem habilita é o **P1100 bit 0** (`POS_CMD.0`) |
+| O pulso não faz nada | `xPulso` já estava TRUE | o movimento começa na **subida**: volte a FALSE e ligue de novo |
+| Anda 10 vezes mais (ou menos) | ângulo sem a conversão para décimos | `POS_ALVO := rAnguloGraus * 10` |
+| Nada se move, mesmo habilitado | P1020 = 0 (aplicativo parado) ou P0202 diferente de 4 | P1020 = 1 e P0202 = 4 |
+| No modo absoluto, o disco vai pelo lado "errado" | tipo 0 = menor caminho | use 1 (horário) ou 2 (anti-horário) para forçar o sentido |
+
+### 8.7 Voltar para velocidade ou torque
+
+1. Aba **Parâmetros** → **Preparar: velocidade e torque pela rede** (ou, pelos outros caminhos: P0202 = 6, P0820 e P0835 = 0 e P0849 = 1).
+2. No CODESYS, troque a conexão de volta para **Exclusive Owner, 4 palavras (velocidade e torque)**.
+
+## Extra: As missões da bancada
+
+A aba **Missões** do simulador traz **16 desafios** em sequência, do básico ao avançado. Cada um confere sozinho quando é cumprido:
+
+| Missões | Assunto |
+| --- | --- |
+| 1 a 3 | abrir a sessão, P0202 = 6, conexão em Data Active |
+| 4 a 7 | habilitar, 300 rpm, inversão em complemento de dois, função STOP |
+| 8 a 11 | corrente numa palavra extra, equilibrar o peso por torque, cabo rompido (F00047), fim de curso |
+| 12 | posicionar em 135,0° pelo Ladder |
+| **13 a 16** | **posição pela rede:** conexão de 8 palavras, **4 pulsos de 45°**, posição absoluta (90° e 270°) e sentido forçado (de 270° a 0° pelo anti-horário) |
+
+Faça-as pelo CLP virtual da aba **Mestre** ou pelo seu projeto no CODESYS. As missões 13 a 16 foram pensadas para o projeto da Parte 8.
