@@ -2,6 +2,9 @@
 
 As notas de cada versão aparecem no HUB quando a atualização é oferecida. Escreva a seção da versão nova antes do push.
 
+## 1.5.5
+- Botão no topo, à direita, para escolher o fundo claro ou escuro. A escolha fica guardada; sem escolha, o HUB segue o tema do Windows.
+
 ## 1.5.4
 - A tela "Bancada" agora se chama "Dispositivos", no menu, no título e nas aulas.
 

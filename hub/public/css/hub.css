@@ -36,8 +36,9 @@
   --mono: ui-monospace, 'Cascadia Mono', Consolas, 'Liberation Mono', monospace;
   --raio: 4px;
 }
+/* Tema escuro: segue o Windows, a menos que o usuário escolha pelo botão do topo (data-tema no <html>) */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-tema="claro"]) {
     color-scheme: dark;
     --painel: #1A1E20;
     --chapa: #242A2D;
@@ -57,6 +58,26 @@
     --sombra: 0 2px 8px rgba(0,0,0,.45);
   }
 }
+:root[data-tema="escuro"] {
+  color-scheme: dark;
+  --painel: #1A1E20;
+  --chapa: #242A2D;
+  --chapa-2: #2C3337;
+  --borda: #3E474B;
+  --grafite: #E2E6E1;
+  --grafite-2: #A2ABAE;
+  --aco: #5D676A;
+  --aco-escuro: #48514F;
+  --azul: #5F9BE6;
+  --azul-texto: #0D1A2A;
+  --rede: #3CB8C0;
+  --rede-claro: #173A3D;
+  --led-off: #4E5759;
+  --console: #121517;
+  --palco: radial-gradient(120% 90% at 50% 35%, #AEB6B4 0%, #8F9897 70%, #7D8685 100%);
+  --sombra: 0 2px 8px rgba(0,0,0,.45);
+}
+:root[data-tema="claro"] { color-scheme: light; }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; }
@@ -312,3 +333,8 @@ dialog .dlg-corpo.texto { border: 0; border-radius: 0; }
 .assist-passos span { flex: 1; height: 4px; background: var(--borda); border-radius: 2px; }
 .assist-passos span.feito { background: var(--azul); }
 .aviso-toast { position: fixed; right: 20px; bottom: 20px; max-width: 420px; background: var(--grafite); color: var(--chapa); padding: 12px 16px; border-radius: var(--raio); z-index: 50; box-shadow: var(--sombra); }
+
+/* botão de tema (claro / escuro) */
+.tema-btn { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid var(--borda); background: var(--chapa); color: var(--grafite); cursor: pointer; padding: 0; }
+.tema-btn:hover { background: var(--chapa-2); }
+.tema-btn svg { width: 18px; height: 18px; }

@@ -6,6 +6,7 @@
   <title>HUB de Simuladores</title>
   <link rel="icon" href="icone.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/hub.css">
+  <script>/* aplica o tema escolhido antes de desenhar, sem piscar */ try { var t = localStorage.getItem("hub.tema"); if (t === "claro" || t === "escuro") document.documentElement.dataset.tema = t; } catch (e) {}</script>
 </head>
 <body>
   <header class="topo">
@@ -31,6 +32,7 @@
       <span class="item" id="resumoExec">Nenhum em execução</span>
       <button class="btn peq" id="pararTodos" hidden>Parar todos</button>
       <button class="btn rede peq" id="avisoAtualizacao" hidden></button>
+      <button class="tema-btn" id="tema" type="button"></button>
     </div>
   </header>
 
