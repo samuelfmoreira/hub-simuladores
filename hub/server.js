@@ -476,12 +476,12 @@ async function encerrar() {
   process.exit(0);
 }
 /**
- * Versão do usuário: quando a janela do HUB é fechada (nenhuma tela conectada), o motor espera 20 s
+ * Versão do usuário (e desenvolvedor sem janela preta): quando a janela do HUB é fechada (nenhuma tela conectada), o motor espera 20 s
  * (tempo de um F5 ou do reinício de uma atualização) e, sem simuladores rodando, encerra sozinho.
  */
 let timerSaida = null;
 function avaliarSaida() {
-  if (MODO !== 'usuario') return;
+  if (MODO !== 'usuario' && !OCULTO) return;   // desenvolvedor com janela preta: só encerra pelo Sair ou fechando a janela preta
   clearTimeout(timerSaida); timerSaida = null;
   if (clientes.size > 0) return;
   timerSaida = setTimeout(() => {

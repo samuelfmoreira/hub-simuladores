@@ -2,6 +2,9 @@
 
 As notas de cada versão aparecem no HUB quando a atualização é oferecida. Escreva a seção da versão nova antes do push.
 
+## 1.6.2
+- Ajustes internos de manutenção. Nada muda no uso do HUB.
+
 ## 1.6.1
 - Guia novo do Inversor CFW500: tutorial completo IHM Modbus + CODESYS + EtherNet/IP, com os prints do projeto funcionando.
 - Guia novo do Servomotor SCA06: tutorial completo CODESYS + EtherNet/IP, com mapa de dados, Ladder, ST, roteiro de teste, problemas comuns e controle por torque.

@@ -8,8 +8,10 @@ rem ==========================================================================
 rem  Abre o HUB do desenvolvedor (com a aba Desenvolvedor): aplicar a versão
 rem  entregue pelo Claude, testar, ajustar versão e notas e publicar no GitHub.
 rem  Na primeira vez baixa as dependências (precisa de internet).
-rem  Esta cópia não se atualiza sozinha: quem recebe atualizações é o HUB
-rem  instalado pelo HUB-Simuladores.exe.
+rem
+rem  O HUB roda por trás, sem janela preta; as mensagens ficam em hub.log.
+rem  Ao fechar a janela do HUB, ele se encerra sozinho (ou use o botão Sair).
+rem  Para abrir do jeito antigo, com a janela preta: HUB-DESENVOLVEDOR.bat janela
 rem ==========================================================================
 
 where node >nul 2>&1
@@ -27,6 +29,16 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-node hub\server.js
+
+if /i "%~1"=="janela" (
+  node hub\server.js
+  echo.
+  pause
+  exit /b 0
+)
+
 echo.
-pause
+echo Abrindo o HUB do desenvolvedor... (as mensagens ficam em hub.log)
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process -FilePath 'node' -ArgumentList 'hub\server.js','--oculto' -WorkingDirectory '%CD%' -WindowStyle Hidden"
+timeout /t 2 >nul
+exit /b 0

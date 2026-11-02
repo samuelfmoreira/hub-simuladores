@@ -34,7 +34,7 @@ O passo a passo completo, em linguagem simples, está no **GUIA-DO-DESENVOLVEDOR
 | Arquivo | Quando |
 |---|---|
 | `CONFIGURAR-GITHUB.bat` | uma vez: instala o que faltar, gera a chave de assinatura, guia você pelas telas do GitHub e envia o projeto |
-| `HUB-DESENVOLVEDOR.bat` | sempre: abre o HUB com a aba **Desenvolvedor**, onde você aplica o zip que o Claude entregar, testa, ajusta versão e notas e publica no GitHub |
+| `HUB-DESENVOLVEDOR.bat` | sempre: abre o HUB com a aba **Desenvolvedor**, onde você aplica o zip que o Claude entregar, testa, ajusta versão e notas e publica no GitHub. Roda sem janela preta (mensagens em `hub.log`); para ver as mensagens ao vivo, rode `HUB-DESENVOLVEDOR.bat janela` |
 | `PUBLICAR-VERSAO.bat` | alternativa sem abrir o HUB: arraste o zip em cima dele e ele aplica e publica |
 
 Ao receber uma versão nova, o GitHub Actions (`.github/workflows/publicar.yml`) monta, assina e cria o release `v<versão>` com o `HUB-Simuladores.exe` (para instalações novas), o pacote de atualização e o `versao.json` (para os HUBs instalados). Se o número da versão (`hub/package.json`) não mudou, nada é publicado.
