@@ -146,6 +146,8 @@ async function publicar(mensagem, log) {
   if (!s.repositorio) throw new Error(s.aviso);
   if (!s.chaveProtegida) throw new Error('Segurança: o .gitignore não está protegendo a chave privada. Publicação cancelada.');
   if (!s.chavePublica) throw new Error('Falta hub/chave-publica.pem. Rode o CONFIGURAR-GITHUB.bat.');
+  // a descrição padrão ("HUB 1.2.3") sempre leva a versão que está sendo publicada
+  if (!mensagem || /^HUB \d+\.\d+\.\d+$/.test(mensagem.trim())) mensagem = `HUB ${s.versao}`;
   log(`Publicando a versão ${s.versao}...`);
   let r = await git(['add', '-A'], { log });
   if (r.codigo !== 0) throw new Error('git add falhou.');

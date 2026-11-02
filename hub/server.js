@@ -232,7 +232,12 @@ async function rotear(req, res) {
 
   // ---------- atualização do HUB ----------
   if (p === '/api/atualizacao' && m === 'GET') return json(res, 200, resumoAtualizacao());
-  if (p === '/api/atualizacao/verificar' && m === 'POST') { await verificarAtualizacao(); return json(res, 200, resumoAtualizacao()); }
+  if (p === '/api/atualizacao/verificar' && m === 'POST') {
+    // ?seAntiga=1: só consulta se a última busca tiver mais de 5 minutos (usado quando o usuário volta para a janela)
+    const seAntiga = new URL(req.url, 'http://x').searchParams.get('seAntiga');
+    if (!seAntiga || !ATU.ultima || Date.now() - ATU.ultima > 5 * 60 * 1000) await verificarAtualizacao();
+    return json(res, 200, resumoAtualizacao());
+  }
   if (p === '/api/atualizacao/aplicar' && m === 'POST') {
     if (!ATU.info?.disponivel) return json(res, 409, { erro: 'Não há versão nova para instalar.' });
     aplicarAtualizacao('pedido na tela');
@@ -369,7 +374,7 @@ servidor.listen(cfg.hubPorta, () => {
   }
   // procura versão nova logo depois de abrir e a cada 6 horas
   setTimeout(() => verificarAtualizacao({ automatica: true }), 4000);
-  setInterval(() => verificarAtualizacao(), 6 * 3600 * 1000);
+  setInterval(() => verificarAtualizacao(), 30 * 60 * 1000);   // procura versão nova a cada 30 minutos
 });
 
 /** Abre uma tela (do HUB ou de um simulador). No Windows, em modo "janela": Edge sem barra de endereço, com cara de programa. */
@@ -392,6 +397,7 @@ function resumoAtualizacao() {
 }
 async function verificarAtualizacao({ automatica = false } = {}) {
   if (ATU.verificando || ATU.aplicando) return;
+  ATU.ultima = Date.now();
   ATU.verificando = true; ATU.erro = null; enviar('atualizacao', resumoAtualizacao());
   try {
     ATU.info = await atualizador.verificar();

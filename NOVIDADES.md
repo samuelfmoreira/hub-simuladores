@@ -2,6 +2,9 @@
 
 As notas de cada versão aparecem no HUB quando a atualização é oferecida. Escreva a seção da versão nova antes do push.
 
+## 1.5.7
+- O HUB procura versões novas com mais frequência: a cada 30 minutos (antes, 6 horas) e também quando você volta para a janela dele.
+
 ## 1.5.6
 - Ajuste no texto da tela Dispositivos: "Escolha um equipamento, inicie e conecte com o seu CLP."
 

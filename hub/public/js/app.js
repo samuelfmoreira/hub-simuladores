@@ -586,6 +586,11 @@
   $('#avisoAtualizacao').onclick = () => mostrarDialogoAtualizacao(true);
   $('#versao').onclick = () => mostrarDialogoAtualizacao(true);
 
+  // ------------------------------------------------------------------ ao voltar para a janela, procura versão nova (no máximo a cada 5 min)
+  window.addEventListener('focus', async () => {
+    try { E.atualizacao = await api('POST', '/api/atualizacao/verificar?seAntiga=1'); renderAtualizacao(); } catch (_) { /* sem conexão: tenta na próxima */ }
+  });
+
   // ------------------------------------------------------------------ tema claro / escuro
   const escuroSistema = matchMedia('(prefers-color-scheme: dark)');
   const temaAtual = () => document.documentElement.dataset.tema || (escuroSistema.matches ? 'escuro' : 'claro');
