@@ -565,7 +565,9 @@
         <div class="acoes"><button class="btn prim" id="atuOk">OK, atualizar agora</button><button class="btn" id="atuDepois">Depois</button></div>`;
     } else {
       corpo = `<p style="margin-top:0">Versão instalada: <b>${esc(a.atual)}</b>.</p>
-        <p>${a.configurado === false ? 'Esta cópia não recebe atualizações automáticas.' : a.erro ? esc(a.erro) : a.verificando ? 'Procurando atualização...' : 'O HUB está atualizado.'}</p>
+        ${E.resultadoBusca
+          ? `<p style="display:flex;gap:10px;align-items:flex-start;font-weight:600;color:${E.resultadoBusca.ok ? 'var(--led-verde)' : '#E05A4F'}"><span aria-hidden="true">${E.resultadoBusca.ok ? '✓' : '✕'}</span><span>${esc(E.resultadoBusca.texto)}</span></p>`
+          : `<p>${a.configurado === false ? 'Esta cópia não recebe atualizações automáticas.' : a.erro ? esc(a.erro) : a.verificando ? 'Procurando atualização...' : 'O HUB está atualizado.'}</p>`}
         <div class="acoes">${a.configurado === false ? '' : '<button class="btn" id="atuProcurar">Procurar atualização</button>'}<button class="btn" id="atuFechar">Fechar</button></div>`;
     }
     $('#atuCorpo').innerHTML = corpo;
@@ -579,12 +581,22 @@
     if ($('#atuDepois')) $('#atuDepois').onclick = () => { E.atualizacaoAdiada = true; d.close(); };
     if ($('#atuFechar')) $('#atuFechar').onclick = () => d.close();
     if ($('#atuProcurar')) $('#atuProcurar').onclick = async () => {
-      try { E.atualizacao = await api('POST', '/api/atualizacao/verificar'); E.atualizacaoAdiada = false; mostrarDialogoAtualizacao(true); } catch (e) { toast(e.message); }
+      const b = $('#atuProcurar'); b.disabled = true; b.textContent = 'Procurando…';
+      const inicio = Date.now();
+      try {
+        E.atualizacao = await api('POST', '/api/atualizacao/verificar');
+        const hora = new Date().toLocaleTimeString('pt-BR');
+        E.resultadoBusca = E.atualizacao.erro ? { ok: false, texto: `Não foi possível verificar (às ${hora}). ${E.atualizacao.erro}` }
+          : E.atualizacao.disponivel ? null
+          : { ok: true, texto: `Verificado agora, às ${hora}. Você já está na versão mais recente (${E.atualizacao.atual}).` };
+      } catch (e) { E.resultadoBusca = { ok: false, texto: `Não foi possível verificar: ${e.message}` }; }
+      await new Promise((r) => setTimeout(r, Math.max(0, 700 - (Date.now() - inicio))));   // o "Procurando…" fica visível por um instante
+      E.atualizacaoAdiada = false; mostrarDialogoAtualizacao(true);
     };
   }
   $('#dlgAtualizacao').addEventListener('cancel', (e) => { if (E.atualizacao?.aplicando || E.reiniciando) e.preventDefault(); else E.atualizacaoAdiada = true; });
   $('#avisoAtualizacao').onclick = () => mostrarDialogoAtualizacao(true);
-  $('#versao').onclick = () => mostrarDialogoAtualizacao(true);
+  $('#versao').onclick = () => { E.resultadoBusca = null; mostrarDialogoAtualizacao(true); };
 
   // ------------------------------------------------------------------ ao voltar para a janela, procura versão nova (no máximo a cada 5 min)
   window.addEventListener('focus', async () => {
