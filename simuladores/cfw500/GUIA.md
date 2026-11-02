@@ -36,7 +36,7 @@ Os endereços %IX/%QX são os do projeto dos prints; no seu podem ser outros.
 
 - No HUB, a aba **Rede virtual** deve mostrar **Rede pronta**. Ela cria 192.168.100.10 para o CODESYS e 192.168.100.20 para o CFW500.
 - Em **Dispositivos**, escolha o **Inversor WEG CFW500** e clique em **Iniciar** antes de iniciar o CODESYS Control Win.
-- No simulador, aba **Rede EtherNet/IP**, quadro **Endereço IP do inversor**: deve dizer "Respondendo em 192.168.100.20".
+- No simulador, aba **Rede EtherNet/IP**, quadro **Endereço IP e configurações da rede EtherNet/IP**: deve dizer "Respondendo em 192.168.100.20".
 
 Fora do HUB, os mesmos passos são feitos pelos arquivos **2-criar-rede-virtual.bat** e **3-iniciar-simulador.bat**, na pasta do simulador.
 
@@ -59,7 +59,7 @@ Antes de o CLP conversar com o inversor, o inversor precisa de um **endereço IP
 
 **Por que mudar o P0810:** com **DHCP**, o inversor pede um IP a um servidor DHCP da rede. Numa máquina industrial normalmente não há esse servidor, e o CLP precisa saber o IP do inversor de antemão. Por isso se usa **IP fixo pelos parâmetros**.
 
-**No simulador:** dentro do HUB, mesmo em DHCP, o inversor responde no IP que o HUB reservou para ele (192.168.100.20), para facilitar. O quadro **Endereço IP do inversor**, na aba **Rede EtherNet/IP**, mostra **"origem: inicialização"**. Mas treine o caminho real: depois da configuração, ele passa a mostrar **"origem: parâmetros"**.
+**No simulador:** dentro do HUB, mesmo em DHCP, o inversor responde no IP que o HUB reservou para ele (192.168.100.20), para facilitar. O quadro **Endereço IP e configurações da rede EtherNet/IP**, na aba **Rede EtherNet/IP**, mostra **"origem: inicialização"**. Mas treine o caminho real: depois da configuração, ele passa a mostrar **"origem: parâmetros"**.
 
 **Regras do IP:** ele precisa estar na **mesma rede** do CLP (192.168.100.x, máscara 24) e ser **único**. O 192.168.100.10 é do CODESYS: nunca use o mesmo nos dois. No simulador, o IP também precisa existir no computador, e a rede virtual do HUB já cria o 192.168.100.20. Se você programar um IP que não existe, o simulador avisa e continua no IP de inicialização.
 
@@ -74,6 +74,8 @@ O assistente faz o mesmo que você faria na HMI, **na mesma ordem e explicando c
 3. Em cada etapa você vê **para que ela serve**, uma tabela com cada parâmetro (**o que faz**, valor **atual** e valor **novo**) e **como seria na HMI**.
 4. Clique em **Gravar esta etapa**. Os parâmetros são gravados um por um: cada linha fica com **✓ gravado** (ou **✓ já estava assim**, quando o valor de fábrica já é o certo), e o **display da HMI do inversor mostra o parâmetro** que acabou de ser gravado. Depois, **Próxima etapa**.
 5. No fim, o assistente mostra **o que configurar no CLP**: IP, arquivo EDS, conexão e tamanhos.
+
+**Navegue à vontade:** clique em qualquer etapa na **trilha do topo** do assistente para ir direto a ela (as gravadas aparecem com ✓), use **Pular ›** para seguir sem gravar a etapa (por exemplo, só para ler a explicação) ou as **setas ← →** do teclado.
 
 Quer só testar o CODESYS? **Fazer tudo** grava a etapa atual e as seguintes, uma depois da outra, com a mesma explicação na tela.
 
@@ -99,7 +101,7 @@ Busque cada número e grave: **P0810 = 0**, **P0813 = 100**, **P0814 = 20** e, p
 
 #### Como saber que deu certo
 
-- Aba **Rede EtherNet/IP**, quadro **Endereço IP do inversor**: **"Respondendo em 192.168.100.20 · origem: parâmetros"**.
+- Aba **Rede EtherNet/IP**, quadro **Endereço IP e configurações da rede EtherNet/IP**: **"Respondendo em 192.168.100.20 · origem: parâmetros"**. O mesmo quadro mostra, numa tabela, tudo o que está nos parâmetros de rede (IP, máscara, gateway, palavras de troca, tamanho da conexão, se o comando vem da rede, a ação se a comunicação cair e o P0801), e avisa quando algo foi gravado mas ainda não aplicado com P0849 = 1.
 - No CODESYS, o IP que você coloca no CFW500 (seção 3.1) é esse mesmo: **192.168.100.20**.
 
 O **Restaurar padrão de fábrica** volta o P0810 para **1 (DHCP)** e o IP para 192.168.0.14.

@@ -114,6 +114,8 @@ O assistente faz o mesmo que você faria na HMI, **na mesma ordem e explicando c
 5. Clique em **Gravar esta etapa**. Os parâmetros são gravados um por um: cada linha fica com **✓ gravado** (ou **✓ já estava assim**), e o **display da HMI do drive mostra o parâmetro** que acabou de ser gravado (primeiro o número, depois o valor). Depois, **Próxima etapa**.
 6. No fim, o assistente mostra **o que configurar no CLP**: IP, arquivo EDS, conexão, tamanhos e como habilitar.
 
+**Navegue à vontade:** clique em qualquer etapa na **trilha do topo** do assistente para ir direto a ela (as gravadas aparecem com ✓), use **Pular ›** para seguir sem gravar a etapa (por exemplo, só para ler a explicação) ou as **setas ← →** do teclado. O primeiro item da trilha, **⇄ modo**, volta à escolha entre velocidade/torque e posição.
+
 Quer só testar o CODESYS? **Fazer tudo** grava a etapa atual e as seguintes, uma depois da outra.
 
 Se o drive estiver habilitado, o assistente avisa e não grava: o modo de operação só muda com o drive desabilitado.

@@ -2,6 +2,12 @@
 
 As notas de cada versão aparecem no HUB quando a atualização é oferecida. Escreva a seção da versão nova antes do push.
 
+## 1.7.3
+- Assistente de comunicação com o CLP (CFW500 e SCA06): agora dá para navegar livremente. Clique em qualquer etapa na trilha do topo para ir direto a ela, use "Pular" para seguir sem gravar, ou as setas do teclado. No SCA06, o primeiro item da trilha troca entre velocidade/torque e posição.
+
+## 1.7.2
+- Inversor CFW500: o quadro da aba Rede EtherNet/IP agora se chama "Endereço IP e configurações da rede EtherNet/IP" e mostra tudo o que define a comunicação: origem do IP, endereço, máscara, gateway, taxa, palavras de troca, tamanho da conexão no CLP, se o comando vem da rede, a ação se a comunicação cair e o estado (P0801). Ele avisa quando algo foi gravado mas ainda não aplicado com P0849 = 1.
+
 ## 1.7.1
 - Inversor CFW500 e Servomotor SCA06: novo "Assistente de comunicação com o CLP" (botão no topo de cada simulador). Ele configura o equipamento para a rede EtherNet/IP em etapas, na ordem de campo (IP, quem manda, palavras de troca, segurança e aplicar), explicando cada parâmetro, e a HMI do equipamento mostra cada gravação. No fim, mostra o que configurar no CLP.
 - O assistente substitui os botões automáticos anteriores. Os guias explicam o assistente e o caminho parâmetro por parâmetro, lado a lado.

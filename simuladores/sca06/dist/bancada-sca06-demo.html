@@ -2756,9 +2756,15 @@ body.arrastando canvas, body.arrastando iframe { pointer-events: none; }
   .aclp-cab p { margin: 2px 0 0; color: #A7B0B3; font-size: 14px; }
   .aclp-x { margin-left: auto; background: none; border: 1px solid #485055; color: #E6EAE7; border-radius: 6px; padding: 4px 10px; cursor: pointer; }
   .aclp-trilha { display: flex; gap: 6px; flex-wrap: wrap; padding: 12px 20px 0; }
-  .aclp-trilha span { font-size: 12.5px; padding: 3px 10px; border-radius: 999px; background: #2A3136; color: #A7B0B3; border: 1px solid #3A4247; }
-  .aclp-trilha span.atual { background: #2E5D8C; color: #fff; border-color: #2E5D8C; }
-  .aclp-trilha span.feita { background: #1F4D33; color: #BFE8CC; border-color: #2C6B47; }
+  .aclp-chip { font: 500 12.5px 'Barlow', system-ui, sans-serif; padding: 3px 10px; border-radius: 999px; background: #2A3136; color: #A7B0B3; border: 1px solid #3A4247; cursor: pointer; }
+  .aclp-chip:hover:not(:disabled) { border-color: #5B8FC2; color: #E6EAE7; }
+  .aclp-chip:focus-visible { outline: 2px solid #5B8FC2; outline-offset: 2px; }
+  .aclp-chip:disabled { cursor: default; opacity: .7; }
+  .aclp-chip.atual { background: #2E5D8C; color: #fff; border-color: #2E5D8C; }
+  .aclp-chip.feita { background: #1F4D33; color: #BFE8CC; border-color: #2C6B47; }
+  .aclp-chip.feita.atual { background: #2E5D8C; color: #fff; border-color: #7FD69B; }
+  .aclp-chip.modo { border-style: dashed; color: #E6EAE7; }
+  .aclp-dica { padding: 6px 20px 0; color: #8E989C; font-size: 12.5px; }
   .aclp-corpo { padding: 14px 20px; overflow: auto; max-height: calc(92vh - 190px); }
   .aclp-corpo h3 { margin: 0 0 6px; font: 600 20px/1.2 'Barlow Condensed', 'Arial Narrow', sans-serif; }
   .aclp-porque { margin: 0 0 12px; }
@@ -2805,8 +2811,22 @@ body.arrastando canvas, body.arrastando iframe { pointer-events: none; }
     }
     function trilha() {
       if (!E.etapas.length) return '';
-      return `<div class="aclp-trilha">${E.etapas.map((et, k) => `<span class="${E.fim ? 'feita' : k === E.i ? 'atual' : E.feitas.has(k) ? 'feita' : ''}">${k + 1}. ${esc(et.titulo)}</span>`).join('')}
-        <span class="${E.fim ? 'atual' : ''}">✓ No CLP</span></div>`;
+      const modo = cfg.modos && cfg.modos.length > 1 ? cfg.modos.find((m) => m.id === E.modo) : null;
+      const chip = (alvo, cls, txt, tit) => `<button class="aclp-chip ${cls}" data-ir="${alvo}" title="${esc(tit)}" ${E.ocupado ? 'disabled' : ''}>${txt}</button>`;
+      const etapas = E.etapas.map((et, k) => {
+        const cls = [E.feitas.has(k) ? 'feita' : '', !E.fim && k === E.i ? 'atual' : ''].join(' ');
+        return chip(k, cls, `${E.feitas.has(k) ? '✓ ' : ''}${k + 1}. ${esc(et.titulo)}`, E.feitas.has(k) ? 'Etapa gravada: clique para rever' : 'Ir para esta etapa');
+      }).join('');
+      return `<nav class="aclp-trilha" aria-label="Etapas do assistente">${modo ? chip('modo', 'modo', '⇄ ' + esc(modo.nome), 'Trocar o modo (velocidade/torque ou posição)') : ''}${etapas}${chip('fim', E.fim ? 'atual' : '', '✓ No CLP', 'O que configurar no CLP')}</nav>
+        <div class="aclp-dica">Clique numa etapa para ir direto a ela, ou use as setas ← → do teclado.</div>`;
+    }
+    function ir(alvo) {
+      if (E.ocupado) return;
+      E.tudo = false; E.aviso = '';
+      if (alvo === 'modo') E.modo = null;
+      else if (alvo === 'fim') E.fim = true;
+      else { E.fim = false; E.i = Math.max(0, Math.min(E.etapas.length - 1, +alvo)); }
+      desenhar();
     }
     function telaModos() {
       return `${cabecalho()}<div class="aclp-corpo"><h3>O que você vai comandar pela rede?</h3>
@@ -2835,7 +2855,8 @@ body.arrastando canvas, body.arrastando iframe { pointer-events: none; }
           <span class="esp"></span>
           <button class="aclp-b" data-a="tudo" ${E.ocupado ? 'disabled' : ''} title="Grava esta etapa e as seguintes, uma depois da outra">Fazer tudo</button>
           ${feita ? `<button class="aclp-b prim" data-a="proxima" ${E.ocupado ? 'disabled' : ''}>${ult ? 'Ver o que configurar no CLP' : 'Próxima etapa'}</button>`
-            : `<button class="aclp-b prim" data-a="gravar" ${E.ocupado ? 'disabled' : ''}>Gravar esta etapa</button>`}
+            : `<button class="aclp-b" data-a="proxima" ${E.ocupado ? 'disabled' : ''} title="Ir para a próxima etapa sem gravar esta">Pular ›</button>
+               <button class="aclp-b prim" data-a="gravar" ${E.ocupado ? 'disabled' : ''}>Gravar esta etapa</button>`}
         </div>`;
     }
     function telaFim() {
@@ -2846,6 +2867,7 @@ body.arrastando canvas, body.arrastando iframe { pointer-events: none; }
       const escolher = cfg.modos && cfg.modos.length > 1 && !E.modo;   // só o SCA06 tem escolha de modo
       dlg.innerHTML = escolher ? telaModos() : E.fim ? telaFim() : telaEtapa();
       dlg.querySelectorAll('[data-a]').forEach((b) => { b.onclick = () => acao(b.dataset.a); });
+      dlg.querySelectorAll('[data-ir]').forEach((b) => { b.onclick = () => ir(b.dataset.ir); });
       dlg.querySelectorAll('[data-modo]').forEach((b) => { b.onclick = () => { E.modo = b.dataset.modo; E.etapas = cfg.etapas(E.modo); E.i = 0; E.feitas.clear(); E.linhas = {}; E.fim = false; desenhar(); }; });
     }
     async function gravarEtapa() {
@@ -2892,6 +2914,14 @@ body.arrastando canvas, body.arrastando iframe { pointer-events: none; }
       }
     }
     dlg.oncancel = (e) => { if (E.ocupado) e.preventDefault(); else E.tudo = false; };   // Esc não interrompe uma gravação
+    // setas ← → passam de etapa (escutadas na página toda: o foco some quando os botões são redesenhados)
+    if (!dlg._teclado) { document.addEventListener('keydown', (e) => { if (dlg.open && dlg._teclas) dlg._teclas(e); }); dlg._teclado = true; }
+    dlg._teclas = (e) => {
+      if (/^(INPUT|SELECT|TEXTAREA)$/.test((e.target && e.target.tagName) || '')) return;
+      if (E.ocupado || !E.modo && cfg.modos && cfg.modos.length > 1) return;
+      if (e.key === 'ArrowRight') { e.preventDefault(); if (!E.fim) ir(E.i < E.etapas.length - 1 ? E.i + 1 : 'fim'); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); if (E.fim) ir(E.etapas.length - 1); else if (E.i > 0) ir(E.i - 1); }
+    };
     desenhar();
     if (!dlg.open) dlg.showModal();
   }

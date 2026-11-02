@@ -149,9 +149,11 @@
       <p><a href="/eds/eip_cfw500_ceth2_v11x.eds" download>Baixar arquivo EDS (v1.1x)</a></p>
     </div>
     <div class="caixa">
-      <h3>Endereço IP do inversor</h3>
+      <h3>Endereço IP e configurações da rede EtherNet/IP</h3>
       <p class="estado-sc" id="ipAtual">—</p>
-      <p class="nota">Igual ao CFW500 real: <b>P0810 = 0</b> (Parâmetros), IP em <b>P0811…P0814</b>, máscara em <b>P0815</b> e <b>P0849 = 1</b> para aplicar. De fábrica o inversor vem em DHCP (P0810 = 1): no simulador ele usa o IP de inicialização. Configure pela HMI, pela aba Parâmetros ou pelo assistente, que explica cada etapa.</p>
+      <table class="kv" id="tabRedeCfg"></table>
+      <p class="estado-sc" id="redePend" hidden></p>
+      <p class="nota">Tudo isto vem dos parâmetros do inversor, como no CFW500 real (grupo <b>NET</b> da HMI). As mudanças de IP e de palavras só valem depois de <b>P0849 = 1</b>. De fábrica o inversor vem em DHCP (P0810 = 1): no simulador ele usa o IP de inicialização. Configure pela HMI, pela aba Parâmetros ou pelo assistente, que explica cada etapa.</p>
       <div class="botoes"><button data-assistente>Abrir o assistente de comunicação com o CLP</button></div>
       <div hidden>
       <div class="form-ip">

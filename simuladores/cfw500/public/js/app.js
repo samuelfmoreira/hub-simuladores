@@ -317,8 +317,49 @@ function renderRede(e) {
   $('#tabEntradas').innerHTML = cab + r.ioCfg.leitura.map((n, i) => linhaPalavra(i, n, r.entradas[i] ?? null, i < 2 ? 'fixa' : pn(820 + i - 2))).join('');
   const txtIp = (ip) => (ip === '0.0.0.0' ? 'todas as placas de rede' : ip);
   $('#ipAtual').innerHTML = `Respondendo em <b>${txtIp(r.bindIp)}</b> · origem: ${esc(r.origemIp)}${r.bindIni !== r.bindIp ? ` · IP de inicialização: ${txtIp(r.bindIni)}` : ''}`;
+  renderRedeCfg(e, r);
   $('#bits684').innerHTML = bitsHtml(e.vals[684], BITS_684);
   $('#bits680').innerHTML = bitsHtml(e.vals[680], BITS_680, 15);
+}
+
+// ---- painel "Endereço IP e configurações da rede EtherNet/IP": o que está nos parâmetros ----
+const OPC_810 = ['Parâmetros', 'DHCP', 'DCP'];
+const OPC_803 = ['Auto', '10 Mbit, half', '10 Mbit, full', '100 Mbit, half', '100 Mbit, full'];
+const OPC_313 = ['Inativo', 'Para por rampa', 'Desabilita geral', 'Vai para LOC', 'LOC mantém habilitado', 'Causa falha'];
+function renderRedeCfg(e, r) {
+  const v = e.vals; if (!v) return;
+  const ip = (a) => [a, a + 1, a + 2, a + 3].map((n) => v[n]).join('.');
+  const cidr = v[815];
+  const masc = [0, 1, 2, 3].map((k) => (0xFF << (8 - Math.max(0, Math.min(8, cidr - 8 * k)))) & 0xFF).join('.');
+  const lista = (base, nome) => {
+    const out = []; for (let i = 0; i < 12; i++) { const p = v[base + i]; if (!p) break; out.push(`${nome} #${i + 3} = P${String(p).padStart(4, '0')}`); }
+    return out.length ? out.join(' · ') : 'nenhuma (só as 2 fixas)';
+  };
+  const nE = r.ioCfg.leitura.length, nS = r.ioCfg.escrita.length;
+  const faltam = [[220, 1], [222, 11], [226, 9], [227, 4]].filter(([n, x]) => v[n] !== x).map(([n, x]) => `P0${n} = ${x}`);
+  const ipParam = ip(811);
+  $('#tabRedeCfg').innerHTML = [
+    ['Origem do IP (P0810)', `${v[810]} · ${OPC_810[v[810]] || '?'}`],
+    ['Endereço IP (P0811…P0814)', `<b>${ipParam}</b>${v[810] !== 0 ? ' <span class="nota">(só vale com P0810 = 0)</span>' : ''}`],
+    ['Máscara (P0815)', `/${cidr} = ${masc}`],
+    ['Gateway (P0816…P0819)', ip(816) === '0.0.0.0' ? '0.0.0.0 (sem gateway: CLP na mesma rede)' : ip(816)],
+    ['Taxa de comunicação (P0803)', `${v[803]} · ${OPC_803[v[803]] || '?'}`],
+    ['Palavras extras de entrada (P0820…)', lista(820, 'leitura')],
+    ['Palavras extras de saída (P0835…)', lista(835, 'escrita')],
+    ['Conexão no CLP (aplicada)', `Input <b>${nE}</b> palavras (${nE * 2} bytes) · Output <b>${nS}</b> palavras (${nS * 2} bytes)`],
+    ['Comando pela rede', faltam.length ? `não: falta ${faltam.join(', ')}` : '<b>sim</b>: em remoto, o inversor obedece ao CLP'],
+    ['Se a comunicação cair (P0313)', `${v[313]} · ${OPC_313[v[313]] || '?'}`],
+    ['Estado da comunicação (P0801)', `${r.p0801} · ${NOMES_P0801[r.p0801] || ''}`],
+  ].map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join('');
+  // avisos de configuração gravada mas ainda não aplicada (erro clássico em campo)
+  const pend = [];
+  if (r.ioPendente) pend.push('as palavras de troca (P0820…/P0835…) mudaram');
+  const ipFora = v[810] === 0 && ipParam !== r.bindIp;
+  $('#redePend').hidden = !pend.length && !ipFora;
+  $('#redePend').innerHTML = [
+    pend.length ? `⚠ Gravado, mas ainda não aplicado: ${pend.join(' e ')}. Faça <b>P0849 = 1</b>.` : '',
+    ipFora ? `⚠ O IP dos parâmetros (<b>${ipParam}</b>) não está em uso. Se ainda não aplicou, faça <b>P0849 = 1</b>; se já aplicou, esse IP não existe neste computador (no HUB, o inversor usa o 192.168.100.20).` : '',
+  ].filter(Boolean).join('<br>');
 }
 
 // =====================================================================
