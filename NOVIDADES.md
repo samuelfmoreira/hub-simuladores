@@ -2,6 +2,9 @@
 
 As notas de cada versão aparecem no HUB quando a atualização é oferecida. Escreva a seção da versão nova antes do push.
 
+## 1.5.6
+- Ajuste no texto da tela Dispositivos: "Escolha um equipamento, inicie e conecte com o seu CLP."
+
 ## 1.5.5
 - Botão no topo, à direita, para escolher o fundo claro ou escuro. A escolha fica guardada; sem escolha, o HUB segue o tema do Windows.
 
