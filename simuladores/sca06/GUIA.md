@@ -560,7 +560,22 @@ O pulso tem 200 ms, e não um ciclo só, de propósito: a comunicação manda os
 | `iTipoMovimento := 2`, `rAnguloGraus := 0`, pulso | volta a 0,0° **girando 270° no anti-horário**, e não 90° no horário |
 | `xStop := TRUE` no meio de um movimento | o disco para pela rampa; `xStop := FALSE` e um novo pulso retomam |
 
-### 8.6 Problemas comuns
+### 8.6 Testar sem o CODESYS: o painel Posição da aba Mestre
+
+Antes de programar o CLP, dá para sentir o modo posição pelo **CLP virtual** do simulador:
+
+1. Configure o drive para posição (assistente **Comunicação com o CLP → Posição**).
+2. Aba **Mestre** → **Conectar (RegisterSession)** → em **Palavras de entrada** e **Palavras de saída**, coloque **8** → **Forward Open**.
+3. No lugar das palavras 5 a 8 aparece o painel **Posição**:
+   - **Habilitar** liga o bit 0 do P1100;
+   - **Pulso ▶** faz o bit 1 ir de 0 para 1 e voltar, ou seja, um pulso;
+   - **STOP**, **Reset** e **Zerar posição** são os bits 2, 3 e 4;
+   - **Ângulo** (em graus), **Velocidade** (rpm) e **Tipo** (menor caminho, horário, anti-horário ou relativo) são convertidos sozinhos para o que vai na rede.
+4. Embaixo do painel aparece **o que vai pela rede** em cada palavra (por exemplo, 90,0° = 900 = 0384h): é exatamente o que o seu programa no CODESYS terá de mandar.
+
+Antes de ligar o CODESYS, clique em **Forward Close** e **Desconectar**: o drive aceita um mestre só.
+
+### 8.7 Problemas comuns
 
 | Sintoma | Causa provável | Solução |
 | --- | --- | --- |
@@ -571,7 +586,7 @@ O pulso tem 200 ms, e não um ciclo só, de propósito: a comunicação manda os
 | Nada se move, mesmo habilitado | P1020 = 0 (aplicativo parado) ou P0202 diferente de 4 | P1020 = 1 e P0202 = 4 |
 | No modo absoluto, o disco vai pelo lado "errado" | tipo 0 = menor caminho | use 1 (horário) ou 2 (anti-horário) para forçar o sentido |
 
-### 8.7 Voltar para velocidade ou torque
+### 8.8 Voltar para velocidade ou torque
 
 1. **Comunicação com o CLP** → **Velocidade e torque** (ou, pelos outros caminhos: P0202 = 6, P0820…P0823 e P0835…P0838 = 0 e P0849 = 1).
 2. No CODESYS, troque a conexão de volta para **Exclusive Owner, 4 palavras (velocidade e torque)**.

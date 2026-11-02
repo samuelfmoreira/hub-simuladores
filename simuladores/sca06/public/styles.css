@@ -225,3 +225,12 @@ body.arrastando canvas, body.arrastando iframe { pointer-events: none; }
 /* botão do assistente de comunicação com o CLP (barra do topo) */
 .assist-btn { margin-left: 8px; background: #2E6FB0; color: #fff; border: 1px solid #2E6FB0; border-radius: 6px; padding: 6px 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
 .assist-btn:hover { filter: brightness(1.1); }
+
+/* painel Posição da aba Mestre (palavras 5 a 8 no modo posição) */
+.pos-painel { margin-top: 10px; padding: 10px 12px; border: 1px solid var(--line-2, #ccc); border-radius: 8px; }
+.pos-painel .row { gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
+.pos-painel .pos-bot button.on { outline: 2px solid var(--ok, #2F9E44); }
+.pos-painel label { display: inline-flex; gap: 6px; align-items: center; }
+.pos-painel .num { width: 80px; }
+.pos-painel .pos-hex { margin-top: 6px; font-size: 12px; opacity: .85; }
+.pos-painel .pos-leitura { margin-top: 4px; }

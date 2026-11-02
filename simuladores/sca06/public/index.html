@@ -91,6 +91,8 @@
         <div class="word">
           <div class="wh"><span>4ª Modo de controle</span><code id="w4Hex">0001h</code></div>
           <div class="seg" id="modeSeg"><button data-m="0">0 · Torque</button><button data-m="1" class="on">1 · Velocidade</button></div>
+          <p class="hint">Posição e pulso não são um modo desta palavra: são o <b>modo posição</b> do drive (P0202 = 4), comandado pelas <b>palavras 5 a 8</b>. Configure pelo assistente <b>Comunicação com o CLP → Posição</b> e abra a conexão com 8 palavras: o painel Posição aparece aqui embaixo.</p>
+          <p class="hint" id="modoNota" style="font-weight:600" hidden></p>
         </div>
         <div id="extraOut"></div>
       </div>

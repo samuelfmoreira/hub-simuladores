@@ -122,6 +122,59 @@
     for (let i = 4; i < n; i++) w.push(OUT.extra[i - 4] | 0);
     return w.map(x => Math.max(-32768, Math.min(32767, x)));
   }
+  // ---- painel Posição (aba Mestre): palavras 5 a 8 = P1100 comando, P1101 alvo/incremento, P1102 velocidade, P1103 tipo ----
+  const TIPOS_POS = ['0 · menor caminho (absoluto)', '1 · horário (absoluto)', '2 · anti-horário (absoluto)', '3 · relativo (cada pulso anda o ângulo)'];
+  function posPainelHtml() {
+    if (!OUT.extra[2]) { OUT.extra[1] = 450; OUT.extra[2] = 60; OUT.extra[3] = 3; }   // valores iniciais: pulsos de 45,0° a 60 rpm
+    return `<div class="pos-painel">
+      <div class="wh"><span>Posição pelo aplicativo Ladder (palavras 5 a 8)</span></div>
+      <div class="row pos-bot">
+        <button id="posHab" class="small">Habilitar</button>
+        <button id="posPulso" class="primary" title="Bit 1 do P1100 de 0 para 1: inicia um movimento">Pulso ▶</button>
+        <button id="posStop" class="small">STOP</button>
+        <button id="posReset" class="small" title="Bit 3: reset de falhas">Reset</button>
+        <button id="posZero" class="small" title="Bit 4: a posição atual passa a ser 0,0°">Zerar posição</button>
+      </div>
+      <div class="row pos-campos">
+        <label>Ângulo <input type="number" id="posAng" class="num" step="0.1" value="${(OUT.extra[1] / 10).toFixed(1)}"> °</label>
+        <label>Velocidade <input type="number" id="posVel" class="num" min="1" max="3000" value="${OUT.extra[2]}"> rpm</label>
+        <label>Tipo <select id="posTipo">${TIPOS_POS.map((t, k) => `<option value="${k}" ${OUT.extra[3] === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
+      </div>
+      <p class="hint" id="posExpl"></p>
+      <p class="hint pos-leitura" id="posLeitura"></p>
+      <div class="pos-hex">Pela rede: 5ª P1100 = <code id="pxo0">0000h</code> · 6ª P1101 = <code id="pxo1">0000h</code> · 7ª P1102 = <code id="pxo2">0000h</code> · 8ª P1103 = <code id="pxo3">0000h</code></div>
+    </div>`;
+  }
+  function posHex() {
+    for (let k = 0; k < 4; k++) { const el = $('#pxo' + k); if (el) el.textContent = `${h4(OUT.extra[k] | 0)} (${OUT.extra[k] | 0})`; }
+    const hab = $('#posHab'); if (hab) { const on = !!(OUT.extra[0] & 1); hab.classList.toggle('on', on); hab.textContent = on ? 'Habilitado ✓' : 'Habilitar'; }
+    const stp = $('#posStop'); if (stp) { const on = !!(OUT.extra[0] & 4); stp.classList.toggle('on', on); stp.textContent = on ? 'STOP ativo' : 'STOP'; }
+    const ex = $('#posExpl'); if (ex) {
+      const ang = fmtN((OUT.extra[1] | 0) / 10, 1);
+      ex.innerHTML = (OUT.extra[3] | 0) === 3 ? `<b>Relativo:</b> cada pulso anda <b>${ang}°</b> a partir de onde o disco está.`
+        : `<b>Absoluto:</b> o pulso manda o disco para <b>${ang}°</b> (${['pelo menor caminho', 'girando no sentido horário', 'girando no sentido anti-horário'][OUT.extra[3] | 0]}).`;
+    }
+  }
+  function posBit(bit, liga) { OUT.extra[0] = liga ? (OUT.extra[0] | bit) : (OUT.extra[0] & ~bit); posHex(); pushOut(); }
+  function posPulsoBit(bit) { posBit(bit, true); setTimeout(() => posBit(bit, false), 300); }   // 300 ms em 1: o drive enxerga a subida mesmo com RPI alto
+  function ligarPosPainel() {
+    $('#posHab').onclick = () => posBit(1, !(OUT.extra[0] & 1));
+    $('#posStop').onclick = () => posBit(4, !(OUT.extra[0] & 4));
+    $('#posPulso').onclick = () => posPulsoBit(2);
+    $('#posReset').onclick = () => posPulsoBit(8);
+    $('#posZero').onclick = () => posPulsoBit(16);
+    $('#posAng').onchange = () => { OUT.extra[1] = Math.max(-32768, Math.min(32767, Math.round(+$('#posAng').value * 10))); posHex(); pushOut(); };
+    $('#posVel').onchange = () => { OUT.extra[2] = Math.max(1, Math.min(3000, Math.round(+$('#posVel').value))); $('#posVel').value = OUT.extra[2]; posHex(); pushOut(); };
+    $('#posTipo').onchange = () => { OUT.extra[3] = +$('#posTipo').value; posHex(); pushOut(); };
+    posHex(); pushOut();
+  }
+  function posAtualizarLeitura() {
+    const el = $('#posLeitura'); if (!el) return;
+    const iw = S.sc && S.sc.inputs; if (!iw || iw.length < 8) { el.textContent = ''; return; }
+    const s5 = iw[4] & 0xFFFF;
+    el.innerHTML = `Posição atual: <b>${fmtN(iw[5] / 10, 1)}°</b> · ${s5 & 2 ? '<b>movendo</b>' : s5 & 4 ? '<b>em posição</b>' : 'parado'} · movimentos concluídos: <b>${iw[7]}</b>${s5 & 8 ? ' · <b style="color:var(--bad,#C0392B)">falha</b>' : ''}`;
+  }
+
   function pushOut() {
     const w = outWords();
     $('#cwHex').textContent = h4(w[0]); $('#w2Hex').textContent = h4(w[1]); $('#w3Hex').textContent = h4(w[2]); $('#w4Hex').textContent = h4(w[3]);
@@ -174,12 +227,19 @@
     const key = (sc.io ? sc.io.outWords : 4) + ':' + wr.join(',');
     if (key !== extraBuiltFor) {
       extraBuiltFor = key; const n = sc.io ? sc.io.outWords : 4;
-      $('#extraOut').innerHTML = Array.from({ length: Math.max(0, n - 4) }, (_, i) => {
+      const posMap = n >= 8 && [1100, 1101, 1102, 1103].every((p, k) => wr[k] === p);
+      $('#extraOut').innerHTML = (posMap ? posPainelHtml() : '') + Array.from({ length: Math.max(0, n - 4) }, (_, i) => {
+        if (posMap && i < 4) return '';
         const pn = wr[i]; const d = S.defs.get(pn);
         return `<div class="word"><div class="wh"><span>${5 + i}ª → P${pad4(pn || 0)} ${d ? d.name : ''}</span><code id="xo${i}h">0000h</code></div><div class="row"><input type="number" class="num" data-xo="${i}" value="${OUT.extra[i] || 0}"> valor bruto${d && d.dec ? ` (${d.dec} casa${d.dec > 1 ? 's' : ''} decimal: ${d.unit})` : d && d.unit ? ' ' + d.unit : ''}</div></div>`;
       }).join('');
       $$('[data-xo]').forEach(inp => inp.onchange = () => { OUT.extra[+inp.dataset.xo] = +inp.value | 0; $(`#xo${inp.dataset.xo}h`).textContent = h4(+inp.value); pushOut(); });
+      if (posMap) ligarPosPainel();
     }
+    // nota: drive em modo posição -> as palavras 1 a 4 são ignoradas
+    const notaM = $('#modoNota');
+    if (notaM) { const emPos = S.P[202] === 4; notaM.hidden = !emPos; if (emPos) notaM.textContent = 'O drive está em modo posição (P0202 = 4): as palavras 1 a 4 acima são ignoradas. Quem comanda é o painel Posição.'; }
+    posAtualizarLeitura();
     // entradas
     const iw = open && sc.inputs && sc.inputs.length ? sc.inputs : null;
     const st = iw ? iw[0] & 0xFFFF : 0;
@@ -191,7 +251,16 @@
       html += `<span>2ª Velocidade</span><span class="v">${fmtN(iw[1] * 18750 / 32767, 1)} rpm</span><span class="h">${iw[1]}</span>`;
       html += `<span>3ª Corrente de torque</span><span class="v">${fmtN(iw[2] / 10, 1)} A</span><span class="h">${iw[2]}</span>`;
       html += `<span>4ª Modo de controle atual</span><span class="v">${['Torque', 'Velocidade', '–', 'Posição'][iw[3] & 0xF] || iw[3]}</span><span class="h">${iw[3]}</span>`;
-      for (let i = 4; i < iw.length; i++) { const pn = rd[i - 4], d = S.defs.get(pn); html += `<span>${i + 1}ª P${pad4(pn || 0)} ${d ? d.name : ''}</span><span class="v">${d ? fmtVal(d, iw[i]) : iw[i]}</span><span class="h">${iw[i]}</span>`; }
+      const posRd = [1110, 1111, 1112, 1113].every((p, k) => rd[k] === p);
+      if (posRd && iw.length >= 8) {
+        const s5 = iw[4] & 0xFFFF, nomes = ['habilitado', 'movendo', 'em posição', 'falha', 'fim de curso', 'STOP'];
+        const ativos = nomes.filter((_, b) => s5 & (1 << b));
+        html += `<span>5ª Status do posicionamento (P1110)</span><span class="v">${ativos.length ? ativos.join(', ') : 'desabilitado'}</span><span class="h">${h4(s5)}</span>`;
+        html += `<span>6ª Posição atual (P1111)</span><span class="v">${fmtN(iw[5] / 10, 1)}°</span><span class="h">${iw[5]}</span>`;
+        html += `<span>7ª Erro de posição (P1112)</span><span class="v">${fmtN(iw[6] / 10, 1)}°</span><span class="h">${iw[6]}</span>`;
+        html += `<span>8ª Movimentos concluídos (P1113)</span><span class="v">${iw[7]}</span><span class="h">${iw[7]}</span>`;
+      }
+      for (let i = posRd && iw.length >= 8 ? 8 : 4; i < iw.length; i++) { const pn = rd[i - 4], d = S.defs.get(pn); html += `<span>${i + 1}ª P${pad4(pn || 0)} ${d ? d.name : ''}</span><span class="v">${d ? fmtVal(d, iw[i]) : iw[i]}</span><span class="h">${iw[i]}</span>`; }
     } else html = '<span style="grid-column:1/-1;color:var(--ink-3)">Sem conexão de I/O. Conecte e faça o Forward Open.</span>';
     $('#inDecode').innerHTML = html;
   }

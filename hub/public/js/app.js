@@ -605,8 +605,11 @@
     try { await api('POST', '/api/sair'); } catch (_) { /* já estava encerrando */ }
     document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;height:100vh;text-align:center;padding:24px">' +
       '<h2 style="margin:0;font-family:var(--display, sans-serif);font-size:34px">HUB encerrado</h2>' +
-      '<p style="margin:0;color:var(--grafite-2);font-size:17px">Pode fechar esta janela. Para abrir de novo, use o atalho "HUB de Simuladores".</p></div>';
-    setTimeout(() => window.close(), 500);
+      '<p style="margin:0;color:var(--grafite-2);font-size:17px">A janela fecha sozinha em instantes. Para abrir de novo, use o atalho "HUB de Simuladores".</p>' +
+      '<button class="btn" id="fecharJanela" style="margin-top:8px">Fechar esta janela</button></div>';
+    const fechar = () => { try { window.close(); } catch (_) { /* o navegador pode recusar */ } };
+    document.getElementById('fecharJanela').onclick = fechar;
+    setTimeout(fechar, 500);
   };
 
   // ------------------------------------------------------------------ ao voltar para a janela, procura versão nova (no máximo a cada 5 min)

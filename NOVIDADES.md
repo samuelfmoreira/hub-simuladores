@@ -2,6 +2,14 @@
 
 As notas de cada versão aparecem no HUB quando a atualização é oferecida. Escreva a seção da versão nova antes do push.
 
+## 1.7.5
+- Ao clicar em "Sair", a janela do HUB fecha sozinha (antes, às vezes ficava aberta mostrando "HUB encerrado"). As janelas dos simuladores abertas pelo HUB também fecham.
+- A janela do HUB passa a usar um perfil próprio do Edge, separado do seu navegador do dia a dia. Por isso, na primeira vez, a escolha de fundo claro ou escuro volta ao padrão.
+
+## 1.7.4
+- Servomotor SCA06, aba Mestre (CLP virtual): novo painel Posição, que aparece quando o drive está em modo posição. Tem botões Habilitar, Pulso, STOP, Reset e Zerar posição, ângulo em graus, velocidade e tipo de movimento, mostra a posição atual e o que vai pela rede em cada palavra.
+- A 4ª palavra (modo de controle) ganhou uma explicação: posição e pulso são o modo posição do drive (P0202 = 4), comandado pelas palavras 5 a 8.
+
 ## 1.7.3
 - Assistente de comunicação com o CLP (CFW500 e SCA06): agora dá para navegar livremente. Clique em qualquer etapa na trilha do topo para ir direto a ela, use "Pular" para seguir sem gravar, ou as setas do teclado. No SCA06, o primeiro item da trilha troca entre velocidade/torque e posição.
 

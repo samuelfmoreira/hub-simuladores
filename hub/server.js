@@ -255,7 +255,7 @@ async function rotear(req, res) {
   }
 
   if (p === '/api/parar-todos' && m === 'POST') { await ger.pararTodos(); return json(res, 200, { ok: true }); }
-  if (p === '/api/sair' && m === 'POST') { json(res, 200, { ok: true }); console.log('Sair do HUB pedido na tela.'); setTimeout(encerrar, 300); return; }
+  if (p === '/api/sair' && m === 'POST') { json(res, 200, { ok: true }); console.log('Sair do HUB pedido na tela.'); setTimeout(encerrar, 600); return; }
 
   // ---------- atualização do HUB ----------
   if (p === '/api/atualizacao' && m === 'GET') return json(res, 200, resumoAtualizacao());
@@ -407,11 +407,28 @@ servidor.listen(cfg.hubPorta, () => {
 });
 
 /** Abre uma tela (do HUB ou de um simulador). No Windows, em modo "janela": Edge sem barra de endereço, com cara de programa. */
+// Perfil próprio do Edge para as janelas do HUB (fora da pasta do projeto, um por modo): assim o HUB sabe quais
+// janelas são dele e consegue fechá-las ao encerrar, sem depender de o Edge aceitar o window.close() da página.
+const PERFIL_JANELA = path.join(process.env.LOCALAPPDATA || require('os').tmpdir(), 'HUB-Simuladores-janela', MODO);
 function abrirTela(url) {
   const comum = process.platform === 'win32' ? `start "" "${url}"` : process.platform === 'darwin' ? `open "${url}"` : `xdg-open "${url}"`;
   if (process.platform === 'win32' && cfg.abrirComo === 'janela') {
-    exec(`start "" msedge --app="${url}" --window-size=1400,900`, (erro) => { if (erro) exec(comum, () => { /* sem navegador */ }); });
+    exec(`start "" msedge --app="${url}" --window-size=1400,900 --user-data-dir="${PERFIL_JANELA}" --no-first-run --no-default-browser-check`,
+      (erro) => { if (erro) exec(comum, () => { /* sem navegador */ }); });
   } else exec(comum, () => { /* sem navegador disponível: tudo bem */ });
+}
+/** Fecha as janelas do Edge abertas pelo HUB (as que usam o perfil próprio). No máximo 4 s. */
+function fecharJanelas() {
+  if (process.platform !== 'win32' || cfg.abrirComo !== 'janela') return Promise.resolve();
+  const alvo = PERFIL_JANELA.replace(/'/g, "''");
+  const ps = `Get-CimInstance Win32_Process | Where-Object { $_.Name -eq 'msedge.exe' -and $_.CommandLine -like '*${alvo}*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`;
+  return new Promise((ok) => {
+    const t = setTimeout(ok, 4000);
+    try {
+      const p = spawn('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', ps], { windowsHide: true, stdio: 'ignore' });
+      p.on('exit', () => { clearTimeout(t); ok(); }); p.on('error', () => { clearTimeout(t); ok(); });
+    } catch (_) { clearTimeout(t); ok(); }
+  });
 }
 
 // ------------------------------------------------------------------ atualização automática
@@ -473,6 +490,7 @@ function verificarUrl(url) {
 async function encerrar() {
   console.log('\nEncerrando os simuladores...');
   await Promise.race([ger.pararTodos(), new Promise((ok) => setTimeout(ok, 4000))]);
+  await fecharJanelas();   // a janela do HUB e as dos simuladores abertas por ele
   process.exit(0);
 }
 /**
