@@ -273,10 +273,12 @@
       </div>
       <p class="estado-sc" id="scEstado">Desconectado.</p>
       <div class="botoes">
+        <button id="btnPresetTutorial">Preparar para o tutorial (CODESYS)</button>
         <button id="btnPreset" class="sec">Parametrizar inversor para comando via rede</button>
         <button id="btnFabrica" class="sec perigo">Restaurar padrão de fábrica</button>
       </div>
-      <p class="nota">O preset aplica P0220 = 1, P0222 = 11, P0226 = 9, P0227 = 4, P0228 = 5, P0105 = 5 e P0313 = 1 (motor parado). Para desfazer: <b>Restaurar padrão de fábrica</b> ou, na HMI do inversor, <b>P0204 = 5</b> (padrão WEG 60 Hz).</p>
+      <p class="nota"><b>Preparar para o tutorial</b> grava tudo o que o projeto do Guia precisa: os parâmetros de rede abaixo, mais P0820 = 3 (corrente na 3ª palavra) e P0849 = 1. Prefere fazer como na vida real? Altere um por um pela HMI do inversor ou pela aba Parâmetros: o passo a passo está no Guia.</p>
+      <p class="nota">O preset de rede aplica P0220 = 1, P0222 = 11, P0226 = 9, P0227 = 4, P0228 = 5, P0105 = 5 e P0313 = 1 (motor parado). Para desfazer: <b>Restaurar padrão de fábrica</b> ou, na HMI do inversor, <b>P0204 = 5</b> (padrão WEG 60 Hz).</p>
     </div>
     <div class="caixa">
       <h3>Palavra de controle P0684</h3>

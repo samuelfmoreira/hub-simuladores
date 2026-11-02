@@ -59,13 +59,14 @@
       }
       if (/^\s*([-*]|\d+[.)])\s+/.test(l)) {
         const ordenada = /^\s*\d/.test(l);
+        const inicio = ordenada ? parseInt(l.trim(), 10) : 1;   // lista que continua a numeração (ex.: começa no 9)
         const itens = [];
         while (i < L.length && /^\s*([-*]|\d+[.)])\s+/.test(L[i])) {
           let item = L[i++].replace(/^\s*([-*]|\d+[.)])\s+/, '');
           while (i < L.length && /^\s{2,}\S/.test(L[i]) && !/^\s*([-*]|\d+[.)])\s+/.test(L[i])) item += ' ' + L[i++].trim();
           itens.push(`<li>${inline(item)}</li>`);
         }
-        out.push(ordenada ? `<ol>${itens.join('')}</ol>` : `<ul>${itens.join('')}</ul>`);
+        out.push(ordenada ? `<ol${inicio > 1 ? ` start="${inicio}"` : ''}>${itens.join('')}</ol>` : `<ul>${itens.join('')}</ul>`);
         continue;
       }
       const par = [];

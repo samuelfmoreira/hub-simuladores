@@ -81,20 +81,92 @@ Na aba **Bancada** do simulador, confira que:
 - **Botoeira STOP (DI1)** está solta;
 - **ECO5** está encaixado e o **cabo Ethernet XA171** está conectado.
 
-### 1.3 Drive obedecendo à rede
+### 1.3 Configurar o drive para obedecer à rede
 
-Aba **Parâmetros** do simulador, com o drive **desabilitado**:
+O simulador sai **de fábrica**, como um drive novo: com **P0202 = 2**, ou seja, a velocidade vem da HMI do próprio drive. Para o CLP comandar pela EtherNet/IP, **3 parâmetros** precisam mudar. Você escolhe o caminho; o resultado é o mesmo.
 
-| Parâmetro | Valor | Por quê |
+| Parâmetro | Valor | O que faz |
 | --- | --- | --- |
 | **P0000** | **5** | senha: libera a alteração dos outros parâmetros |
-| **P0202** | **6** | modo de operação = rede (Profibus DP/Ethernet). Sem isso, as palavras de saída são ignoradas |
-| **P0662** | **3** | ação para erro de comunicação = desabilita o drive (veja o teste do cabo, na Parte 6) |
-| P0105 | 200 (padrão) | rampa da função STOP, em ms/krpm: 200 = para 1000 rpm em 0,2 s |
+| **P0202** | **6** | modo de operação = **rede** (Profibus DP/Ethernet). Sem isso, o drive ignora as palavras de saída do CLP |
+| **P0662** | **3** | se a comunicação cair: **desabilita o drive** (veja o teste do cabo, na Parte 6) |
 
-O chip **P0202** do topo passa a mostrar **6**.
+**O drive precisa estar desabilitado**: o P0202 não muda com ele habilitado (aparece o alarme A00124).
 
 **Sobre o P0662:** de fábrica ele vale **0** (só mostra alarme). Nesse caso, se a comunicação cair, o motor **continua girando** com a última referência. Numa máquina real isso é perigoso, por isso a recomendação de usar 3 (desabilita) ou 2 (função STOP).
+
+#### Caminho A: automático, um clique
+
+1. No simulador, abra a aba **Parâmetros**.
+2. No topo, clique em **Preparar para EtherNet/IP**.
+3. Confirme com **OK**.
+4. Aparece em verde: **"Pronto: P0000 = 5 · P0202 = 6 · P0662 = 3"**, e o chip **P0202** do topo passa a mostrar **6**.
+
+Se aparecer em vermelho "desabilite o drive antes", o drive está habilitado: desabilite e clique de novo.
+
+#### Caminho B: pela HMI do drive, como na vida real
+
+A HMI fica no desenho do drive: à esquerda da tela, em monitores largos, ou na aba **SCA06**, em telas menores. Ela tem um display de 6 dígitos e quatro teclas:
+
+| Tecla | No teclado do PC | Para que serve |
+| --- | --- | --- |
+| **P** | Enter | entra no parâmetro e grava |
+| **▲** | seta para cima | próximo parâmetro / aumenta o valor |
+| **▼** | seta para baixo | parâmetro anterior / diminui o valor |
+| **◄** | seta para a esquerda | na alteração, escolhe o dígito que vai mudar |
+
+**Como ler o display:**
+
+- **P00202**, com "P" na frente, é o **número** de um parâmetro: você está escolhendo qual parâmetro abrir;
+- um número **sem o "P"** é o **valor** do parâmetro;
+- se um dígito **pisca**, você está **alterando** aquele dígito.
+
+**As setas:** na escolha do parâmetro, **▲** vai para o próximo e **▼** volta. A lista só tem os parâmetros que existem, então do P00000 ao P00202 são 37 toques. Segure **▲** para andar rápido (começa a repetir depois de meio segundo e acelera depois de 2 segundos).
+
+**Passo 1: liberar a senha (P0000 = 5)**
+
+1. O display mostra **P00000**. Se mostrar outra coisa, segure **▼** até voltar ao P00000.
+2. Aperte **P**: aparece **00000**, com o último dígito piscando.
+3. Aperte **▲ 5 vezes**: **00005**.
+4. Aperte **P**: grava e volta para **P00000**. A senha está liberada.
+
+**Passo 2: modo rede (P0202 = 6)**
+
+5. Segure **▲** até **P00202** (37 toques a partir do P00000).
+6. Aperte **P**: aparece o valor atual, **00002**, sem piscar. O P0202 é um parâmetro especial: o primeiro **P** só mostra o valor.
+7. Aperte **P** de novo: agora o último dígito pisca.
+8. Aperte **▲ 4 vezes**: **00006**.
+9. Aperte **P**: grava. O chip **P0202** do topo da tela passa a mostrar **6**.
+
+**Passo 3: segurança na queda de comunicação (P0662 = 3)**
+
+10. Aperte **▲** até **P00662** (13 toques depois do P00202).
+11. Aperte **P**: o último dígito pisca.
+12. Aperte **▲ 3 vezes**: **00003**.
+13. Aperte **P**: grava.
+
+**Passo 4: conferir**
+
+14. Abra a aba **Parâmetros** e escolha o filtro **Diferentes do padrão**: aparecem o P0202 = 6 e o P0662 = 3.
+
+**Se errar um valor:** na alteração, ▲ ▼ mudam o dígito que pisca, e **◄** passa para o dígito ao lado (unidades → dezenas → centenas…). Ajuste e aperte **P**.
+
+#### Caminho C: pela aba Parâmetros, parâmetro por parâmetro
+
+É o equivalente a configurar pelo software do fabricante no PC (pela USB).
+
+1. Abra a aba **Parâmetros** do simulador.
+2. No campo **Buscar**, digite `0` e clique na linha **P0000**. Digite **5** no campo que abre e clique em **Gravar**.
+3. Busque `202`, clique em **P0202**, digite **6** e clique em **Gravar**.
+4. Busque `662`, clique em **P0662**, digite **3** e clique em **Gravar**.
+5. Para conferir, escolha o filtro **Diferentes do padrão**.
+
+Se aparecer "Desabilite o drive antes (A00124)", o drive está habilitado.
+
+#### Voltar ao padrão de fábrica (para treinar de novo)
+
+- Botão **Restaurar padrão de fábrica**, no topo da aba **Parâmetros**; ou
+- pela HMI, como no drive real: libere a senha (**P0000 = 5**), vá até o **P00204** (1 toque depois do P00202), aperte **P** duas vezes, **▲ 5 vezes** e **P**. O display pisca e o drive volta ao padrão: P0202 = 2.
 
 ## Parte 2: No CODESYS, o projeto
 
@@ -258,7 +330,7 @@ Repita o teste do cabo com **P0662 = 0**: o alarme aparece, mas o motor **contin
 | CODESYS recusado mesmo com tudo certo | o CLP virtual da aba Mestre está conectado | **Desconectar** na aba Mestre |
 | Habilita, mas o motor não gira | OUT4 = 0 (modo torque) | `GVL_SCA.MODO := 1` (Parte 5) |
 | Nada que o CLP manda tem efeito | P0202 diferente de 6 | P0000 = 5 e P0202 = 6 com o drive desabilitado |
-| Não consigo alterar parâmetros | senha não liberada | P0000 = 5 |
+| Não consigo alterar parâmetros | senha não liberada | P0000 = 5 (Parte 1.3) |
 | P0202 não muda | drive habilitado | `xHabilita := FALSE` antes |
 | Velocidade com número absurdo | variável declarada como WORD | use **INT**: a velocidade tem sinal |
 | Motor gira no sentido errado | sinal da referência | positivo = horário, negativo = anti-horário |

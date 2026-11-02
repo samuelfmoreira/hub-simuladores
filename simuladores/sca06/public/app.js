@@ -223,6 +223,31 @@
     return val + (d.unit ? ' ' + d.unit : '');
   }
   let openParam = null;
+  // ---- Preparar para EtherNet/IP (atalho) e padrão de fábrica: o mesmo que o aluno faria parâmetro por parâmetro
+  const MOTIVO = { RO: 'somente leitura (A00122)', RANGE: 'fora da faixa (A00126)', ENABLED: 'desabilite o drive antes (A00124)', NOEXIST: 'parâmetro inexistente (A00125)' };
+  const resPreset = (txt, ok) => { const el = $('#pPresetRes'); if (el) { el.textContent = txt; el.style.color = ok ? 'var(--ok, #2F9E44)' : 'var(--bad, #C0392B)'; el.style.fontWeight = '600'; } };
+  async function gravarEmSequencia(passos) {
+    for (const [n, v] of passos) {
+      const r = (await req({ t: 'param', n, v })).result;
+      if (!r.ok) return `P${pad4(n)} não foi gravado: ${MOTIVO[r.code] || r.code}.`;
+    }
+    return null;
+  }
+  const btnPreset = $('#pPresetEip');
+  if (btnPreset) btnPreset.onclick = async () => {
+    if (!confirm('Preparar o SCA06 para ser comandado pela EtherNet/IP?\n\nGrava, nesta ordem:\n  P0000 = 5  (senha)\n  P0202 = 6  (comando pela rede)\n  P0662 = 3  (erro de comunicação desabilita o drive)\n\nO drive precisa estar desabilitado.')) return;
+    const erro = await gravarEmSequencia([[0, 5], [202, 6], [662, 3]]);
+    resPreset(erro || 'Pronto: P0000 = 5 · P0202 = 6 · P0662 = 3. O SCA06 agora obedece ao CLP pela rede.', !erro);
+    buildParams();
+  };
+  const btnFab = $('#pFabrica');
+  if (btnFab) btnFab.onclick = async () => {
+    if (!confirm('Restaurar o padrão de fábrica do SCA06?\n\nEquivale a P0204 = 5: todos os parâmetros voltam ao valor de fábrica (P0202 = 2, comando pela HMI). O drive precisa estar desabilitado.')) return;
+    const erro = await gravarEmSequencia([[0, 5], [204, 5]]);
+    resPreset(erro || 'Padrão de fábrica carregado (P0204 = 5). O drive voltou a ser comandado pela HMI.', !erro);
+    buildParams();
+  };
+
   function buildParams() {
     const q = ($('#pSearch').value || '').toLowerCase().trim(), grp = $('#pGroup').value;
     const rows = [];

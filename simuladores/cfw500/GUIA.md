@@ -40,11 +40,94 @@ Os endereços %IX/%QX são os do projeto dos prints; no seu podem ser outros.
 
 Fora do HUB, os mesmos passos são feitos pelos arquivos **2-criar-rede-virtual.bat** e **3-iniciar-simulador.bat**, na pasta do simulador.
 
-### 1.2 Inversor obedecendo à rede
+### 1.2 Configurar o inversor para obedecer à rede
 
-- Motor parado. Aba **CLP virtual** → **Parametrizar inversor para comando via rede** → **Aplicar**. Grava P0220 = 1, P0222 = 11, P0226 = 9, P0227 = 4, P0228 = 5, P0105 = 5, P0313 = 1.
-- Aba **Parâmetros**: **P0820 = 3** (3ª palavra de entrada = corrente P0003) e depois **P0849 = 1** (aplica).
-- O display do inversor mostra **REM**, e o quadro "Configure no seu CLP" mostra **Input 3 palavras (6 bytes)** e **Output 2 palavras (4 bytes)**.
+O simulador sai **de fábrica**, como um inversor novo: comandado pela própria HMI e pelas entradas digitais. Para o CLP comandar pela EtherNet/IP, **9 parâmetros** precisam mudar. Você escolhe o caminho; o resultado é o mesmo.
+
+| Parâmetro | Valor | O que faz | Grupo na HMI |
+| --- | --- | --- | --- |
+| P0105 | 5 | quem escolhe entre a 1ª e a 2ª rampa: a rede | I/O |
+| P0220 | 1 | situação LOC/REM: **sempre remoto** | I/O |
+| P0222 | 11 | de onde vem a velocidade em remoto: **da rede** (CO/DN/PB/Eth) | I/O |
+| P0226 | 9 | quem escolhe o sentido de giro em remoto: a rede | I/O |
+| P0227 | 4 | quem manda girar e parar em remoto: a rede | I/O |
+| P0228 | 5 | quem comanda o JOG em remoto: a rede | I/O |
+| P0313 | 1 | se a comunicação cair: **para por rampa** (já vem 1 de fábrica: só confira) | NET |
+| P0820 | 3 | 3ª palavra de entrada = **P0003** (corrente do motor) | NET |
+| P0849 | 1 | **aplica** a configuração Ethernet (volta sozinho para 0) | NET |
+
+Antes de qualquer caminho: **motor parado**. Parâmetros de configuração não mudam com o motor girando (a HMI mostra **CONF**).
+
+#### Caminho A: automático, um clique
+
+1. No simulador, abra a aba **CLP virtual**.
+2. Clique em **Preparar para o tutorial (CODESYS)**.
+3. Confira a lista e clique em **Aplicar**.
+4. Aparece **"Pronto para o tutorial"** com os 9 parâmetros gravados.
+
+O botão **Parametrizar inversor para comando via rede**, ao lado, grava só os 7 primeiros (sem a corrente na 3ª palavra). Ele serve para os exercícios com o CLP virtual.
+
+#### Caminho B: pela HMI do inversor, como na vida real
+
+**As teclas que você vai usar:** **ENTER/MENU**, **BACK/ESC**, **▲** e **▼**. A HMI tem quatro níveis:
+
+| Nível | O que aparece | Como chegar |
+| --- | --- | --- |
+| Monitoração | a velocidade do motor | é a tela normal |
+| Grupos | PARAM, READ, MODIF, BASIC, MOTOR, I/O, NET… | ENTER na monitoração |
+| Lista de parâmetros | o número do parâmetro (ex.: P0220) | ENTER num grupo |
+| Edição | o valor, piscando | ENTER num parâmetro |
+
+**As setas funcionam assim:**
+
+- nos **grupos**, **▼** vai para o próximo grupo e **▲** volta;
+- na **lista**, **▲** vai para o próximo parâmetro e **▼** volta. A lista "dá a volta": **▼** no primeiro parâmetro vai para o último;
+- segure a seta para andar rápido.
+
+**Para gravar qualquer parâmetro (sempre igual):** com o número na tela, **ENTER** (o valor pisca) → **▲ ▼** até o valor certo → **ENTER** (grava e volta para a lista). **BACK** cancela sem gravar.
+
+**Passo 1: grupo I/O**
+
+1. Na monitoração, aperte **ENTER**: aparece **PARAM**.
+2. Aperte **▼ 5 vezes**: PARAM → READ → MODIF → BASIC → MOTOR → **I/O**. Aperte **ENTER**. A lista começa no **P0012**.
+3. **▲ 11 vezes** → **P0105** → grave **5**.
+4. **▲ 1 vez** → **P0220** → grave **1**.
+5. **▲ 2 vezes** → **P0222** → grave **11**.
+6. **▲ 4 vezes** → **P0226** → grave **9**.
+7. **▲ 1 vez** → **P0227** → grave **4**.
+8. **▲ 1 vez** → **P0228** → grave **5**.
+
+**Passo 2: grupo NET**
+
+9. Aperte **BACK**: volta aos grupos, mostrando **I/O**. Aperte **▼ 1 vez** → **NET** → **ENTER**. A lista começa no **P0308**.
+10. **▲ 4 vezes** → **P0313**. Ele já vem com **1** de fábrica: aperte **ENTER** só para conferir o valor e **BACK** para sair sem mudar.
+11. Segure **▲** (são 34 toques) → **P0820** → grave **3**.
+12. Aperte **BACK** e **ENTER** de novo: a lista volta ao começo (P0308). Aperte **▼ 1 vez**: vai direto para o último, **P0849** → grave **1**. A configuração Ethernet é aplicada e o P0849 volta sozinho para 0.
+
+**Passo 3: conferir o que você fez**
+
+13. Aperte **BACK**. Nos grupos, aperte **▲ 4 vezes** (NET → I/O → MOTOR → BASIC → **MODIF**) e **ENTER**. O grupo **MODIF** mostra **só os parâmetros diferentes do padrão de fábrica**: devem aparecer **7**, que são P0105, P0220, P0222, P0226, P0227, P0228 e P0820. O P0313 não aparece porque o valor 1 já é o de fábrica, e o P0849 porque volta sozinho para 0.
+14. Aperte **BACK** duas vezes para voltar à monitoração. O display mostra **REM**.
+
+#### Caminho C: pela aba Parâmetros, parâmetro por parâmetro
+
+É o equivalente a configurar pelo software do fabricante no PC.
+
+1. Abra a aba **Parâmetros** do simulador.
+2. No campo **Buscar**, digite o número (ex.: `220`).
+3. Clique no **valor**, escolha ou digite o novo valor e confirme com **Enter**.
+4. Repita para os 9 parâmetros da tabela.
+5. Para conferir, escolha o grupo **MODIF** no seletor ao lado da busca.
+
+#### Como saber que deu certo
+
+- O display do inversor mostra **REM**.
+- O quadro **"Configure no seu CLP"** mostra **Input 3 palavras (6 bytes)** e **Output 2 palavras (4 bytes)**.
+
+#### Voltar ao padrão de fábrica (para treinar de novo)
+
+- Botão **Restaurar padrão de fábrica**, na aba **CLP virtual** ou na aba **Parâmetros**; ou
+- pela HMI, como no inversor real: grupo **PARAM**, segure **▲** até o **P0204** e grave **5** (carrega o padrão WEG de 60 Hz).
 
 ### 1.3 Tags da IHM (aba IHM Modbus)
 

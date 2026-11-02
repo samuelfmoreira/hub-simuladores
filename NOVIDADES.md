@@ -2,6 +2,12 @@
 
 As notas de cada versão aparecem no HUB quando a atualização é oferecida. Escreva a seção da versão nova antes do push.
 
+## 1.6.3
+- Inversor CFW500 e Servomotor SCA06 saem de fábrica e podem ser configurados para a rede de dois jeitos: parâmetro por parâmetro (pela HMI ou pela aba Parâmetros, como na vida real) ou com um botão que faz tudo de uma vez.
+- CFW500: novo botão "Preparar para o tutorial (CODESYS)", na aba CLP virtual.
+- SCA06: novos botões "Preparar para EtherNet/IP" e "Restaurar padrão de fábrica", na aba Parâmetros.
+- Guias dos dois com o passo a passo de cada caminho, tecla por tecla.
+
 ## 1.6.2
 - Ajustes internos de manutenção. Nada muda no uso do HUB.
 

@@ -362,6 +362,17 @@ $('#btnPreset').addEventListener('click', async () => {
   if (r.erro) dialogo({ tipo: 'erro', titulo: 'Parametrização não aplicada', texto: esc(r.erro) });
   else dialogo({ titulo: 'Configurações realizadas com sucesso', texto: 'O inversor agora é comandado pela rede. Para desfazer, use <b>Restaurar padrão de fábrica</b> ou <b>P0204 = 5</b> na HMI do inversor.', itens: r.itens });
 });
+$('#btnPresetTutorial').addEventListener('click', async () => {
+  const sim = await confirmar({ titulo: 'Preparar o inversor para o tutorial?', texto: 'Grava tudo o que o projeto do Guia (IHM Modbus + CODESYS) precisa. O motor precisa estar parado.',
+    itens: ['P0220 = 1 · P0222 = 11 · P0226 = 9 · P0227 = 4', 'P0228 = 5 · P0105 = 5 · P0313 = 1', 'P0820 = 3 (corrente na 3ª palavra de entrada) · P0849 = 1 (aplica)'], ok: 'Aplicar' });
+  if (!sim) return;
+  const r = await pedir('presetTutorial');
+  if (r.erro) dialogo({ tipo: 'erro', titulo: 'Configuração não aplicada', texto: esc(r.erro) });
+  else {
+    const exE = $('#scExE'); if (exE) exE.value = 1;   // o CLP virtual passa a pedir a 3ª palavra de entrada também
+    dialogo({ titulo: 'Pronto para o tutorial', texto: 'O inversor agora é comandado pela rede e manda a corrente na 3ª palavra. No CODESYS: O→T 4 bytes e T→O 6 bytes. Para desfazer, use <b>Restaurar padrão de fábrica</b> ou <b>P0204 = 5</b> na HMI.', itens: r.itens });
+  }
+});
 async function restaurarFabrica() {
   const sim = await confirmar({ titulo: 'Restaurar o padrão de fábrica?', perigo: true, ok: 'Restaurar',
     texto: 'Equivale a programar <b>P0204 = 5</b> na HMI (padrão WEG 60 Hz). Todos os parâmetros voltam ao valor de fábrica. O motor precisa estar parado.',

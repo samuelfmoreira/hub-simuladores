@@ -282,6 +282,8 @@ main { padding: 24px; max-width: 1400px; margin: 0 auto; }
 .texto h1 { font-size: 38px; margin-bottom: 8px; }
 .texto h2 { font-size: 27px; margin: 36px 0 10px; padding-top: 14px; border-top: 1px solid var(--borda); }
 .texto h3 { font-size: 21px; margin: 24px 0 6px; }
+/* nos guias, os "caminhos" (h4) se destacam: faixa à esquerda na cor de destaque */
+.texto h4 { font-size: 19px; margin: 22px 0 8px; padding: 4px 0 4px 10px; border-left: 4px solid var(--rede); }
 .texto blockquote { margin: 0 0 18px; padding: 0; font-size: 19px; color: var(--grafite-2); }
 .texto blockquote.nota { font-size: 16px; color: var(--grafite); background: var(--rede-claro); border-left: 4px solid var(--rede); padding: 10px 14px; border-radius: var(--raio); }
 .texto table { border-collapse: collapse; font-size: 15px; margin: 12px 0 18px; max-width: 100%; display: block; overflow-x: auto; }

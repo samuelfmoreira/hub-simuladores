@@ -217,3 +217,7 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
 .splitter[hidden] { display: none; }
 body.arrastando, body.arrastando * { cursor: col-resize !important; user-select: none !important; }
 body.arrastando canvas, body.arrastando iframe { pointer-events: none; }
+
+/* atalho de configuração de rede (aba Parâmetros) */
+.preset-rede { margin: 0 0 12px; padding: 10px 12px; border: 1px solid var(--line-2, #ccc); border-radius: 8px; }
+.preset-rede .row { gap: 8px; flex-wrap: wrap; }
