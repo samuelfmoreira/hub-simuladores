@@ -431,19 +431,13 @@ function abrirTela(url) {
   const comum = process.platform === 'win32' ? `start "" "${url}"` : process.platform === 'darwin' ? `open "${url}"` : `xdg-open "${url}"`;
   if (process.platform === 'win32' && cfg.abrirComo === 'janela') {
     const nav = acharNavegador();
-    if (nav) {
-      // janela de aplicativo, sempre maximizada, com perfil próprio (um por navegador): o HUB consegue fechá-la ao sair
-      const args = [`--app=${url}`, '--start-maximized', `--user-data-dir=${path.join(PERFIL_JANELA, nav.nome)}`, '--no-first-run', '--no-default-browser-check'];
-      try {
-        const p = spawn(nav.exe, args, { detached: true, stdio: 'ignore' });
-        p.on('error', () => exec(comum, () => { /* sem navegador */ }));
-        p.unref();
-        console.log(`Tela aberta no ${nav.nome === 'chrome' ? 'Chrome' : 'Edge'}: ${url}`);
-        return;
-      } catch (_) { /* tenta pelo comando do Windows */ }
-    }
-    exec(`start "" msedge --app="${url}" --start-maximized --user-data-dir="${path.join(PERFIL_JANELA, 'edge')}" --no-first-run --no-default-browser-check`,
+    // Abre pelo "start" do Windows (/max = maximizada): assim a janela vem para a frente e no tamanho certo.
+    // Chamar o navegador direto, a partir do motor que roda escondido, fazia a janela abrir minimizada.
+    const exe = nav ? `"${nav.exe}"` : 'msedge';
+    const perfil = path.join(PERFIL_JANELA, nav ? nav.nome : 'edge');
+    exec(`start "" /max ${exe} --app="${url}" --start-maximized --user-data-dir="${perfil}" --no-first-run --no-default-browser-check`,
       (erro) => { if (erro) exec(comum, () => { /* sem navegador */ }); });
+    console.log(`Tela aberta no ${nav && nav.nome === 'chrome' ? 'Chrome' : 'Edge'}: ${url}`);
   } else exec(comum, () => { /* sem navegador disponível: tudo bem */ });
 }
 /** Fecha as janelas do Edge abertas pelo HUB (as que usam o perfil próprio). No máximo 4 s. */
