@@ -2,8 +2,9 @@
 /**
  * TBEN-L-SIM: servidor do simulador.
  *   - roda a planta (core/sim.js) a cada 5 ms
- *   - escolhe quem comanda as saídas: CLP demo, manual ou CODESYS (via PROFINET)
- *   - conversa com o driver PROFINET (pn/driver-bridge.js)
+ *   - escolhe quem comanda as saídas: CLP demo, manual ou CODESYS (via EtherNet/IP ou PROFINET)
+ *   - conversa com o CLP: EtherNet/IP direto no Windows (eip/eip-bridge.js, opção --eip)
+ *     ou PROFINET pelo driver p-net na VM Linux (pn/driver-bridge.js)
  *   - serve a cena 3D e o painel (public/) por HTTP + WebSocket
  */
 const http = require('http');
@@ -15,6 +16,7 @@ const { Sim } = require('./core/sim');
 const { DemoPlc } = require('./core/demo-plc');
 const isdu = require('./core/isdu');
 const { DriverBridge } = require('./pn/driver-bridge');
+const { EipBridge } = require('./eip/eip-bridge');
 const iolCall = require('./pn/iol-call');
 
 // ---------- Configuração ----------
@@ -22,7 +24,9 @@ const DEFAULTS = {
   http: { host: '0.0.0.0', port: 8080 },
   mode: 'demo',
   driver: { enabled: true, autostart: true, interface: 'enp0s8', stationName: 'tben-l-sim', storage: '/var/lib/tben-sim', verbose: true, echoToConsole: false },
-  ipc: { nodePort: 50100, driverPort: 50101 }
+  ipc: { nodePort: 50100, driverPort: 50101 },
+  protocolo: 'profinet',            // 'eip' (EtherNet/IP, roda no Windows) ou 'profinet' (driver p-net, VM Linux)
+  eip: { bindAddress: '0.0.0.0', hostIp: null }
 };
 function loadConfig() {
   const file = path.resolve(__dirname, '../config.json');
@@ -33,6 +37,9 @@ function loadConfig() {
   if (process.env.TBEN_NO_DRIVER || process.argv.includes('--sem-profinet')) cfg.driver.enabled = false;
   if (process.env.PORT) cfg.http.port = +process.env.PORT;
   if (process.env.SIM_HTTP_PORT) cfg.http.port = +process.env.SIM_HTTP_PORT;   // [HUB] porta definida pelo HUB
+  if (process.argv.includes('--eip')) cfg.protocolo = 'eip';
+  if (cfg.protocolo === 'eip') cfg.driver.enabled = false;                     // EtherNet/IP não usa o driver PROFINET
+  if (process.env.SIM_IP) { cfg.eip.bindAddress = process.env.SIM_IP; if (process.env.SIM_IP !== '0.0.0.0') cfg.eip.hostIp = process.env.SIM_IP; }   // [HUB] IP na SIM-HUB
   return cfg;
 }
 const cfg = loadConfig();
@@ -54,7 +61,13 @@ const OUT_MANUAL = PORTS.map(p => new Uint8Array(p.outLen));
 let mode = ['demo', 'manual', 'codesys'].includes(cfg.mode) ? cfg.mode : 'demo';
 
 let bridge = null;
-if (cfg.driver.enabled) {
+const PROTO = cfg.protocolo === 'eip' ? 'EtherNet/IP' : 'PROFINET';
+if (cfg.protocolo === 'eip') {
+  bridge = new EipBridge(cfg);
+  bridge.on('log', log);
+  bridge.on('ar', on => log({ text: on ? 'CODESYS conectado: conexão EtherNet/IP de I/O ativa' : 'Conexão EtherNet/IP encerrada: saídas no estado seguro (zeradas)', kind: on ? 'ok' : 'diag' }));
+  bridge.start();
+} else if (cfg.driver.enabled) {
   bridge = new DriverBridge(cfg);
   bridge.on('log', log);
   bridge.on('ar', on => log({ text: on ? 'CODESYS conectado: relação de aplicação (AR) PROFINET ativa' : 'Conexão PROFINET encerrada: saídas no estado seguro (zeradas)', kind: on ? 'ok' : 'diag' }));
@@ -97,7 +110,7 @@ function statePacket() {
     io: { IN: sim.IN.map(hex), PQI: hex(sim.PQI), OUT: PORTS.map(p => hex(outFor(p.n))) },
     ports: sim.portInfo(),
     plc: mode === 'demo' ? { state: plc.state, step: plc.stepText(), msg: plc.msg } : null,
-    pn: bridge ? { driver: !!bridge.proc || bridge.ipcAlive, ipc: bridge.ipcAlive, ar: bridge.arConnected } : null,
+    pn: bridge ? { driver: !!bridge.proc || bridge.ipcAlive, ipc: bridge.ipcAlive, ar: bridge.arConnected, proto: PROTO, cfgPlc: bridge.cfgFromPlc !== false } : null,
     estop: sim.W.estop, feed: sim.W.feed, boxH: sim.W.boxH
   };
 }
@@ -112,6 +125,10 @@ const server = http.createServer((req, res) => {
   if (VENDOR[url]) {
     try { const f = require.resolve(VENDOR[url]); res.writeHead(200, { 'Content-Type': MIME['.js'] }); return fs.createReadStream(f).pipe(res); }
     catch (_) { res.writeHead(404); return res.end('Rode npm install'); }
+  }
+  if (url.startsWith('/eds/')) {
+    const f = path.resolve(__dirname, '../docs', path.basename(url));
+    if (f.endsWith('.eds') && fs.existsSync(f)) { res.writeHead(200, { 'Content-Type': 'application/octet-stream', 'Content-Disposition': `attachment; filename="${path.basename(f)}"` }); return fs.createReadStream(f).pipe(res); }
   }
   if (url.startsWith('/gsdml/')) {
     const f = path.resolve(__dirname, '../gsdml', path.basename(url));
@@ -128,7 +145,9 @@ wss = new WebSocketServer({ server });
 function broadcast(msg) { const s = JSON.stringify(msg); wss && wss.clients.forEach(c => { if (c.readyState === 1) c.send(s); }); }
 wss.on('connection', ws => {
   const gsdml = fs.existsSync(path.resolve(__dirname, '../gsdml')) ? fs.readdirSync(path.resolve(__dirname, '../gsdml')).filter(f => f.endsWith('.xml')) : [];
-  ws.send(JSON.stringify({ type: 'init', PORTS, DEV, MODELS, VDS_TXT, events: sim.S.map(st => st.events), logs: logHistory, gsdml, driverEnabled: !!bridge, iface: cfg.driver.interface, station: cfg.driver.stationName }));
+  const eds = fs.existsSync(path.resolve(__dirname, '../docs')) ? fs.readdirSync(path.resolve(__dirname, '../docs')).filter(f => f.endsWith('.eds')) : [];
+  ws.send(JSON.stringify({ type: 'init', PORTS, DEV, MODELS, VDS_TXT, events: sim.S.map(st => st.events), logs: logHistory, gsdml, eds, driverEnabled: !!bridge, iface: cfg.driver.interface, station: cfg.driver.stationName,
+    proto: PROTO, ip: cfg.eip.hostIp || cfg.eip.bindAddress }));
   ws.on('message', raw => {
     let m; try { m = JSON.parse(raw); } catch (_) { return; }
     handle(m, ws);
@@ -144,7 +163,7 @@ function handle(m, ws) {
     case 'scene': sim.reset(); plc.reset(); break;
     case 'mode':
       if (!['demo', 'manual', 'codesys'].includes(m.mode) || m.mode === mode) break;
-      if (m.mode === 'codesys' && !bridge) { log({ text: 'Modo CODESYS indisponível: o driver PROFINET está desativado em config.json', kind: 'diag' }); break; }
+      if (m.mode === 'codesys' && !bridge) { log({ text: 'Modo CODESYS indisponível neste modo do simulador (sem rede). No HUB, inicie o TBEN-L no modo EtherNet/IP.', kind: 'diag' }); break; }
       mode = m.mode; OUT_DEMO.forEach(o => o.fill(0)); OUT_MANUAL.forEach(o => o.fill(0)); plc.reset();
       log({ text: mode === 'demo' ? 'CLP demo assumiu a célula. Pressione Partir' : mode === 'manual' ? 'Modo manual: comande as saídas pela aba Dados de processo' : (bridge.arConnected ? 'CODESYS assumiu a célula' : 'Modo CODESYS: aguardando o controlador conectar. Saídas zeradas até lá') });
       break;
@@ -154,7 +173,7 @@ function handle(m, ws) {
       break;
     }
     case 'cfg': {
-      if (mode === 'codesys' && bridge && bridge.arConnected) { log({ text: 'Com o CODESYS conectado, a configuração da porta vem do CLP (registro 0x0200). Altere no CODESYS.', kind: 'diag' }); break; }
+      if (mode === 'codesys' && bridge && bridge.arConnected && bridge.cfgFromPlc !== false) { log({ text: 'Com o CODESYS conectado, a configuração da porta vem do CLP (registro 0x0200). Altere no CODESYS.', kind: 'diag' }); break; }
       const r = sim.configure(m.port, m.cfg, 'tela');
       if (!r.ok) log({ text: `X${m.port}: configuração recusada (${r.msg})`, kind: 'diag' });
       break;
@@ -176,7 +195,7 @@ setInterval(() => broadcast(statePacket()), 50);
 
 server.listen(cfg.http.port, cfg.http.host, () => {
   console.log(`TBEN-L-SIM pronto em http://${cfg.http.host === '0.0.0.0' ? 'localhost' : cfg.http.host}:${cfg.http.port}`);
-  console.log(`Modo inicial: ${mode}. Driver PROFINET: ${bridge ? 'ativo na interface ' + cfg.driver.interface : 'desativado'}`);
+  console.log(`Modo inicial: ${mode}. Rede: ${!bridge ? 'desativada (demonstração)' : PROTO === 'EtherNet/IP' ? 'EtherNet/IP em ' + (cfg.eip.hostIp || cfg.eip.bindAddress) : 'PROFINET na interface ' + cfg.driver.interface}`);
   log({ text: `Simulador iniciado em modo ${mode}` });
 });
 const stop = () => { if (bridge) bridge.stop(); process.exit(0); };

@@ -1,0 +1,408 @@
+$ EDS do SIMULADOR TBEN-L-SIM (nao e um EDS da Turck) - gerado por tools/gera-eds-eip.js
+[File]
+        DescText = "Simulador didatico TBEN-L-SIM: remoto IO-Link de 8 portas em EtherNet/IP";
+        CreateDate = 11-03-2026;
+        CreateTime = 22:58:22;
+        ModDate = 11-03-2026;
+        ModTime = 22:58:22;
+        Revision = 1.0;
+
+[Device]
+        VendCode = 1171;
+        VendName = "TBEN-L-SIM (simulador)";
+        ProdType = 12;
+        ProdTypeStr = "Communications Adapter";
+        ProdCode = 257;
+        MajRev = 1;
+        MinRev = 1;
+        ProdName = "TBEN-L-SIM (simulador)";
+        Catalog = "TBEN-L-SIM-EIP";
+
+[Device Classification]
+        Class1 = EtherNetIP;
+
+[Params]
+        Param1 =
+                0,,,0x0000,0xC6,1,
+                "X0_In_Status","","Porta X0",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param2 =
+                0,,,0x0000,0xC6,1,
+                "X0_In_Speed","","Porta X0",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param3 =
+                0,,,0x0000,0xC6,1,
+                "X0_PQI","","PQI da porta X0: .7 PQ  .6 DevCom  .5 DevErr",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param4 =
+                0,,,0x0000,0xC6,1,
+                "X0_reservado","","Reservado (alinhamento)",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param5 =
+                0,,,0x0000,0xC7,2,
+                "X1_In_Dist","","Porta X1",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param6 =
+                0,,,0x0000,0xC6,1,
+                "X1_In_Flags","","Porta X1",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param7 =
+                0,,,0x0000,0xC6,1,
+                "X1_In_Quality","","Porta X1",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param8 =
+                0,,,0x0000,0xC6,1,
+                "X1_PQI","","PQI da porta X1: .7 PQ  .6 DevCom  .5 DevErr",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param9 =
+                0,,,0x0000,0xC6,1,
+                "X1_reservado","","Reservado (alinhamento)",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param10 =
+                0,,,0x0000,0xC6,1,
+                "X2_In_Status","","Porta X2",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param11 =
+                0,,,0x0000,0xC6,1,
+                "X2_PQI","","PQI da porta X2: .7 PQ  .6 DevCom  .5 DevErr",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param12 =
+                0,,,0x0000,0xC6,1,
+                "X3_In_B0","","Porta X3",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param13 =
+                0,,,0x0000,0xC6,1,
+                "X3_In_B1","","Porta X3",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param14 =
+                0,,,0x0000,0xC6,1,
+                "X3_PQI","","PQI da porta X3: .7 PQ  .6 DevCom  .5 DevErr",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param15 =
+                0,,,0x0000,0xC6,1,
+                "X3_reservado","","Reservado (alinhamento)",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param16 =
+                0,,,0x0000,0xC6,1,
+                "X4_In_Status","","Porta X4",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param17 =
+                0,,,0x0000,0xC6,1,
+                "X4_In_Fault","","Porta X4",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param18 =
+                0,,,0x0000,0xC7,2,
+                "X4_In_Speed","","Porta X4",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param19 =
+                0,,,0x0000,0xC6,1,
+                "X4_PQI","","PQI da porta X4: .7 PQ  .6 DevCom  .5 DevErr",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param20 =
+                0,,,0x0000,0xC6,1,
+                "X4_reservado","","Reservado (alinhamento)",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param21 =
+                0,,,0x0000,0xC7,2,
+                "X5_In_Dist","","Porta X5",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param22 =
+                0,,,0x0000,0xC6,1,
+                "X5_In_Flags","","Porta X5",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param23 =
+                0,,,0x0000,0xC6,1,
+                "X5_In_Quality","","Porta X5",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param24 =
+                0,,,0x0000,0xC6,1,
+                "X5_PQI","","PQI da porta X5: .7 PQ  .6 DevCom  .5 DevErr",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param25 =
+                0,,,0x0000,0xC6,1,
+                "X5_reservado","","Reservado (alinhamento)",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param26 =
+                0,,,0x0000,0xC6,1,
+                "X6_In_Status","","Porta X6",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param27 =
+                0,,,0x0000,0xC6,1,
+                "X6_In_Speed","","Porta X6",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param28 =
+                0,,,0x0000,0xC6,1,
+                "X6_PQI","","PQI da porta X6: .7 PQ  .6 DevCom  .5 DevErr",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param29 =
+                0,,,0x0000,0xC6,1,
+                "X6_reservado","","Reservado (alinhamento)",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param30 =
+                0,,,0x0000,0xC6,1,
+                "X7_PQI","","PQI da porta X7: .7 PQ  .6 DevCom  .5 DevErr",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param31 =
+                0,,,0x0000,0xC6,1,
+                "X7_reservado","","Reservado (alinhamento)",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param32 =
+                0,,,0x0000,0xC6,1,
+                "X0_Out_Ctrl","","Porta X0",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param33 =
+                0,,,0x0000,0xC6,1,
+                "X0_Out_Speed","","Porta X0",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param34 =
+                0,,,0x0000,0xC6,1,
+                "X2_Out_Valves","","Porta X2",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param35 =
+                0,,,0x0000,0xC6,1,
+                "X2_reservado","","Reservado (alinhamento)",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param36 =
+                0,,,0x0000,0xC6,1,
+                "X4_Out_Ctrl","","Porta X4",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param37 =
+                0,,,0x0000,0xC6,1,
+                "X4_Out_Res","","Porta X4",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param38 =
+                0,,,0x0000,0xC7,2,
+                "X4_Out_Speed","","Porta X4",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param39 =
+                0,,,0x0000,0xC6,1,
+                "X6_Out_Ctrl","","Porta X6",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param40 =
+                0,,,0x0000,0xC6,1,
+                "X6_Out_Speed","","Porta X6",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param41 =
+                0,,,0x0000,0xC6,1,
+                "X7_Out_Lamps","","Porta X7",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param42 =
+                0,,,0x0000,0xC6,1,
+                "X7_reservado","","Reservado (alinhamento)",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param43 =
+                0,,,0x0000,0xC8,4,
+                "RPI","","Requested Packet Interval (us)",
+                1000,3200000,20000,
+                ,,,,
+                ,,,,
+                0;
+
+[Assembly]
+        Object_Name = "Assembly Object";
+        Object_Class_Code = 0x04;
+        Number_Of_Static_Instances = 2;
+        Assem100 =
+                "Entradas: portas X0 a X7 + PQI (T->O)",
+                "",
+                34,
+                0x0000,
+                ,,
+                8,Param1,
+                8,Param2,
+                8,Param3,
+                8,Param4,
+                16,Param5,
+                8,Param6,
+                8,Param7,
+                8,Param8,
+                8,Param9,
+                8,Param10,
+                8,Param11,
+                8,Param12,
+                8,Param13,
+                8,Param14,
+                8,Param15,
+                8,Param16,
+                8,Param17,
+                16,Param18,
+                8,Param19,
+                8,Param20,
+                16,Param21,
+                8,Param22,
+                8,Param23,
+                8,Param24,
+                8,Param25,
+                8,Param26,
+                8,Param27,
+                8,Param28,
+                8,Param29,
+                8,Param30,
+                8,Param31;
+        Assem150 =
+                "Saidas: portas X0, X2, X4, X6 e X7 (O->T)",
+                "",
+                12,
+                0x0001,
+                ,,
+                8,Param32,
+                8,Param33,
+                8,Param34,
+                8,Param35,
+                8,Param36,
+                8,Param37,
+                16,Param38,
+                8,Param39,
+                8,Param40,
+                8,Param41,
+                8,Param42;
+
+[Connection Manager]
+        Revision = 1;
+        Object_Name = "Connection Manager Object";
+        Object_Class_Code = 0x06;
+        MaxInst = 1;
+        Number_Of_Static_Instances = 1;
+        Max_Number_Of_Dynamic_Instances = 0;
+        Connection1 =
+                0x84010002,
+                0x44640405,
+                Param43,12,Assem150,
+                Param43,34,Assem100,
+                ,,
+                0,,
+                "Exclusive Owner (34 bytes de entrada, 12 de saida)",
+                "",
+                "20 04 24 01 2C 96 2C 64";
+
+[Capacity]
+        MaxIOConnections = 1;
+        MaxMsgConnections = 6;
+        TSpec1 = TxRx, 34, 1000;
+        TSpec2 = TxRx, 12, 1000;

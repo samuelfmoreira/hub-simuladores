@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>TBEN-L-SIM: célula de paletização (PROFINET)</title>
+<title>TBEN-L-SIM: célula de paletização</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@500;600&display=swap" rel="stylesheet">
@@ -163,7 +163,7 @@ td.code{font-family:'Barlow Semi Condensed',sans-serif;font-weight:600;white-spa
   <header class="top">
     <div class="brand">
       <h1>Célula de paletização com elevador</h1>
-      <p>Remoto TBEN-L-SIM com 8 portas IO-Link via PROFINET <a id="gsdLink" class="gsd" href="#" hidden>Baixar GSDML</a></p>
+      <p>Remoto TBEN-L-SIM com 8 portas IO-Link via <span id="protoNome">PROFINET</span> <a id="gsdLink" class="gsd" href="#" hidden>Baixar GSDML</a></p>
     </div>
     <div class="modebox">
       <span class="lbl" id="modeLbl">Quem controla a célula</span>
@@ -218,7 +218,7 @@ td.code{font-family:'Barlow Semi Condensed',sans-serif;font-weight:600;white-spa
         <div class="mod-head">
           <div>
             <div class="mod-name">TBEN-L-SIM 8IOL</div>
-            <div class="mod-sub" id="busTxt">PROFINET: conectando ao servidor…</div>
+            <div class="mod-sub" id="busTxt">Rede: conectando ao servidor…</div>
           </div>
           <div class="mod-leds">
             <span class="led g" id="lPwr"></span><span>PWR</span>
@@ -508,7 +508,7 @@ const STATE_TXT = {OPERATE:['Operando (OPERATE)','ok'], STARTUP:['Partida (START
   SEM_DEVICE:['Sem device','err'], ERRO_VALIDACAO:['Erro de validação','err'], CURTO:['Curto em L+','err'], DESATIVADA:['Desativada','']};
 const h4 = v => '0x' + v.toString(16).toUpperCase().padStart(4,'0');
 const h6 = v => '0x' + v.toString(16).toUpperCase().padStart(6,'0');
-function portLocked(){ return S && S.mode === 'codesys' && S.pn && S.pn.ar; }
+function portLocked(){ return S && S.mode === 'codesys' && S.pn && S.pn.ar && S.pn.cfgPlc; }   // no EtherNet/IP a configuração das portas vem da tela
 function buildPortTab(body){
   const st = S ? S.ports[sel] : null; if (!st) return;
   portSig = JSON.stringify([st.cfg, portLocked()]);
@@ -615,10 +615,11 @@ function refreshModule(){
   $('#lErr').className = 'led ' + (anyErr ? 'r' : '');
   const pn = S.pn;
   let bus = 'led', txt;
-  if (!pn){ txt = 'PROFINET: driver desativado em config.json'; }
+  const eip = pn && pn.proto === 'EtherNet/IP';
+  if (!pn){ txt = 'Sem rede: modo Demonstração (no HUB, inicie no modo EtherNet/IP)'; }
   else if (!pn.ipc){ bus = 'led r'; txt = 'PROFINET: driver parado (rode o servidor com sudo)'; }
-  else if (pn.ar){ bus = 'led g'; txt = 'PROFINET: CODESYS conectado (AR ativa)'; }
-  else { bus = 'led g blink'; txt = 'PROFINET: aguardando o controlador'; }
+  else if (pn.ar){ bus = 'led g'; txt = eip ? 'EtherNet/IP: CODESYS conectado (conexão de I/O ativa)' : 'PROFINET: CODESYS conectado (AR ativa)'; }
+  else { bus = 'led g blink'; txt = eip ? `EtherNet/IP: aguardando o CLP (adapter em ${window.TBEN_IP || ''})` : 'PROFINET: aguardando o controlador'; }
   $('#lBus').className = bus; $('#busTxt').textContent = txt;
 }
 const NAMES = {PARADO:'Parado', AUTO:'Automático', FALHA:'Falha', 'EMERGÊNCIA':'Emergência'};
@@ -635,7 +636,7 @@ function refreshHud(){
   } else {
     const ar = S.pn && S.pn.ar;
     $('#hState').textContent = ar ? 'CODESYS' : 'Aguardando CODESYS'; $('#hDot').style.background = ar ? 'var(--green)' : 'var(--yellow)';
-    $('#hStep').textContent = ar ? 'O programa do CLP comanda a célula' : 'Saídas no estado seguro até a AR PROFINET subir'; $('#hMsg').textContent = '';
+    $('#hStep').textContent = ar ? 'O programa do CLP comanda a célula' : `Saídas no estado seguro até a conexão ${S.pn && S.pn.proto === 'EtherNet/IP' ? 'EtherNet/IP' : 'PROFINET (AR)'} subir`; $('#hMsg').textContent = '';
   }
   $('#hCount').textContent = `${w.count} de 12`;
   $('#hLayer').textContent = `${Math.min(3, Math.floor(w.count/4)+1)} de 3`;
@@ -692,8 +693,12 @@ function connect(){
       PORTS = m.PORTS; DEV = m.DEV; MODELS = m.MODELS; VDS_TXT = m.VDS_TXT; EVTS = m.events; driverEnabled = m.driverEnabled;
       logEl.innerHTML = ''; m.logs.forEach(addLog);
       const cs = document.querySelector('.seg button[data-mode="codesys"]');
-      cs.disabled = !driverEnabled; cs.title = driverEnabled ? `Controlador PROFINET na interface ${m.iface}, estação ${m.station}` : 'Driver PROFINET desativado em config.json';
-      if (m.gsdml && m.gsdml.length){ const a = $('#gsdLink'); a.href = '/gsdml/' + encodeURIComponent(m.gsdml[0]); a.hidden = false; }
+      const eipIni = m.proto === 'EtherNet/IP';
+      $('#protoNome').textContent = eipIni ? 'EtherNet/IP' : 'PROFINET';
+      window.TBEN_IP = m.ip;
+      cs.disabled = !driverEnabled; cs.title = !driverEnabled ? 'Sem rede no modo Demonstração' : eipIni ? `CLP EtherNet/IP: adapter em ${m.ip}` : `Controlador PROFINET na interface ${m.iface}, estação ${m.station}`;
+      if (eipIni && m.eds && m.eds.length){ const a = $('#gsdLink'); a.href = '/eds/' + encodeURIComponent(m.eds[0]); a.textContent = 'Baixar EDS'; a.hidden = false; }
+      else if (m.gsdml && m.gsdml.length){ const a = $('#gsdLink'); a.href = '/gsdml/' + encodeURIComponent(m.gsdml[0]); a.hidden = false; }
       buildPorts(); buildDetail();
     } else if (m.type === 'state') onState(m);
     else if (m.type === 'log') addLog(m.entry);

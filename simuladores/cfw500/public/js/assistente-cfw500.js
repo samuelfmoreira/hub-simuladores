@@ -51,9 +51,9 @@
           { n: 228, v: 5, nome: 'JOG em remoto', faz: 'quem comanda o JOG: a rede' },
           { n: 105, v: 5, nome: 'Seleção da 1ª ou 2ª rampa', faz: 'quem escolhe a rampa: a rede' },
         ] },
-      { titulo: 'O que vai nas palavras de troca',
-        porque: 'A conexão EtherNet/IP troca <b>palavras</b> (16 bits) a cada ciclo. De fábrica, o inversor manda 2 palavras ao CLP (Status Word e velocidade) e recebe 2 (Control Word e referência). O <b>P0820</b> acrescenta uma <b>3ª palavra de entrada</b> no CLP: a corrente do motor (P0003). Com isso, a conexão no CLP terá <b>6 bytes de entrada e 4 de saída</b>.',
-        hmi: 'grupo <b>NET</b> → P0820 = 3.',
+      { titulo: 'Ler a corrente do motor pela rede',
+        porque: 'De fábrica, a conexão EtherNet/IP leva ao CLP só <b>2 palavras</b>: a Status Word (P0680) e a velocidade (P0681). <b>A corrente não vai.</b> No CFW500, você escolhe o que vai nas palavras extras de leitura: o <b>P0820</b> (Leitura #3) diz qual parâmetro o inversor manda na <b>3ª palavra</b>. Com <b>P0820 = 3</b>, vai o <b>P0003, a corrente do motor, em décimos de ampère</b> (26 = 2,6 A). A conexão no CLP passa a ter <b>6 bytes de entrada</b> (e continua com 4 de saída). No CODESYS, essa palavra aparece em dois BYTEs, o baixo e o alto, que o programa junta e divide por 10.',
+        hmi: 'grupo <b>NET</b> → ▲ 38 vezes a partir do P0308 (ou segure) até <b>P0820</b> → ENTER → ▲ 3 vezes → ENTER.',
         itens: [
           { n: 820, v: 3, nome: '3ª palavra de entrada (leitura #3)', faz: 'qual parâmetro o inversor manda na 3ª palavra: P0003, a corrente' },
         ] },
@@ -83,6 +83,7 @@
       ${l('Conexão', '<b>100/150 Manufacturer Speed + I/O data</b>')}
       ${l('O→T, saída do CLP', '<b>4 bytes</b>: Control Word + Speed Ref')}
       ${l('T→O, entrada do CLP', '<b>6 bytes</b>: Status Word + Motor Speed + corrente')}
+      ${l('Corrente do motor', '3ª palavra de entrada = <b>P0003 em décimos de ampère</b> (26 = 2,6 A). No I/O Mapping ela aparece em dois BYTEs: <b>…_Param2</b> (byte baixo) e <b>…_Param3</b> (byte alto). Guia, seção 3.4')}
       ${l('RPI', '10 a 30 ms')}
       </tbody></table>
       <p class="aclp-porque">Como conferir aqui no simulador: o display do inversor mostra <b>REM</b>, a aba Rede EtherNet/IP mostra <b>origem: parâmetros</b> e, quando o CODESYS entrar em RUN, o chip <b>P0801</b> fica em <b>Data Active</b>.</p>`;

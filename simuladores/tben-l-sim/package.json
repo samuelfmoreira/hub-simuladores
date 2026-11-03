@@ -1,6 +1,6 @@
 {
   "name": "tben-l-sim",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Simulador de remoto IO-Link TBEN-L 8 portas com PROFINET real (p-net) e célula de paletização 3D",
   "main": "src/server.js",
   "private": true,
@@ -11,7 +11,9 @@
     "build:driver": "bash pn-driver/build.sh",
     "test:sim": "node tools/test-sim.js"
   },
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "three": "0.128.0",
     "ws": "8.18.0"

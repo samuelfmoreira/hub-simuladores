@@ -452,13 +452,14 @@ function abrirTela(url) {
 // A tela do simulador é servida pelo próprio simulador; o HUB a mostra dentro de uma página dele que ocupa a janela
 // inteira e mantém uma ligação aberta com o HUB. Quando a janela fecha, a ligação cai e o HUB pode parar o simulador.
 const PRESENCA = new Map();   // id -> { n: janelas abertas, timer }
+// Sempre o simulador que roda neste PC. O endereço da instância remota (ex.: VM Linux do TBEN-L)
+// tem o próprio botão "Abrir", na seção "Instância remota" do cartão.
 function urlDoSimulador(f) {
-  if (f.remoto) return cfg.urlsRemotas[f.id] || f.remoto.urlPadrao || '';
   const ex = ger.resumo(f.id) || {};
   return `http://localhost:${ex.httpPort || Number(cfg.portasWeb[f.id]) || f.web.porta}${f.web.caminho || '/'}`;
 }
 function abrirTelaSimulador(f) {
-  const url = f.remoto ? urlDoSimulador(f) : `http://localhost:${cfg.hubPorta}/janela/${encodeURIComponent(f.id)}`;
+  const url = `http://localhost:${cfg.hubPorta}/janela/${encodeURIComponent(f.id)}`;
   ger.log(f.id, `Abrindo a tela do simulador: ${urlDoSimulador(f)}`, 'hub');
   abrirTela(url);
 }

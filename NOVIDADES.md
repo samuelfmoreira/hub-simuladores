@@ -2,6 +2,17 @@
 
 As notas de cada versão aparecem no HUB quando a atualização é oferecida. Escreva a seção da versão nova antes do push.
 
+## 1.8.1
+- Inversor CFW500: ler a corrente do motor pela rede ficou explícito. No assistente, a etapa 3 se chama "Ler a corrente do motor pela rede" e o resumo diz onde a corrente chega no CLP. No guia, a seção nova 3.4 ensina o passo a passo (P0820 = 3, 6 bytes no CODESYS, mapeamento, conversão para ampères e teste) e mostra outras grandezas que dá para ler do mesmo jeito.
+
+## 1.8.0
+- Remoto IO-Link TBEN-L agora fala EtherNet/IP direto no Windows, sem máquina virtual: inicie no modo "EtherNet/IP (Windows)" e o CODESYS conecta pela SIM-HUB (IP 192.168.100.23), como o CFW500 e o SCA06. Como o TBEN-L real, ele é multiprotocolo: o PROFINET continua disponível na máquina virtual Linux.
+- TBEN-L: EDS novo em "Arquivos para o CLP", com cada campo das portas com o nome da variável do programa pronto (GVL_TBEN).
+- TBEN-L: guia novo, com mapa de dados, configuração no CODESYS, I/O Mapping, programa pronto da célula de paletização, testes e diagnóstico IO-Link.
+
+## 1.7.12
+- Correção: a tela do Remoto IO-Link TBEN-L abria uma página em branco (o endereço da máquina virtual Linux). Agora abre a célula de paletização que roda no seu PC. O endereço da máquina virtual continua no botão "Abrir" da seção "Instância remota".
+
 ## 1.7.11
 - Fechou a janela da tela de um simulador? Ele para sozinho alguns segundos depois, liberando o IP e as portas. Recarregar a página não para. Para deixar o simulador rodando só para o CLP, desmarque a nova opção "Parar o simulador ao fechar a tela dele", na tela Dispositivos.
 - O botão "Abrir tela" abre o simulador numa janela própria, maximizada, como ao iniciar.

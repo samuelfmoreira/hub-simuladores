@@ -119,7 +119,7 @@ O simulador sai **de fábrica**, como um inversor novo: comandado pela própria 
 | P0227 | 4 | quem manda girar e parar em remoto: a rede | I/O |
 | P0228 | 5 | quem comanda o JOG em remoto: a rede | I/O |
 | P0313 | 1 | se a comunicação cair: **para por rampa** (já vem 1 de fábrica: só confira) | NET |
-| P0820 | 3 | 3ª palavra de entrada = **P0003** (corrente do motor) | NET |
+| P0820 | 3 | 3ª palavra de entrada = **P0003** (corrente do motor): veja a seção 3.4 | NET |
 | P0849 | 1 | **aplica** a configuração Ethernet (volta sozinho para 0) | NET |
 
 Antes de qualquer caminho: **motor parado**. Parâmetros de configuração não mudam com o motor girando (a HMI mostra **CONF**).
@@ -248,7 +248,7 @@ Aba **Connections** → dois cliques na conexão **100/150 Manufacturer Speed + 
 | Campo | Valor | Por quê |
 | --- | --- | --- |
 | O→T size (saída) | **4 bytes** | Control Word + Speed Ref |
-| T→O size (entrada) | **6 bytes** | Status Word + Motor Speed + corrente (P0820 = 3) |
+| T→O size (entrada) | **6 bytes** | Status Word + Motor Speed + corrente (P0820 = 3, seção 3.4) |
 | RPI | 10 a 30 ms | 30 ms no print |
 | Connection type T→O | Point to Point | evita problema com tudo no mesmo PC |
 
@@ -272,6 +272,78 @@ Aba **EtherNet/IP I/O Mapping** → ligue cada canal a uma variável da GVL_CFW 
 | Speed Ref | GVL_CFW.REF | P0685 |
 
 A corrente aparece **picada em dois BYTEs** porque o EDS genérico não sabe o nome da 3ª palavra. O programa junta os dois na Parte 7.
+
+### 3.4 Ler a corrente do motor pela rede
+
+De fábrica, a conexão EtherNet/IP leva ao CLP só **2 palavras**: a Status Word (P0680) e a velocidade (P0681). **A corrente não vai.** Para o CLP enxergar a corrente, é preciso configurar o inversor e o CLP, nesta ordem.
+
+**Como funciona:** o CFW500 deixa você escolher o que vai nas **palavras extras de leitura**. O **P0820** (Leitura #3) diz **qual parâmetro** o inversor manda na 3ª palavra de entrada do CLP; o P0821 (Leitura #4), na 4ª, e assim por diante. Com **P0820 = 3**, vai o **P0003, a corrente do motor**.
+
+#### Passo 1: no inversor (P0820 = 3 e P0849 = 1)
+
+Motor parado. Escolha um caminho:
+
+- **Assistente:** **Comunicação com o CLP** → etapa **3. Ler a corrente do motor pela rede** → **Gravar esta etapa**. Depois, a etapa **Aplicar** grava o P0849 = 1.
+- **HMI do inversor:** ENTER → **▼ 6 vezes** até **NET** → ENTER (a lista começa no P0308) → segure **▲** até **P0820** (38 toques) → ENTER → **▲ 3 vezes** → ENTER. Depois, **BACK** e **ENTER** (volta ao começo da lista) → **▼ 1 vez** → **P0849** → ENTER → **▲** → ENTER.
+- **Aba Parâmetros:** busque `820`, grave **3**; busque `849`, grave **1**.
+
+**Confira** no simulador, aba **Rede EtherNet/IP**, no quadro **Endereço IP e configurações da rede EtherNet/IP**:
+
+- **Palavras extras de entrada:** "leitura #3 = P0003";
+- **Conexão no CLP (aplicada):** "Input **3** palavras (**6** bytes)".
+
+Se aparecer o aviso "Gravado, mas ainda não aplicado", falta o P0849 = 1.
+
+#### Passo 2: no CODESYS (6 bytes e o mapeamento)
+
+1. Na conexão do CFW500 (seção 3.2), **T→O size = 6 bytes**. Os dois lados têm de bater: com o inversor mandando 6 e o CLP esperando 4, a conexão é recusada.
+2. No **I/O Mapping** (seção 3.3), a 3ª palavra aparece **picada em dois BYTEs**, porque o EDS genérico não sabe o nome dela:
+
+| Canal | Variável | O que é |
+| --- | --- | --- |
+| 150 – …_Param2 (%IB4) | GVL_CFW.CORR_L | corrente, byte baixo |
+| 150 – …_Param3 (%IB5) | GVL_CFW.CORR_H | corrente, byte alto |
+
+#### Passo 3: no programa (juntar os bytes e converter para ampères)
+
+```
+VAR
+    wCorrente  : WORD;   // P0003 cru: 26 = 2,6 A
+    rCorrenteA : REAL;   // corrente em ampères
+END_VAR
+
+wCorrente  := SHL(BYTE_TO_WORD(GVL_CFW.CORR_H), 8) OR BYTE_TO_WORD(GVL_CFW.CORR_L);   // byte alto sobe 8 bits
+rCorrenteA := WORD_TO_REAL(wCorrente) / 10.0;                                          // décimos de A → A
+```
+
+No programa da Parte 7, a mesma palavra vai direto para o IR2 da IHM, que aplica o fator 0,1.
+
+#### Passo 4: testar
+
+Com o CODESYS em RUN e o motor girando, aumente a **massa na esteira** (60 kg) e coloque caixas: **rCorrenteA** sobe. Compare com o **P0003** no display do inversor ou na aba Parâmetros: os dois têm de bater.
+
+#### Outras grandezas do mesmo jeito
+
+Qualquer parâmetro de leitura pode ir nas palavras extras. Alguns úteis:
+
+| Parâmetro | Grandeza | Na rede |
+| --- | --- | --- |
+| P0003 | corrente do motor | décimos de A (26 = 2,6 A) |
+| P0005 | frequência de saída | décimos de Hz (600 = 60,0 Hz) |
+| P0009 | torque no motor | décimos de % (500 = 50,0 %) |
+| P0004 | tensão do barramento CC | V |
+| P0030 | temperatura do módulo de potência | °C |
+
+Para ler mais de uma, use as palavras seguintes: por exemplo, **P0820 = 3** (corrente) e **P0821 = 9** (torque). Cada palavra extra soma **2 bytes** no T→O: com duas, a conexão fica com **8 bytes de entrada**. Faça **P0849 = 1** depois e ajuste o tamanho no CODESYS.
+
+#### Problemas comuns da corrente
+
+| Sintoma | Causa provável | Solução |
+| --- | --- | --- |
+| Conexão caiu depois do P0849 = 1 | T→O do CODESYS continua em 4 bytes | T→O = 6 bytes (Passo 2) |
+| Corrente sempre 0 | motor parado, ou canais sem variável no I/O Mapping | ligue o motor; confira o mapeamento de …_Param2 e …_Param3 |
+| Valor 10 vezes maior | falta dividir por 10 | `rCorrenteA := WORD_TO_REAL(wCorrente) / 10.0` |
+| Valor absurdo (ex.: 6656 no lugar de 26) | bytes alto e baixo trocados | CORR_L = …_Param2 e CORR_H = …_Param3 |
 
 ## Parte 4: Modbus TCP Server
 
