@@ -2,6 +2,12 @@
 
 As notas de cada versão aparecem no HUB quando a atualização é oferecida. Escreva a seção da versão nova antes do push.
 
+## 1.7.7
+- A janela do HUB e as telas dos simuladores voltam a abrir maximizadas.
+
+## 1.7.6
+- Assistente de comunicação com o CLP: os títulos ficaram legíveis no fundo escuro (no SCA06 apareciam em azul-escuro), e a escolha do modo no SCA06 ficou mais clara: "Como o CLP vai comandar o servomotor?", com exemplos e o que muda no drive e no CLP em cada modo.
+
 ## 1.7.5
 - Ao clicar em "Sair", a janela do HUB fecha sozinha (antes, às vezes ficava aberta mostrando "HUB encerrado"). As janelas dos simuladores abertas pelo HUB também fecham.
 - A janela do HUB passa a usar um perfil próprio do Edge, separado do seu navegador do dia a dia. Por isso, na primeira vez, a escolha de fundo claro ou escuro volta ao padrão.

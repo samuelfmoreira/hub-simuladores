@@ -413,7 +413,8 @@ const PERFIL_JANELA = path.join(process.env.LOCALAPPDATA || require('os').tmpdir
 function abrirTela(url) {
   const comum = process.platform === 'win32' ? `start "" "${url}"` : process.platform === 'darwin' ? `open "${url}"` : `xdg-open "${url}"`;
   if (process.platform === 'win32' && cfg.abrirComo === 'janela') {
-    exec(`start "" msedge --app="${url}" --window-size=1400,900 --user-data-dir="${PERFIL_JANELA}" --no-first-run --no-default-browser-check`,
+    // sempre maximizada (antes dependia de o Edge lembrar do tamanho; o perfil próprio começa sem essa memória)
+    exec(`start "" msedge --app="${url}" --start-maximized --user-data-dir="${PERFIL_JANELA}" --no-first-run --no-default-browser-check`,
       (erro) => { if (erro) exec(comum, () => { /* sem navegador */ }); });
   } else exec(comum, () => { /* sem navegador disponível: tudo bem */ });
 }

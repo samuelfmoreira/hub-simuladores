@@ -105,9 +105,11 @@
     window.AssistenteCLP.abrir({
       titulo: 'Assistente de comunicação com o CLP',
       subtitulo: 'SCA06 + ECO5 · EtherNet/IP · o mesmo que você faria parâmetro por parâmetro na HMI',
+      perguntaModo: 'Como o CLP vai comandar o servomotor?',
+      textoModo: 'Escolha o modo de controle. Cada modo pede uma configuração diferente no drive e uma conexão diferente no CLP; o assistente mostra as etapas do modo escolhido.',
       modos: [
-        { id: 'vel', nome: 'Velocidade e torque', texto: 'O CLP manda a velocidade (rpm) ou a força (A). Conexão de 4 palavras.' },
-        { id: 'pos', nome: 'Posição (absoluta e por pulso)', texto: 'O CLP manda para onde ir, ou um ângulo a cada pulso. Conexão de 8 palavras.' },
+        { id: 'vel', nome: 'Velocidade e torque', texto: 'O CLP diz quão rápido girar (rpm) ou com quanta força (A). No drive: P0202 = 6. No CLP: conexão de 4 palavras.' },
+        { id: 'pos', nome: 'Posição (absoluta e por pulso)', texto: 'O CLP diz para onde o disco vai (ex.: 90°) ou quantos graus andar a cada pulso (ex.: 45°). No drive: P0202 = 4. No CLP: conexão de 8 palavras.' },
       ],
       etapas, ler, fmt, resumo,
       gravar: async (n, v) => {

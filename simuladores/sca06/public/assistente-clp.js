@@ -36,7 +36,8 @@
   .aclp-chip.modo { border-style: dashed; color: #E6EAE7; }
   .aclp-dica { padding: 6px 20px 0; color: #8E989C; font-size: 12.5px; }
   .aclp-corpo { padding: 14px 20px; overflow: auto; max-height: calc(92vh - 190px); }
-  .aclp-corpo h3 { margin: 0 0 6px; font: 600 20px/1.2 'Barlow Condensed', 'Arial Narrow', sans-serif; }
+  .aclp-corpo h3 { margin: 0 0 6px; font: 600 20px/1.2 'Barlow Condensed', 'Arial Narrow', sans-serif; color: #F2F4F3; }
+  dialog.aclp h2, dialog.aclp h3 { color: #F2F4F3; }
   .aclp-porque { margin: 0 0 12px; }
   .aclp table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 4px 0 12px; }
   .aclp th, .aclp td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #343B40; vertical-align: top; }
@@ -56,6 +57,7 @@
   .aclp-modos button { text-align: left; padding: 12px 14px; border-radius: 8px; border: 1px solid #485055; background: #262C30; color: #E6EAE7; cursor: pointer; font: inherit; }
   .aclp-modos button:hover { border-color: #5B8FC2; }
   .aclp-modos b { display: block; font-size: 16px; margin-bottom: 4px; }
+  .aclp-modos small { display: block; margin-top: 8px; color: #7FB3E6; font-weight: 600; }
   .aclp-rodape { display: flex; gap: 8px; align-items: center; padding: 12px 20px 16px; border-top: 1px solid #343B40; flex-wrap: wrap; }
   .aclp-rodape .esp { flex: 1; }
   .aclp-b { font: 600 14px 'Barlow', system-ui, sans-serif; padding: 8px 14px; border-radius: 6px; border: 1px solid #485055; background: #2A3136; color: #E6EAE7; cursor: pointer; }
@@ -99,9 +101,9 @@
       desenhar();
     }
     function telaModos() {
-      return `${cabecalho()}<div class="aclp-corpo"><h3>O que você vai comandar pela rede?</h3>
-        <p class="aclp-porque">A configuração muda conforme o modo. Escolha um para ver as etapas.</p>
-        <div class="aclp-modos">${cfg.modos.map((m) => `<button data-modo="${esc(m.id)}"><b>${esc(m.nome)}</b>${esc(m.texto)}</button>`).join('')}</div></div>
+      return `${cabecalho()}<div class="aclp-corpo"><h3>${esc(cfg.perguntaModo || 'Como o CLP vai comandar o equipamento?')}</h3>
+        <p class="aclp-porque">${esc(cfg.textoModo || 'Escolha o modo de controle. Cada modo pede uma configuração diferente no equipamento e no CLP.')}</p>
+        <div class="aclp-modos">${cfg.modos.map((m) => `<button data-modo="${esc(m.id)}"><b>${esc(m.nome)}</b>${esc(m.texto)}<small>Escolher ›</small></button>`).join('')}</div></div>
         <div class="aclp-rodape"><span class="esp"></span><button class="aclp-b" data-a="fechar">Cancelar</button></div>`;
     }
     function telaEtapa() {
