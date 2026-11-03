@@ -72,6 +72,39 @@ São **4 palavras** (INT, 16 bits) em cada sentido. No CODESYS elas chegam intei
 
 **Atenção ao modo de controle (OUT4):** se essa palavra ficar em **0**, o drive entra em **modo torque** e ignora a referência de velocidade. É o erro mais comum: o motor habilita, mas não gira. Para controlar por velocidade, escreva **1**.
 
+## Parâmetros por modo de controle
+
+O SCA06 pode ser comandado pela rede em **três modos de controle**. Esta tabela mostra, lado a lado, **o valor de cada parâmetro em cada modo**: é a "receita" de configuração. As partes do guia explicam cada modo passo a passo.
+
+| Parâmetro | O que faz | Velocidade | Torque | Posição |
+| --- | --- | --- | --- | --- |
+| P0000 | senha (libera a alteração) | 5 | 5 | 5 |
+| **P0202** | **modo de operação** | **6** (rede) | **6** (rede) | **4** (Ladder) |
+| P1020 | aplicativo Ladder em execução | — | — | 1 (já vem de fábrica) |
+| P0810 | IP pelos parâmetros | 0 | 0 | 0 |
+| P0811…P0814 | endereço IP | 192.168.100.22 | 192.168.100.22 | 192.168.100.22 |
+| P0815 | máscara (CIDR) | 24 | 24 | 24 |
+| P0820…P0823 | palavras de entrada 5 a 8 | 0 | 0 | 1110, 1111, 1112, 1113 |
+| P0835…P0838 | palavras de saída 5 a 8 | 0 | 0 | 1100, 1101, 1102, 1103 |
+| P0662 | ação se a comunicação cair | 3 | 3 | 3 |
+| P0849 | aplica a configuração de rede | 1 | 1 | 1 |
+| **Conexão no CODESYS** | | **4 palavras** (8 / 8 bytes) | **4 palavras** (8 / 8 bytes) | **8 palavras** (16 / 16 bytes) |
+| **Onde está no guia** | | Partes 1 a 6 | Parte 7 | Parte 8 |
+
+Velocidade e torque usam **a mesma configuração do drive**: a diferença está no que o CLP manda nas palavras de saída.
+
+**O que o CLP manda em cada modo:**
+
+| Palavra de saída | Velocidade | Torque | Posição |
+| --- | --- | --- | --- |
+| OUT1 palavra de controle | bit 3 habilita · bit 2 STOP · bit 7 reset | igual | ignorada |
+| OUT2 referência de velocidade | **rpm** (32767 = 18750 rpm) | ignorada | ignorada |
+| OUT3 referência de torque | ignorada | **corrente em A × 10** | ignorada |
+| **OUT4 modo de controle** | **1** | **0** | ignorada |
+| OUT5…OUT8 | — | — | comando, destino, velocidade e tipo de movimento (P1100…P1103) |
+
+As **entradas** IN1 a IN4 (estado, velocidade, corrente e modo atual) são iguais nos três modos. No modo posição, as entradas IN5 a IN8 trazem o status, a posição atual, o erro de posição e o contador de movimentos.
+
 ## Lista de parâmetros da comunicação
 
 Todos os parâmetros que entram na comunicação EtherNet/IP do SCA06, num lugar só, para consulta. As Partes seguintes mostram **como** configurar cada um (pelo assistente, pela HMI ou pela aba Parâmetros). "Desabilitado" quer dizer que o parâmetro só muda com o drive desabilitado.
@@ -158,13 +191,20 @@ Na aba **Bancada** do simulador, confira que:
 
 ### 1.3 Configurar o drive para obedecer à rede
 
-O simulador sai **de fábrica**, como um drive novo: com **P0202 = 2**, ou seja, a velocidade vem da HMI do próprio drive. Para o CLP comandar pela EtherNet/IP, **3 parâmetros** precisam mudar. Você escolhe o caminho; o resultado é o mesmo.
+O simulador sai **de fábrica**, como um drive novo: com **P0202 = 2**, ou seja, a velocidade vem da HMI do próprio drive. Esta é a configuração para os modos **velocidade** e **torque** (os dois usam a mesma). Para o modo posição, veja a Parte 8.2. Você escolhe o caminho; o resultado é o mesmo.
 
-| Parâmetro | Valor | O que faz |
-| --- | --- | --- |
-| **P0000** | **5** | senha: libera a alteração dos outros parâmetros |
-| **P0202** | **6** | modo de operação = **rede** (Profibus DP/Ethernet). Sem isso, o drive ignora as palavras de saída do CLP |
-| **P0662** | **3** | se a comunicação cair: **desabilita o drive** (veja o teste do cabo, na Parte 6) |
+| Parâmetro | Fábrica | Valor | O que faz |
+| --- | --- | --- | --- |
+| **P0000** | 0 | **5** | senha: libera a alteração dos outros parâmetros |
+| **P0202** | 2 | **6** | modo de operação = **rede** (Profibus DP/Ethernet). Sem isso, o drive ignora as palavras de saída do CLP |
+| P0810 | 1 (DHCP) | **0** | o IP vem dos parâmetros abaixo |
+| P0811…P0814 | 192.168.0.10 | **192.168.100.22** | o endereço IP do drive |
+| P0815 | 24 | 24 | máscara 255.255.255.0 (já vem certo) |
+| P0820…P0823 e P0835…P0838 | 0 | **0** | sem palavras extras: conexão de 4 palavras (já vem certo; confira se o drive esteve em modo posição) |
+| **P0662** | 0 | **3** | se a comunicação cair: **desabilita o drive** (veja o teste do cabo, na Parte 6) |
+| **P0849** | 0 | **1** | **aplica** o IP e as palavras de troca (volta sozinho para 0) |
+
+**Sobre o IP no simulador:** dentro do HUB, mesmo em DHCP, o drive responde no IP que o HUB reservou para ele (192.168.100.22). Configurar o IP fixo é o que se faz num drive real, e por isso está aqui.
 
 **O drive precisa estar desabilitado**: o P0202 não muda com ele habilitado (aparece o alarme A00124).
 
@@ -379,6 +419,8 @@ GVL_SCA.rCorrenteA := INT_TO_REAL(GVL_SCA.IQ) / 10.0;
 
 Os cálculos são feitos em REAL de propósito: em INT, 3000 × 32767 estoura o limite de 32767.
 
+**Rampas:** no modo rede (P0202 = 6), as rampas de aceleração e desaceleração P0100/P0101 **não atuam**: elas valem só no modo velocidade pela HMI (P0202 = 2). A referência que o CLP manda é aplicada na hora. Se a máquina precisar de rampa, faça-a no programa do CLP (por exemplo, subindo `rVelocidadeRpm` aos poucos). Só a função STOP tem rampa própria no drive, a P0105.
+
 ## Parte 6: Testar e diagnosticar
 
 ### 6.1 Antes de começar
@@ -425,20 +467,104 @@ Repita o teste do cabo com **P0662 = 0**: o alarme aparece, mas o motor **contin
 
 ## Parte 7: Controle por torque
 
-No modo torque, o CLP não pede velocidade: pede **força** (corrente). É ótimo para sentir o efeito do peso de desbalanceamento. A configuração do drive e a conexão são as mesmas da velocidade (P0202 = 6, 4 palavras): só muda a 4ª palavra de saída.
+### 7.1 Como funciona
 
-- No ST, troque a linha 1 por `GVL_SCA.MODO := 0;` e acrescente:
+No modo **velocidade**, o CLP diz **quão rápido** girar, e o drive faz a força que for preciso para manter essa velocidade. No modo **torque**, é o contrário: o CLP diz **quanta força** fazer (em corrente), e **a velocidade é consequência da carga**. É o modo usado em enroladores (tensão constante no material), prensas e testes de força.
+
+O que muda no comportamento do drive:
+
+| Item | No modo torque |
+| --- | --- |
+| Referência | **3ª palavra de saída**, corrente em **A × 10**, com sinal (3 = 0,3 A; −3 = 0,3 A no outro sentido) |
+| Limites de velocidade P0133/P0134 | **não atuam**: se a força for maior que a carga, o disco **acelera sem parar** |
+| Fins de curso | **não atuam** |
+| Corrente máxima | limitada pelo **P0136** (% da corrente nominal) |
+| Função STOP (OUT1 bit 2) | **funciona**: o drive troca para velocidade e para o motor pela rampa **P0105**. É o freio de segurança deste modo |
+
+### 7.2 Parâmetros
+
+**Os mesmos do modo velocidade** (seção 1.3): P0000 = 5, **P0202 = 6**, IP fixo, palavras extras em 0, P0662 = 3 e P0849 = 1. A conexão também é a mesma: **4 palavras** (8 / 8 bytes). A diferença está toda no CLP:
+
+| Palavra de saída | Valor no modo torque |
+| --- | --- |
+| OUT4 modo de controle | **0** (torque) |
+| OUT3 referência de torque | corrente desejada, em A × 10 |
+| OUT1 palavra de controle | bit 3 habilita · bit 2 STOP · bit 7 reset (igual à velocidade) |
+| OUT2 referência de velocidade | ignorada |
+
+### 7.3 Variáveis
+
+Acrescente na **GVL_SCA**:
 
 ```
-// referência de torque: ampères -> A x 10
-GVL_SCA.REF_TORQUE := REAL_TO_INT(LIMIT(-5.0, rTorqueA, 5.0) * 10.0);
+    rTorqueA         : REAL := 0.0;     // corrente desejada (A); positivo = sentido horário
+    rVelMaxRpm       : REAL := 300.0;   // proteção: acima disto o CLP aciona o STOP
+    xSobrevelocidade : BOOL;
 ```
 
-- Declare `rTorqueA : REAL := 0.0;` na GVL_SCA e ligue o motor (`xHabilita := TRUE`).
-- Com o **peso** montado, aumente `rTorqueA` aos poucos (0,2 A de cada vez) até o disco **parar de cair** e ficar equilibrado: essa é a corrente que segura o peso naquela posição.
-- Com um pouco mais de corrente, o disco começa a girar e **acelera sem parar**: no modo torque ninguém controla a velocidade. Pare com `xStop := TRUE`.
+### 7.4 Programa ST (Torque_SCA)
 
-Os fins de curso não atuam no modo torque. Cuidado com o disco solto: use valores pequenos.
+Crie o programa e coloque-o na **MainTask** (Add Call). **Tire o `Velocidade_SCA` da MainTask** (botão direito na chamada → Delete): os dois escrevem na 4ª palavra, e o último a rodar ganharia. O `PLC_PRG` (Ladder) continua: ele cuida da habilitação, do STOP e do reset.
+
+```
+PROGRAM Torque_SCA
+
+// 1) modo de controle: 0 = torque (1 seria velocidade)
+GVL_SCA.MODO := 0;
+
+// 2) referência de torque: ampères -> A x 10, com limite de segurança
+GVL_SCA.REF_TORQUE := REAL_TO_INT(LIMIT(-2.0, GVL_SCA.rTorqueA, 2.0) * 10.0);
+
+// 3) leituras
+GVL_SCA.rVelAtualRpm := INT_TO_REAL(GVL_SCA.VEL) * 18750.0 / 32767.0;
+GVL_SCA.rCorrenteA   := INT_TO_REAL(GVL_SCA.IQ) / 10.0;
+
+// 4) proteção feita pelo CLP: no modo torque o drive não limita a velocidade
+GVL_SCA.xSobrevelocidade := ABS(GVL_SCA.rVelAtualRpm) > GVL_SCA.rVelMaxRpm;
+IF GVL_SCA.xSobrevelocidade THEN
+    GVL_SCA.xStop := TRUE;          // para pela rampa P0105; para voltar, xStop := FALSE
+END_IF
+```
+
+| Trecho | O que faz |
+| --- | --- |
+| `MODO := 0` | coloca o drive em torque. Com 1, ele volta a obedecer à velocidade |
+| `* 10.0` | o drive recebe a corrente em décimos de ampère: 0,3 A viram 3 |
+| `LIMIT(-2.0, …, 2.0)` | não deixa o CLP pedir uma força exagerada por engano |
+| proteção de velocidade | como os limites P0133/P0134 não atuam, quem protege é o CLP |
+
+### 7.5 Testar com o peso
+
+Monte o **peso de desbalanceamento** na bancada (aba Bancada do simulador). **Build**, **Login** e **Start**. O chip **P0801** deve estar em **Data Active**. Altere os valores no online (**Ctrl+F7**):
+
+| Ação no CODESYS | Resultado esperado |
+| --- | --- |
+| `rTorqueA := 0`, `xHabilita := TRUE` | drive habilitado, mas sem força: o peso desce e o disco para com o peso embaixo |
+| `rTorqueA := 0.1`, depois 0.2 | o disco gira e para em cerca de **17°** e depois **32°**: a força segura o peso ali |
+| `rTorqueA := 0.3` | o peso fica parado perto de **50°**: é a corrente que equilibra a gravidade nesse ângulo |
+| `rTorqueA := 0.5` | a força passa o que o peso pede (no máximo uns 0,41 A, com o peso na horizontal): o disco **dispara** e acelera |
+| velocidade passa de `rVelMaxRpm` | a proteção do CLP aciona o **STOP**: o disco para pela rampa P0105 |
+| `xStop := FALSE`, `rTorqueA := -0.3` | sinal negativo: o peso fica parado do outro lado, perto de **−46°** |
+| `rCorrenteA` | acompanha o `rTorqueA`: é a corrente que o drive está fazendo |
+
+A **missão 9** da aba Missões ("Equilibrar o peso só com torque") é exatamente esse exercício: segurar a seta entre 40° e 55°.
+
+**Segurança:** use valores pequenos e mude de 0,1 em 0,1 A. Se o disco disparar, **xStop := TRUE** é o freio.
+
+### 7.6 Problemas comuns
+
+| Sintoma | Causa provável | Solução |
+| --- | --- | --- |
+| O disco não se mexe com corrente | OUT4 = 1 (velocidade, com referência 0: o drive segura o disco parado) | `GVL_SCA.MODO := 0` |
+| `MODO` volta sozinho para 1 | o `Velocidade_SCA` continua na MainTask | tire o `Velocidade_SCA` da tarefa (7.4) |
+| Nada acontece | drive desabilitado, ou P0202 diferente de 6 | `xHabilita := TRUE`; confira a seção 1.3 |
+| Força 10 vezes maior que a esperada | faltou a escala | `REF_TORQUE := … * 10.0` (A × 10) |
+| O disco dispara e não para | força maior que a carga e nenhuma proteção | `xStop := TRUE`; use a proteção do 7.4 |
+| Fim de curso não segura o disco | no modo torque os fins de curso não atuam | é o comportamento do drive: proteja pelo CLP |
+
+### 7.7 Voltar para velocidade
+
+`GVL_SCA.MODO := 1` (ou coloque de volta o `Velocidade_SCA` na MainTask, no lugar do `Torque_SCA`). A configuração do drive não muda. Prefira trocar de modo com o motor parado.
 
 ## Parte 8: Controle por posição (absoluta e por pulso)
 

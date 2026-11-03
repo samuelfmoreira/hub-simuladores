@@ -2,6 +2,11 @@
 
 As notas de cada versão aparecem no HUB quando a atualização é oferecida. Escreva a seção da versão nova antes do push.
 
+## 1.8.5
+- Guia do Servomotor SCA06: nova seção "Parâmetros por modo de controle", com velocidade, torque e posição lado a lado (o valor de cada parâmetro em cada modo, o que o CLP manda em cada palavra e o tamanho da conexão).
+- A configuração do modo velocidade (seção 1.3) traz a tabela completa, com o IP e o P0849.
+- O controle por torque (Parte 7) ganhou o passo a passo completo: como funciona, parâmetros, variáveis, programa com proteção de velocidade, teste com o peso (ângulos esperados), segurança e problemas comuns.
+
 ## 1.8.4
 - Guias do Inversor CFW500 e do Servomotor SCA06: nova seção "Lista de parâmetros da comunicação", com todos os parâmetros da EtherNet/IP num lugar só (acesso e estado, quem manda, endereço IP, palavras de troca, segurança, aplicar e padrão de fábrica; no SCA06, também o posicionamento), com o valor de fábrica, o valor para a rede e o que cada um faz.
 
