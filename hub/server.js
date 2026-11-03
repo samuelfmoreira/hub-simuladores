@@ -422,13 +422,16 @@ function abrirTela(url) {
 function fecharJanelas() {
   if (process.platform !== 'win32' || cfg.abrirComo !== 'janela') return Promise.resolve();
   const alvo = PERFIL_JANELA.replace(/'/g, "''");
-  const ps = `Get-CimInstance Win32_Process | Where-Object { $_.Name -eq 'msedge.exe' -and $_.CommandLine -like '*${alvo}*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`;
+  const ps = `$p = @(Get-CimInstance Win32_Process | Where-Object { $_.Name -eq 'msedge.exe' -and $_.CommandLine -like '*${alvo}*' }); $p | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }; $p.Count`;
   return new Promise((ok) => {
-    const t = setTimeout(ok, 4000);
+    const t = setTimeout(() => { console.log('Fechar janelas: o PowerShell não respondeu em 4 s.'); ok(); }, 4000);
     try {
-      const p = spawn('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', ps], { windowsHide: true, stdio: 'ignore' });
-      p.on('exit', () => { clearTimeout(t); ok(); }); p.on('error', () => { clearTimeout(t); ok(); });
-    } catch (_) { clearTimeout(t); ok(); }
+      let saida = '';
+      const p = spawn('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', ps], { windowsHide: true, stdio: ['ignore', 'pipe', 'ignore'] });
+      p.stdout.on('data', (d) => { saida += d; });
+      p.on('exit', () => { clearTimeout(t); console.log(`Fechar janelas: ${saida.trim() || 0} processo(s) do Edge com o perfil ${PERFIL_JANELA}.`); ok(); });
+      p.on('error', (e) => { clearTimeout(t); console.log('Fechar janelas: ' + e.message); ok(); });
+    } catch (e) { clearTimeout(t); console.log('Fechar janelas: ' + e.message); ok(); }
   });
 }
 

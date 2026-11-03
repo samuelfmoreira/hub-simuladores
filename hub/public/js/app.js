@@ -761,7 +761,7 @@
     a.querySelectorAll('[data-fim]').forEach((b) => b.addEventListener('click', concluirAssistente));
   }
   async function concluirAssistente(e) {
-    if (e?.currentTarget?.tagName === 'BUTTON') location.hash = '#/bancada';
+    if (e?.currentTarget?.tagName === 'BUTTON') { history.replaceState(null, '', '#/bancada'); window.dispatchEvent(new HashChangeEvent('hashchange')); }
     $('#dlgAssistente').close();
   }
   $('#dlgAssistente').addEventListener('close', () => { api('PUT', '/api/config', { primeiraConfigFeita: true }).catch(() => {}); });
@@ -779,6 +779,15 @@
     if (v === 'dev') carregarDev();
   }
   window.addEventListener('hashchange', rota);
+  // Trocar de aba sem acumular histórico: o navegador só deixa a página fechar a própria janela (botão Sair)
+  // quando o histórico dela tem uma página só. Os links internos (#/...) trocam o endereço no lugar.
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest && e.target.closest('a[href^="#"]');
+    if (!a || e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || a.target) return;
+    const h = a.getAttribute('href'); if (!h || h === '#') return;
+    e.preventDefault();
+    if (location.hash !== h) { history.replaceState(null, '', h); window.dispatchEvent(new HashChangeEvent('hashchange')); }
+  });
 
   (async function iniciar() {
     try {
