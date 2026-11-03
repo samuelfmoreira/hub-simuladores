@@ -64,12 +64,12 @@ const PADRAO = {
   ip: '192.168.100.10', porta: 502, unitId: 1, varredura: 100, timeout: 1000, ordem32: 'baixaPrimeiro', ativo: false,
   titulo: 'ESTEIRA TC-01',
   tags: {
-    setpoint: { nome: 'SP_VELOCIDADE', area: 'hr', end: 0, tipo: 'UINT', bit: 0, fator: 1, offset: 0, dec: 0, un: 'rpm', min: 0, max: 1800, ativo: true },
+    setpoint: { nome: 'SP_VELOCIDADE', area: 'hr', end: 0, tipo: 'REAL', bit: 0, fator: 1, offset: 0, dec: 1, un: 'rpm', min: 0, max: 1800, ativo: true },   // HR0 e HR1
     liga: { nome: 'CMD_LIGA', area: 'coil', end: 0, tipo: 'BOOL', bit: 0, modo: 'alternar', pulsoMs: 300, ativo: true },
     reverso: { nome: 'CMD_REVERSO', area: 'coil', end: 1, tipo: 'BOOL', bit: 0, modo: 'alternar', pulsoMs: 300, ativo: true },
     reset: { nome: 'CMD_RESET', area: 'coil', end: 2, tipo: 'BOOL', bit: 0, modo: 'pulso', pulsoMs: 500, ativo: true },
-    velocidade: { nome: 'VEL_ATUAL', area: 'ir', end: 0, tipo: 'INT', bit: 0, fator: 1, offset: 0, dec: 0, un: 'rpm', min: 0, max: 1800, ativo: true },
-    corrente: { nome: 'CORRENTE', area: 'ir', end: 1, tipo: 'UINT', bit: 0, fator: 0.1, offset: 0, dec: 1, un: 'A', min: 0, max: 10, ativo: true },
+    velocidade: { nome: 'VEL_ATUAL', area: 'ir', end: 0, tipo: 'REAL', bit: 0, fator: 1, offset: 0, dec: 1, un: 'rpm', min: 0, max: 1800, ativo: true },   // IR0 e IR1
+    corrente: { nome: 'CORRENTE', area: 'ir', end: 2, tipo: 'UINT', bit: 0, fator: 0.1, offset: 0, dec: 1, un: 'A', min: 0, max: 10, ativo: true },     // IR2: o REAL da velocidade já usa o IR0 e o IR1
     operando: { nome: 'ST_OPERANDO', area: 'di', end: 0, tipo: 'BOOL', bit: 0, ativo: true },
     sentidoRev: { nome: 'ST_REVERSO', area: 'di', end: 1, tipo: 'BOOL', bit: 0, ativo: true },
     falha: { nome: 'ST_FALHA', area: 'di', end: 2, tipo: 'BOOL', bit: 0, ativo: true },

@@ -730,6 +730,27 @@ function lerFormIhm() {
   return cfg;
 }
 
+/** Registradores usados por mais de uma tag (erro clássico: um REAL ocupa 2 registradores e a tag seguinte cai em cima dele). */
+function sobreposicoesIhm(cfg) {
+  const usado = {}, msgs = [], NOME = { hr: 'Holding Register', ir: 'Input Register', coil: 'Coil', di: 'Discrete Input' };
+  for (const t of Object.values(cfg.tags)) {
+    if (!t.ativo) continue;
+    const doisRegs = ['hr', 'ir'].includes(t.area) && ['DINT', 'UDINT', 'REAL'].includes(t.tipo);
+    for (let k = 0; k < (doisRegs ? 2 : 1); k++) {
+      const end = t.end + k, chave = `${t.area}:${end}` + (['hr', 'ir'].includes(t.area) && t.tipo === 'BOOL' ? `:${t.bit}` : '');
+      const outro = usado[chave];
+      if (outro) msgs.push(`${NOME[t.area]} ${end} é usado por ${outro.nome} e por ${t.nome}.${outro.dois || doisRegs ? ' Lembre: um REAL (ou DINT) ocupa 2 registradores; a tag seguinte precisa começar depois deles.' : ''}`);
+      else usado[chave] = { nome: t.nome, dois: doisRegs };
+    }
+  }
+  return msgs;
+}
+function avisarSobreposicaoIhm(cfg) {
+  const el = $('#ihmSobrepoe'); if (!el) return;
+  const m = sobreposicoesIhm(cfg); el.hidden = !m.length;
+  el.innerHTML = m.map((x) => '⚠ ' + esc(x)).join('<br>');
+}
+
 function marcarSujo(ev) {
   ihmMeta.sujo = true; $('#ihmSujo').hidden = false;
   const el = ev && ev.target;
@@ -766,7 +787,7 @@ $('#ihmLigar').addEventListener('click', async () => {
 $('#ihmPadrao').addEventListener('click', async () => {
   const sim = await confirmar({ titulo: 'Restaurar o mapa padrão da IHM?', perigo: true, ok: 'Restaurar',
     texto: 'As tags e a conexão voltam ao padrão. O que você mudou na tabela será perdido.',
-    itens: ['Botões em Coils 0, 1 e 2 · sinais em Discrete Inputs 0, 1 e 2', 'Set point em HR 0 · velocidade em IR 0 · corrente em IR 1', 'CLP em 192.168.100.10:502, Unit ID 1'] });
+    itens: ['Botões em Coils 0, 1 e 2 · sinais em Discrete Inputs 0, 1 e 2', 'Set point em HR 0 e 1 (REAL) · velocidade em IR 0 e 1 (REAL) · corrente em IR 2 (UINT ×0,1)', 'CLP em 192.168.100.10:502, Unit ID 1'] });
   if (!sim) return;
   ihmMeta.sujo = false; $('#ihmSujo').hidden = true;
   await pedir('ihmPadrao');
@@ -780,6 +801,7 @@ $('#ihmCopiar').addEventListener('click', async () => {
 function renderAbaIhm(e) {
   const s = e.ihm; const info = ihmMeta.info; if (!s || !info) return;
   const cfg = info.cfg;
+  avisarSobreposicaoIhm(ihmMeta.sujo ? lerFormIhm() : cfg);
   $('#arqMb').textContent = `→ ${cfg.ip}:${cfg.porta} · Unit ${cfg.unitId}`;
   $('#ihmLigar').textContent = s.ativo ? 'Parar comunicação' : 'Ativar comunicação';
   $('#ihmLigar').className = s.ativo ? 'sec perigo' : '';

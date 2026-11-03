@@ -2,6 +2,13 @@
 
 As notas de cada versão aparecem no HUB quando a atualização é oferecida. Escreva a seção da versão nova antes do push.
 
+## 1.8.3
+- Guia do CFW500: a seção 1.4 (tags da IHM Modbus) explica as quatro áreas do Modbus, por que cada tag tem o seu tipo (REAL, UINT, BOOL), fator e casas decimais, o mapa dos registradores, o erro clássico do REAL que ocupa dois registradores e a ordem das palavras de 32 bits.
+
+## 1.8.2
+- Inversor CFW500, aba IHM Modbus: o mapa padrão das tags agora é o mesmo do guia (set point e velocidade em REAL, corrente no Input Register 2). Antes a corrente ficava no Input Register 1, em cima da velocidade, e aparecia como 0,0 A.
+- A tabela de tags avisa quando duas tags usam o mesmo registrador, lembrando que um REAL ocupa dois registradores.
+
 ## 1.8.1
 - Inversor CFW500: ler a corrente do motor pela rede ficou explícito. No assistente, a etapa 3 se chama "Ler a corrente do motor pela rede" e o resumo diz onde a corrente chega no CLP. No guia, a seção nova 3.4 ensina o passo a passo (P0820 = 3, 6 bytes no CODESYS, mapeamento, conversão para ampères e teste) e mostra outras grandezas que dá para ler do mesmo jeito.
 

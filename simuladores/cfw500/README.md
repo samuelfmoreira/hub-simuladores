@@ -263,9 +263,9 @@ A configuração fica em `data/ihm-modbus.json`.
 | ST_OPERANDO | **Discrete Input 0** | IHM lê | P0680 bit 8 |
 | ST_REVERSO | **Discrete Input 1** | IHM lê | NOT P0680 bit 10 |
 | ST_FALHA | **Discrete Input 2** | IHM lê | P0680 bit 15 |
-| SP_VELOCIDADE (rpm) | Holding Register 0 | IHM escreve | P0685 = SP × 8192 / 1800 |
-| VEL_ATUAL (rpm) | Input Register 0 | IHM lê | P0681 × 1800 / 8192 |
-| CORRENTE (×0,1 A) | Input Register 1 | IHM lê | P0003 (P0820 = 3, 3ª palavra de entrada) |
+| SP_VELOCIDADE (rpm, REAL) | Holding Registers 0 e 1 | IHM escreve | P0685 = SP × 8192 / 1800 |
+| VEL_ATUAL (rpm, REAL) | Input Registers 0 e 1 | IHM lê | P0681 × 1800 / 8192 |
+| CORRENTE (×0,1 A) | Input Register 2 | IHM lê | P0003 (P0820 = 3, 3ª palavra de entrada) |
 
 Cada área tem a sua própria contagem, começando em 0: Coil 0, Discrete Input 0, HR 0 e IR 0 são endereços diferentes.
 Se o seu CLP não tiver áreas de bit, troque na tabela de tags para Holding/Input Register com o tipo

@@ -192,6 +192,10 @@ Antes de qualquer caminho: **motor parado**. Parâmetros de configuração não 
 
 ### 1.4 Tags da IHM (aba IHM Modbus)
 
+A IHM do simulador é um **cliente Modbus TCP**: ela lê e escreve na memória do CLP. Cada elemento da tela (botão, mostrador, lâmpada) é uma **tag**, que diz **onde** o dado está no CLP (área e endereço) e **como** ele está guardado (tipo, fator e casas decimais).
+
+#### A tabela de tags
+
 | Elemento | Área | End. | Tipo | Fator | Dec. | Botão |
 | --- | --- | --- | --- | --- | --- | --- |
 | Set point | Holding Register | 0 | REAL | 1 | 1 | — |
@@ -204,9 +208,63 @@ Antes de qualquer caminho: **motor parado**. Parâmetros de configuração não 
 | Sentido anti-horário | Discrete Input | 1 | BOOL | — | — | — |
 | Inversor em falha | Discrete Input | 2 | BOOL | — | — | — |
 
+Esse é o **mapa padrão** do simulador: o botão **Restaurar o mapa padrão** volta a ele.
+
 Em cima: **IP do CLP = 192.168.100.10**, porta 502, Unit ID 1, **Ordem 32 bits = Palavra baixa primeiro (CODESYS)** → **Salvar configuração**. A comunicação só é ativada no teste (Parte 8).
 
-Um REAL ocupa dois registradores: a velocidade usa IR0 **e** IR1, por isso a corrente vai no IR2.
+#### As quatro áreas do Modbus
+
+| Área | Guarda | Quem escreve | No CLP é |
+| --- | --- | --- | --- |
+| Coil | bits (BOOL) | a IHM | entrada (%IX) |
+| Discrete Input | bits (BOOL) | o CLP | saída (%QX) |
+| Holding Register | palavras de 16 bits | a IHM | entrada (%IW) |
+| Input Register | palavras de 16 bits | o CLP | saída (%QW) |
+
+Cada área conta a partir de 0, **separadamente**: Coil 0, Discrete Input 0, Holding Register 0 e Input Register 0 são quatro endereços diferentes.
+
+#### O tipo da tag é o tipo do dado no registrador
+
+A regra mais importante: **o tipo da tag descreve como o número está guardado no CLP**, e não a grandeza que ele representa.
+
+| Tipo | Ocupa | Guarda | Quando usar |
+| --- | --- | --- | --- |
+| **BOOL** | 1 bit | verdadeiro ou falso | botões e lâmpadas (Coils e Discrete Inputs) |
+| **UINT** | 1 registrador | inteiro de 0 a 65535 (sem sinal) | grandezas que nunca são negativas: corrente, contadores |
+| **INT** | 1 registrador | inteiro de −32768 a 32767 (com sinal) | grandezas que podem ser negativas, sem casas decimais |
+| **DINT / UDINT** | **2 registradores** | inteiros de 32 bits | números grandes |
+| **REAL** | **2 registradores** | número com casas decimais (ponto flutuante) | valores já convertidos pelo CLP, com sinal e decimais |
+
+Por que cada tag do mapa padrão tem o tipo que tem:
+
+- **Set point e Velocidade são REAL:** o programa da Parte 7 converte esses valores para rpm, com casas decimais e sinal (a velocidade fica negativa no anti-horário). Um REAL ocupa **dois registradores**: o set point usa o **HR0 e o HR1**, e a velocidade usa o **IR0 e o IR1**.
+- **Corrente é UINT com fator 0,1:** a corrente sai do inversor (P0003) como **inteiro em décimos de ampère**: 2,6 A chegam como **26**. O CLP só junta os dois bytes numa WORD (inteiro de 16 bits sem sinal) e coloca no IR2. A tag UINT lê o 26, e o **fator 0,1** mostra **2,6 A**. INT também funcionaria (a corrente nunca passa de 3276,7 A), mas UINT combina com uma WORD e com uma grandeza que nunca é negativa.
+- **Botões e lâmpadas são BOOL:** um bit cada, em Coils (a IHM escreve) e Discrete Inputs (o CLP escreve).
+
+#### Fator, offset e casas decimais
+
+A tela mostra **valor do registrador × fator + offset**, com o número de **casas decimais** escolhido. Na corrente: 26 × 0,1 = **2,6 A**. Na tabela de tags, o número entre parênteses ao lado do valor, **(bruto …)**, é o que veio do registrador antes da conta: é o primeiro lugar para olhar quando um valor parece errado.
+
+Mandar **inteiro com escala** (26 com fator 0,1) é o mais comum na indústria: ocupa **um registrador só**, é **exato** e é como os próprios equipamentos fazem. A alternativa seria o CLP calcular os ampères e mandar um REAL. Aí a tag seria **REAL no IR2, fator 1**, ocupando o IR2 **e** o IR3.
+
+#### O mapa dos registradores
+
+Para nenhuma tag cair em cima de outra, desenhe o mapa antes:
+
+| Registrador | Holding (a IHM escreve) | Input (o CLP escreve) |
+| --- | --- | --- |
+| 0 | set point (REAL, 1ª parte) | velocidade (REAL, 1ª parte) |
+| 1 | set point (REAL, 2ª parte) | velocidade (REAL, 2ª parte) |
+| 2 | livre | **corrente (UINT)** |
+| 3 em diante | livres | livres |
+
+A tag seguinte a um REAL começa **dois** endereços depois dele. Se duas tags usarem o mesmo registrador, a tabela de tags mostra um aviso em amarelo, por exemplo: *"Input Register 1 é usado por VEL_ATUAL e por CORRENTE. Lembre: um REAL ocupa 2 registradores"*.
+
+**Erro clássico:** a corrente no **IR1**, como **REAL**, aparece como **0,0 A (bruto 2,41E-39)**. Ela junta o pedaço final da velocidade com a corrente e forma um número sem sentido. O certo é **IR2, UINT, fator 0,1**.
+
+#### Ordem 32 bits
+
+Um REAL é guardado em duas palavras, e cada equipamento escolhe qual vem primeiro. O CODESYS manda a **palavra baixa primeiro**, e é essa a opção da IHM. Se outro equipamento mandar a palavra alta primeiro, o valor fica absurdo até a ordem ser trocada (veja o Extra 2).
 
 ## Parte 2: No CODESYS, o projeto
 
