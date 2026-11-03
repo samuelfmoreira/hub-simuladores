@@ -2,6 +2,9 @@
 
 As notas de cada versão aparecem no HUB quando a atualização é oferecida. Escreva a seção da versão nova antes do push.
 
+## 1.8.4
+- Guias do Inversor CFW500 e do Servomotor SCA06: nova seção "Lista de parâmetros da comunicação", com todos os parâmetros da EtherNet/IP num lugar só (acesso e estado, quem manda, endereço IP, palavras de troca, segurança, aplicar e padrão de fábrica; no SCA06, também o posicionamento), com o valor de fábrica, o valor para a rede e o que cada um faz.
+
 ## 1.8.3
 - Guia do CFW500: a seção 1.4 (tags da IHM Modbus) explica as quatro áreas do Modbus, por que cada tag tem o seu tipo (REAL, UINT, BOOL), fator e casas decimais, o mapa dos registradores, o erro clássico do REAL que ocupa dois registradores e a ordem das palavras de 32 bits.
 

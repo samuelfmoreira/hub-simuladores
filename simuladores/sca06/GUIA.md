@@ -72,6 +72,73 @@ São **4 palavras** (INT, 16 bits) em cada sentido. No CODESYS elas chegam intei
 
 **Atenção ao modo de controle (OUT4):** se essa palavra ficar em **0**, o drive entra em **modo torque** e ignora a referência de velocidade. É o erro mais comum: o motor habilita, mas não gira. Para controlar por velocidade, escreva **1**.
 
+## Lista de parâmetros da comunicação
+
+Todos os parâmetros que entram na comunicação EtherNet/IP do SCA06, num lugar só, para consulta. As Partes seguintes mostram **como** configurar cada um (pelo assistente, pela HMI ou pela aba Parâmetros). "Desabilitado" quer dizer que o parâmetro só muda com o drive desabilitado.
+
+#### Acesso e estado
+
+| Parâmetro | Nome | Fábrica | Para a rede | O que faz |
+| --- | --- | --- | --- | --- |
+| P0000 | Acesso aos parâmetros (senha) | 0 | **5** | libera a alteração dos outros parâmetros |
+| P0200 | Senha | 1 (ativa) | 1 | com 1, a senha P0000 = 5 é exigida |
+| P0800 | Identificação do módulo Ethernet | 2 | — | só leitura: 2 = módulo EtherNet/IP (ECO5) encaixado |
+| P0801 | Estado da comunicação Ethernet | 0 | — | só leitura: 2 Wait Comm (esperando o CLP) · **4 Data Active** (trocando dados) · 5 Error |
+
+#### Quem manda no drive
+
+| Parâmetro | Nome | Fábrica | Para a rede | O que faz |
+| --- | --- | --- | --- | --- |
+| P0202 | Modo de operação | 2 (velocidade pela HMI) | **6** (velocidade/torque) ou **4** (posição) | 6 = Profibus DP/Ethernet: o CLP manda pelas palavras de saída · 4 = Ladder: o aplicativo de posicionamento manda. Desabilitado |
+| P1020 | Comando da PLC (Ladder) | 1 | 1 | mantém o aplicativo de posicionamento em execução (modo posição) |
+
+#### Endereço IP
+
+| Parâmetro | Nome | Fábrica | Para a rede do HUB | O que faz |
+| --- | --- | --- | --- | --- |
+| P0803 | Taxa de comunicação | 0 (Auto) | 0 | velocidade da porta Ethernet |
+| P0810 | Configuração do endereço IP | 1 (DHCP) | **0** (Parâmetros) | de onde vem o IP |
+| P0811…P0814 | Endereço IP | 192.168.0.10 | **192.168.100.22** | um número em cada parâmetro |
+| P0815 | Sub-rede (CIDR) | 24 | 24 | 24 = 255.255.255.0 |
+| P0816…P0819 | Gateway | 0.0.0.0 | 0.0.0.0 | só se o CLP estiver em outra rede |
+
+#### Palavras de troca
+
+As **4 primeiras palavras** de cada sentido são **fixas** (não têm parâmetro): entradas = estado, velocidade, corrente, modo atual; saídas = controle, referência de velocidade, referência de torque, modo de controle. As extras são escolhidas por parâmetro: cada uma diz **qual parâmetro** vai naquela palavra (0 = sem palavra; a lista para no primeiro 0).
+
+| Parâmetro | Nome | Fábrica | Velocidade/torque | Posição | O que faz |
+| --- | --- | --- | --- | --- | --- |
+| P0820…P0823 | Palavra de leitura #5 a #8 | 0 | 0 | **1110, 1111, 1112, 1113** | o que o drive manda nas entradas 5 a 8 |
+| P0824…P0831 | Palavra de leitura #9 a #16 | 0 | 0 | 0 | entradas 9 a 16 (até 16 palavras) |
+| P0835…P0838 | Palavra de escrita #5 a #8 | 0 | 0 | **1100, 1101, 1102, 1103** | onde o CLP escreve as saídas 5 a 8 |
+| P0839…P0846 | Palavra de escrita #9 a #16 | 0 | 0 | 0 | saídas 9 a 16 |
+
+Cada palavra extra soma **2 bytes** na conexão do CLP: 4 palavras = 8 bytes; 8 palavras = 16 bytes.
+
+#### Segurança, aplicar e fábrica
+
+| Parâmetro | Nome | Fábrica | Para a rede | O que faz |
+| --- | --- | --- | --- | --- |
+| P0662 | Ação para erro de comunicação | 0 (mostra alarme) | **3** (desabilita drive) | o que fazer se a rede cair: 0 alarme (o motor continua!) · 1 falha · 2 função STOP · 3 desabilita |
+| P0105 | Rampa da função STOP | 200 | 200 | ms/krpm: como o motor para pela função STOP |
+| P0849 | Atualiza configuração Ethernet | 0 | **1** | **aplica** o IP e as palavras de troca; volta sozinho para 0 |
+| P0204 | Carrega parâmetros | 0 | — | **5** = volta tudo ao padrão de fábrica. Desabilitado |
+| P0806 | Watchdog Modbus TCP | 0 | 0 | só para o Modbus TCP (não usado na EtherNet/IP) |
+
+#### Posicionamento pela rede (aplicativo DISCO_POS, P0202 = 4)
+
+| Parâmetro | Nome | Fábrica | O que faz |
+| --- | --- | --- | --- |
+| P1100 | Comando | 0 | bit 0 habilita · bit 1 inicia (na subida 0 → 1) · bit 2 STOP · bit 3 reset · bit 4 zera a posição |
+| P1101 | Posição alvo / incremento | 0 | décimos de grau (450 = 45,0°) |
+| P1102 | Velocidade de posicionamento | 100 | rpm (1 a 3000) |
+| P1103 | Tipo de movimento | 0 | 0 menor caminho · 1 horário · 2 anti-horário · 3 relativo (pulso) |
+| P1104 | Rampa de posicionamento | 500 | ms/krpm |
+| P1110 | Status | — | só leitura: bit 0 habilitado · 1 movendo · 2 em posição · 3 falha · 4 fim de curso · 5 STOP |
+| P1111 | Posição atual | — | só leitura, décimos de grau (0 a 3599) |
+| P1112 | Erro de posição | — | só leitura, décimos de grau |
+| P1113 | Posicionamentos concluídos | — | só leitura |
+
 ## Parte 1: No HUB e no simulador
 
 ### 1.1 Rede e IP

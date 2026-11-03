@@ -30,6 +30,61 @@ Cada sinal da IHM, onde ele mora no Modbus, a variável no CLP e o parâmetro do
 
 Os endereços %IX/%QX são os do projeto dos prints; no seu podem ser outros.
 
+## Lista de parâmetros da comunicação
+
+Todos os parâmetros que entram na comunicação EtherNet/IP do CFW500, num lugar só, para consulta. As Partes seguintes mostram **como** configurar cada um (pelo assistente, pela HMI ou pela aba Parâmetros). Os marcados com "motor parado" só mudam com o motor parado (a HMI mostra CONF).
+
+#### Acesso e estado
+
+| Parâmetro | Nome | Fábrica | Para a rede | O que faz |
+| --- | --- | --- | --- | --- |
+| P0000 / P0200 | Acesso / senha | 0 | 0 | de fábrica o CFW500 não pede senha |
+| P0800 | Eth: identificação do módulo | 2 | — | só leitura: 2 = módulo EtherNet/IP (CFW500-CETH-IP) |
+| P0801 | Eth: estado da comunicação | 0 | — | só leitura: 2 Wait Comm (esperando o CLP) · **4 Data Active** (trocando dados) · 5 Error |
+
+#### Quem manda no inversor (grupo I/O, motor parado)
+
+| Parâmetro | Nome | Fábrica | Para a rede | O que faz |
+| --- | --- | --- | --- | --- |
+| P0220 | Seleção LOC/REM | 2 (tecla HMI, LOC) | **1** (sempre remoto) | quem decide entre local e remoto |
+| P0222 | Seleção da referência REM | 1 (AI1) | **11** (CO/DN/PB/Eth) | de onde vem a velocidade em remoto |
+| P0226 | Seleção do giro REM | 4 (DIx) | **9** (CO/DN/PB/Eth) | quem escolhe o sentido em remoto |
+| P0227 | Seleção gira/para REM | 1 (DIx) | **4** (CO/DN/PB/Eth) | quem manda girar e parar em remoto |
+| P0228 | Seleção do JOG REM | 2 (DIx) | **5** (CO/DN/PB/Eth) | quem comanda o JOG em remoto |
+| P0105 | Seleção 1ª/2ª rampa | 2 (DIx) | **5** (CO/DN/DP) | quem escolhe a rampa |
+
+#### Endereço IP (grupo NET, motor parado)
+
+| Parâmetro | Nome | Fábrica | Para a rede do HUB | O que faz |
+| --- | --- | --- | --- | --- |
+| P0803 | Eth: taxa de comunicação | 0 (Auto) | 0 | velocidade da porta Ethernet |
+| P0810 | Eth: config. do endereço IP | 1 (DHCP) | **0** (Parâmetros) | de onde vem o IP: 0 parâmetros · 1 DHCP · 2 DCP |
+| P0811…P0814 | Eth: endereço IP | 192.168.0.14 | **192.168.100.20** | um número em cada parâmetro |
+| P0815 | Eth: sub-rede (CIDR) | 24 | 24 | 24 = 255.255.255.0 |
+| P0816…P0819 | Eth: gateway | 0.0.0.0 | 0.0.0.0 | só se o CLP estiver em outra rede |
+
+#### Palavras de troca
+
+As **2 primeiras palavras** de cada sentido são **fixas**: entradas = **P0680** (Status Word) e **P0681** (velocidade em 13 bits); saídas = **P0684** (Control Word) e **P0685** (referência em 13 bits). As extras são escolhidas por parâmetro: cada uma diz **qual parâmetro** vai naquela palavra (0 = sem palavra; a lista para no primeiro 0).
+
+| Parâmetro | Nome | Fábrica | Para o guia | O que faz |
+| --- | --- | --- | --- | --- |
+| P0820 | Eth: leitura #3 | 0 | **3** (corrente, P0003) | o que vai na 3ª palavra de entrada (seção 3.4) |
+| P0821…P0831 | Eth: leitura #4 a #14 | 0 | 0 | entradas 4 a 14 |
+| P0835 | Eth: escrita #3 | 0 | 0 (no Extra 1: **100**, rampa de aceleração) | onde o CLP escreve a 3ª palavra de saída |
+| P0836…P0846 | Eth: escrita #4 a #14 | 0 | 0 (no Extra 1: P0836 = **101**, desaceleração) | saídas 4 a 14 |
+
+Cada palavra extra soma **2 bytes** na conexão do CLP: com P0820 = 3, a entrada passa de 4 para **6 bytes**.
+
+#### Segurança, aplicar e fábrica
+
+| Parâmetro | Nome | Fábrica | Para a rede | O que faz |
+| --- | --- | --- | --- | --- |
+| P0313 | Ação para erro de comunicação | 1 (para por rampa) | 1 | o que fazer se a rede cair: 0 inativo · 1 para por rampa · 2 desabilita geral · 3 vai para LOC · 5 causa falha |
+| P0849 | Eth: atualiza configuração | 0 | **1** | **aplica** o IP e as palavras de troca; volta sozinho para 0 |
+| P0204 | Carrega/salva parâmetros | 0 | — | **5** = volta ao padrão WEG de 60 Hz (motor parado) |
+| P0806 | Eth: timeout Modbus TCP | 0 | 0 | só para o Modbus TCP do inversor (não usado na EtherNet/IP) |
+
 ## Parte 1: No HUB e no simulador
 
 ### 1.1 Rede e IP
