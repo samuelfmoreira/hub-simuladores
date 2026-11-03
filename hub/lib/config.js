@@ -16,7 +16,8 @@ const PADRAO = {
   navegador: 'auto',               // janelas do HUB: 'auto' = Chrome se estiver instalado, senão Edge; 'chrome' ou 'edge' para forçar
   abrirComo: 'janela',             // 'janela' = Edge em modo aplicativo (Windows); 'navegador' = aba comum
   primeiraConfigFeita: false,
-  abrirTelaAoIniciar: true,        // abre a tela do simulador quando ele termina de iniciar
+  abrirTelaAoIniciar: true,
+  pararAoFecharTela: true,          // fechou a janela da tela do simulador: o simulador para (6 s depois, para não parar num recarregar)        // abre a tela do simulador quando ele termina de iniciar
   atualizacaoAutomatica: false,    // false = pergunta ao usuário (mensagem com OK); true = instala sozinho ao abrir
   rede: {
     adaptador: 'SIM-HUB',          // nome da placa virtual (Windows) / interface dummy (Linux)

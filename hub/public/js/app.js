@@ -30,6 +30,7 @@
     $('#versao').textContent = `v${E.estado.hub.versao}` + (E.dev ? ' · desenvolvedor' : '');
     document.querySelectorAll('[data-so-dev]').forEach((el) => { el.hidden = !E.dev; });
     $('#abrirAuto').checked = E.estado.config.abrirTelaAoIniciar !== false;
+    $('#pararAoFechar').checked = E.estado.config.pararAoFecharTela !== false;
     E.atualizacao = E.estado.atualizacao; renderAtualizacao();
     if (!E.sel || !sim(E.sel)) E.sel = E.estado.simuladores[0]?.id || null;
     renderBancada();
@@ -234,7 +235,7 @@
     const acoes = $('#detAcoes'); if (!acoes) return;
     acoes.innerHTML = `
       ${ativo ? '<button class="btn prim" data-a="parar">Parar</button>' : `<button class="btn prim" data-a="iniciar" ${ocupado || !s.instalado ? 'disabled' : ''}>Iniciar</button>`}
-      <a class="btn" href="${esc(urlTela(s))}" target="_blank" rel="noopener" ${st === 'rodando' ? '' : 'aria-disabled="true" style="opacity:.45;pointer-events:none"'}>Abrir tela</a>
+      <button class="btn" data-a="abrir" ${st === 'rodando' ? '' : 'disabled'} title="Abre a tela do simulador numa janela própria">Abrir tela</button>
       ${ativo ? '<button class="btn" data-a="reiniciar">Reiniciar</button>' : ''}
       ${s.arquivos.guia ? '<button class="btn" data-a="guia">Guia</button>' : ''}
       ${!s.instalado || st === 'erro' ? `<button class="btn" data-a="instalar" ${ativo || ocupado ? 'disabled' : ''}>Instalar dependências</button>` : ''}
@@ -299,6 +300,10 @@
   });
   $('#abrirAuto').addEventListener('change', async (e) => {
     try { await api('PUT', '/api/config', { abrirTelaAoIniciar: e.target.checked }); E.estado.config.abrirTelaAoIniciar = e.target.checked; }
+    catch (err) { toast(err.message); }
+  });
+  $('#pararAoFechar').addEventListener('change', async (e) => {
+    try { await api('PUT', '/api/config', { pararAoFecharTela: e.target.checked }); E.estado.config.pararAoFecharTela = e.target.checked; }
     catch (err) { toast(err.message); }
   });
   $('#pararTodos').onclick = async () => { await api('POST', '/api/parar-todos'); toast('Todos os simuladores foram parados.'); };

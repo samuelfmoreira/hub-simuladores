@@ -145,7 +145,7 @@ async function rotear(req, res) {
   }
 
   if (p === '/api/estado' && m === 'GET') {
-    return json(res, 200, { hub: { versao: VERSAO, plataforma: process.platform, porta: cfg.hubPorta, node: process.version, modo: MODO }, config: { rede: cfg.rede, primeiraConfigFeita: cfg.primeiraConfigFeita, abrirComo: cfg.abrirComo, abrirTelaAoIniciar: cfg.abrirTelaAoIniciar, atualizacaoAutomatica: cfg.atualizacaoAutomatica }, atualizacao: resumoAtualizacao(), simuladores: estadoSimuladores() });
+    return json(res, 200, { hub: { versao: VERSAO, plataforma: process.platform, porta: cfg.hubPorta, node: process.version, modo: MODO }, config: { rede: cfg.rede, primeiraConfigFeita: cfg.primeiraConfigFeita, abrirComo: cfg.abrirComo, abrirTelaAoIniciar: cfg.abrirTelaAoIniciar, pararAoFecharTela: cfg.pararAoFecharTela !== false, atualizacaoAutomatica: cfg.atualizacaoAutomatica }, atualizacao: resumoAtualizacao(), simuladores: estadoSimuladores() });
   }
 
   // ---------- funções só do desenvolvedor ----------
@@ -169,6 +169,13 @@ async function rotear(req, res) {
   }
   if (p === '/api/dev/reiniciar' && m === 'POST') { json(res, 200, { ok: true }); setTimeout(reiniciar, 300); return; }
 
+  // ---------- moldura da tela do simulador: a janela avisa o HUB quando é fechada ----------
+  if ((r = p.match(/^\/janela\/([\w.-]+)$/)) && m === 'GET') {
+    const f = catalogo.obter(r[1]); if (!f) return json(res, 404, { erro: 'Simulador não encontrado.' });
+    return molduraSimulador(res, f);
+  }
+  if ((r = p.match(/^\/api\/janela\/([\w.-]+)\/presenca$/)) && m === 'GET') return presencaTela(req, res, r[1]);
+
   // ---------- simuladores ----------
   if ((r = p.match(/^\/api\/sim\/([\w.-]+)\/(\w+)(?:\/(.+))?$/))) {
     const [, id, acao, resto] = r;
@@ -180,15 +187,15 @@ async function rotear(req, res) {
         const b = await corpoJson(req).catch(() => ({}));
         if (b.modo && ficha.modos) config.alterar((c) => { c.modos[id] = b.modo; });
         const r = await ger.iniciar(ficha, cfg, b.modo);
-        if (r.estado === 'rodando' && cfg.abrirTelaAoIniciar) {
-          const url = `http://localhost:${r.httpPort}${ficha.web.caminho || '/'}`;
-          ger.log(id, `Abrindo a tela do simulador: ${url}`, 'hub');
-          abrirTela(url);
-        }
+        if (r.estado === 'rodando' && cfg.abrirTelaAoIniciar) abrirTelaSimulador(ficha);
         return json(res, 200, r);
       } catch (e) { return json(res, e.bloqueio ? 409 : 400, { erro: e.message }); }
     }
     if (acao === 'parar' && m === 'POST') return json(res, 200, await ger.parar(id));
+    if (acao === 'abrir' && m === 'POST') {
+      if (!['rodando', 'iniciando'].includes((ger.resumo(id) || {}).estado)) return json(res, 409, { erro: 'O simulador não está em execução.' });
+      abrirTelaSimulador(ficha); return json(res, 200, { ok: true });
+    }
     if (acao === 'reiniciar' && m === 'POST') {
       const modoAtual = ger.resumo(id).modo;
       await ger.parar(id);
@@ -309,6 +316,7 @@ async function rotear(req, res) {
     config.alterar((c) => {
       if (typeof b.primeiraConfigFeita === 'boolean') c.primeiraConfigFeita = b.primeiraConfigFeita;
       if (typeof b.abrirTelaAoIniciar === 'boolean') c.abrirTelaAoIniciar = b.abrirTelaAoIniciar;
+      if (typeof b.pararAoFecharTela === 'boolean') c.pararAoFecharTela = b.pararAoFecharTela;
       if (typeof b.atualizacaoAutomatica === 'boolean') c.atualizacaoAutomatica = b.atualizacaoAutomatica;
       if (['janela', 'navegador'].includes(b.abrirComo)) c.abrirComo = b.abrirComo;
     });
@@ -440,6 +448,61 @@ function abrirTela(url) {
     console.log(`Tela aberta no ${nav && nav.nome === 'chrome' ? 'Chrome' : 'Edge'}: ${url}`);
   } else exec(comum, () => { /* sem navegador disponível: tudo bem */ });
 }
+// ------------------------------------------------------------------ tela do simulador numa "moldura" do HUB
+// A tela do simulador é servida pelo próprio simulador; o HUB a mostra dentro de uma página dele que ocupa a janela
+// inteira e mantém uma ligação aberta com o HUB. Quando a janela fecha, a ligação cai e o HUB pode parar o simulador.
+const PRESENCA = new Map();   // id -> { n: janelas abertas, timer }
+function urlDoSimulador(f) {
+  if (f.remoto) return cfg.urlsRemotas[f.id] || f.remoto.urlPadrao || '';
+  const ex = ger.resumo(f.id) || {};
+  return `http://localhost:${ex.httpPort || Number(cfg.portasWeb[f.id]) || f.web.porta}${f.web.caminho || '/'}`;
+}
+function abrirTelaSimulador(f) {
+  const url = f.remoto ? urlDoSimulador(f) : `http://localhost:${cfg.hubPorta}/janela/${encodeURIComponent(f.id)}`;
+  ger.log(f.id, `Abrindo a tela do simulador: ${urlDoSimulador(f)}`, 'hub');
+  abrirTela(url);
+}
+function molduraSimulador(res, f) {
+  const e = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${e(f.nome)}</title><link rel="icon" href="/favicon.ico">
+<style>html,body{margin:0;height:100%;background:#1A1E20;overflow:hidden}iframe{border:0;width:100%;height:100%;display:block}
+#aviso{position:fixed;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;background:rgba(20,23,25,.92);color:#E6EAE7;font:16px system-ui,sans-serif;text-align:center;padding:24px}
+#aviso b{font-size:26px}#aviso button{font:inherit;padding:8px 16px;border-radius:6px;border:1px solid #485055;background:#2A3136;color:#E6EAE7;cursor:pointer}</style></head>
+<body><iframe id="sim" src="${e(urlDoSimulador(f))}" allow="fullscreen; clipboard-read; clipboard-write" allowfullscreen></iframe>
+<div id="aviso"><b>Simulador parado</b><span>Pode fechar esta janela. Para usar de novo, inicie o simulador no HUB.</span><button onclick="window.close()">Fechar esta janela</button></div>
+<script>
+  const sim = document.getElementById('sim');
+  sim.addEventListener('load', () => sim.focus());
+  // ligação com o HUB: enquanto esta janela estiver aberta, o HUB sabe que a tela está em uso
+  const es = new EventSource('/api/janela/${encodeURIComponent(f.id)}/presenca');
+  es.addEventListener('parado', () => { document.getElementById('aviso').style.display = 'flex'; es.close(); setTimeout(() => window.close(), 400); });
+</script></body></html>`;
+  res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(html);
+}
+function presencaTela(req, res, id) {
+  res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' });
+  res.write(': ligado\n\n');
+  const pr = PRESENCA.get(id) || { n: 0, timer: null };
+  pr.n++; clearTimeout(pr.timer); pr.timer = null; PRESENCA.set(id, pr);
+  // avisa a moldura se o simulador parar por outro motivo (botão Parar, Parar todos, erro)
+  const vigia = setInterval(() => {
+    const est = (ger.resumo(id) || {}).estado;
+    if (!['rodando', 'iniciando'].includes(est)) res.write('event: parado\ndata: {}\n\n'); else res.write(': ping\n\n');
+  }, 1500);
+  req.on('close', () => {
+    clearInterval(vigia);
+    pr.n = Math.max(0, pr.n - 1);
+    if (pr.n > 0) return;
+    pr.timer = setTimeout(async () => {
+      if (pr.n > 0 || cfg.pararAoFecharTela === false) return;
+      if (!['rodando', 'iniciando'].includes((ger.resumo(id) || {}).estado)) return;
+      ger.log(id, 'A tela do simulador foi fechada: parando o simulador (opção "Parar o simulador ao fechar a tela dele").', 'hub');
+      await ger.parar(id);
+    }, 6000);
+  });
+}
+
 /** Fecha as janelas do Edge abertas pelo HUB (as que usam o perfil próprio). No máximo 4 s. */
 function fecharJanelas() {
   if (process.platform !== 'win32' || cfg.abrirComo !== 'janela') return Promise.resolve();

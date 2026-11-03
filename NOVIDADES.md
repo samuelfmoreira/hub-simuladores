@@ -2,6 +2,10 @@
 
 As notas de cada versão aparecem no HUB quando a atualização é oferecida. Escreva a seção da versão nova antes do push.
 
+## 1.7.11
+- Fechou a janela da tela de um simulador? Ele para sozinho alguns segundos depois, liberando o IP e as portas. Recarregar a página não para. Para deixar o simulador rodando só para o CLP, desmarque a nova opção "Parar o simulador ao fechar a tela dele", na tela Dispositivos.
+- O botão "Abrir tela" abre o simulador numa janela própria, maximizada, como ao iniciar.
+
 ## 1.7.10
 - A janela do HUB e as dos simuladores voltam a abrir na frente e maximizadas (na 1.7.9 podiam abrir minimizadas na barra de tarefas).
 
