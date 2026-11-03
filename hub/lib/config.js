@@ -13,6 +13,7 @@ const ARQ = path.join(RAIZ, 'hub-config.json');
 const PADRAO = {
   hubPorta: 4000,
   abrirNavegador: true,
+  navegador: 'auto',               // janelas do HUB: 'auto' = Chrome se estiver instalado, senão Edge; 'chrome' ou 'edge' para forçar
   abrirComo: 'janela',             // 'janela' = Edge em modo aplicativo (Windows); 'navegador' = aba comum
   primeiraConfigFeita: false,
   abrirTelaAoIniciar: true,        // abre a tela do simulador quando ele termina de iniciar

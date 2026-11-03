@@ -2,6 +2,9 @@
 
 As notas de cada versão aparecem no HUB quando a atualização é oferecida. Escreva a seção da versão nova antes do push.
 
+## 1.7.9
+- As janelas do HUB e dos simuladores abrem no Google Chrome, se ele estiver instalado. Sem o Chrome, abrem no Edge, como antes.
+
 ## 1.7.8
 - O botão "Sair" fecha a janela do HUB também depois de você navegar pelas abas (antes, a janela às vezes ficava aberta em "HUB encerrado").
 

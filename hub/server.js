@@ -410,11 +410,39 @@ servidor.listen(cfg.hubPorta, () => {
 // Perfil próprio do Edge para as janelas do HUB (fora da pasta do projeto, um por modo): assim o HUB sabe quais
 // janelas são dele e consegue fechá-las ao encerrar, sem depender de o Edge aceitar o window.close() da página.
 const PERFIL_JANELA = path.join(process.env.LOCALAPPDATA || require('os').tmpdir(), 'HUB-Simuladores-janela', MODO);
+/**
+ * Navegador das janelas do HUB: o Chrome, se estiver instalado; senão o Edge (que vem em todo Windows).
+ * "navegador" no hub-config.json força a escolha: "auto" (padrão), "chrome" ou "edge".
+ */
+function acharNavegador() {
+  if (process.platform !== 'win32') return null;
+  const pf = process.env.ProgramFiles || 'C:\\Program Files', pf86 = process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)', la = process.env.LOCALAPPDATA || '';
+  const chrome = [path.join(pf, 'Google', 'Chrome', 'Application', 'chrome.exe'), path.join(pf86, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+    la && path.join(la, 'Google', 'Chrome', 'Application', 'chrome.exe')].filter(Boolean);
+  const edge = [path.join(pf86, 'Microsoft', 'Edge', 'Application', 'msedge.exe'), path.join(pf, 'Microsoft', 'Edge', 'Application', 'msedge.exe')];
+  const ordem = String(cfg.navegador || 'auto').toLowerCase() === 'edge' ? [['edge', edge], ['chrome', chrome]] : [['chrome', chrome], ['edge', edge]];
+  for (const [nome, lista] of ordem) {
+    const exe = lista.find((p) => { try { return fs.existsSync(p); } catch (_) { return false; } });
+    if (exe) return { nome, exe };
+  }
+  return null;
+}
 function abrirTela(url) {
   const comum = process.platform === 'win32' ? `start "" "${url}"` : process.platform === 'darwin' ? `open "${url}"` : `xdg-open "${url}"`;
   if (process.platform === 'win32' && cfg.abrirComo === 'janela') {
-    // sempre maximizada (antes dependia de o Edge lembrar do tamanho; o perfil próprio começa sem essa memória)
-    exec(`start "" msedge --app="${url}" --start-maximized --user-data-dir="${PERFIL_JANELA}" --no-first-run --no-default-browser-check`,
+    const nav = acharNavegador();
+    if (nav) {
+      // janela de aplicativo, sempre maximizada, com perfil próprio (um por navegador): o HUB consegue fechá-la ao sair
+      const args = [`--app=${url}`, '--start-maximized', `--user-data-dir=${path.join(PERFIL_JANELA, nav.nome)}`, '--no-first-run', '--no-default-browser-check'];
+      try {
+        const p = spawn(nav.exe, args, { detached: true, stdio: 'ignore' });
+        p.on('error', () => exec(comum, () => { /* sem navegador */ }));
+        p.unref();
+        console.log(`Tela aberta no ${nav.nome === 'chrome' ? 'Chrome' : 'Edge'}: ${url}`);
+        return;
+      } catch (_) { /* tenta pelo comando do Windows */ }
+    }
+    exec(`start "" msedge --app="${url}" --start-maximized --user-data-dir="${path.join(PERFIL_JANELA, 'edge')}" --no-first-run --no-default-browser-check`,
       (erro) => { if (erro) exec(comum, () => { /* sem navegador */ }); });
   } else exec(comum, () => { /* sem navegador disponível: tudo bem */ });
 }
@@ -422,14 +450,14 @@ function abrirTela(url) {
 function fecharJanelas() {
   if (process.platform !== 'win32' || cfg.abrirComo !== 'janela') return Promise.resolve();
   const alvo = PERFIL_JANELA.replace(/'/g, "''");
-  const ps = `$p = @(Get-CimInstance Win32_Process | Where-Object { $_.Name -eq 'msedge.exe' -and $_.CommandLine -like '*${alvo}*' }); $p | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }; $p.Count`;
+  const ps = `$p = @(Get-CimInstance Win32_Process | Where-Object { ($_.Name -eq 'msedge.exe' -or $_.Name -eq 'chrome.exe') -and $_.CommandLine -like '*${alvo}*' }); $p | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }; $p.Count`;
   return new Promise((ok) => {
     const t = setTimeout(() => { console.log('Fechar janelas: o PowerShell não respondeu em 4 s.'); ok(); }, 4000);
     try {
       let saida = '';
       const p = spawn('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', ps], { windowsHide: true, stdio: ['ignore', 'pipe', 'ignore'] });
       p.stdout.on('data', (d) => { saida += d; });
-      p.on('exit', () => { clearTimeout(t); console.log(`Fechar janelas: ${saida.trim() || 0} processo(s) do Edge com o perfil ${PERFIL_JANELA}.`); ok(); });
+      p.on('exit', () => { clearTimeout(t); console.log(`Fechar janelas: ${saida.trim() || 0} processo(s) do navegador com o perfil ${PERFIL_JANELA}.`); ok(); });
       p.on('error', (e) => { clearTimeout(t); console.log('Fechar janelas: ' + e.message); ok(); });
     } catch (e) { clearTimeout(t); console.log('Fechar janelas: ' + e.message); ok(); }
   });
