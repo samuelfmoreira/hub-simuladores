@@ -2,6 +2,11 @@
 
 As notas de cada versão aparecem no HUB quando a atualização é oferecida. Escreva a seção da versão nova antes do push.
 
+## 1.9.0
+- Servomotor SCA06 segue o firmware V2.1X e funciona só por controle via rede. Velocidade e torque continuam pelas palavras fixas (P0202 = 6). A posição passa a ser pela Função Posicionador do drive (P0202 = 3): movimentos programados em parâmetros, habilitados, disparados e com destino escritos pelo CLP nas palavras 5 a 8, sem programar ladder.
+- O aplicativo ladder didático DISCO_POS saiu (no drive real, o ladder é feito no WLP). Com P0202 = 4 o drive avisa que não há programa ladder gravado. Valores antigos dele em P1100…P1113 são descartados uma vez.
+- Assistente de comunicação, painel Posição da aba Mestre, missões 12 a 16, EDS, README e guia (Parte 8 nova) atualizados para a Função Posicionador.
+
 ## 1.8.5
 - Guia do Servomotor SCA06: nova seção "Parâmetros por modo de controle", com velocidade, torque e posição lado a lado (o valor de cada parâmetro em cada modo, o que o CLP manda em cada palavra e o tamanho da conexão).
 - A configuração do modo velocidade (seção 1.3) traz a tabela completa, com o IP e o P0849.

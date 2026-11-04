@@ -122,57 +122,48 @@
     for (let i = 4; i < n; i++) w.push(OUT.extra[i - 4] | 0);
     return w.map(x => Math.max(-32768, Math.min(32767, x)));
   }
-  // ---- painel Posição (aba Mestre): palavras 5 a 8 = P1100 comando, P1101 alvo/incremento, P1102 velocidade, P1103 tipo ----
-  const TIPOS_POS = ['0 · menor caminho (absoluto)', '1 · horário (absoluto)', '2 · anti-horário (absoluto)', '3 · relativo (cada pulso anda o ângulo)'];
+  // ---- painel Posição (aba Mestre): Função Posicionador (P0202 = 3), firmware V2.1X
+  // palavras de saída 5 a 8 = P0099 habilitação, P01079 disparo, P01171 destino do movimento 1, P0219 reset de falhas
+  // palavras de entrada 5 a 8 = P0052 fração de volta, P0053 voltas, P0006 estado, P0048 erro de lag
+  const POS_WR = [99, 1079, 1171, 219], POS_RD = [52, 53, 6, 48];
+  const EST6 = ['desabilitado', 'servo ready (habilitado)', 'falha', 'potência desligada', 'autoajuste', 'STOP ativo', 'STO ativo'];
   function posPainelHtml() {
-    if (!OUT.extra[2]) { OUT.extra[1] = 450; OUT.extra[2] = 60; OUT.extra[3] = 3; }   // valores iniciais: pulsos de 45,0° a 60 rpm
     return `<div class="pos-painel">
-      <div class="wh"><span>Posição pelo aplicativo Ladder (palavras 5 a 8)</span></div>
+      <div class="wh"><span>Posição pela Função Posicionador (palavras 5 a 8)</span></div>
       <div class="row pos-bot">
-        <button id="posHab" class="small">Habilitar</button>
-        <button id="posPulso" class="primary" title="Bit 1 do P1100 de 0 para 1: inicia um movimento">Pulso ▶</button>
-        <button id="posStop" class="small">STOP</button>
-        <button id="posReset" class="small" title="Bit 3: reset de falhas">Reset</button>
-        <button id="posZero" class="small" title="Bit 4: a posição atual passa a ser 0,0°">Zerar posição</button>
+        <button id="posHab" class="small" title="5ª palavra = P0099: 2 habilita (sem gravar na memória), 0 desabilita">Habilitar</button>
+        <button id="posPulso" class="primary" title="6ª palavra = P01079: de 0 para 1 aciona o ciclo programado em P01080">Disparar ▶</button>
+        <button id="posReset" class="small" title="8ª palavra = P0219: de 0 para 1 reseta as falhas">Reset</button>
       </div>
       <div class="row pos-campos">
-        <label>Ângulo <input type="number" id="posAng" class="num" step="0.1" value="${(OUT.extra[1] / 10).toFixed(1)}"> °</label>
-        <label>Velocidade <input type="number" id="posVel" class="num" min="1" max="3000" value="${OUT.extra[2]}"> rpm</label>
-        <label>Tipo <select id="posTipo">${TIPOS_POS.map((t, k) => `<option value="${k}" ${OUT.extra[3] === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
+        <label>Destino do movimento 1 <input type="number" id="posAng" class="num" step="0.1" min="0" max="359.9" value="${fmtN((OUT.extra[2] | 0) * 360 / 16384, 1).replace(',', '.')}"> °</label>
+        <span class="hint" id="posFrac"></span>
       </div>
-      <p class="hint" id="posExpl"></p>
+      <p class="hint" id="posExpl">O disparo executa o próximo movimento do ciclo escolhido em <b>P01080</b>. Com a configuração do assistente, é o <b>movimento 1</b> (posicionamento absoluto): o disco vai para o destino acima.</p>
       <p class="hint pos-leitura" id="posLeitura"></p>
-      <div class="pos-hex">Pela rede: 5ª P1100 = <code id="pxo0">0000h</code> · 6ª P1101 = <code id="pxo1">0000h</code> · 7ª P1102 = <code id="pxo2">0000h</code> · 8ª P1103 = <code id="pxo3">0000h</code></div>
+      <div class="pos-hex">Pela rede: 5ª P0099 = <code id="pxo0">0000h</code> · 6ª P01079 = <code id="pxo1">0000h</code> · 7ª P01171 = <code id="pxo2">0000h</code> · 8ª P0219 = <code id="pxo3">0000h</code></div>
     </div>`;
   }
   function posHex() {
     for (let k = 0; k < 4; k++) { const el = $('#pxo' + k); if (el) el.textContent = `${h4(OUT.extra[k] | 0)} (${OUT.extra[k] | 0})`; }
-    const hab = $('#posHab'); if (hab) { const on = !!(OUT.extra[0] & 1); hab.classList.toggle('on', on); hab.textContent = on ? 'Habilitado ✓' : 'Habilitar'; }
-    const stp = $('#posStop'); if (stp) { const on = !!(OUT.extra[0] & 4); stp.classList.toggle('on', on); stp.textContent = on ? 'STOP ativo' : 'STOP'; }
-    const ex = $('#posExpl'); if (ex) {
-      const ang = fmtN((OUT.extra[1] | 0) / 10, 1);
-      ex.innerHTML = (OUT.extra[3] | 0) === 3 ? `<b>Relativo:</b> cada pulso anda <b>${ang}°</b> a partir de onde o disco está.`
-        : `<b>Absoluto:</b> o pulso manda o disco para <b>${ang}°</b> (${['pelo menor caminho', 'girando no sentido horário', 'girando no sentido anti-horário'][OUT.extra[3] | 0]}).`;
-    }
+    const hab = $('#posHab'); if (hab) { const on = (OUT.extra[0] | 0) !== 0; hab.classList.toggle('on', on); hab.textContent = on ? 'Habilitado ✓' : 'Habilitar'; }
+    const fr = $('#posFrac'); if (fr) fr.innerHTML = `fração de volta = <b>${OUT.extra[2] | 0}</b> (16384 = 1 volta)`;
   }
-  function posBit(bit, liga) { OUT.extra[0] = liga ? (OUT.extra[0] | bit) : (OUT.extra[0] & ~bit); posHex(); pushOut(); }
-  function posPulsoBit(bit) { posBit(bit, true); setTimeout(() => posBit(bit, false), 300); }   // 300 ms em 1: o drive enxerga a subida mesmo com RPI alto
+  function posPulso(k) { OUT.extra[k] = 1; posHex(); pushOut(); setTimeout(() => { OUT.extra[k] = 0; posHex(); pushOut(); }, 300); }   // 300 ms em 1: o drive enxerga a subida mesmo com RPI alto
   function ligarPosPainel() {
-    $('#posHab').onclick = () => posBit(1, !(OUT.extra[0] & 1));
-    $('#posStop').onclick = () => posBit(4, !(OUT.extra[0] & 4));
-    $('#posPulso').onclick = () => posPulsoBit(2);
-    $('#posReset').onclick = () => posPulsoBit(8);
-    $('#posZero').onclick = () => posPulsoBit(16);
-    $('#posAng').onchange = () => { OUT.extra[1] = Math.max(-32768, Math.min(32767, Math.round(+$('#posAng').value * 10))); posHex(); pushOut(); };
-    $('#posVel').onchange = () => { OUT.extra[2] = Math.max(1, Math.min(3000, Math.round(+$('#posVel').value))); $('#posVel').value = OUT.extra[2]; posHex(); pushOut(); };
-    $('#posTipo').onchange = () => { OUT.extra[3] = +$('#posTipo').value; posHex(); pushOut(); };
+    $('#posHab').onclick = () => { OUT.extra[0] = (OUT.extra[0] | 0) ? 0 : 2; posHex(); pushOut(); };
+    $('#posPulso').onclick = () => posPulso(1);
+    $('#posReset').onclick = () => posPulso(3);
+    $('#posAng').onchange = () => { const g = ((+$('#posAng').value % 360) + 360) % 360; OUT.extra[2] = Math.round(g * 16384 / 360) % 16384; posHex(); pushOut(); };
     posHex(); pushOut();
   }
   function posAtualizarLeitura() {
     const el = $('#posLeitura'); if (!el) return;
     const iw = S.sc && S.sc.inputs; if (!iw || iw.length < 8) { el.textContent = ''; return; }
-    const s5 = iw[4] & 0xFFFF;
-    el.innerHTML = `Posição atual: <b>${fmtN(iw[5] / 10, 1)}°</b> · ${s5 & 2 ? '<b>movendo</b>' : s5 & 4 ? '<b>em posição</b>' : 'parado'} · movimentos concluídos: <b>${iw[7]}</b>${s5 & 8 ? ' · <b style="color:var(--bad,#C0392B)">falha</b>' : ''}`;
+    const graus = (iw[5] + iw[4] / 16384) * 360, lagGraus = (iw[7] & 0xFFFF) * 360 / 16384, rpm = iw[1] * 18750 / 32767;
+    const est = EST6[iw[6]] || iw[6];
+    const situacao = Math.abs(rpm) > 3 ? '<b>movendo</b>' : lagGraus < 0.2 ? '<b>em posição</b>' : 'parado';
+    el.innerHTML = `Posição atual: <b>${fmtN(graus, 1)}°</b> (P0053 = ${iw[5]} voltas + P0052 = ${iw[4]}) · ${situacao} · erro de lag ${fmtN(lagGraus, 1)}° · estado: <b>${est}</b>`;
   }
 
   function pushOut() {
@@ -227,7 +218,7 @@
     const key = (sc.io ? sc.io.outWords : 4) + ':' + wr.join(',');
     if (key !== extraBuiltFor) {
       extraBuiltFor = key; const n = sc.io ? sc.io.outWords : 4;
-      const posMap = n >= 8 && [1100, 1101, 1102, 1103].every((p, k) => wr[k] === p);
+      const posMap = n >= 8 && POS_WR.every((p, k) => wr[k] === p);
       $('#extraOut').innerHTML = (posMap ? posPainelHtml() : '') + Array.from({ length: Math.max(0, n - 4) }, (_, i) => {
         if (posMap && i < 4) return '';
         const pn = wr[i]; const d = S.defs.get(pn);
@@ -238,7 +229,7 @@
     }
     // nota: drive em modo posição -> as palavras 1 a 4 são ignoradas
     const notaM = $('#modoNota');
-    if (notaM) { const emPos = S.P[202] === 4; notaM.hidden = !emPos; if (emPos) notaM.textContent = 'O drive está em modo posição (P0202 = 4): as palavras 1 a 4 acima são ignoradas. Quem comanda é o painel Posição.'; }
+    if (notaM) { const emPos = S.P[202] === 3; notaM.hidden = !emPos; if (emPos) notaM.textContent = 'O drive está na Função Posicionador (P0202 = 3): as palavras 1 a 4 acima são ignoradas. Quem comanda é o painel Posição (palavras 5 a 8).'; }
     posAtualizarLeitura();
     // entradas
     const iw = open && sc.inputs && sc.inputs.length ? sc.inputs : null;
@@ -251,14 +242,13 @@
       html += `<span>2ª Velocidade</span><span class="v">${fmtN(iw[1] * 18750 / 32767, 1)} rpm</span><span class="h">${iw[1]}</span>`;
       html += `<span>3ª Corrente de torque</span><span class="v">${fmtN(iw[2] / 10, 1)} A</span><span class="h">${iw[2]}</span>`;
       html += `<span>4ª Modo de controle atual</span><span class="v">${['Torque', 'Velocidade', '–', 'Posição'][iw[3] & 0xF] || iw[3]}</span><span class="h">${iw[3]}</span>`;
-      const posRd = [1110, 1111, 1112, 1113].every((p, k) => rd[k] === p);
+      const posRd = POS_RD.every((p, k) => rd[k] === p);
       if (posRd && iw.length >= 8) {
-        const s5 = iw[4] & 0xFFFF, nomes = ['habilitado', 'movendo', 'em posição', 'falha', 'fim de curso', 'STOP'];
-        const ativos = nomes.filter((_, b) => s5 & (1 << b));
-        html += `<span>5ª Status do posicionamento (P1110)</span><span class="v">${ativos.length ? ativos.join(', ') : 'desabilitado'}</span><span class="h">${h4(s5)}</span>`;
-        html += `<span>6ª Posição atual (P1111)</span><span class="v">${fmtN(iw[5] / 10, 1)}°</span><span class="h">${iw[5]}</span>`;
-        html += `<span>7ª Erro de posição (P1112)</span><span class="v">${fmtN(iw[6] / 10, 1)}°</span><span class="h">${iw[6]}</span>`;
-        html += `<span>8ª Movimentos concluídos (P1113)</span><span class="v">${iw[7]}</span><span class="h">${iw[7]}</span>`;
+        const graus = (iw[5] + iw[4] / 16384) * 360;
+        html += `<span>5ª Fração de volta (P0052)</span><span class="v">${iw[4]} → posição ${fmtN(graus, 1)}°</span><span class="h">${iw[4]}</span>`;
+        html += `<span>6ª Número de voltas (P0053)</span><span class="v">${iw[5]}</span><span class="h">${iw[5]}</span>`;
+        html += `<span>7ª Estado do servo (P0006)</span><span class="v">${EST6[iw[6]] || iw[6]}</span><span class="h">${iw[6]}</span>`;
+        html += `<span>8ª Erro de lag (P0048)</span><span class="v">${iw[7] & 0xFFFF} pulsos = ${fmtN((iw[7] & 0xFFFF) * 360 / 16384, 1)}°</span><span class="h">${iw[7]}</span>`;
       }
       for (let i = posRd && iw.length >= 8 ? 8 : 4; i < iw.length; i++) { const pn = rd[i - 4], d = S.defs.get(pn); html += `<span>${i + 1}ª P${pad4(pn || 0)} ${d ? d.name : ''}</span><span class="v">${d ? fmtVal(d, iw[i]) : iw[i]}</span><span class="h">${iw[i]}</span>`; }
     } else html = '<span style="grid-column:1/-1;color:var(--ink-3)">Sem conexão de I/O. Conecte e faça o Forward Open.</span>';
@@ -319,7 +309,9 @@
   }
   // palavras extras: zeradas para velocidade/torque (conexão de 4 palavras), mapeadas no aplicativo de posição (8 palavras)
   const SEM_EXTRAS = [[820, 0], [821, 0], [822, 0], [823, 0], [835, 0], [836, 0], [837, 0], [838, 0]];
-  const EXTRAS_POS = [[820, 1110], [821, 1111], [822, 1112], [823, 1113], [835, 1100], [836, 1101], [837, 1102], [838, 1103]];
+  // Função Posicionador (P0202 = 3): mesma configuração do assistente de comunicação (opção Posição)
+  const EXTRAS_POS = [[820, 52], [821, 53], [822, 6], [823, 48], [835, 99], [836, 1079], [837, 1171], [838, 219]];
+  const FP_CONFIG = [[1151, 5], [1161, 0], [1171, 0], [1181, 0], [1191, 100], [1201, 1000], [1211, 1000], [1077, 0], [1078, 0], [1080, 1], [1101, 1], [1102, 0]];
   const btnPreset = $('#pPresetEip');
   if (btnPreset) btnPreset.onclick = async () => {
     if (!confirm('Preparar o SCA06 para velocidade e torque pela EtherNet/IP?\n\nGrava:\n  P0000 = 5  (senha)\n  P0202 = 6  (comando pela rede)\n  P0662 = 3  (erro de comunicação desabilita o drive)\n  P0820…P0823 e P0835…P0838 = 0  (sem palavras extras: conexão de 4 palavras)\n  P0849 = 1  (aplica a configuração de rede)\n\nO drive precisa estar desabilitado.')) return;
@@ -329,9 +321,9 @@
   };
   const btnPos = $('#pPresetPos');
   if (btnPos) btnPos.onclick = async () => {
-    if (!confirm('Preparar o SCA06 para posição pela EtherNet/IP?\n\nGrava:\n  P0000 = 5  (senha)\n  P0202 = 4  (modo Ladder: aplicativo de posicionamento)\n  P1020 = 1  (aplicativo em execução)\n  P0820…P0823 = 1110…1113  (status, posição, erro e contador nas palavras de entrada 5 a 8)\n  P0835…P0838 = 1100…1103  (comando, alvo, velocidade e tipo nas palavras de saída 5 a 8)\n  P0662 = 3  (erro de comunicação desabilita o drive)\n  P0849 = 1  (aplica a configuração de rede)\n\nO drive precisa estar desabilitado.')) return;
-    const erro = await gravarEmSequencia([[0, 5], [202, 4], [1020, 1], ...EXTRAS_POS, [662, 3], [849, 1]]);
-    resPreset(erro || 'Pronto para posição: P0202 = 4, conexão de 8 palavras. No CODESYS, use a conexão "Exclusive Owner, 8 palavras (posicao)".', !erro);
+    if (!confirm('Preparar o SCA06 para posição pela EtherNet/IP (Função Posicionador)?\n\nGrava:\n  P0000 = 5  (senha)\n  P0099 = 0  (começa desabilitado: quem habilita é o CLP)\n  P0202 = 3  (Função Posicionador)\n  Movimento 1: P01151 = 5 (absoluto), P01191 = 100 rpm, P01201 = P01211 = 1000 rpm/s\n  Ciclo 1 = movimento 1: P01101 = 1, P01102 = 0 · disparo: P01080 = 1, P01077 = 0 (borda)\n  P0835…P0838 = 99, 1079, 1171, 219  (habilitação, disparo, destino, reset)\n  P0820…P0823 = 52, 53, 6, 48  (fração, voltas, estado, erro de lag)\n  P0662 = 3 e P0849 = 1')) return;
+    const erro = await gravarEmSequencia([[0, 5], [99, 0], [202, 3], ...FP_CONFIG, ...EXTRAS_POS, [662, 3], [849, 1]]);
+    resPreset(erro || 'Pronto para posição: P0202 = 3 (Função Posicionador), conexão de 8 palavras. No CODESYS, use a conexão "Exclusive Owner, 8 palavras (posicao)".', !erro);
     buildParams();
   };
   const btnFab = $('#pFabrica');
@@ -346,11 +338,11 @@
     const q = ($('#pSearch').value || '').toLowerCase().trim(), grp = $('#pGroup').value;
     const rows = [];
     for (const d of S.defs.values()) {
-      if (d.n >= 1050 && !(d.n >= 1100 && d.n <= 1113) && grp !== 'changed' && !q) continue;
+      if (d.n >= 1050 && grp !== 'fp' && grp !== 'changed' && !q) continue;
       if (grp === 'read' && !(d.n < 99)) continue;
       if (grp === 'cfg' && !(d.n >= 99 && d.n < 800)) continue;
       if (grp === 'eth' && !(d.n >= 800 && d.n <= 849) && d.n !== 662) continue;
-      if (grp === 'lad' && !(d.n >= 1000 && d.n <= 1113)) continue;
+      if (grp === 'fp' && !(d.fp || d.n === 202 || d.n === 99 || d.n === 1000 || d.n === 1020 || d.n === 1024)) continue;
       if (grp === 'changed' && (d.ro || S.P[d.n] === d.def)) continue;
       if (q && !(String(d.n).includes(q.replace(/^p0*/, '')) || d.name.toLowerCase().includes(q))) continue;
       rows.push(d);
@@ -402,31 +394,40 @@
       hint: 'Com P0662 = 0 o motor continua com a última referência: compare os dois casos.', check: c => { if (c.P[662] === 1 && c.v.fault === 47) mem.f47 = true; return !!mem.f47 && !c.v.fault && c.v.p801 === 4; } },
     { id: 'm11', title: 'Atingir um fim de curso', text: 'Monte as cames (clique numa chave de fim de curso) e gire devagar até a chave atuar. Observe o bit 14 ou 15 da palavra de estado.',
       hint: 'O fim de curso força a referência de velocidade a zero no sentido limitado. Ele não atua no modo torque.', check: c => c.v.bench.cams && (c.v.status & 0xC000) && c.v.mode === 6 },
-    { id: 'm12', title: 'Posicionar em 135,0° pelo Ladder', text: 'O manual Ethernet manda usar o modo Ladder (P0202 = 4) para posicionamento. Mapeie P0835 = 1100 e P0836 = 1101, aplique com P0849 e comande: 5ª palavra = 1 (habilita), 6ª = 1350, depois 5ª = 3 (inicia).',
-      hint: 'P1103 escolhe o caminho: 0 menor, 1 horário, 2 anti-horário, 3 relativo. Leia P1111 mapeando P0820 = 1111.', target: [135, 0.5],
-      live: c => `posição = ${fmtN(c.v.userPosDeg, 1)}°`, check: c => c.P[202] === 4 && c.v.applied && c.v.applied.wrWords.includes(1100) && c.v.applied.wrWords.includes(1101) && c.v.lad.inPos && c.v.lad.count > 0 && Math.abs(c.v.userPosDeg - 135) < 0.3 },
-    { id: 'm13', title: 'Posição pela rede: conexão de 8 palavras', text: 'Prepare o drive para posição: P0202 = 4 (aplicativo Ladder de posicionamento), P0820…P0823 = 1110…1113 e P0835…P0838 = 1100…1103, aplicados com P0849 = 1. Abra a conexão de 8 palavras e chegue a Data Active.',
+    { id: 'm12', title: 'Posição pela rede: Função Posicionador', text: 'Prepare o drive para posição sem ladder: P0202 = 3 (Função Posicionador), movimento 1 absoluto (P01151 = 5), ciclo 1 = movimento 1 (P01101 = 1), disparo pelo P01079 (P01080 = 1). Mapeie P0835…P0838 = 99, 1079, 1171, 219 e P0820…P0823 = 52, 53, 6, 48, aplique com P0849 = 1 e chegue a Data Active com a conexão de 8 palavras.',
       hint: 'O assistente "Comunicação com o CLP" (topo da tela), na opção Posição, faz a configuração explicando cada etapa. No CODESYS, escolha a conexão "Exclusive Owner, 8 palavras (posicao)". Sem o P0849 = 1 o mapeamento não vale e a conexão é recusada (0x0109).',
-      check: c => c.P[202] === 4 && c.v.applied && c.v.applied.rdWords.length >= 4 && [1100, 1101, 1102, 1103].every(n => c.v.applied.wrWords.includes(n)) && c.v.p801 === 4 && c.v.ioRun },
-    { id: 'm14', title: 'Pulso: cada pulso gira 45°', text: 'Com o movimento relativo (P1103 = 3) e incremento de 45,0° (P1101 = 450), dê 4 pulsos no bit 1 do comando (P1100): o disco deve dar meia volta, em 4 passos de 45°.',
-      hint: 'O movimento começa na borda de subida do bit 1 (0 → 1): desligue o bit entre um pulso e outro. Cada movimento concluído soma 1 em P1113.',
-      live: c => `posição = ${fmtN(c.v.userPosDeg, 1)}° · pulsos seguidos de ${c.v.lad.relInc == null ? '—' : fmtN(c.v.lad.relInc, 1) + '°'}: ${c.v.lad.relSeq}`,
-      check: c => c.P[202] === 4 && c.v.lad.relInc === 45 && c.v.lad.relSeq >= 4 && c.v.lad.inPos },
-    { id: 'm15', title: 'Posição absoluta: 90° e depois 270°', text: 'Com o tipo menor caminho (P1103 = 0), mande o disco para 90,0° (P1101 = 900) e, depois de parar, para 270,0° (P1101 = 2700).',
-      hint: 'No modo absoluto, P1101 é a posição final, e não um incremento. Leia a posição atual em P1111 (décimos de grau).', target: [270, 0.5],
+      check: c => c.P[202] === 3 && c.v.applied && [99, 1079, 1171].every(n => c.v.applied.wrWords.includes(n)) && [52, 53].every(n => c.v.applied.rdWords.includes(n)) && c.v.p801 === 4 && c.v.ioRun },
+    { id: 'm13', title: 'Posicionar em 135,0°', text: 'Habilite pela rede (5ª palavra = P0099 = 2), escreva o destino 135° na 7ª palavra (P01171 = 6144, porque 16384 = 1 volta) e dê um pulso na 6ª palavra (P01079: 0 → 1).',
+      hint: 'Fração de volta = graus × 16384 / 360. A posição atual chega nas entradas 5 e 6: (P0053 + P0052 / 16384) × 360.', target: [135, 0.5],
+      live: c => `posição = ${fmtN(c.v.userPosDeg, 1)}° · movimentos concluídos: ${c.v.fp.count}`,
+      check: c => c.P[202] === 3 && [5, 6].includes(c.P[1151]) && c.v.fp.inPos && c.v.fp.count > 0 && Math.abs(c.v.userPosDeg - 135) < 0.3 },
+    { id: 'm14', title: 'Pulso: cada pulso gira 45°', text: 'Troque o movimento 1 para relativo (P01151 = 3): o destino vira incremento. Com 45° na 7ª palavra (P01171 = 2048), dê 4 pulsos na 6ª palavra: o disco deve dar meia volta, em 4 passos de 45°.',
+      hint: 'O movimento começa na borda de subida do P01079 (0 → 1): volte para 0 entre um pulso e outro. Espere o disco parar antes do próximo pulso.',
+      live: c => `posição = ${fmtN(c.v.userPosDeg, 1)}° · pulsos de 45° concluídos: ${mem.p14 ? c.v.fp.count - mem.p14.n : 0}`,
+      check: c => {
+        const rel = c.P[202] === 3 && [3, 4].includes(c.P[1151]) && c.P[1171] === 2048;
+        if (!rel) { mem.p14 = null; return false; }
+        if (!mem.p14 && c.v.fp.inPos) mem.p14 = { n: c.v.fp.count, pos: c.v.userPosDeg };
+        if (!mem.p14) return false;
+        const andou = ((c.v.userPosDeg - mem.p14.pos) % 360 + 360) % 360;
+        return c.v.fp.count - mem.p14.n >= 4 && c.v.fp.inPos && Math.abs(andou - 180) < 0.5;
+      } },
+    { id: 'm15', title: 'Posição absoluta: 90° e depois 270°', text: 'Com o movimento 1 absoluto (P01151 = 5), mande o disco para 90,0° (P01171 = 4096) e, depois de parar, para 270,0° (P01171 = 12288).',
+      hint: 'No absoluto, o destino é a posição final, e não um incremento: disparar duas vezes com 4096 deixa o disco parado em 90°.', target: [270, 0.5],
       live: c => `posição = ${fmtN(c.v.userPosDeg, 1)}°`,
       check: c => {
-        const pos = c.v.userPosDeg, ok = c.P[202] === 4 && c.P[1103] === 0 && c.v.lad.inPos;
+        const pos = c.v.userPosDeg, ok = c.P[202] === 3 && [5, 6].includes(c.P[1151]) && c.v.fp.inPos;
         if (ok && Math.abs(pos - 90) < 0.3) mem.p90 = true;
         return !!mem.p90 && ok && Math.abs(pos - 270) < 0.3;
       } },
-    { id: 'm16', title: 'Sentido forçado: de 270° para 0° pelo anti-horário', text: 'Parado em 270,0°, mande o disco para 0,0° com P1103 = 2 (anti-horário): ele deve girar 270° para trás, e não 90° para a frente.',
-      hint: 'Com P1103 = 0 o drive escolheria o menor caminho (90° no sentido horário). O sentido forçado serve para máquinas que não podem girar ao contrário.',
-      live: c => `posição = ${fmtN(c.v.userPosDeg, 1)}°`,
+    { id: 'm16', title: 'Ciclo completo: vai a 180° e volta com um só disparo', text: 'Programe o movimento 2 absoluto em 0° (P01152 = 5, P01172 = 0, P01182 = 0, P01192 = 100, P01202 = P01212 = 1000), ponha-o no ciclo 1 (P01102 = 2) e faça o ciclo completo (P01080 = −1). Com destino 180° (P01171 = 8192), um único pulso deve levar o disco a 180° e trazê-lo de volta a 0°.',
+      hint: 'Com P01080 negativo, um disparo executa todos os movimentos do ciclo em sequência. Um timer no movimento 2 (P01162 = 1000) faz o disco esperar 1 s em 180° antes de voltar.',
+      live: c => `posição = ${fmtN(c.v.userPosDeg, 1)}°${mem.v180 ? ' · passou por 180° ✓' : ''}`,
       check: c => {
-        const pos = c.v.userPosDeg;
-        if (c.P[202] === 4 && c.v.lad.inPos && Math.abs(pos - 270) < 0.3) mem.c270 = c.v.lad.count;
-        return mem.c270 !== undefined && c.P[202] === 4 && c.P[1103] === 2 && c.v.lad.inPos && c.v.lad.count > mem.c270 && (pos < 0.3 || pos > 359.7);
+        const pos = c.v.userPosDeg, cfg = c.P[202] === 3 && c.P[1080] < 0 && c.P[1102] === 2 && [5, 6].includes(c.P[1152]);
+        if (!cfg) { mem.v180 = false; return false; }
+        if (Math.abs(pos - 180) < 1) mem.v180 = true;
+        return !!mem.v180 && c.v.fp.done && c.v.fp.inPos && (pos < 0.3 || pos > 359.7);
       } },
   ];
   let done = {}; try { done = JSON.parse(localStorage.getItem('sca06-missoes') || '{}'); } catch (_) { }

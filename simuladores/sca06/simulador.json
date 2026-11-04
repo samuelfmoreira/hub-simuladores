@@ -3,7 +3,7 @@
   "nome": "Servomotor WEG SCA06",
   "fabricante": "WEG",
   "tipo": "Servomotor",
-  "descricao": "SCA06 com acessório ECO5 numa bancada 3D com servomotor, disco graduado, fins de curso e posicionamento pelo ladder DISCO_POS.",
+  "descricao": "SCA06 com acessório ECO5 (firmware V2.1X) numa bancada 3D com servomotor, disco graduado e fins de curso. Tudo pela rede EtherNet/IP: velocidade e torque (P0202 = 6) e posição pela Função Posicionador (P0202 = 3), sem ladder.",
   "protocolos": [
     "EtherNet/IP",
     "Modbus TCP"
@@ -70,6 +70,6 @@
   ],
   "cor": "#5B4FA8",
   "icone": "icone.png",
-  "versao": "1.1.6",
+  "versao": "1.2.0",
   "pacote": "sca06-ethernetip-sim"
 }

@@ -2,7 +2,7 @@
  *   node tools/gera-eds.js
  * Um EDS só, com duas conexões Exclusive Owner para escolher no mestre:
  *   - 4 palavras de entrada e 4 de saída (velocidade e torque, P0202 = 6)
- *   - 8 palavras de entrada e 8 de saída (posição pelo aplicativo Ladder DISCO_POS, P0202 = 4)
+ *   - 8 palavras de entrada e 8 de saída (posição pela Função Posicionador, P0202 = 3, firmware V2.1X)
  * ATENÇÃO: este NÃO é o EDS oficial da WEG. O EDS oficial do SCA06 está em www.weg.net
  * [ETH 8.4]. Estrutura baseada no EDS de exemplo do projeto OpENer (EIPStackGroup). */
 'use strict';
@@ -14,9 +14,9 @@ const d = new Date(), dd = (n) => String(n).padStart(2, '0');
 const date = `${dd(d.getMonth() + 1)}-${dd(d.getDate())}-${d.getFullYear()}`, time = `${dd(d.getHours())}:${dd(d.getMinutes())}:${dd(d.getSeconds())}`;
 const hex4 = (n) => n.toString(16).toUpperCase().padStart(4, '0');
 const IN_NAMES = ['Palavra de estado', 'Velocidade do motor', 'Corrente de torque', 'Modo de controle atual',
-  'P0820 (posicao: status P1110)', 'P0821 (posicao atual P1111)', 'P0822 (erro de posicao P1112)', 'P0823 (posicionamentos P1113)'];
+  'P0820 (posicao: fracao de volta P0052)', 'P0821 (posicao: voltas P0053)', 'P0822 (estado do servo P0006)', 'P0823 (erro de lag P0048)'];
 const OUT_NAMES = ['Palavra de controle', 'Referencia de velocidade', 'Referencia de torque', 'Modo de controle',
-  'P0835 (posicao: comando P1100)', 'P0836 (alvo ou incremento P1101)', 'P0837 (velocidade P1102)', 'P0838 (tipo de movimento P1103)'];
+  'P0835 (posicao: habilitacao P0099)', 'P0836 (disparo P01079)', 'P0837 (destino fracao P01171)', 'P0838 (reset de falhas P0219)'];
 const param = (i, name, help, type = '0xC3', size = 2, mm = ',,0') => `        Param${i} =
                 0,,,0x0000,${type},${size},
                 "${name}","","${help}",

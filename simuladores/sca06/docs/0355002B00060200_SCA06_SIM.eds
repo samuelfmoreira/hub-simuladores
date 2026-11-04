@@ -1,10 +1,10 @@
 $ EDS do SIMULADOR SCA06 + ECO5 (nao e o EDS oficial WEG) - gerado por tools/gera-eds.js
 [File]
         DescText = "Simulador didatico SCA06 ECO5 EtherNet/IP (conexoes de 4 ou 8 palavras)";
-        CreateDate = 11-02-2026;
-        CreateTime = 14:50:46;
-        ModDate = 11-02-2026;
-        ModTime = 14:50:46;
+        CreateDate = 11-04-2026;
+        CreateTime = 00:14:47;
+        ModDate = 11-04-2026;
+        ModTime = 00:14:47;
         Revision = 1.0;
 
 [Device]
@@ -52,28 +52,28 @@ $ EDS do SIMULADOR SCA06 + ECO5 (nao e o EDS oficial WEG) - gerado por tools/ger
                 0;
         Param5 =
                 0,,,0x0000,0xC3,2,
-                "IN5 P0820 (posicao: status P1110)","","Parametro apontado em P0820",
+                "IN5 P0820 (posicao: fracao de volta P0052)","","Parametro apontado em P0820",
                 ,,0,
                 ,,,,
                 ,,,,
                 0;
         Param6 =
                 0,,,0x0000,0xC3,2,
-                "IN6 P0821 (posicao atual P1111)","","Parametro apontado em P0821",
+                "IN6 P0821 (posicao: voltas P0053)","","Parametro apontado em P0821",
                 ,,0,
                 ,,,,
                 ,,,,
                 0;
         Param7 =
                 0,,,0x0000,0xC3,2,
-                "IN7 P0822 (erro de posicao P1112)","","Parametro apontado em P0822",
+                "IN7 P0822 (estado do servo P0006)","","Parametro apontado em P0822",
                 ,,0,
                 ,,,,
                 ,,,,
                 0;
         Param8 =
                 0,,,0x0000,0xC3,2,
-                "IN8 P0823 (posicionamentos P1113)","","Parametro apontado em P0823",
+                "IN8 P0823 (erro de lag P0048)","","Parametro apontado em P0823",
                 ,,0,
                 ,,,,
                 ,,,,
@@ -108,28 +108,28 @@ $ EDS do SIMULADOR SCA06 + ECO5 (nao e o EDS oficial WEG) - gerado por tools/ger
                 0;
         Param13 =
                 0,,,0x0000,0xC3,2,
-                "OUT5 P0835 (posicao: comando P1100)","","Parametro apontado em P0835",
+                "OUT5 P0835 (posicao: habilitacao P0099)","","Parametro apontado em P0835",
                 ,,0,
                 ,,,,
                 ,,,,
                 0;
         Param14 =
                 0,,,0x0000,0xC3,2,
-                "OUT6 P0836 (alvo ou incremento P1101)","","Parametro apontado em P0836",
+                "OUT6 P0836 (disparo P01079)","","Parametro apontado em P0836",
                 ,,0,
                 ,,,,
                 ,,,,
                 0;
         Param15 =
                 0,,,0x0000,0xC3,2,
-                "OUT7 P0837 (velocidade P1102)","","Parametro apontado em P0837",
+                "OUT7 P0837 (destino fracao P01171)","","Parametro apontado em P0837",
                 ,,0,
                 ,,,,
                 ,,,,
                 0;
         Param16 =
                 0,,,0x0000,0xC3,2,
-                "OUT8 P0838 (tipo de movimento P1103)","","Parametro apontado em P0838",
+                "OUT8 P0838 (reset de falhas P0219)","","Parametro apontado em P0838",
                 ,,0,
                 ,,,,
                 ,,,,

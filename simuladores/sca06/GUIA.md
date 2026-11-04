@@ -79,13 +79,15 @@ O SCA06 pode ser comandado pela rede em **três modos de controle**. Esta tabela
 | Parâmetro | O que faz | Velocidade | Torque | Posição |
 | --- | --- | --- | --- | --- |
 | P0000 | senha (libera a alteração) | 5 | 5 | 5 |
-| **P0202** | **modo de operação** | **6** (rede) | **6** (rede) | **4** (Ladder) |
-| P1020 | aplicativo Ladder em execução | — | — | 1 (já vem de fábrica) |
+| **P0202** | **modo de operação** | **6** (rede) | **6** (rede) | **3** (Função Posicionador) |
+| P0099 | habilitação (só no modo 3) | — | — | 0 (o CLP escreve 2 pela rede) |
 | P0810 | IP pelos parâmetros | 0 | 0 | 0 |
 | P0811…P0814 | endereço IP | 192.168.100.22 | 192.168.100.22 | 192.168.100.22 |
 | P0815 | máscara (CIDR) | 24 | 24 | 24 |
-| P0820…P0823 | palavras de entrada 5 a 8 | 0 | 0 | 1110, 1111, 1112, 1113 |
-| P0835…P0838 | palavras de saída 5 a 8 | 0 | 0 | 1100, 1101, 1102, 1103 |
+| P0820…P0823 | palavras de entrada 5 a 8 | 0 | 0 | 52, 53, 6, 48 |
+| P0835…P0838 | palavras de saída 5 a 8 | 0 | 0 | 99, 1079, 1171, 219 |
+| P01151, P01191, P01201, P01211 | movimento 1 (tipo, velocidade, rampas) | — | — | 5 (absoluto), 100, 1000, 1000 |
+| P01101, P01102, P01080, P01077 | ciclo 1 e disparo | — | — | 1, 0, 1, 0 (borda) |
 | P0662 | ação se a comunicação cair | 3 | 3 | 3 |
 | P0849 | aplica a configuração de rede | 1 | 1 | 1 |
 | **Conexão no CODESYS** | | **4 palavras** (8 / 8 bytes) | **4 palavras** (8 / 8 bytes) | **8 palavras** (16 / 16 bytes) |
@@ -101,9 +103,9 @@ Velocidade e torque usam **a mesma configuração do drive**: a diferença está
 | OUT2 referência de velocidade | **rpm** (32767 = 18750 rpm) | ignorada | ignorada |
 | OUT3 referência de torque | ignorada | **corrente em A × 10** | ignorada |
 | **OUT4 modo de controle** | **1** | **0** | ignorada |
-| OUT5…OUT8 | — | — | comando, destino, velocidade e tipo de movimento (P1100…P1103) |
+| OUT5…OUT8 | — | — | habilitação (P0099), disparo (P01079), destino (P01171) e reset (P0219) |
 
-As **entradas** IN1 a IN4 (estado, velocidade, corrente e modo atual) são iguais nos três modos. No modo posição, as entradas IN5 a IN8 trazem o status, a posição atual, o erro de posição e o contador de movimentos.
+As **entradas** IN1 a IN4 (estado, velocidade, corrente e modo atual) são iguais nos três modos. No modo posição, as entradas IN5 a IN8 trazem a posição (fração de volta P0052 e voltas P0053), o estado do servo (P0006) e o erro de lag (P0048).
 
 ## Lista de parâmetros da comunicação
 
@@ -122,8 +124,8 @@ Todos os parâmetros que entram na comunicação EtherNet/IP do SCA06, num lugar
 
 | Parâmetro | Nome | Fábrica | Para a rede | O que faz |
 | --- | --- | --- | --- | --- |
-| P0202 | Modo de operação | 2 (velocidade pela HMI) | **6** (velocidade/torque) ou **4** (posição) | 6 = Profibus DP/Ethernet: o CLP manda pelas palavras de saída · 4 = Ladder: o aplicativo de posicionamento manda. Desabilitado |
-| P1020 | Comando da PLC (Ladder) | 1 | 1 | mantém o aplicativo de posicionamento em execução (modo posição) |
+| P0202 | Modo de operação | 2 (velocidade pela HMI) | **6** (velocidade/torque) ou **3** (posição) | 6 = Profibus DP/Ethernet: o CLP manda pelas palavras fixas de saída · 3 = Função Posicionador: movimentos programados em parâmetros, habilitados e disparados pela rede. Desabilitado |
+| P0099 | Habilitação | 0 | 0 (o CLP escreve **2** no modo posição) | com P0202 = 3 é por aqui que o drive habilita: 0 desabilita · 1 habilita · 2 habilita sem gravar na memória |
 
 #### Endereço IP
 
@@ -141,9 +143,9 @@ As **4 primeiras palavras** de cada sentido são **fixas** (não têm parâmetro
 
 | Parâmetro | Nome | Fábrica | Velocidade/torque | Posição | O que faz |
 | --- | --- | --- | --- | --- | --- |
-| P0820…P0823 | Palavra de leitura #5 a #8 | 0 | 0 | **1110, 1111, 1112, 1113** | o que o drive manda nas entradas 5 a 8 |
+| P0820…P0823 | Palavra de leitura #5 a #8 | 0 | 0 | **52, 53, 6, 48** | o que o drive manda nas entradas 5 a 8 |
 | P0824…P0831 | Palavra de leitura #9 a #16 | 0 | 0 | 0 | entradas 9 a 16 (até 16 palavras) |
-| P0835…P0838 | Palavra de escrita #5 a #8 | 0 | 0 | **1100, 1101, 1102, 1103** | onde o CLP escreve as saídas 5 a 8 |
+| P0835…P0838 | Palavra de escrita #5 a #8 | 0 | 0 | **99, 1079, 1171, 219** | onde o CLP escreve as saídas 5 a 8 |
 | P0839…P0846 | Palavra de escrita #9 a #16 | 0 | 0 | 0 | saídas 9 a 16 |
 
 Cada palavra extra soma **2 bytes** na conexão do CLP: 4 palavras = 8 bytes; 8 palavras = 16 bytes.
@@ -158,19 +160,28 @@ Cada palavra extra soma **2 bytes** na conexão do CLP: 4 palavras = 8 bytes; 8 
 | P0204 | Carrega parâmetros | 0 | — | **5** = volta tudo ao padrão de fábrica. Desabilitado |
 | P0806 | Watchdog Modbus TCP | 0 | 0 | só para o Modbus TCP (não usado na EtherNet/IP) |
 
-#### Posicionamento pela rede (aplicativo DISCO_POS, P0202 = 4)
+#### Função Posicionador (P0202 = 3, firmware V2.1X)
+
+Os movimentos ficam guardados no drive. Há **10 movimentos** (cada um com tipo, destino, velocidade e rampas) e **10 ciclos** (cada um com uma sequência de até 5 movimentos). O "X" nos números abaixo é o número do movimento: P01151 é o tipo do movimento 1, P01152 o do movimento 2, e assim por diante.
 
 | Parâmetro | Nome | Fábrica | O que faz |
 | --- | --- | --- | --- |
-| P1100 | Comando | 0 | bit 0 habilita · bit 1 inicia (na subida 0 → 1) · bit 2 STOP · bit 3 reset · bit 4 zera a posição |
-| P1101 | Posição alvo / incremento | 0 | décimos de grau (450 = 45,0°) |
-| P1102 | Velocidade de posicionamento | 100 | rpm (1 a 3000) |
-| P1103 | Tipo de movimento | 0 | 0 menor caminho · 1 horário · 2 anti-horário · 3 relativo (pulso) |
-| P1104 | Rampa de posicionamento | 500 | ms/krpm |
-| P1110 | Status | — | só leitura: bit 0 habilitado · 1 movendo · 2 em posição · 3 falha · 4 fim de curso · 5 STOP |
-| P1111 | Posição atual | — | só leitura, décimos de grau (0 a 3599) |
-| P1112 | Erro de posição | — | só leitura, décimos de grau |
-| P1113 | Posicionamentos concluídos | — | só leitura |
+| P0115X | Tipo do movimento | 0 | 1 torque (Iq) · 2 velocidade · 3 relativo · **5 absoluto** · 7 jog · 8/9 seguidor · 10/11 busca de zero |
+| P0116X | Timer do movimento | 0 | ms de espera entre o disparo e o início |
+| P0117X | Posição: fração de volta | 0 | **16384 = 1 volta** (4096 = 90°, 8192 = 180°) |
+| P0118X | Posição: número de voltas | 0 | voltas inteiras do destino (absoluto) ou do deslocamento (relativo) |
+| P0119X | Velocidade / Iq | 0 | rpm do movimento (no tipo torque: décimos de ampère). Negativo inverte o sentido |
+| P0120X | Aceleração | 0 | rpm/s (no tipo torque: A/s) |
+| P0121X | Desaceleração | 0 | rpm/s |
+| P0122X | Jerk | 0 | rpm/s² (curva S; o simulador usa perfil trapezoidal) |
+| P01101…P01150 | Movimentos dos ciclos 1 a 10 | 0 | 5 por ciclo: P01101…P01105 são o 1º ao 5º movimento do ciclo 1. 0 encerra o ciclo |
+| P01077 | Acionamento por borda ou nível | 0 | 0 borda de subida (um disparo por pulso) · 1 nível (repete enquanto estiver em 1) |
+| P01078 | Filtro do acionamento | 0 | ms que o disparo precisa ficar em 1 para valer |
+| P01079 | Acionamento do ciclo por parâmetro | 0 | **o disparo**: o CLP escreve 1 pela rede |
+| P01080 | Ciclo acionado pelo P01079 | 0 | qual ciclo o disparo aciona. Positivo: um movimento por disparo. **Negativo: o ciclo inteiro** |
+| P01071 | Reseta ciclo | 0 | na subida 0 → 1, os ciclos voltam para o primeiro movimento |
+
+Leituras úteis para o CLP: **P0052** (fração de volta da posição atual), **P0053** (voltas), **P0006** (estado do servo: 0 desabilitado, 1 habilitado, 2 falha, 5 STOP, 6 STO) e **P0048** (erro de lag, em pulsos).
 
 ## Parte 1: No HUB e no simulador
 
@@ -566,100 +577,91 @@ A **missão 9** da aba Missões ("Equilibrar o peso só com torque") é exatamen
 
 `GVL_SCA.MODO := 1` (ou coloque de volta o `Velocidade_SCA` na MainTask, no lugar do `Torque_SCA`). A configuração do drive não muda. Prefira trocar de modo com o motor parado.
 
-## Parte 8: Controle por posição (absoluta e por pulso)
+## Parte 8: Controle por posição (Função Posicionador)
 
-No modo posição, o CLP manda **para onde** o disco deve ir, e o drive cuida da aceleração, da velocidade e da parada exata. Dá para comandar de dois jeitos:
+### 8.1 Como funciona
 
-- **Posição absoluta:** "vá para 90,0°". O drive escolhe o caminho (o menor, ou um sentido forçado).
-- **Por pulso (relativo):** "a cada pulso, ande 45,0°". Cada vez que um BOOL do CLP vai de 0 para 1, o disco anda o ângulo programado, a partir de onde está.
+Nas palavras fixas (P0202 = 6), o SCA06 só aceita **velocidade e torque**. Para posicionar, o firmware **V2.1X** do SCA06 tem a **Função Posicionador** (**P0202 = 3**): os movimentos ficam **programados em parâmetros** dentro do drive, e o CLP só faz quatro coisas, **tudo pela rede**:
 
-### 8.1 Como funciona no SCA06
+```
+CODESYS (CLP)                                   SCA06 (Função Posicionador)
+  habilita  ─────── 5ª palavra de saída ──────▶  P0099  habilitação
+  dispara   ─────── 6ª palavra de saída ──────▶  P01079 aciona o ciclo do P01080
+  destino   ─────── 7ª palavra de saída ──────▶  P01171 destino do movimento 1
+  reset     ─────── 8ª palavra de saída ──────▶  P0219  reset de falhas
+  posição   ◀────── 5ª e 6ª palavras de entrada  P0052 fração de volta, P0053 voltas
+  estado    ◀────── 7ª e 8ª palavras de entrada  P0006 estado do servo, P0048 erro de lag
+```
 
-O manual Ethernet do SCA06 manda fazer posicionamento pelo **modo Ladder** (P0202 = 4): um aplicativo roda dentro do drive e o CLP conversa com ele por **parâmetros do usuário**. O simulador traz esse aplicativo pronto, o **DISCO_POS**:
+O drive calcula sozinho a aceleração, a velocidade e a parada exata no destino. **Não é preciso programar ladder no drive.**
 
-| Parâmetro | O que é | Unidade |
+Três ideias para entender a Função Posicionador:
+
+| Ideia | O que é |
+| --- | --- |
+| **Movimento** | um passo do eixo: tipo (absoluto, relativo, velocidade…), destino, velocidade e rampas. São 10 (P0115X a P0122X, com X = número do movimento) |
+| **Ciclo** | uma sequência de até 5 movimentos. São 10 ciclos (P01101 a P01150) |
+| **Disparo** | o **P01079** aciona o ciclo escolhido no **P01080**: positivo executa um movimento por disparo; negativo executa o ciclo inteiro |
+
+**Posição em voltas:** o SCA06 mede a posição em **voltas + fração de volta**, com **16384 = 1 volta**. No disco da bancada:
+
+| Ângulo | Fração de volta |
+| --- | --- |
+| 45° | 2048 |
+| 90° | 4096 |
+| 135° | 6144 |
+| 180° | 8192 |
+| 270° | 12288 |
+
+Fração = graus × 16384 / 360. Para ler a posição: graus = (P0053 + P0052 / 16384) × 360.
+
+**Tipos de movimento** (P0115X):
+
+| Tipo | Movimento | No simulador |
 | --- | --- | --- |
-| **P1100** | comando (bits, tabela abaixo) | — |
-| **P1101** | posição de destino, ou o incremento no modo relativo | décimos de grau (450 = 45,0°) |
-| **P1102** | velocidade do movimento | rpm |
-| **P1103** | tipo de movimento: **0** menor caminho · **1** horário · **2** anti-horário · **3** relativo (pulso) | — |
-| P1104 | rampa do movimento (padrão 500) | ms/krpm |
-| **P1110** | status (bits, tabela abaixo) | — |
-| **P1111** | posição atual, de 0 a 3599 | décimos de grau |
-| **P1112** | erro de posição (quanto falta para o destino) | décimos de grau |
-| **P1113** | quantos movimentos já foram concluídos | — |
+| 1 | controle de Iq (torque): aplica uma corrente e mantém | simulado |
+| 2 | controle de velocidade: acelera até a velocidade e mantém | simulado |
+| 3 e 4 | **posicionamento relativo**: anda o deslocamento a partir de onde está | simulado |
+| 5 e 6 | **posicionamento absoluto**: vai até a posição de destino | simulado |
+| 7 | jog: gira enquanto o disparo estiver em 1 | simulado |
+| 8 e 9 | seguidor de posição e de velocidade | não simulado (a bancada não tem mestre de seguimento) |
+| 10 e 11 | busca de zero máquina | não simulado (a bancada não tem sensor de zero) |
 
-| Bit | P1100 (comando) | P1110 (status) |
-| --- | --- | --- |
-| 0 | habilita o drive | drive habilitado |
-| 1 | **inicia o movimento, na borda 0 → 1** (é o "pulso") | movendo |
-| 2 | STOP | **em posição** |
-| 3 | reset de falhas | falha |
-| 4 | a posição atual passa a ser 0,0° | fim de curso atuado |
-| 5 | — | STOP ativo |
-
-No modo posição, **quem habilita é o bit 0 do P1100**. A palavra de controle (OUT1) e a referência de velocidade (OUT2) não são usadas.
-
-Para o CLP enxergar esses parâmetros, eles são **mapeados nas palavras extras** da conexão EtherNet/IP, que passa a ter **8 palavras** em cada sentido:
-
-| Palavra | Mapeada por | Carrega | Canal no CODESYS |
-| --- | --- | --- | --- |
-| IN5 | P0820 = 1110 | status | IN5 P0820 (posicao: status P1110) |
-| IN6 | P0821 = 1111 | posição atual | IN6 P0821 (posicao atual P1111) |
-| IN7 | P0822 = 1112 | erro de posição | IN7 P0822 (erro de posicao P1112) |
-| IN8 | P0823 = 1113 | movimentos concluídos | IN8 P0823 (posicionamentos P1113) |
-| OUT5 | P0835 = 1100 | comando | OUT5 P0835 (posicao: comando P1100) |
-| OUT6 | P0836 = 1101 | destino ou incremento | OUT6 P0836 (alvo ou incremento P1101) |
-| OUT7 | P0837 = 1102 | velocidade | OUT7 P0837 (velocidade P1102) |
-| OUT8 | P0838 = 1103 | tipo de movimento | OUT8 P0838 (tipo de movimento P1103) |
+**O que muda no modo 3:**
+- As **palavras fixas de saída** (controle, referências e modo) são **ignoradas**: a habilitação passa a ser pelo **P0099**.
+- A **botoeira STOP** (DI1) e o **P0662** continuam valendo. O STOP cancela o movimento em andamento.
+- **Por que não o modo 4 (Ladder)?** No SCA06 real, o modo 4 exige um programa feito no software WLP/WPS e gravado no drive. Este simulador, como um drive novo, não tem programa ladder gravado: com P0202 = 4 o eixo não é controlado.
 
 ### 8.2 Configurar o drive para posição
 
-O que precisa mudar (o drive **desabilitado**):
+Com o drive **desabilitado**:
 
-| Parâmetro | Valor | O que faz |
-| --- | --- | --- |
-| **P0000** | **5** | senha |
-| **P0202** | **4** | modo Ladder: o aplicativo de posicionamento comanda o motor |
-| P1020 | 1 | aplicativo em execução (já vem 1 de fábrica: só confira) |
-| **P0820…P0823** | **1110, 1111, 1112, 1113** | o que vai nas palavras de entrada 5 a 8 |
-| **P0835…P0838** | **1100, 1101, 1102, 1103** | onde as palavras de saída 5 a 8 escrevem |
-| **P0662** | **3** | se a comunicação cair: desabilita o drive |
-| **P0849** | **1** | aplica a configuração de rede (volta sozinho para 0) |
+| Parâmetro | Fábrica | Valor | O que faz |
+| --- | --- | --- | --- |
+| **P0000** | 0 | **5** | senha: libera a alteração |
+| **P0099** | 0 | **0** | começa desabilitado: quem habilita é o CLP, pela rede |
+| **P0202** | 2 | **3** | Função Posicionador |
+| P0810…P0815 | DHCP | IP fixo 192.168.100.22 / 24 | igual à seção 1.3 |
+| **P01151** | 0 | **5** | movimento 1 = **posicionamento absoluto** |
+| P01161 | 0 | 0 | sem espera antes do movimento |
+| P01171 / P01181 | 0 | 0 / 0 | destino inicial (a fração quem escreve é o CLP) |
+| **P01191** | 0 | **100** | velocidade do movimento: 100 rpm |
+| **P01201** / **P01211** | 0 | **1000** / **1000** | aceleração e desaceleração: 1000 rpm/s |
+| **P01101** / P01102 | 0 | **1** / 0 | ciclo 1 = só o movimento 1 (0 encerra o ciclo) |
+| **P01080** | 0 | **1** | o disparo pelo P01079 aciona o ciclo 1 |
+| P01077 / P01078 | 0 | 0 / 0 | disparo na borda de subida, sem filtro |
+| **P0820…P0823** | 0 | **52, 53, 6, 48** | entradas 5 a 8: fração, voltas, estado, erro de lag |
+| **P0835…P0838** | 0 | **99, 1079, 1171, 219** | saídas 5 a 8: habilitação, disparo, destino, reset |
+| **P0662** | 0 | **3** | se a comunicação cair, desabilita o drive |
+| **P0849** | 0 | **1** | aplica o IP e as palavras de troca |
 
-#### Caminho A: pelo assistente de comunicação
+Você escolhe o caminho:
 
-Clique em **Comunicação com o CLP** (topo da tela) e escolha **Posição (absoluta e por pulso)**. As 6 etapas são as da Parte 1.3, e nesta escolha:
+- **Caminho A, assistente:** botão **Comunicação com o CLP** → **Posição (Função Posicionador)**. São 8 etapas, com duas a mais que na velocidade: **O movimento** e **O ciclo e o disparo**.
+- **Caminho B, HMI do drive:** como na seção 1.3. Para os parâmetros P01xxx, segure **▲** para correr a lista até o número.
+- **Caminho C, aba Parâmetros:** no filtro, escolha **Função Posicionador (P1070–P1230)** e grave os valores da tabela. P0202, P0099 e o IP estão no filtro "Todos".
 
-- a etapa **Quem manda no drive** grava **P0202 = 4** e confere o **P1020 = 1**;
-- a etapa **O que vai nas palavras de troca** grava o mapeamento das 8 palavras (P0820…P0823 = 1110…1113 e P0835…P0838 = 1100…1103), explicando o que cada palavra carrega;
-- o resumo final mostra a conexão **Exclusive Owner, 8 palavras (posicao)**, como habilitar e como dar o pulso.
-
-#### Caminho B: pela HMI do drive
-
-As teclas e o jeito de ler o display são os da Parte 1.3. O que é novo aqui são os valores de **4 dígitos**: na alteração, **◄** passa para o dígito ao lado (unidades → dezenas → centenas → milhar) e **▲** soma 1 naquele dígito. Exemplo: para formar **1110** a partir de 00000, aperte **◄ ▲ ◄ ▲ ◄ ▲** (dezena, centena e milhar valendo 1).
-
-Comece com o display em **P00000** e o drive desabilitado:
-
-1. **Senha:** **P**, **▲ 5 vezes**, **P**.
-2. **P0202 = 4:** **▲ 37 vezes** (P00202) → **P** → **P** → **▲ 2 vezes** (00004) → **P**.
-3. **P0662 = 3:** **▲ 13 vezes** (P00662) → **P** → **▲ 3 vezes** → **P**.
-4. **P0820 = 1110:** **▲ 16 vezes** (P00820) → **P** → **◄ ▲ ◄ ▲ ◄ ▲** → **P**.
-5. **P0821 = 1111:** **▲** → **P** → **▲** → **◄ ▲ ◄ ▲ ◄ ▲** → **P**.
-6. **P0822 = 1112:** **▲** → **P** → **▲ ▲** → **◄ ▲ ◄ ▲ ◄ ▲** → **P**.
-7. **P0823 = 1113:** **▲** → **P** → **▲ ▲ ▲** → **◄ ▲ ◄ ▲ ◄ ▲** → **P**.
-8. **P0835 = 1100:** **▲ 9 vezes** (P00835) → **P** → **◄ ◄ ▲ ◄ ▲** → **P**.
-9. **P0836 = 1101:** **▲** → **P** → **▲** → **◄ ◄ ▲ ◄ ▲** → **P**.
-10. **P0837 = 1102:** **▲** → **P** → **▲ ▲** → **◄ ◄ ▲ ◄ ▲** → **P**.
-11. **P0838 = 1103:** **▲** → **P** → **▲ ▲ ▲** → **◄ ◄ ▲ ◄ ▲** → **P**.
-12. **P0849 = 1:** **▲ 9 vezes** (P00849) → **P** → **▲** → **P**. A interface de rede reinicia e passa a esperar 8 palavras.
-13. **Confira o P1020:** **▲ 3 vezes** (P01020) → **P** mostra o valor: deve ser **1**. **◄** volta sem alterar.
-
-Para conferir tudo, use o filtro **Diferentes do padrão** na aba Parâmetros.
-
-#### Caminho C: pela aba Parâmetros
-
-Busque cada número, clique na linha, digite o valor e clique em **Gravar**, na ordem da tabela. Deixe o **P0849 = 1** por último.
+**Confira:** o chip **P0202** do topo mostra **3**.
 
 ### 8.3 No CODESYS: a conexão de 8 palavras
 
@@ -667,23 +669,20 @@ Busque cada número, clique na linha, digite o valor e clique em **Gravar**, na 
 2. Acrescente na **GVL_SCA**:
 
 ```
-    // modo posição: palavras extras (entradas)
-    POS_STATUS : INT;   // IN5  P1110 status
-    POS_ATUAL  : INT;   // IN6  P1111 posição atual (décimos de grau)
-    POS_ERRO   : INT;   // IN7  P1112 erro de posição
-    POS_CONT   : INT;   // IN8  P1113 movimentos concluídos
-    // modo posição: palavras extras (saídas)
-    POS_CMD    : INT;   // OUT5 P1100 comando
-    POS_ALVO   : INT;   // OUT6 P1101 destino ou incremento (décimos de grau)
-    POS_VEL    : INT;   // OUT7 P1102 velocidade (rpm)
-    POS_TIPO   : INT;   // OUT8 P1103 tipo de movimento
+    // Função Posicionador: palavras extras (entradas)
+    POS_FRACAO  : INT;   // IN5  P0052 fração de volta (16384 = 1 volta)
+    POS_VOLTAS  : INT;   // IN6  P0053 número de voltas
+    POS_ESTADO  : INT;   // IN7  P0006 estado do servo (1 = habilitado, 2 = falha)
+    POS_LAG     : INT;   // IN8  P0048 erro de lag, em pulsos
+    // Função Posicionador: palavras extras (saídas)
+    POS_HAB     : INT;   // OUT5 P0099 habilitação (2 habilita, 0 desabilita)
+    POS_DISPARO : INT;   // OUT6 P01079 disparo (subida 0 -> 1)
+    POS_DESTINO : INT;   // OUT7 P01171 destino do movimento 1 (fração de volta)
+    POS_RESET   : INT;   // OUT8 P0219 reset de falhas (subida 0 -> 1)
 
     // comandos e leituras do modo posição (use no online ou numa visualização)
-    xPulso         : BOOL;            // cada FALSE -> TRUE inicia um movimento
-    xZerarPosicao  : BOOL;            // a posição atual passa a ser 0,0°
-    rAnguloGraus   : REAL := 45.0;    // destino (absoluto) ou incremento (relativo)
-    rVelPosRpm     : REAL := 60.0;    // velocidade do movimento
-    iTipoMovimento : INT := 3;        // 0 menor caminho, 1 horário, 2 anti-horário, 3 relativo (pulso)
+    xPulso         : BOOL;            // cada FALSE -> TRUE dispara um movimento
+    rAnguloGraus   : REAL := 90.0;    // destino (absoluto) ou incremento (relativo), de 0 a 359,9°
     rPosAtualGraus : REAL;
     xEmPosicao, xMovendo : BOOL;
 ```
@@ -692,97 +691,110 @@ Busque cada número, clique na linha, digite o valor e clique em **Gravar**, na 
 
 ### 8.4 Programa ST (Posicao_SCA)
 
-Crie o programa e coloque-o na **MainTask** (Add Call). No modo posição, os programas PLC_PRG e Velocidade_SCA podem continuar na tarefa: o drive ignora o que eles mandam.
+Crie o programa e coloque-o na **MainTask** (Add Call). Os programas PLC_PRG e Velocidade_SCA podem continuar na tarefa: no modo 3, o drive ignora as palavras fixas que eles escrevem.
 
 ```
 PROGRAM Posicao_SCA
 
-// 1) comando P1100: um bit para cada função
-GVL_SCA.POS_CMD.0 := GVL_SCA.xHabilita;       // habilita o drive
-GVL_SCA.POS_CMD.1 := GVL_SCA.xPulso;          // inicia o movimento na borda FALSE -> TRUE
-GVL_SCA.POS_CMD.2 := GVL_SCA.xStop;           // STOP
-GVL_SCA.POS_CMD.3 := GVL_SCA.xReset;          // reset de falhas
-GVL_SCA.POS_CMD.4 := GVL_SCA.xZerarPosicao;   // a posição atual vira 0,0°
+// 1) habilitação: P0099 = 2 (habilita sem gravar na memória do drive)
+IF GVL_SCA.xHabilita THEN
+    GVL_SCA.POS_HAB := 2;
+ELSE
+    GVL_SCA.POS_HAB := 0;
+END_IF
 
-// 2) destino ou incremento, velocidade e tipo
-GVL_SCA.POS_ALVO := REAL_TO_INT(GVL_SCA.rAnguloGraus * 10.0);   // graus -> décimos de grau
-GVL_SCA.POS_VEL  := REAL_TO_INT(LIMIT(1.0, GVL_SCA.rVelPosRpm, 3000.0));
-GVL_SCA.POS_TIPO := GVL_SCA.iTipoMovimento;
+// 2) destino: graus -> fração de volta (16384 = 1 volta)
+GVL_SCA.POS_DESTINO := REAL_TO_INT(LIMIT(0.0, GVL_SCA.rAnguloGraus, 359.9) * 16384.0 / 360.0);
 
-// 3) leituras
-GVL_SCA.rPosAtualGraus := INT_TO_REAL(GVL_SCA.POS_ATUAL) / 10.0;
-GVL_SCA.xMovendo   := GVL_SCA.POS_STATUS.1;
-GVL_SCA.xEmPosicao := GVL_SCA.POS_STATUS.2;
+// 3) disparo e reset: o drive reage à subida 0 -> 1
+GVL_SCA.POS_DISPARO := BOOL_TO_INT(GVL_SCA.xPulso);
+GVL_SCA.POS_RESET   := BOOL_TO_INT(GVL_SCA.xReset);
+
+// 4) leituras
+GVL_SCA.rPosAtualGraus := (INT_TO_REAL(GVL_SCA.POS_VOLTAS) + INT_TO_REAL(GVL_SCA.POS_FRACAO) / 16384.0) * 360.0;
+GVL_SCA.rVelAtualRpm   := INT_TO_REAL(GVL_SCA.VEL) * 18750.0 / 32767.0;
+GVL_SCA.xMovendo       := ABS(GVL_SCA.rVelAtualRpm) > 3.0;
+GVL_SCA.xEmPosicao     := NOT GVL_SCA.xMovendo AND GVL_SCA.POS_LAG >= 0 AND GVL_SCA.POS_LAG < 10;
 ```
 
 | Trecho | O que faz |
 | --- | --- |
-| `POS_CMD.1 := xPulso` | o drive reage à **subida** do bit: para dar outro pulso, o xPulso precisa voltar a FALSE antes |
-| `* 10.0` | o drive trabalha em décimos de grau: 45,0° viram 450 |
-| `LIMIT(1.0, …, 3000.0)` | a velocidade do movimento vai de 1 a 3000 rpm |
-| `POS_STATUS.2` | "em posição": o movimento terminou e o disco está no destino |
+| `POS_HAB := 2` | habilita sem gravar o P0099 na memória do drive a cada ciclo da rede |
+| `* 16384.0 / 360.0` | o drive trabalha em fração de volta: 90° viram 4096 |
+| `POS_DISPARO := BOOL_TO_INT(xPulso)` | o drive reage à **subida**: para disparar de novo, o xPulso precisa voltar a FALSE antes |
+| `POS_LAG < 10` | o erro de lag é o que falta para chegar: menos de 10 pulsos (0,2°) e parado = em posição |
 
-**Pulso automático (opcional):** para o disco andar sozinho de tempos em tempos, troque a linha do `POS_CMD.1` por dois temporizadores: um marca o tempo (a cada 2 segundos) e o outro gera o pulso, com 200 ms de duração:
+**Disparo automático (opcional):** para o disco andar sozinho de tempos em tempos, troque a linha do `POS_DISPARO` por dois temporizadores: um marca o intervalo (2 s) e o outro gera o pulso, de 200 ms:
 
 ```
 VAR
-    tCiclo : TON;   // marca o intervalo entre os pulsos
+    tCiclo : TON;   // marca o intervalo entre os disparos
     tPulso : TP;    // gera um pulso de duração fixa
 END_VAR
 
 tCiclo(IN := GVL_SCA.xHabilita AND NOT tCiclo.Q, PT := T#2S);
 tPulso(IN := tCiclo.Q, PT := T#200MS);
-GVL_SCA.POS_CMD.1 := tPulso.Q;   // 200 ms em TRUE a cada 2 s = um pulso
+GVL_SCA.POS_DISPARO := BOOL_TO_INT(tPulso.Q);   // 200 ms em 1 a cada 2 s = um disparo
 ```
 
-O pulso tem 200 ms, e não um ciclo só, de propósito: a comunicação manda os dados a cada RPI (20 ms, por exemplo), e um bit que fica TRUE por menos tempo que isso pode não chegar ao drive.
+O pulso tem 200 ms, e não um ciclo só, de propósito: a rede manda os dados a cada RPI (20 ms, por exemplo), e um valor que fica em 1 por menos tempo que isso pode não chegar ao drive.
 
 ### 8.5 Testar
 
-**Build**, **Login** e **Start**. O chip **P0801** deve ficar em **Data Active**. Altere os valores no online (**Ctrl+F7**):
+**Build**, **Login** e **Start**. O chip **P0801** deve estar em **Data Active**. Altere os valores no online (**Ctrl+F7**):
 
 | Ação no CODESYS | Resultado esperado |
 | --- | --- |
-| `xHabilita := TRUE` | o drive habilita e segura o disco parado; `POS_STATUS` com os bits 0 e 2 |
-| `xZerarPosicao` TRUE e FALSE | a posição atual passa a ser 0,0° |
-| `iTipoMovimento := 3`, `rAnguloGraus := 45` | modo pulso, de 45° em 45° |
-| `xPulso` TRUE e FALSE | o disco anda 45°; `rPosAtualGraus` = 45,0 |
-| `xPulso` TRUE e FALSE mais 3 vezes | 90° → 135° → **180°**: meia volta; `POS_CONT` conta os movimentos |
-| `iTipoMovimento := 0`, `rAnguloGraus := 90`, pulso | vai para **90,0°** pelo menor caminho |
-| `rAnguloGraus := 270`, pulso | vai para **270,0°** |
-| `iTipoMovimento := 2`, `rAnguloGraus := 0`, pulso | volta a 0,0° **girando 270° no anti-horário**, e não 90° no horário |
-| `xStop := TRUE` no meio de um movimento | o disco para pela rampa; `xStop := FALSE` e um novo pulso retomam |
+| `xHabilita := TRUE` | `POS_ESTADO` = 1 (servo ready) e o chip P0006 mostra 1 |
+| `rAnguloGraus := 90`, depois `xPulso := TRUE` e `FALSE` | o disco vai para **90°**; `rPosAtualGraus` = 90 e `xEmPosicao` = TRUE |
+| `rAnguloGraus := 270` e um pulso | o disco vai para **270°** |
+| outro pulso com o mesmo ângulo | nada se mexe: no absoluto, o destino é a posição final |
+| `xHabilita := FALSE` | o drive desabilita |
+
+**Posição por pulso (relativo):** na aba Parâmetros (ou na HMI), mude o **P01151 para 3**. O destino passa a ser **incremento**: com `rAnguloGraus := 45`, cada pulso anda **45°**; quatro pulsos dão meia volta. Volte o P01151 para 5 para o absoluto.
+
+**Ciclo completo (ida e volta com um disparo):** programe o movimento 2 como absoluto em 0° (**P01152 = 5**, P01172 = 0, P01182 = 0, P01192 = 100, P01202 = P01212 = 1000), coloque-o no ciclo 1 (**P01102 = 2**) e mude o **P01080 para −1**. Um único pulso leva o disco ao destino e o traz de volta a 0°. Com **P01162 = 1000**, ele espera 1 s no destino.
+
+As **missões 12 a 16** da aba Missões seguem esse roteiro e conferem sozinhas.
 
 ### 8.6 Testar sem o CODESYS: o painel Posição da aba Mestre
 
-Antes de programar o CLP, dá para sentir o modo posição pelo **CLP virtual** do simulador:
+Com o drive configurado (8.2), a aba **Mestre** do simulador faz o papel do CLP:
 
-1. Configure o drive para posição (assistente **Comunicação com o CLP → Posição**).
-2. Aba **Mestre** → **Conectar (RegisterSession)** → em **Palavras de entrada** e **Palavras de saída**, coloque **8** → **Forward Open**.
-3. No lugar das palavras 5 a 8 aparece o painel **Posição**:
-   - **Habilitar** liga o bit 0 do P1100;
-   - **Pulso ▶** faz o bit 1 ir de 0 para 1 e voltar, ou seja, um pulso;
-   - **STOP**, **Reset** e **Zerar posição** são os bits 2, 3 e 4;
-   - **Ângulo** (em graus), **Velocidade** (rpm) e **Tipo** (menor caminho, horário, anti-horário ou relativo) são convertidos sozinhos para o que vai na rede.
-4. Embaixo do painel aparece **o que vai pela rede** em cada palavra (por exemplo, 90,0° = 900 = 0384h): é exatamente o que o seu programa no CODESYS terá de mandar.
+1. **Conectar (RegisterSession)** → ajuste **8** palavras de entrada e **8** de saída → **Forward Open**, com **CLP em RUN** marcado.
+2. O painel **Posição pela Função Posicionador** aparece abaixo das palavras de saída:
+   - **Habilitar** escreve 2 na 5ª palavra (P0099);
+   - **Destino do movimento 1** converte os graus em fração de volta e escreve na 7ª palavra (P01171);
+   - **Disparar ▶** dá um pulso de 300 ms na 6ª palavra (P01079);
+   - **Reset** dá um pulso na 8ª palavra (P0219).
+3. Embaixo, o painel mostra a posição atual, se está movendo ou em posição, o erro de lag e o estado do servo. As palavras de entrada 5 a 8 aparecem decodificadas no quadro **Entradas**.
 
-Antes de ligar o CODESYS, clique em **Forward Close** e **Desconectar**: o drive aceita um mestre só.
+### 8.7 Outros movimentos: velocidade, torque e jog
 
-### 8.7 Problemas comuns
+A mesma Função Posicionador faz outros movimentos, só mudando o tipo no P0115X:
+
+| Movimento | Tipo | O que programar | Ao disparar |
+| --- | --- | --- | --- |
+| Velocidade | 2 | P0119X = rpm, P0120X / P0121X = rampas (rpm/s) | acelera e mantém a velocidade até outro movimento |
+| Torque (Iq) | 1 | P0119X = corrente em décimos de A, P0120X = rampa em A/s | aplica a corrente e mantém |
+| Jog | 7 | P0119X = rpm, rampas; **P01077 = 1** (nível) | gira enquanto o P01079 ficar em 1 e para ao voltar a 0 |
+
+Exemplo do próprio manual da WEG: um ciclo com um movimento de **velocidade** (tipo 2) seguido de um **relativo** de 1/4 de volta (tipo 3, fração 4096). O primeiro disparo faz o disco girar; o segundo o faz andar mais um quarto de volta e parar.
+
+### 8.8 Problemas comuns
 
 | Sintoma | Causa provável | Solução |
 | --- | --- | --- |
-| Forward Open recusado (0x0109), P0801 em Wait Comm | a conexão no CODESYS é a de 4 palavras, ou o P0849 = 1 não foi feito | conexão **8 palavras (posicao)**; aplique com P0849 = 1 |
-| Conecta, mas o drive não habilita | habilitando pela OUT1 (palavra de controle) | no modo posição quem habilita é o **P1100 bit 0** (`POS_CMD.0`) |
-| O pulso não faz nada | `xPulso` já estava TRUE | o movimento começa na **subida**: volte a FALSE e ligue de novo |
-| Anda 10 vezes mais (ou menos) | ângulo sem a conversão para décimos | `POS_ALVO := rAnguloGraus * 10` |
-| Nada se move, mesmo habilitado | P1020 = 0 (aplicativo parado) ou P0202 diferente de 4 | P1020 = 1 e P0202 = 4 |
-| No modo absoluto, o disco vai pelo lado "errado" | tipo 0 = menor caminho | use 1 (horário) ou 2 (anti-horário) para forçar o sentido |
+| O disparo não faz nada | drive desabilitado (`POS_ESTADO` ≠ 1), P01080 = 0, ciclo vazio (P01101 = 0) ou o P01079 não voltou a 0 entre um disparo e outro | habilite; confira P01080 e P01101; volte o xPulso a FALSE |
+| Não habilita | P0202 ≠ 3, emergência (STO), falha (`POS_ESTADO` = 2) ou queda de comunicação com P0662 = 3 | confira P0202; libere o STO; reset; depois de uma queda, escreva 0 e depois 2 no P0099 |
+| O disco vai para o lugar errado | destino em graus em vez de fração de volta, ou movimento relativo (P01151 = 3) quando se queria absoluto | fração = graus × 16384 / 360; confira o P01151 |
+| O disco dá uma volta inteira para chegar | o absoluto conta voltas: se o disco já deu uma volta (posição 450°), o destino 90° com 0 voltas fica uma volta atrás | use o relativo, ou acerte as voltas no P01181 |
+| Conexão recusada (0x0109) | o drive não tem 8 palavras aplicadas | P0849 = 1 depois de mapear P0820…P0838 |
+| P0202 = 4 e nada acontece | não há programa ladder gravado | use P0202 = 3 (Função Posicionador) |
 
-### 8.8 Voltar para velocidade ou torque
+### 8.9 Voltar para velocidade ou torque
 
-1. **Comunicação com o CLP** → **Velocidade e torque** (ou, pelos outros caminhos: P0202 = 6, P0820…P0823 e P0835…P0838 = 0 e P0849 = 1).
-2. No CODESYS, troque a conexão de volta para **Exclusive Owner, 4 palavras (velocidade e torque)**.
+Com o drive desabilitado: **P0099 = 0**, **P0202 = 6**, P0820…P0823 e P0835…P0838 = 0 e **P0849 = 1**. No CODESYS, volte para a conexão **Exclusive Owner, 4 palavras**. O assistente, na opção **Velocidade e torque**, faz isso sozinho.
 
 ## Extra: As missões da bancada
 
@@ -793,7 +805,6 @@ A aba **Missões** do simulador traz **16 desafios** em sequência, do básico a
 | 1 a 3 | abrir a sessão, P0202 = 6, conexão em Data Active |
 | 4 a 7 | habilitar, 300 rpm, inversão em complemento de dois, função STOP |
 | 8 a 11 | corrente numa palavra extra, equilibrar o peso por torque, cabo rompido (F00047), fim de curso |
-| 12 | posicionar em 135,0° pelo Ladder |
-| **13 a 16** | **posição pela rede:** conexão de 8 palavras, **4 pulsos de 45°**, posição absoluta (90° e 270°) e sentido forçado (de 270° a 0° pelo anti-horário) |
+| **12 a 16** | **posição pela Função Posicionador:** configurar e conectar com 8 palavras, posicionar em 135,0°, **4 pulsos de 45°**, posição absoluta (90° e 270°) e ciclo completo (vai a 180° e volta com um só disparo) |
 
-Faça-as pelo CLP virtual da aba **Mestre** ou pelo seu projeto no CODESYS. As missões 13 a 16 foram pensadas para o projeto da Parte 8.
+Faça-as pelo CLP virtual da aba **Mestre** ou pelo seu projeto no CODESYS. As missões 12 a 16 foram pensadas para o projeto da Parte 8.

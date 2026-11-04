@@ -132,24 +132,40 @@
   P(1000, 'Estado da PLC', 0, 5, 0, { ...RO, opts: { 0: 'Sem programa', 1: 'Salvando programa', 2: 'Cópia para cartão', 3: 'Programa inválido', 4: 'Programa parado', 5: 'Programa em execução' } });
   P(1001, 'Tempo de Scan', 0, 65535, 50, { ...RO, dec: 1, unit: 'ms' });
   P(1020, 'Comando da PLC', 0, 1, 1, { pp: true, opts: { 0: 'Para programa', 1: 'Executa programa' } });
-  // Parâmetros do usuário P01050…P01249: os nomes abaixo são do APLICATIVO LADDER DIDÁTICO
-  // "DISCO_POS" que acompanha a bancada (no equipamento real, o aluno cria no WLP/WPS).
-  const LAD = {
-    1100: ['Ladder: Comando (bit0 hab, bit1 inicia, bit2 STOP, bit3 reset, bit4 zera)', 0, 255, 0],
-    1101: ['Ladder: Posição alvo / incremento', -32768, 32767, 0, 1, '°'],
-    1102: ['Ladder: Velocidade de posicionamento', 1, 3000, 100, 0, 'rpm'],
-    1103: ['Ladder: Modo (0 menor caminho, 1 horário, 2 anti-horário, 3 relativo)', 0, 3, 0],
-    1104: ['Ladder: Rampa de posicionamento', 1, 32767, 500, 0, 'ms/krpm'],
-    1110: ['Ladder: Status (bit0 hab, bit1 movendo, bit2 em posição, bit3 falha, bit4 fim de curso, bit5 STOP)', 0, 65535, 0, 0, '', true],
-    1111: ['Ladder: Posição atual', 0, 3599, 0, 1, '°', true],
-    1112: ['Ladder: Erro de posição', -32768, 32767, 0, 1, '°', true],
-    1113: ['Ladder: Posicionamentos concluídos', 0, 32767, 0, 0, '', true],
-  };
-  for (let n = 1050; n <= 1249; n++) {
-    const l = LAD[n];
-    if (l) P(n, l[0], l[1], l[2], l[3], { dec: l[4] || 0, unit: l[5] || '', ro: !!l[6], src: 'SIM', note: 'Aplicativo ladder didático "DISCO_POS" (simulado).' });
-    else P(n, `Parâmetro do Usuário ${n}`, -32768, 32767, 0, { src: 'PROG' });
+  P(1024, 'Supervisão PLC', 0, 2, 0, { pp: true, opts: { 0: 'Inativa', 1: 'Gera alarme A00708', 2: 'Gera falha F00709' }, note: 'Ação quando o aplicativo ladder não está rodando. O simulador não tem aplicativo ladder gravado.' });
+
+  // ---- FUNÇÃO POSICIONADOR (P00202 = 3)  [PROG V2.1X cap. 20 / Adendo V1.7X cap. 19] ----
+  // Com P00202 = 3 o aplicativo ladder não roda, e os parâmetros do usuário passam a ser da Função Posicionador.
+  // No simulador o disparo é pelo P01079 (escrito pela rede). Disparo por entrada digital não é simulado.
+  const FP = (n, name, min, max, def, o = {}) => P(n, name, min, max, def, Object.assign({ src: 'PROG', fp: true }, o));
+  FP(1070, 'Seleciona Slot (entradas da Função Posicionador)', 0, 3, 0, { opts: { 0: 'DIs padrão do drive', 1: 'Slot 1', 2: 'Slot 2', 3: 'Slot 3' }, note: 'Disparo por entrada digital não simulado: use o P01079 pela rede.' });
+  FP(1071, 'Reseta Ciclo', 0, 1, 0, { note: 'Na transição 0 → 1, todos os ciclos voltam para o primeiro movimento.' });
+  FP(1072, 'Mapeia Parâmetros da Função Move do SCA05', 0, 1, 0, { note: 'Não simulado.' });
+  FP(1074, 'Mestre do Movimento Tipo Seguimento', 0, 4, 0, { opts: { 0: 'Sem função', 1: 'Entradas rápidas', 2: 'Rede CANopen', 3: 'Entrada de encoder 1', 4: 'Entrada de encoder 2' }, note: 'Seguidor não simulado.' });
+  FP(1075, 'Tipo da Busca de Zero Máquina', 0, 1, 0, { note: 'Busca de zero não simulada.' });
+  FP(1076, 'Tipo de Borda da Busca de Zero Máquina', 0, 1, 0, { note: 'Busca de zero não simulada.' });
+  FP(1077, 'Acionamento dos Ciclos por Borda ou Nível', 0, 1, 0, { opts: { 0: 'Borda de subida', 1: 'Nível' } });
+  FP(1078, 'Filtro do Acionamento dos Ciclos', 0, 32767, 0, { unit: 'ms' });
+  FP(1079, 'Acionamento do Ciclo por Parâmetro', 0, 1, 0, { note: 'Em 1, aciona o ciclo programado em P01080.' });
+  FP(1080, 'Ciclo Acionado pelo Parâmetro P01079', -10, 10, 0, { note: 'Positivo: um movimento do ciclo por acionamento. Negativo: ciclo completo.' });
+  for (let k = 1; k <= 10; k++) FP(1080 + k, `Ciclo Acionado pela Entrada Digital ${String(k).padStart(2, '0')}`, -10, 10, 0, { note: 'Disparo por entrada digital não simulado.' });
+  FP(1091, 'Ref. de Posição (fração de volta) p/ Saída Digital', 0, 16383, 0, { note: 'Não simulado.' });
+  FP(1092, 'Ref. de Posição (número de voltas) p/ Saída Digital', 0, 32767, 0, { note: 'Não simulado.' });
+  const ORD = ['Primeiro', 'Segundo', 'Terceiro', 'Quarto', 'Quinto'];
+  for (let c = 1; c <= 10; c++) for (let j = 0; j < 5; j++) FP(1100 + (c - 1) * 5 + j + 1, `${ORD[j]} Movimento do Ciclo ${String(c).padStart(2, '0')}`, 0, 10, 0, { note: 'Número do movimento (1 a 10). 0 = fim do ciclo.' });
+  const FP_TIPOS = { 0: 'Sem movimento', 1: 'Controle de Iq (torque)', 2: 'Controle de velocidade', 3: 'Posicionamento relativo', 4: 'Posicionamento relativo', 5: 'Posicionamento absoluto', 6: 'Posicionamento absoluto', 7: 'Jog', 8: 'Seguidor de posição', 9: 'Seguidor de velocidade', 10: 'Busca de zero (sentido +)', 11: 'Busca de zero (sentido −)' };
+  for (let m = 1; m <= 10; m++) {
+    const mm = String(m).padStart(2, '0');
+    FP(1150 + m, `Tipo do Movimento ${mm}`, 0, 11, 0, { opts: FP_TIPOS });
+    FP(1160 + m, `Timer do Movimento ${mm}`, 0, 32767, 0, { unit: 'ms', note: 'Espera entre o acionamento e o início do movimento.' });
+    FP(1170 + m, `Ref. de Posição (fração de volta) do Movimento ${mm}`, 0, 32767, 0, { unit: 'pulsos', note: '16384 = 1 volta (4096 = 90°, 8192 = 180°).' });
+    FP(1180 + m, `Ref. de Posição (número de voltas) do Movimento ${mm}`, -32768, 32767, 0);
+    FP(1190 + m, `Ref. de Velocidade/Iq do Movimento ${mm}`, -32768, 32767, 0, { note: 'rpm (velocidade, jog e posicionamentos) ou décimos de A (Iq). Negativo inverte o sentido.' });
+    FP(1200 + m, `Aceleração do Movimento ${mm}`, 0, 32767, 0, { unit: 'rpm/s', note: 'No tipo Iq: rampa em A/s.' });
+    FP(1210 + m, `Desaceleração do Movimento ${mm}`, 0, 32767, 0, { unit: 'rpm/s' });
+    FP(1220 + m, `Jerk do Movimento ${mm}`, 0, 32767, 0, { unit: 'rpm/s²', note: 'Aceito; o simulador usa perfil trapezoidal (sem curva S).' });
   }
+  { const def = new Set(DEFS.map(d => d.n)); for (let n = 1050; n <= 1249; n++) if (!def.has(n)) P(n, `Parâmetro do Usuário ${n}`, -32768, 32767, 0, { src: 'PROG' }); }
 
   const DEF_MAP = new Map(DEFS.map(d => [d.n, d]));
   const PARAM_LIST = DEFS.map(d => d.n).sort((a, b) => a - b);
@@ -170,7 +186,7 @@
   // Alarmes e falhas usados [PROG Tabela 5.1]
   const CODES = {
     2: 'Subtensão no Link DC com drive habilitado', 6: 'Falha externa',
-    47: 'Ethernet offline (comunicação com o mestre)', 48: 'Erro de acesso à interface Ethernet',
+    47: 'Ethernet offline (comunicação com o mestre)', 708: 'Aplicativo do PLC não está rodando', 709: 'Aplicativo do PLC não está rodando', 48: 'Erro de acesso à interface Ethernet',
     122: 'Escrita em parâmetro somente leitura', 124: 'Parâmetro exige motor desabilitado',
     125: 'Parâmetro inexistente', 126: 'Valor fora dos limites',
     147: 'Ethernet offline (comunicação com o mestre)', 148: 'Erro de acesso à interface Ethernet'
@@ -215,11 +231,11 @@
       this.nRefRamped = 0; this.vInt = 0; this.nFilt = 0;
       this.fcState = { h: false, a: false }; this.stopActive = false; this.ctlMode = 'speed'; this.imax = 0; this.speedCountsInst = 0;
       this.homeOffset = 0;                 // rad, referência do usuário
-      this.prev = { ctrl: 0, p219: 0, lad: 0, di: [0, 0, 0], enableReq: false, ioRun: false };
+      this.prev = { ctrl: 0, p219: 0, di: [0, 0, 0], enableReq: false, ioRun: false, mode: 0 };
       this.out = [0, 0, 0, 0];             // palavras de saída 1..4 recebidas do mestre
       this.outExtra = [];
       this.volatil = new Set();   // parâmetros escritos pelo I/O cíclico: ficam só na memória (como no drive real)
-      this.lad = { active: false, target: 0, moving: false, inPos: true, count: 0, nCmd: 0 };
+      this.fp = { ptr: new Array(11).fill(0), queue: [], cur: null, hold: null, nCmd: 0, iqCmd: 0, count: 0, prevTrig: 0, trigSince: -1, fired: false, prevReset: 0, lastCycle: 0 };
       this.comm = {
         phase: 'setup', phaseT: 0, applied: null,
         ioConnected: false, ioRun: false, ioTimedOut: false, lastRx: -1, lastTx: -1,
@@ -404,6 +420,7 @@
       if (this.comm.accessErr && this.fault !== 48) return 148;
       if (this.comm.commErr && this.fault !== 47) return 147;
       if (this.alarmTransient.code && this.now < this.alarmTransient.until) return this.alarmTransient.code;
+      if (this.p.get(1024) === 1 && this.p.get(202) === 4) return 708;    // supervisão PLC: aplicativo não está rodando
       return 0;
     }
 
@@ -433,6 +450,7 @@
     modeActual() {
       const m = this.p.get(202);
       if (m === 1) return 0; if (m === 2) return 1; if (m === 4) return 3;
+      if (m === 3) { const C = this.fp.cur; return C && C.type === 1 ? 0 : C && (C.type === 2 || C.type === 7) ? 1 : 3; }
       if (m === 6) return (this.out[3] & 0xF) === 0 ? 0 : 1;
       return 1;
     }
@@ -503,13 +521,17 @@
       const ctrl = mode === 6 ? (this.out[0] & 0xFFFF) : 0;
       if (mode === 6 && (ctrl & 0x80) && !(this.prev.ctrl & 0x80)) this.resetFaults('palavra de controle bit 7');
       this.prev.ctrl = ctrl;
-      const lad = this.p.get(1100), ladRun = this.p.get(1020) === 1;
-      if (mode === 4 && ladRun && (lad & 8) && !(this.prev.lad & 8)) this.resetFaults('ladder P01100 bit3');
+      if (mode !== this.prev.mode) {
+        if (mode === 4) this.log('P00202 = 4 (Ladder): nenhum aplicativo ladder gravado neste drive. No SCA06 real, o programa é feito no WLP/WPS. O eixo não será controlado.', 'warn');
+        if (mode === 3) this.log('P00202 = 3: Função Posicionador. Habilitação pelo P00099; movimentos acionados pelo P01079 (ciclo em P01080).');
+        this.prev.mode = mode;
+      }
+      if (this.p.get(1024) === 2 && mode === 4 && !this.fault) this.raiseFault(709);
 
       // ---- Requisição de habilitação por fonte  [PROG P00202 / ETH 6.2.1]
       let req = false;
-      if (mode === 1 || mode === 2) req = di.enable !== null ? di.enable : this.p.get(99) !== 0;
-      else if (mode === 4) req = ladRun && !!(lad & 1);
+      if (mode === 1 || mode === 2 || mode === 3) req = di.enable !== null ? di.enable : this.p.get(99) !== 0;
+      else if (mode === 4) req = false;                                    // sem aplicativo ladder gravado
       else if (mode === 6) req = !!(ctrl & 0x08);
       const edge = req && !this.prev.enableReq;
       if (!req) { this.stoLatch = false; this.commDisableLatch = false; if (this.enabled) this.log('Drive desabilitado.'); this.enabled = false; }
@@ -522,7 +544,7 @@
       if (req && !this.enabled && canEnable) { this.enabled = true; this.stoLatch = false; this.vInt = 0; this.nRefRamped = this.rpmUser(); this.log('Drive habilitado.'); }
 
       // ---- STOP  [PROG 12.3]
-      const stopReq = di.stop || (mode === 6 && !!(ctrl & 0x04)) || (mode === 4 && ladRun && !!(lad & 4)) || this.commStopLatch;
+      const stopReq = di.stop || (mode === 6 && !!(ctrl & 0x04)) || this.commStopLatch;
       this.stopActive = this.enabled && stopReq;
 
       // ---- Referências
@@ -533,19 +555,19 @@
       else if (mode === 6) {
         if ((this.out[3] & 0xF) === 0) { ctlMode = 'torque'; iqRef = toInt16(this.out[2]) / 10; }
         else nRef = countsToRpm(toInt16(this.out[1]));
-      } else if (mode === 4) { ctlMode = 'position'; }
+      } else if (mode === 3) { ctlMode = 'fp'; }
 
       if (this.stopActive) {
         ctlMode = 'speed';
         const rate = 1000 / Math.max(1, this.p.get(105)) * 1000;        // rpm/s  (ms/krpm)
         this.nRefRamped = approach(this.nRefRamped, 0, rate * h);
         nRef = this.nRefRamped; ramp = 'done';
-        // STOP cancela os blocos de movimento do ladder  [PROG 12.3]
-        if (mode === 4) { this.lad.moving = false; this.lad.target = this.posUserRad() * 180 / Math.PI; this.lad.nCmd = 0; }
+        // STOP cancela os movimentos da Função Posicionador  [PROG 12.3]
+        if (mode === 3) this.fpCancel('função STOP');
       }
 
-      // ---- Ladder (posicionamento)
-      if (ctlMode === 'position') nRef = this.ladderStep(h, lad);
+      // ---- Função Posicionador (P00202 = 3)
+      if (ctlMode === 'fp') { const r = this.fpStep(h); ctlMode = r.ctl; nRef = r.nRef; iqRef = r.iqRef; }
 
       // ---- Fim de curso (não disponível em modo torque)  [PROG 12.4]
       if (ctlMode !== 'torque') {
@@ -611,44 +633,112 @@
         if (d > lim && m.omega > 0) { m.theta -= (d - lim); m.omega = 0; }
         if (d < -lim && m.omega < 0) { m.theta += (-lim - d); m.omega = 0; }
       }
-      this.prev.lad = lad;
       // térmico [SIM]
       this.tSink += ((34 + 1.6 * m.iq * m.iq) - this.tSink) * h / 40;
       this.tAir += ((32 + 0.6 * m.iq * m.iq) - this.tAir) * h / 60;
     }
 
-    /** Aplicativo ladder didático "DISCO_POS" — roda quando P00202 = 4 e P01020 = 1 */
-    ladderStep(h, cmd) {
-      const L = this.lad;
-      const posDeg = this.posUserRad() * 180 / Math.PI;
-      if ((cmd & 16) && !(this.prev.lad & 16)) { this.homeOffset = this.mech.theta; L.target = 0; this.log('Ladder: posição atual definida como 0,0°.'); }
-      if (!this.enabled) { L.target = posDeg; L.moving = false; return 0; }
-      if ((cmd & 2) && !(this.prev.lad & 2) && !this.stopActive) {
-        const mode = this.p.get(1103), tgt = this.p.get(1101) / 10;
-        const cur = wrapDeg(posDeg);
-        let delta;
-        if (mode === 3) delta = tgt;
-        else {
-          const t = wrapDeg(tgt);
-          if (mode === 1) delta = wrapDeg(t - cur);
-          else if (mode === 2) delta = -wrapDeg(cur - t);
-          else delta = wrap180(t - cur);
-        }
-        L.target = posDeg + delta; L.moving = true; L.inPos = false;
-        if (mode === 3) { L.relSeq = (L.relInc === tgt ? (L.relSeq || 0) : 0); L.relInc = tgt; L.relPend = true; } else { L.relSeq = 0; L.relInc = null; L.relPend = false; }
-        this.log(`Ladder: movimento iniciado (${delta >= 0 ? '+' : ''}${delta.toFixed(1)}°).`);
+    // ===================== Função Posicionador  [PROG V2.1X cap. 20] =====================
+    fpMoves(cyc) {
+      const list = [];
+      for (let j = 0; j < 5; j++) { const m = this.p.get(1100 + (cyc - 1) * 5 + j + 1); if (!m) break; list.push(m); }
+      return list;
+    }
+    fpCancel(motivo) {
+      const F = this.fp;
+      if (F.cur || F.queue.length) this.log(`Função Posicionador: movimento cancelado (${motivo}).`, 'warn');
+      F.cur = null; F.queue = []; F.nCmd = this.rpmUser(); F.iqCmd = 0; F.hold = this.posUserRad() * 180 / Math.PI;
+    }
+    fpTrigger() {
+      const F = this.fp, c = this.p.get(1080);
+      if (!c) { this.log('P01079 acionado, mas P01080 = 0: nenhum ciclo programado.', 'warn'); return; }
+      const cyc = Math.abs(c), moves = this.fpMoves(cyc);
+      if (!moves.length) { this.log(`Ciclo ${cyc} vazio: programe o primeiro movimento em P0${1100 + (cyc - 1) * 5 + 1}.`, 'warn'); return; }
+      F.lastCycle = cyc;
+      if (c < 0) F.queue = moves.slice();
+      else { const i = F.ptr[cyc] % moves.length; F.queue = [moves[i]]; F.ptr[cyc] = (i + 1) % moves.length; }
+      this.log(`Função Posicionador: ciclo ${cyc}${c < 0 ? ' completo' : ''} acionado → movimento ${F.queue.join(', ')}.`);
+      this.fpNext();
+    }
+    fpNext() {
+      const F = this.fp, m = F.queue.shift();
+      if (!m) return false;
+      F.cur = { m, type: this.p.get(1150 + m), tStart: this.now + this.p.get(1160 + m) / 1000, started: false, done: false };
+      return true;
+    }
+    fpStart(C) {
+      const F = this.fp, m = C.m, posDeg = this.posUserRad() * 180 / Math.PI;
+      const frac = this.p.get(1170 + m), turns = this.p.get(1180 + m), vel = this.p.get(1190 + m);
+      C.acc = this.p.get(1200 + m) || 30000; C.dec = this.p.get(1210 + m) || 30000; C.started = true;
+      const T = C.type;
+      if (T === 3 || T === 4 || T === 5 || T === 6) {
+        let x = turns + frac / PULSES_PER_REV; if (vel < 0) x = -x;
+        C.target = (T <= 4 ? posDeg : 0) + x * 360; C.vmax = Math.max(1, Math.abs(vel));
+        this.log(`Movimento ${m}: ${T <= 4 ? 'posicionamento relativo' : 'posicionamento absoluto'} para ${(C.target).toFixed(1)}° a ${C.vmax} rpm.`);
+      } else if (T === 2 || T === 7) { C.n = vel; this.log(`Movimento ${m}: ${T === 2 ? 'velocidade' : 'jog'} ${vel} rpm.`); }
+      else if (T === 1) { C.iq = vel / 10; C.ramp = this.p.get(1200 + m) || 1000; this.log(`Movimento ${m}: controle de Iq ${C.iq.toFixed(1)} A.`); }
+      else { this.log(`Movimento ${m}: tipo ${T} (${T >= 10 ? 'busca de zero' : T >= 8 ? 'seguidor' : 'sem movimento'}) não simulado; ignorado.`, 'warn'); C.done = true; }
+    }
+    fpPosition(h, targetDeg, vmax, acc, dec) {
+      const F = this.fp, posDeg = this.posUserRad() * 180 / Math.PI, errDeg = targetDeg - posDeg;
+      const vProfile = Math.sqrt(2 * dec * 6 * Math.abs(errDeg)) / 6;          // rpm (1 rpm = 6 °/s)
+      const kp = this.p.get(159) * 0.4;                                        // 1/s [SIM]
+      const n = Math.sign(errDeg) * Math.min(vmax, vProfile, Math.abs(errDeg) * kp / 6);
+      F.nCmd = approach(F.nCmd, n, (Math.abs(n) > Math.abs(F.nCmd) ? acc : dec) * h);
+      return { errDeg, n: F.nCmd };
+    }
+    fpStep(h) {
+      const F = this.fp, posDeg = this.posUserRad() * 180 / Math.PI;
+      // reseta ciclo (borda de subida do P01071)
+      const rst = this.p.get(1071);
+      if (rst && !F.prevReset) { F.ptr.fill(0); this.log('P01071: ciclos reinicializados no primeiro movimento.'); }
+      F.prevReset = rst;
+      if (!this.enabled) { F.cur = null; F.queue = []; F.nCmd = 0; F.iqCmd = 0; F.hold = posDeg; F.prevTrig = this.p.get(1079); F.fired = true; return { ctl: 'speed', nRef: 0, iqRef: 0 }; }
+      if (F.hold === null) F.hold = posDeg;
+      // acionamento pelo P01079: filtro P01078, borda ou nível P01077
+      const trig = this.p.get(1079);
+      if (trig && !F.prevTrig) { F.trigSince = this.now; F.fired = false; }
+      F.prevTrig = trig;
+      const armed = trig && this.now - F.trigSince >= this.p.get(1078) / 1000;
+      const livre = !F.cur || (F.cur.done && !F.queue.length);
+      if (armed && ((this.p.get(1077) === 0 && !F.fired) || (this.p.get(1077) === 1 && livre))) { F.fired = true; this.fpTrigger(); }
+      const C = F.cur;
+      if (!C) { const r = this.fpPosition(h, F.hold, 300, 30000, 30000); return { ctl: 'speed', nRef: r.n, iqRef: 0 }; }
+      if (!C.started) {
+        if (this.now < C.tStart) { const r = this.fpPosition(h, F.hold, 300, 30000, 30000); return { ctl: 'speed', nRef: r.n, iqRef: 0 }; }
+        this.fpStart(C);
       }
-      const errDeg = L.target - posDeg;
-      const vmax = this.p.get(1102);
-      const acc = 1e6 / Math.max(1, this.p.get(1104));        // rpm/s
-      const accDeg = acc * 6;                                   // °/s²  (1 rpm = 6 °/s)
-      const vProfile = Math.sqrt(2 * accDeg * Math.abs(errDeg)) / 6;  // rpm
-      const kp = this.p.get(159) * 0.4;                         // 1/s [SIM]
-      let n = Math.sign(errDeg) * Math.min(vmax, vProfile, Math.abs(errDeg) * kp / 6);
-      L.nCmd = approach(L.nCmd, n, acc * h);
-      if (L.moving && Math.abs(errDeg) < 0.05 && Math.abs(this.rpmUser()) < 3) { L.moving = false; L.inPos = true; L.count++; if (L.relPend) { L.relSeq = (L.relSeq || 0) + 1; L.relPend = false; } this.log('Ladder: em posição.'); }
-      if (!L.moving) L.inPos = Math.abs(errDeg) < 0.2;
-      return L.nCmd;
+      const T = C.type;
+      const terminou = () => { C.done = true; F.count++; if (F.queue.length) this.fpNext(); };
+      if (T >= 3 && T <= 6) {
+        const r = this.fpPosition(h, C.target, C.vmax, C.acc, C.dec);
+        if (!C.done && Math.abs(r.errDeg) < 0.05 && Math.abs(this.rpmUser()) < 3) { this.log(`Movimento ${C.m}: em posição (${posDeg.toFixed(1)}°).`); F.hold = C.target; terminou(); }
+        return { ctl: 'speed', nRef: r.n, iqRef: 0 };
+      }
+      if (T === 2 || T === 7) {
+        const alvo = T === 7 && !trig ? 0 : C.n;
+        F.nCmd = approach(F.nCmd, alvo, (Math.abs(alvo) > Math.abs(F.nCmd) ? C.acc : C.dec) * h);
+        if (T === 2 && !C.done && F.nCmd === alvo) terminou();
+        if (T === 7 && !trig && F.nCmd === 0) { F.hold = posDeg; F.cur = null; F.count++; this.log(`Movimento ${C.m}: jog encerrado.`); }
+        if (T === 2 && F.nCmd === 0 && C.done) F.hold = posDeg;
+        return { ctl: 'speed', nRef: F.nCmd, iqRef: 0 };
+      }
+      if (T === 1) {
+        F.iqCmd = approach(F.iqCmd, C.iq, C.ramp * h);
+        if (!C.done && F.iqCmd === C.iq) terminou();
+        F.hold = posDeg;
+        return { ctl: 'torque', nRef: 0, iqRef: F.iqCmd };
+      }
+      if (C.done && !F.queue.length) F.cur = null;
+      const r = this.fpPosition(h, F.hold, 300, 30000, 30000);
+      return { ctl: 'speed', nRef: r.n, iqRef: 0 };
+    }
+    fpView() {
+      const F = this.fp, C = F.cur, posDeg = this.posUserRad() * 180 / Math.PI;
+      const alvo = C && C.started && C.target !== undefined ? C.target : F.hold;
+      const movendo = !!(C && C.started && !C.done && (C.type >= 2 && C.type <= 7));
+      return { cur: C ? C.m : 0, type: C ? C.type : 0, moving: movendo, waiting: !!(C && !C.started), done: !C || C.done,
+        inPos: !movendo && alvo !== null && Math.abs(alvo - posDeg) < 0.2, targetDeg: alvo, count: F.count, cycle: F.lastCycle, ptr: F.ptr.slice() };
     }
 
     updateReadParams(dt = 0.005) {
@@ -673,18 +763,11 @@
       this.setRO(800, this.bench.accessorySeated ? 2 : 0);
       this.setRO(801, this.p801());
       this.setRO(92, this.bench.accessorySeated ? 257 : 0);
-      // ladder
-      const ladRun = this.p.get(1020) === 1;
-      this.setRO(1000, ladRun ? 5 : 4);
-      const posDeg = wrapDeg(this.posUserRad() * 180 / Math.PI);
-      this.setRO(1111, Math.round(posDeg * 10) % 3600);
-      const L = this.lad;
-      this.setRO(1112, Math.round((L.target - this.posUserRad() * 180 / Math.PI) * 10));
-      this.setRO(1113, L.count);
-      let s = 0; if (this.enabled) s |= 1; if (L.moving) s |= 2; if (L.inPos) s |= 4; if (this.fault) s |= 8;
-      if (this.fcState.h || this.fcState.a) s |= 16; if (this.stopActive) s |= 32;
-      this.setRO(1110, s);
-      this.setRO(48, this.p.get(202) === 4 ? Math.min(65535, Math.abs(Math.round((L.target - this.posUserRad() * 180 / Math.PI) / 360 * PULSES_PER_REV))) : 0);
+      // ladder: não há aplicativo gravado (P01000 = 0, sem programa)
+      this.setRO(1000, 0);
+      // erro de lag: só na Função Posicionador
+      const fv = this.p.get(202) === 3 ? this.fpView() : null;
+      this.setRO(48, fv && fv.targetDeg !== null ? Math.min(65535, Math.abs(Math.round((fv.targetDeg - this.posUserRad() * 180 / Math.PI) / 360 * PULSES_PER_REV))) : 0);
     }
 
     // ------------------------------------------------------------- bancada
@@ -798,7 +881,7 @@
         sizes: this.ioSizes(), applied: c.applied, owner: c.owner, ioConnected: c.ioConnected, ioRun: c.ioRun, commErr: c.commErr,
         bench: Object.assign({}, this.bench), fc: this.fcState || { h: false, a: false }, di: this.diStates(),
         hmi: { cells: this.hmiDisplay(), leds: this.hmiLeds(), mode: this.hmi.mode, param: this.hmiParam() },
-        lad: { target: this.lad.target, moving: this.lad.moving, inPos: this.lad.inPos, count: this.lad.count, relSeq: this.lad.relSeq || 0, relInc: this.lad.relInc },
+        fp: this.fpView(),
         userPosDeg: wrapDeg(this.posUserRad() * 180 / Math.PI)
       };
     }

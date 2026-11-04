@@ -1,6 +1,6 @@
-/* Assistente de comunicação com o CLP — etapas do SCA06 + ECO5 (EtherNet/IP).
- * Dois modos: velocidade e torque (P0202 = 6, conexão de 4 palavras) ou posição pelo aplicativo
- * Ladder DISCO_POS (P0202 = 4, conexão de 8 palavras). Usa assistente-clp.js e window.SCA06App. */
+/* Assistente de comunicação com o CLP — etapas do SCA06 + ECO5 (EtherNet/IP), firmware V2.1X.
+ * Dois modos: velocidade e torque (P0202 = 6, conexão de 4 palavras) ou posição pela Função
+ * Posicionador (P0202 = 3, conexão de 8 palavras, sem programar ladder). Usa assistente-clp.js e window.SCA06App. */
 (function () {
   'use strict';
   const A = () => window.SCA06App;
@@ -12,9 +12,11 @@
     662: { 0: 'Mostra alarme', 1: 'Gera falha', 2: 'Executa função STOP', 3: 'Desabilita drive' },
     810: { 0: 'Parâmetros', 1: 'DHCP' },
     849: { 0: 'Operação normal', 1: 'Atualiza configuração' },
-    1020: { 0: 'Para programa', 1: 'Executa programa' },
+    99: { 0: 'Não habilitado', 1: 'Habilita', 2: 'Habilita sem salvar' },
+    1077: { 0: 'Borda de subida', 1: 'Nível' },
+    1151: { 1: 'Controle de Iq', 2: 'Controle de velocidade', 3: 'Posicionamento relativo', 5: 'Posicionamento absoluto', 7: 'Jog' },
   };
-  const MAPA = { 1100: 'comando', 1101: 'alvo/incremento', 1102: 'velocidade', 1103: 'tipo de movimento', 1110: 'status', 1111: 'posição atual', 1112: 'erro de posição', 1113: 'posicionamentos' };
+  const MAPA = { 52: 'fração de volta P0052', 53: 'voltas P0053', 6: 'estado do servo P0006', 48: 'erro de lag P0048', 99: 'habilitação P0099', 1079: 'disparo P01079', 1171: 'destino do movimento 1 P01171', 219: 'reset de falhas P0219' };
   const fmt = (n, v) => {
     if (OPC[n] && OPC[n][v] !== undefined) return `${v} (${OPC[n][v]})`;
     if ((n >= 820 && n <= 823) || (n >= 835 && n <= 838)) return v ? `${v} (${MAPA[v] || 'P' + v})` : '0 (nenhuma)';
@@ -30,10 +32,10 @@
     const ip = ipDoDrive(), o = ip.split('.').map(Number), pos = modo === 'pos';
     const mudam = ['P0810', ...[192, 168, 0, 10].map((f, k) => (o[k] !== f ? 'P081' + (k + 1) : null)).filter(Boolean)].join(', ');
     const extras = pos
-      ? [[820, 1110, 'Palavra de entrada #5', 'o drive manda o status do posicionamento (P1110)'], [821, 1111, 'Palavra de entrada #6', 'a posição atual (P1111)'],
-        [822, 1112, 'Palavra de entrada #7', 'o erro de posição (P1112)'], [823, 1113, 'Palavra de entrada #8', 'quantos movimentos terminaram (P1113)'],
-        [835, 1100, 'Palavra de saída #5', 'o CLP escreve o comando: habilita, pulso, STOP… (P1100)'], [836, 1101, 'Palavra de saída #6', 'o destino ou o incremento (P1101)'],
-        [837, 1102, 'Palavra de saída #7', 'a velocidade do movimento (P1102)'], [838, 1103, 'Palavra de saída #8', 'o tipo de movimento (P1103)']]
+      ? [[820, 52, 'Palavra de entrada #5', 'o drive manda a fração de volta da posição (P0052, 16384 = 1 volta)'], [821, 53, 'Palavra de entrada #6', 'o número de voltas (P0053)'],
+        [822, 6, 'Palavra de entrada #7', 'o estado do servo (P0006: 1 = habilitado, 2 = falha…)'], [823, 48, 'Palavra de entrada #8', 'o erro de lag (P0048): quanto falta para chegar'],
+        [835, 99, 'Palavra de saída #5', 'o CLP habilita o drive (P0099: 2 habilita, 0 desabilita)'], [836, 1079, 'Palavra de saída #6', 'o CLP dispara o movimento (P01079: pulso 0 → 1)'],
+        [837, 1171, 'Palavra de saída #7', 'o CLP escreve o destino do movimento 1 (P01171, fração de volta)'], [838, 219, 'Palavra de saída #8', 'o CLP reseta falhas (P0219: pulso 0 → 1)']]
       : [[820, 0, 'Palavra de entrada #5', 'sem palavra extra'], [821, 0, 'Palavra de entrada #6', 'sem palavra extra'], [822, 0, 'Palavra de entrada #7', 'sem palavra extra'],
         [823, 0, 'Palavra de entrada #8', 'sem palavra extra'], [835, 0, 'Palavra de saída #5', 'sem palavra extra'], [836, 0, 'Palavra de saída #6', 'sem palavra extra'],
         [837, 0, 'Palavra de saída #7', 'sem palavra extra'], [838, 0, 'Palavra de saída #8', 'sem palavra extra']];
@@ -55,21 +57,41 @@
         ] },
       pos
         ? { titulo: 'Quem manda no drive',
-          porque: 'De fábrica, o SCA06 vem com <b>P0202 = 2</b>: a velocidade vem da própria HMI. Para posicionar pela rede, o manual Ethernet manda usar o <b>modo Ladder (P0202 = 4)</b>: um aplicativo de posicionamento roda dentro do drive (aqui, o DISCO_POS) e o CLP conversa com ele por parâmetros do usuário. O <b>P1020 = 1</b> mantém esse aplicativo em execução. O drive precisa estar desabilitado.',
-          hmi: '<b>P00202</b> → <b>P</b> → <b>P</b> → ▲ 2 vezes (00004) → <b>P</b> · <b>P01020</b>: confira que vale 1.',
+          porque: 'De fábrica, o SCA06 vem com <b>P0202 = 2</b>: a velocidade vem da própria HMI. Com <b>P0202 = 3</b> entra a <b>Função Posicionador</b> do firmware: os movimentos ficam programados em parâmetros e o CLP só habilita, escolhe o destino e dispara, tudo pela rede. Não é preciso programar ladder. Nesse modo a palavra de controle fixa não vale: a habilitação é pelo <b>P0099</b>, que fica em 0 agora e é escrito pelo CLP depois. O drive precisa estar desabilitado.',
+          hmi: '<b>▲ 37 vezes</b> até <b>P00202</b> → <b>P</b> → <b>P</b> → ▲ 1 vez (00003) → <b>P</b> · <b>P00099</b>: confira que vale 0.',
           itens: [
-            { n: 202, v: 4, nome: 'Modo de operação', faz: 'Ladder: o aplicativo de posicionamento comanda o motor' },
-            { n: 1020, v: 1, nome: 'Comando da PLC (Ladder)', faz: 'mantém o aplicativo em execução (já vem 1 de fábrica)' },
+            { n: 202, v: 3, nome: 'Modo de operação', faz: 'Função Posicionador: movimentos programados em parâmetros' },
+            { n: 99, v: 0, nome: 'Habilitação', faz: 'começa desabilitado; quem habilita é o CLP, pela 5ª palavra de saída' },
           ] }
         : { titulo: 'Quem manda no drive',
           porque: 'De fábrica, o SCA06 vem com <b>P0202 = 2</b>: a velocidade vem da própria HMI. Com <b>P0202 = 6</b> ele passa a obedecer às <b>palavras de saída do CLP</b>: palavra de controle, referência de velocidade, referência de torque e modo de controle. Sem isso, o CLP conecta, mas o drive ignora o que ele manda. O drive precisa estar desabilitado.',
           hmi: '<b>▲ 37 vezes</b> até <b>P00202</b> → <b>P</b> (mostra o valor) → <b>P</b> (o dígito pisca) → ▲ 4 vezes (00006) → <b>P</b>.',
           itens: [{ n: 202, v: 6, nome: 'Modo de operação', faz: 'Profibus DP/Ethernet: quem manda é o CLP pela rede' }] },
+      ...(pos ? [
+        { titulo: 'O movimento',
+          porque: 'A Função Posicionador guarda até <b>10 movimentos</b> (P01151 a P01230). Aqui se programa o <b>movimento 1</b> como <b>posicionamento absoluto</b>: o disco vai até um destino. O destino (P01171, em fração de volta: <b>16384 = 1 volta</b>, 4096 = 90°) quem escreve é o CLP, pela rede. A velocidade e as rampas ficam aqui.',
+          hmi: 'segure <b>▲</b> até <b>P01151</b> → 5 · <b>P01191</b> = 100 · <b>P01201</b> = 1000 · <b>P01211</b> = 1000.',
+          itens: [
+            { n: 1151, v: 5, nome: 'Tipo do movimento 01', faz: 'posicionamento absoluto: vai até o destino' },
+            { n: 1191, v: 100, nome: 'Velocidade do movimento 01', faz: '100 rpm durante o posicionamento' },
+            { n: 1201, v: 1000, nome: 'Aceleração do movimento 01', faz: '1000 rpm/s para ganhar velocidade' },
+            { n: 1211, v: 1000, nome: 'Desaceleração do movimento 01', faz: '1000 rpm/s para frear até o destino' },
+          ] },
+        { titulo: 'O ciclo e o disparo',
+          porque: 'Os movimentos são executados em <b>ciclos</b> (até 10, cada um com até 5 movimentos). O <b>ciclo 1</b> fica só com o movimento 1. O <b>P01080 = 1</b> diz que o disparo pelo parâmetro <b>P01079</b> aciona o ciclo 1, e o <b>P01077 = 0</b> faz o disparo na <b>borda de subida</b>: cada vez que o CLP muda o P01079 de 0 para 1, o disco vai para o destino.',
+          hmi: 'segure <b>▲</b> até <b>P01077</b> → 0 · <b>P01080</b> = 1 · <b>P01101</b> = 1 · <b>P01102</b> = 0.',
+          itens: [
+            { n: 1077, v: 0, nome: 'Acionamento por borda ou nível', faz: 'borda de subida: um disparo por pulso' },
+            { n: 1080, v: 1, nome: 'Ciclo acionado pelo P01079', faz: 'o disparo aciona o ciclo 1' },
+            { n: 1101, v: 1, nome: 'Primeiro movimento do ciclo 01', faz: 'o ciclo 1 executa o movimento 1' },
+            { n: 1102, v: 0, nome: 'Segundo movimento do ciclo 01', faz: '0 = fim do ciclo' },
+          ] },
+      ] : []),
       { titulo: 'O que vai nas palavras de troca',
         porque: pos
-          ? 'A conexão sempre troca <b>4 palavras fixas</b> em cada sentido. Para posicionar, o CLP precisa de mais 4 em cada sentido, que conversam com o aplicativo de posicionamento: nas <b>entradas</b> (P0820…P0823) o drive manda status, posição, erro e contador; nas <b>saídas</b> (P0835…P0838) o CLP escreve comando, destino, velocidade e tipo de movimento. A conexão no CLP passa a ter <b>8 palavras (16 bytes) em cada sentido</b>.'
+          ? 'A conexão sempre troca <b>4 palavras fixas</b> em cada sentido (no modo 3 as saídas fixas são ignoradas). Para posicionar, o CLP precisa de mais 4 em cada sentido, e cada uma aponta para um parâmetro: nas <b>saídas</b> (P0835…P0838) o CLP escreve a habilitação, o disparo, o destino e o reset; nas <b>entradas</b> (P0820…P0823) o drive manda a posição (fração e voltas), o estado e o erro de lag. A conexão no CLP passa a ter <b>8 palavras (16 bytes) em cada sentido</b>.'
           : 'A conexão troca <b>4 palavras fixas</b> em cada sentido: no CLP, 8 bytes de entrada e 8 de saída. As palavras extras (P0820…P0823 e P0835…P0838) ficam <b>zeradas</b>: assim, se o drive já tinha sido configurado para posição, a conexão volta a ter 4 palavras.',
-        hmi: pos ? '<b>P00820</b> = 1110 (◄ ▲ ◄ ▲ ◄ ▲), P00821 = 1111, P00822 = 1112, P00823 = 1113 · <b>P00835</b> = 1100 (◄ ◄ ▲ ◄ ▲), P00836 = 1101, P00837 = 1102, P00838 = 1103.'
+        hmi: pos ? '<b>P00820</b> = 52, P00821 = 53, P00822 = 6, P00823 = 48 · <b>P00835</b> = 99, P00836 = 1079, P00837 = 1171, P00838 = 219.'
           : 'confira <b>P00820</b>…P00823 e <b>P00835</b>…P00838 = 0 (de fábrica já vêm zerados).',
         itens: extras.map(([n, v, nome, faz]) => ({ n, v, nome, faz })) },
       { titulo: 'Segurança se a comunicação cair',
@@ -94,10 +116,10 @@
       ${l('Conexão', pos ? '<b>Exclusive Owner, 8 palavras (posicao)</b>' : '<b>Exclusive Owner, 4 palavras (velocidade e torque)</b>')}
       ${l('O→T e T→O', pos ? '<b>16 bytes</b> em cada sentido' : '<b>8 bytes</b> em cada sentido')}
       ${l('RPI', '10 a 30 ms')}
-      ${pos ? l('Para habilitar', 'bit 0 da 5ª palavra de saída (P1100)') + l('O pulso', 'bit 1 da 5ª palavra de saída: cada subida 0 → 1 inicia um movimento')
+      ${pos ? l('Para habilitar', '5ª palavra de saída (P0099) = <b>2</b>; 0 desabilita') + l('Destino', '7ª palavra de saída (P01171): fração de volta, <b>16384 = 1 volta</b> (90° = 4096)') + l('Disparar', '6ª palavra de saída (P01079): pulso <b>0 → 1</b>') + l('Posição atual', '5ª e 6ª palavras de entrada: (P0053 + P0052 / 16384) × 360 = graus')
         : l('Para habilitar', 'bit 3 da 1ª palavra de saída (palavra de controle)') + l('Modo de controle (4ª palavra de saída)', '<b>1 = velocidade</b>, 0 = torque')}
       </tbody></table>
-      <p class="aclp-porque">Como conferir aqui no simulador: o chip <b>P0202</b> do topo mostra <b>${pos ? 4 : 6}</b> e, quando o CODESYS entrar em RUN, o chip <b>P0801</b> fica em <b>Data Active</b>.</p>`;
+      <p class="aclp-porque">Como conferir aqui no simulador: o chip <b>P0202</b> do topo mostra <b>${pos ? 3 : 6}</b> e, quando o CODESYS entrar em RUN, o chip <b>P0801</b> fica em <b>Data Active</b>.</p>`;
   }
 
   function abrir() {
@@ -109,7 +131,7 @@
       textoModo: 'Escolha o modo de controle. Cada modo pede uma configuração diferente no drive e uma conexão diferente no CLP; o assistente mostra as etapas do modo escolhido.',
       modos: [
         { id: 'vel', nome: 'Velocidade e torque', texto: 'O CLP diz quão rápido girar (rpm) ou com quanta força (A). No drive: P0202 = 6. No CLP: conexão de 4 palavras.' },
-        { id: 'pos', nome: 'Posição (absoluta e por pulso)', texto: 'O CLP diz para onde o disco vai (ex.: 90°) ou quantos graus andar a cada pulso (ex.: 45°). No drive: P0202 = 4. No CLP: conexão de 8 palavras.' },
+        { id: 'pos', nome: 'Posição (Função Posicionador)', texto: 'O CLP diz para onde o disco vai (ex.: 90°) e dispara o movimento. No drive: P0202 = 3, movimentos programados em parâmetros, sem ladder. No CLP: conexão de 8 palavras.' },
       ],
       etapas, ler, fmt, resumo,
       gravar: async (n, v) => {

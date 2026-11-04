@@ -34,11 +34,16 @@ const EEPROM = path.join(ROOT, 'data', 'eeprom.json');
 // ------------------------------------------------------------------ "EEPROM"
 let saved = {};
 if (cfg.persistParams && fs.existsSync(EEPROM)) { try { saved = JSON.parse(fs.readFileSync(EEPROM, 'utf8')); } catch (_) { } }
+// Firmware V2.1X: P01100…P01113 eram do aplicativo ladder DISCO_POS (versões anteriores do simulador) e agora
+// são os ciclos da Função Posicionador. Valores gravados pela versão antiga são descartados uma vez.
+const LAYOUT = 'fp-v2.1x';
+if (saved.__layout !== LAYOUT) { for (let n = 1100; n <= 1113; n++) delete saved[n]; }
+delete saved.__layout;
 let persistTimer = null;
 const persist = (obj) => {
   if (!cfg.persistParams) return;
   clearTimeout(persistTimer);
-  persistTimer = setTimeout(() => { fs.mkdirSync(path.dirname(EEPROM), { recursive: true }); fs.writeFileSync(EEPROM, JSON.stringify(obj, null, 1)); }, 400);
+  persistTimer = setTimeout(() => { fs.mkdirSync(path.dirname(EEPROM), { recursive: true }); fs.writeFileSync(EEPROM, JSON.stringify(Object.assign({ __layout: LAYOUT }, obj), null, 1)); }, 400);
 };
 
 // ------------------------------------------------------------------ eventos p/ interface

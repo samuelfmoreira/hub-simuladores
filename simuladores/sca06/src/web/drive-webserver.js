@@ -72,7 +72,7 @@ function handle(req, res, drive, url) {
 <div class="note">As alterações valem após Reboot (P0849 = 1) ou desligar/ligar.</div>${nav}`));
   }
   if (p === '/params') {
-    const rows = drive.constructor && require('../../public/core/sca06-core.js').PARAM_LIST.filter(n => n < 1050 || (n >= 1100 && n <= 1113))
+    const rows = drive.constructor && require('../../public/core/sca06-core.js').PARAM_LIST.filter(n => n < 1050 || [1077, 1078, 1079, 1080, 1101, 1102, 1151, 1161, 1171, 1181, 1191, 1201, 1211].includes(n))
       .map(n => `<tr><td>P${String(n).padStart(4, '0')}</td><td>${g(n)}</td></tr>`).join('');
     return send(page('SCA-06 Parameter Data', `<h1>SCA-06</h1><h2>Parameter Data</h2><table><tr><th>Parameter</th><th>Value</th></tr>${rows}</table>${nav}`));
   }

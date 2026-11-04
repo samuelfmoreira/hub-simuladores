@@ -52,8 +52,8 @@ button, input, select { font: inherit; color: inherit; }
 .tip3d { position: absolute; pointer-events: none; background: #f2f3f0; color: var(--ink); border: 1px solid var(--line-2); padding: 3px 8px; font-size: 12px; border-radius: 3px; opacity: 0; transition: opacity .12s; max-width: 280px; z-index: 3; }
 
 .side { display: flex; flex-direction: column; min-height: 0; border-left: 1px solid var(--line-2); background: var(--panel); }
-.tabs { display: flex; background: var(--panel-2); border-bottom: 1px solid var(--line-2); overflow-x: auto; scrollbar-width: none; }
-.tabs button { flex: 1 0 auto; background: none; border: 0; border-right: 1px solid var(--line); padding: 10px 12px 8px; cursor: pointer; font-weight: 500; color: var(--ink-2); border-bottom: 3px solid transparent; }
+.tabs { display: flex; flex-wrap: wrap; background: var(--panel-2); border-bottom: 1px solid var(--line-2); }
+.tabs button { flex: 1 1 auto; white-space: nowrap; background: none; border: 0; border-right: 1px solid var(--line); padding: 10px 9px 8px; cursor: pointer; font-weight: 500; color: var(--ink-2); border-bottom: 3px solid transparent; }
 .tabs button[aria-selected="true"] { color: var(--navy); border-bottom-color: var(--navy); background: var(--panel); font-weight: 600; }
 .pane { flex: 1; overflow-y: auto; padding: 14px 16px 40px; }
 h3 { font-size: 15px; margin: 0 0 8px; font-weight: 600; color: var(--navy); }
@@ -203,16 +203,42 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
 
 /* Drive e configurações à esquerda, bancada 3D à direita */
 @media (min-width: 901px) {
-  .layout { grid-template-columns: 440px minmax(0, 1fr); }
+  .layout { grid-template-columns: var(--col-side, 440px) minmax(0, 1fr); }
   .side { order: 1; border-left: 0; border-right: 1px solid var(--line-2); }
   .stage { order: 2; }
 }
 @media (min-width: 1200px) {
-  .layout { grid-template-columns: 300px 420px minmax(0, 1fr); }
+  .layout { grid-template-columns: var(--col-front, 300px) var(--col-side, 460px) minmax(0, 1fr); }
   .front { order: 0; border-left: 0; border-right: 1px solid var(--line-2); }
   .side { order: 1; }
   .stage { order: 2; }
 }
+
+/* ---------- divisórias arrastáveis entre os painéis ---------- */
+.layout { position: relative; }
+.splitter { position: absolute; top: 0; bottom: 0; width: 12px; margin-left: -6px; cursor: col-resize; z-index: 30; touch-action: none; }
+.splitter::after { content: ""; position: absolute; left: 5px; top: 0; bottom: 0; width: 2px; background: transparent; transition: background .12s; }
+.splitter:hover::after, .splitter.drag::after { background: var(--navy); }
+.splitter[hidden] { display: none; }
+body.arrastando, body.arrastando * { cursor: col-resize !important; user-select: none !important; }
+body.arrastando canvas, body.arrastando iframe { pointer-events: none; }
+
+/* atalho de configuração de rede (aba Parâmetros) */
+.preset-rede { margin: 0 0 12px; padding: 10px 12px; border: 1px solid var(--line-2, #ccc); border-radius: 8px; }
+.preset-rede .row { gap: 8px; flex-wrap: wrap; }
+
+/* botão do assistente de comunicação com o CLP (barra do topo) */
+.assist-btn { margin-left: 8px; background: #2E6FB0; color: #fff; border: 1px solid #2E6FB0; border-radius: 6px; padding: 6px 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.assist-btn:hover { filter: brightness(1.1); }
+
+/* painel Posição da aba Mestre (palavras 5 a 8 no modo posição) */
+.pos-painel { margin-top: 10px; padding: 10px 12px; border: 1px solid var(--line-2, #ccc); border-radius: 8px; }
+.pos-painel .row { gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
+.pos-painel .pos-bot button.on { outline: 2px solid var(--ok, #2F9E44); }
+.pos-painel label { display: inline-flex; gap: 6px; align-items: center; }
+.pos-painel .num { width: 80px; }
+.pos-painel .pos-hex { margin-top: 6px; font-size: 12px; opacity: .85; }
+.pos-painel .pos-leitura { margin-top: 4px; }
 
 </style>
 
@@ -228,6 +254,7 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
   <div class="ind num opt"><span class="k">Iq</span><b id="indIq">0,0</b><span class="u">A</span></div>
   <div class="ind wide" id="indMsg"></div>
   <div class="ind src" id="indSrc" title="Origem dos dados"></div>
+  <button class="assist-btn" data-assistente title="Configura o drive para conversar com o CLP pela EtherNet/IP, etapa por etapa">Comunicação com o CLP</button>
 </header>
 
 <main class="layout">
@@ -298,6 +325,8 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
         <div class="word">
           <div class="wh"><span>4ª Modo de controle</span><code id="w4Hex">0001h</code></div>
           <div class="seg" id="modeSeg"><button data-m="0">0 · Torque</button><button data-m="1" class="on">1 · Velocidade</button></div>
+          <p class="hint">Posição não é um modo desta palavra: é a <b>Função Posicionador</b> do drive (P0202 = 3), comandada pelas <b>palavras 5 a 8</b> (habilitação P0099, disparo P01079, destino P01171 e reset P0219). Configure pelo assistente <b>Comunicação com o CLP → Posição</b> e abra a conexão com 8 palavras: o painel Posição aparece aqui embaixo.</p>
+          <p class="hint" id="modoNota" style="font-weight:600" hidden></p>
         </div>
         <div id="extraOut"></div>
       </div>
@@ -334,8 +363,13 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
 
     <!-- ===================== PARÂMETROS ===================== -->
     <div class="pane" data-pane="params" hidden>
+      <div class="preset-rede">
+        <div class="row"><button data-assistente>Assistente de comunicação com o CLP</button><button id="pFabrica" class="small">Restaurar padrão de fábrica</button></div>
+        <p class="hint">O drive sai de fábrica comandado pela HMI. O <b>assistente</b> configura a comunicação com o CLP pela EtherNet/IP em 6 etapas (senha, IP, quem manda, palavras de troca, segurança e aplicar), para <b>velocidade e torque</b> ou para <b>posição</b>, explicando cada parâmetro, e mostra no fim o que configurar no CLP. Prefere fazer como na vida real? Altere um por um nesta lista ou pela HMI do drive: o passo a passo está no Guia.</p>
+        <p class="hint" id="pPresetRes" aria-live="polite"></p>
+      </div>
       <div class="row"><input type="search" id="pSearch" placeholder="Buscar: 202, rampa, Ethernet, ladder…" aria-label="Buscar parâmetro">
-        <select id="pGroup"><option value="">Todos</option><option value="read">Leitura</option><option value="cfg">Configuração</option><option value="eth">Ethernet</option><option value="lad">Ladder/usuário (1100–1113)</option><option value="changed">Diferentes do padrão</option></select></div>
+        <select id="pGroup"><option value="">Todos</option><option value="read">Leitura</option><option value="cfg">Configuração</option><option value="eth">Ethernet</option><option value="fp">Função Posicionador (P1070–P1230)</option><option value="changed">Diferentes do padrão</option></select></div>
       <p class="hint">Fonte: <span class="src ETH">ETH</span> manual Ethernet · <span class="src PROG">PROG</span> manual de programação V2.1X · <span class="src SIM">SIM</span> valor do simulador, confira no equipamento. Escrever aqui equivale a usar o WPS pela USB.</p>
       <div class="ptable" id="ptable"></div>
     </div>
@@ -516,24 +550,40 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
   P(1000, 'Estado da PLC', 0, 5, 0, { ...RO, opts: { 0: 'Sem programa', 1: 'Salvando programa', 2: 'Cópia para cartão', 3: 'Programa inválido', 4: 'Programa parado', 5: 'Programa em execução' } });
   P(1001, 'Tempo de Scan', 0, 65535, 50, { ...RO, dec: 1, unit: 'ms' });
   P(1020, 'Comando da PLC', 0, 1, 1, { pp: true, opts: { 0: 'Para programa', 1: 'Executa programa' } });
-  // Parâmetros do usuário P01050…P01249: os nomes abaixo são do APLICATIVO LADDER DIDÁTICO
-  // "DISCO_POS" que acompanha a bancada (no equipamento real, o aluno cria no WLP/WPS).
-  const LAD = {
-    1100: ['Ladder: Comando (bit0 hab, bit1 inicia, bit2 STOP, bit3 reset, bit4 zera)', 0, 255, 0],
-    1101: ['Ladder: Posição alvo / incremento', -32768, 32767, 0, 1, '°'],
-    1102: ['Ladder: Velocidade de posicionamento', 1, 3000, 100, 0, 'rpm'],
-    1103: ['Ladder: Modo (0 menor caminho, 1 horário, 2 anti-horário, 3 relativo)', 0, 3, 0],
-    1104: ['Ladder: Rampa de posicionamento', 1, 32767, 500, 0, 'ms/krpm'],
-    1110: ['Ladder: Status (bit0 hab, bit1 movendo, bit2 em posição, bit3 falha, bit4 fim de curso, bit5 STOP)', 0, 65535, 0, 0, '', true],
-    1111: ['Ladder: Posição atual', 0, 3599, 0, 1, '°', true],
-    1112: ['Ladder: Erro de posição', -32768, 32767, 0, 1, '°', true],
-    1113: ['Ladder: Posicionamentos concluídos', 0, 32767, 0, 0, '', true],
-  };
-  for (let n = 1050; n <= 1249; n++) {
-    const l = LAD[n];
-    if (l) P(n, l[0], l[1], l[2], l[3], { dec: l[4] || 0, unit: l[5] || '', ro: !!l[6], src: 'SIM', note: 'Aplicativo ladder didático "DISCO_POS" (simulado).' });
-    else P(n, `Parâmetro do Usuário ${n}`, -32768, 32767, 0, { src: 'PROG' });
+  P(1024, 'Supervisão PLC', 0, 2, 0, { pp: true, opts: { 0: 'Inativa', 1: 'Gera alarme A00708', 2: 'Gera falha F00709' }, note: 'Ação quando o aplicativo ladder não está rodando. O simulador não tem aplicativo ladder gravado.' });
+
+  // ---- FUNÇÃO POSICIONADOR (P00202 = 3)  [PROG V2.1X cap. 20 / Adendo V1.7X cap. 19] ----
+  // Com P00202 = 3 o aplicativo ladder não roda, e os parâmetros do usuário passam a ser da Função Posicionador.
+  // No simulador o disparo é pelo P01079 (escrito pela rede). Disparo por entrada digital não é simulado.
+  const FP = (n, name, min, max, def, o = {}) => P(n, name, min, max, def, Object.assign({ src: 'PROG', fp: true }, o));
+  FP(1070, 'Seleciona Slot (entradas da Função Posicionador)', 0, 3, 0, { opts: { 0: 'DIs padrão do drive', 1: 'Slot 1', 2: 'Slot 2', 3: 'Slot 3' }, note: 'Disparo por entrada digital não simulado: use o P01079 pela rede.' });
+  FP(1071, 'Reseta Ciclo', 0, 1, 0, { note: 'Na transição 0 → 1, todos os ciclos voltam para o primeiro movimento.' });
+  FP(1072, 'Mapeia Parâmetros da Função Move do SCA05', 0, 1, 0, { note: 'Não simulado.' });
+  FP(1074, 'Mestre do Movimento Tipo Seguimento', 0, 4, 0, { opts: { 0: 'Sem função', 1: 'Entradas rápidas', 2: 'Rede CANopen', 3: 'Entrada de encoder 1', 4: 'Entrada de encoder 2' }, note: 'Seguidor não simulado.' });
+  FP(1075, 'Tipo da Busca de Zero Máquina', 0, 1, 0, { note: 'Busca de zero não simulada.' });
+  FP(1076, 'Tipo de Borda da Busca de Zero Máquina', 0, 1, 0, { note: 'Busca de zero não simulada.' });
+  FP(1077, 'Acionamento dos Ciclos por Borda ou Nível', 0, 1, 0, { opts: { 0: 'Borda de subida', 1: 'Nível' } });
+  FP(1078, 'Filtro do Acionamento dos Ciclos', 0, 32767, 0, { unit: 'ms' });
+  FP(1079, 'Acionamento do Ciclo por Parâmetro', 0, 1, 0, { note: 'Em 1, aciona o ciclo programado em P01080.' });
+  FP(1080, 'Ciclo Acionado pelo Parâmetro P01079', -10, 10, 0, { note: 'Positivo: um movimento do ciclo por acionamento. Negativo: ciclo completo.' });
+  for (let k = 1; k <= 10; k++) FP(1080 + k, `Ciclo Acionado pela Entrada Digital ${String(k).padStart(2, '0')}`, -10, 10, 0, { note: 'Disparo por entrada digital não simulado.' });
+  FP(1091, 'Ref. de Posição (fração de volta) p/ Saída Digital', 0, 16383, 0, { note: 'Não simulado.' });
+  FP(1092, 'Ref. de Posição (número de voltas) p/ Saída Digital', 0, 32767, 0, { note: 'Não simulado.' });
+  const ORD = ['Primeiro', 'Segundo', 'Terceiro', 'Quarto', 'Quinto'];
+  for (let c = 1; c <= 10; c++) for (let j = 0; j < 5; j++) FP(1100 + (c - 1) * 5 + j + 1, `${ORD[j]} Movimento do Ciclo ${String(c).padStart(2, '0')}`, 0, 10, 0, { note: 'Número do movimento (1 a 10). 0 = fim do ciclo.' });
+  const FP_TIPOS = { 0: 'Sem movimento', 1: 'Controle de Iq (torque)', 2: 'Controle de velocidade', 3: 'Posicionamento relativo', 4: 'Posicionamento relativo', 5: 'Posicionamento absoluto', 6: 'Posicionamento absoluto', 7: 'Jog', 8: 'Seguidor de posição', 9: 'Seguidor de velocidade', 10: 'Busca de zero (sentido +)', 11: 'Busca de zero (sentido −)' };
+  for (let m = 1; m <= 10; m++) {
+    const mm = String(m).padStart(2, '0');
+    FP(1150 + m, `Tipo do Movimento ${mm}`, 0, 11, 0, { opts: FP_TIPOS });
+    FP(1160 + m, `Timer do Movimento ${mm}`, 0, 32767, 0, { unit: 'ms', note: 'Espera entre o acionamento e o início do movimento.' });
+    FP(1170 + m, `Ref. de Posição (fração de volta) do Movimento ${mm}`, 0, 32767, 0, { unit: 'pulsos', note: '16384 = 1 volta (4096 = 90°, 8192 = 180°).' });
+    FP(1180 + m, `Ref. de Posição (número de voltas) do Movimento ${mm}`, -32768, 32767, 0);
+    FP(1190 + m, `Ref. de Velocidade/Iq do Movimento ${mm}`, -32768, 32767, 0, { note: 'rpm (velocidade, jog e posicionamentos) ou décimos de A (Iq). Negativo inverte o sentido.' });
+    FP(1200 + m, `Aceleração do Movimento ${mm}`, 0, 32767, 0, { unit: 'rpm/s', note: 'No tipo Iq: rampa em A/s.' });
+    FP(1210 + m, `Desaceleração do Movimento ${mm}`, 0, 32767, 0, { unit: 'rpm/s' });
+    FP(1220 + m, `Jerk do Movimento ${mm}`, 0, 32767, 0, { unit: 'rpm/s²', note: 'Aceito; o simulador usa perfil trapezoidal (sem curva S).' });
   }
+  { const def = new Set(DEFS.map(d => d.n)); for (let n = 1050; n <= 1249; n++) if (!def.has(n)) P(n, `Parâmetro do Usuário ${n}`, -32768, 32767, 0, { src: 'PROG' }); }
 
   const DEF_MAP = new Map(DEFS.map(d => [d.n, d]));
   const PARAM_LIST = DEFS.map(d => d.n).sort((a, b) => a - b);
@@ -554,7 +604,7 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
   // Alarmes e falhas usados [PROG Tabela 5.1]
   const CODES = {
     2: 'Subtensão no Link DC com drive habilitado', 6: 'Falha externa',
-    47: 'Ethernet offline (comunicação com o mestre)', 48: 'Erro de acesso à interface Ethernet',
+    47: 'Ethernet offline (comunicação com o mestre)', 708: 'Aplicativo do PLC não está rodando', 709: 'Aplicativo do PLC não está rodando', 48: 'Erro de acesso à interface Ethernet',
     122: 'Escrita em parâmetro somente leitura', 124: 'Parâmetro exige motor desabilitado',
     125: 'Parâmetro inexistente', 126: 'Valor fora dos limites',
     147: 'Ethernet offline (comunicação com o mestre)', 148: 'Erro de acesso à interface Ethernet'
@@ -599,10 +649,11 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
       this.nRefRamped = 0; this.vInt = 0; this.nFilt = 0;
       this.fcState = { h: false, a: false }; this.stopActive = false; this.ctlMode = 'speed'; this.imax = 0; this.speedCountsInst = 0;
       this.homeOffset = 0;                 // rad, referência do usuário
-      this.prev = { ctrl: 0, p219: 0, lad: 0, di: [0, 0, 0], enableReq: false, ioRun: false };
+      this.prev = { ctrl: 0, p219: 0, di: [0, 0, 0], enableReq: false, ioRun: false, mode: 0 };
       this.out = [0, 0, 0, 0];             // palavras de saída 1..4 recebidas do mestre
       this.outExtra = [];
-      this.lad = { active: false, target: 0, moving: false, inPos: true, count: 0, nCmd: 0 };
+      this.volatil = new Set();   // parâmetros escritos pelo I/O cíclico: ficam só na memória (como no drive real)
+      this.fp = { ptr: new Array(11).fill(0), queue: [], cur: null, hold: null, nCmd: 0, iqCmd: 0, count: 0, prevTrig: 0, trigSince: -1, fired: false, prevReset: 0, lastCycle: 0 };
       this.comm = {
         phase: 'setup', phaseT: 0, applied: null,
         ioConnected: false, ioRun: false, ioTimedOut: false, lastRx: -1, lastTx: -1,
@@ -636,11 +687,13 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
       const old = this.p.get(n);
       this.p.set(n, raw); this.dirty.add(n);
       if (old !== raw) this.onWrite(n, raw, old, source);
-      const persist = !(source === 'modbus' && this.p.get(664) === 0) && !(n === 99 && raw === 2);
+      if (source === 'io') this.volatil.add(n); else this.volatil.delete(n);
+      const persist = source !== 'io' && !(source === 'modbus' && this.p.get(664) === 0) && !(n === 99 && raw === 2);
       if (persist && this.onPersist && old !== raw) this.onPersist(this.savedParams());
       return { ok: true };
     }
-    savedParams() { const o = {}; for (const d of DEFS) if (!d.ro && this.p.get(d.n) !== d.def) o[d.n] = this.p.get(d.n); return o; }
+    // não salva: parâmetros escritos pelo I/O cíclico (voláteis) e parâmetros de comando, que voltam sozinhos para 0
+    savedParams() { const COMANDO = [204, 219, 849]; const o = {}; for (const d of DEFS) if (!d.ro && !this.volatil.has(d.n) && !COMANDO.includes(d.n) && this.p.get(d.n) !== d.def) o[d.n] = this.p.get(d.n); return o; }
 
     onWrite(n, raw, old, source) {
       if (n === 849 && raw === 1) { this.log('P00849 = 1 → reinicializando a interface Ethernet.'); this.pendingReinit = this.now + 0.05; }
@@ -724,7 +777,7 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
         const v = extra[i];
         const d = DEF_MAP.get(pn);
         if (!d || d.ro) return;                      // ignorado (o mestre não recebe erro no I/O cíclico)
-        if (this.p.get(pn) !== v) this.write(pn, clampInt(v, d.min, d.max), 'net');
+        if (this.p.get(pn) !== v) this.write(pn, clampInt(v, d.min, d.max), 'io');   // I/O cíclico: não grava na memória permanente
       });
     }
 
@@ -785,6 +838,7 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
       if (this.comm.accessErr && this.fault !== 48) return 148;
       if (this.comm.commErr && this.fault !== 47) return 147;
       if (this.alarmTransient.code && this.now < this.alarmTransient.until) return this.alarmTransient.code;
+      if (this.p.get(1024) === 1 && this.p.get(202) === 4) return 708;    // supervisão PLC: aplicativo não está rodando
       return 0;
     }
 
@@ -814,6 +868,7 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
     modeActual() {
       const m = this.p.get(202);
       if (m === 1) return 0; if (m === 2) return 1; if (m === 4) return 3;
+      if (m === 3) { const C = this.fp.cur; return C && C.type === 1 ? 0 : C && (C.type === 2 || C.type === 7) ? 1 : 3; }
       if (m === 6) return (this.out[3] & 0xF) === 0 ? 0 : 1;
       return 1;
     }
@@ -884,13 +939,17 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
       const ctrl = mode === 6 ? (this.out[0] & 0xFFFF) : 0;
       if (mode === 6 && (ctrl & 0x80) && !(this.prev.ctrl & 0x80)) this.resetFaults('palavra de controle bit 7');
       this.prev.ctrl = ctrl;
-      const lad = this.p.get(1100), ladRun = this.p.get(1020) === 1;
-      if (mode === 4 && ladRun && (lad & 8) && !(this.prev.lad & 8)) this.resetFaults('ladder P01100 bit3');
+      if (mode !== this.prev.mode) {
+        if (mode === 4) this.log('P00202 = 4 (Ladder): nenhum aplicativo ladder gravado neste drive. No SCA06 real, o programa é feito no WLP/WPS. O eixo não será controlado.', 'warn');
+        if (mode === 3) this.log('P00202 = 3: Função Posicionador. Habilitação pelo P00099; movimentos acionados pelo P01079 (ciclo em P01080).');
+        this.prev.mode = mode;
+      }
+      if (this.p.get(1024) === 2 && mode === 4 && !this.fault) this.raiseFault(709);
 
       // ---- Requisição de habilitação por fonte  [PROG P00202 / ETH 6.2.1]
       let req = false;
-      if (mode === 1 || mode === 2) req = di.enable !== null ? di.enable : this.p.get(99) !== 0;
-      else if (mode === 4) req = ladRun && !!(lad & 1);
+      if (mode === 1 || mode === 2 || mode === 3) req = di.enable !== null ? di.enable : this.p.get(99) !== 0;
+      else if (mode === 4) req = false;                                    // sem aplicativo ladder gravado
       else if (mode === 6) req = !!(ctrl & 0x08);
       const edge = req && !this.prev.enableReq;
       if (!req) { this.stoLatch = false; this.commDisableLatch = false; if (this.enabled) this.log('Drive desabilitado.'); this.enabled = false; }
@@ -903,7 +962,7 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
       if (req && !this.enabled && canEnable) { this.enabled = true; this.stoLatch = false; this.vInt = 0; this.nRefRamped = this.rpmUser(); this.log('Drive habilitado.'); }
 
       // ---- STOP  [PROG 12.3]
-      const stopReq = di.stop || (mode === 6 && !!(ctrl & 0x04)) || (mode === 4 && ladRun && !!(lad & 4)) || this.commStopLatch;
+      const stopReq = di.stop || (mode === 6 && !!(ctrl & 0x04)) || this.commStopLatch;
       this.stopActive = this.enabled && stopReq;
 
       // ---- Referências
@@ -914,19 +973,19 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
       else if (mode === 6) {
         if ((this.out[3] & 0xF) === 0) { ctlMode = 'torque'; iqRef = toInt16(this.out[2]) / 10; }
         else nRef = countsToRpm(toInt16(this.out[1]));
-      } else if (mode === 4) { ctlMode = 'position'; }
+      } else if (mode === 3) { ctlMode = 'fp'; }
 
       if (this.stopActive) {
         ctlMode = 'speed';
         const rate = 1000 / Math.max(1, this.p.get(105)) * 1000;        // rpm/s  (ms/krpm)
         this.nRefRamped = approach(this.nRefRamped, 0, rate * h);
         nRef = this.nRefRamped; ramp = 'done';
-        // STOP cancela os blocos de movimento do ladder  [PROG 12.3]
-        if (mode === 4) { this.lad.moving = false; this.lad.target = this.posUserRad() * 180 / Math.PI; this.lad.nCmd = 0; }
+        // STOP cancela os movimentos da Função Posicionador  [PROG 12.3]
+        if (mode === 3) this.fpCancel('função STOP');
       }
 
-      // ---- Ladder (posicionamento)
-      if (ctlMode === 'position') nRef = this.ladderStep(h, lad);
+      // ---- Função Posicionador (P00202 = 3)
+      if (ctlMode === 'fp') { const r = this.fpStep(h); ctlMode = r.ctl; nRef = r.nRef; iqRef = r.iqRef; }
 
       // ---- Fim de curso (não disponível em modo torque)  [PROG 12.4]
       if (ctlMode !== 'torque') {
@@ -992,43 +1051,112 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
         if (d > lim && m.omega > 0) { m.theta -= (d - lim); m.omega = 0; }
         if (d < -lim && m.omega < 0) { m.theta += (-lim - d); m.omega = 0; }
       }
-      this.prev.lad = lad;
       // térmico [SIM]
       this.tSink += ((34 + 1.6 * m.iq * m.iq) - this.tSink) * h / 40;
       this.tAir += ((32 + 0.6 * m.iq * m.iq) - this.tAir) * h / 60;
     }
 
-    /** Aplicativo ladder didático "DISCO_POS" — roda quando P00202 = 4 e P01020 = 1 */
-    ladderStep(h, cmd) {
-      const L = this.lad;
-      const posDeg = this.posUserRad() * 180 / Math.PI;
-      if ((cmd & 16) && !(this.prev.lad & 16)) { this.homeOffset = this.mech.theta; L.target = 0; this.log('Ladder: posição atual definida como 0,0°.'); }
-      if (!this.enabled) { L.target = posDeg; L.moving = false; return 0; }
-      if ((cmd & 2) && !(this.prev.lad & 2) && !this.stopActive) {
-        const mode = this.p.get(1103), tgt = this.p.get(1101) / 10;
-        const cur = wrapDeg(posDeg);
-        let delta;
-        if (mode === 3) delta = tgt;
-        else {
-          const t = wrapDeg(tgt);
-          if (mode === 1) delta = wrapDeg(t - cur);
-          else if (mode === 2) delta = -wrapDeg(cur - t);
-          else delta = wrap180(t - cur);
-        }
-        L.target = posDeg + delta; L.moving = true; L.inPos = false;
-        this.log(`Ladder: movimento iniciado (${delta >= 0 ? '+' : ''}${delta.toFixed(1)}°).`);
+    // ===================== Função Posicionador  [PROG V2.1X cap. 20] =====================
+    fpMoves(cyc) {
+      const list = [];
+      for (let j = 0; j < 5; j++) { const m = this.p.get(1100 + (cyc - 1) * 5 + j + 1); if (!m) break; list.push(m); }
+      return list;
+    }
+    fpCancel(motivo) {
+      const F = this.fp;
+      if (F.cur || F.queue.length) this.log(`Função Posicionador: movimento cancelado (${motivo}).`, 'warn');
+      F.cur = null; F.queue = []; F.nCmd = this.rpmUser(); F.iqCmd = 0; F.hold = this.posUserRad() * 180 / Math.PI;
+    }
+    fpTrigger() {
+      const F = this.fp, c = this.p.get(1080);
+      if (!c) { this.log('P01079 acionado, mas P01080 = 0: nenhum ciclo programado.', 'warn'); return; }
+      const cyc = Math.abs(c), moves = this.fpMoves(cyc);
+      if (!moves.length) { this.log(`Ciclo ${cyc} vazio: programe o primeiro movimento em P0${1100 + (cyc - 1) * 5 + 1}.`, 'warn'); return; }
+      F.lastCycle = cyc;
+      if (c < 0) F.queue = moves.slice();
+      else { const i = F.ptr[cyc] % moves.length; F.queue = [moves[i]]; F.ptr[cyc] = (i + 1) % moves.length; }
+      this.log(`Função Posicionador: ciclo ${cyc}${c < 0 ? ' completo' : ''} acionado → movimento ${F.queue.join(', ')}.`);
+      this.fpNext();
+    }
+    fpNext() {
+      const F = this.fp, m = F.queue.shift();
+      if (!m) return false;
+      F.cur = { m, type: this.p.get(1150 + m), tStart: this.now + this.p.get(1160 + m) / 1000, started: false, done: false };
+      return true;
+    }
+    fpStart(C) {
+      const F = this.fp, m = C.m, posDeg = this.posUserRad() * 180 / Math.PI;
+      const frac = this.p.get(1170 + m), turns = this.p.get(1180 + m), vel = this.p.get(1190 + m);
+      C.acc = this.p.get(1200 + m) || 30000; C.dec = this.p.get(1210 + m) || 30000; C.started = true;
+      const T = C.type;
+      if (T === 3 || T === 4 || T === 5 || T === 6) {
+        let x = turns + frac / PULSES_PER_REV; if (vel < 0) x = -x;
+        C.target = (T <= 4 ? posDeg : 0) + x * 360; C.vmax = Math.max(1, Math.abs(vel));
+        this.log(`Movimento ${m}: ${T <= 4 ? 'posicionamento relativo' : 'posicionamento absoluto'} para ${(C.target).toFixed(1)}° a ${C.vmax} rpm.`);
+      } else if (T === 2 || T === 7) { C.n = vel; this.log(`Movimento ${m}: ${T === 2 ? 'velocidade' : 'jog'} ${vel} rpm.`); }
+      else if (T === 1) { C.iq = vel / 10; C.ramp = this.p.get(1200 + m) || 1000; this.log(`Movimento ${m}: controle de Iq ${C.iq.toFixed(1)} A.`); }
+      else { this.log(`Movimento ${m}: tipo ${T} (${T >= 10 ? 'busca de zero' : T >= 8 ? 'seguidor' : 'sem movimento'}) não simulado; ignorado.`, 'warn'); C.done = true; }
+    }
+    fpPosition(h, targetDeg, vmax, acc, dec) {
+      const F = this.fp, posDeg = this.posUserRad() * 180 / Math.PI, errDeg = targetDeg - posDeg;
+      const vProfile = Math.sqrt(2 * dec * 6 * Math.abs(errDeg)) / 6;          // rpm (1 rpm = 6 °/s)
+      const kp = this.p.get(159) * 0.4;                                        // 1/s [SIM]
+      const n = Math.sign(errDeg) * Math.min(vmax, vProfile, Math.abs(errDeg) * kp / 6);
+      F.nCmd = approach(F.nCmd, n, (Math.abs(n) > Math.abs(F.nCmd) ? acc : dec) * h);
+      return { errDeg, n: F.nCmd };
+    }
+    fpStep(h) {
+      const F = this.fp, posDeg = this.posUserRad() * 180 / Math.PI;
+      // reseta ciclo (borda de subida do P01071)
+      const rst = this.p.get(1071);
+      if (rst && !F.prevReset) { F.ptr.fill(0); this.log('P01071: ciclos reinicializados no primeiro movimento.'); }
+      F.prevReset = rst;
+      if (!this.enabled) { F.cur = null; F.queue = []; F.nCmd = 0; F.iqCmd = 0; F.hold = posDeg; F.prevTrig = this.p.get(1079); F.fired = true; return { ctl: 'speed', nRef: 0, iqRef: 0 }; }
+      if (F.hold === null) F.hold = posDeg;
+      // acionamento pelo P01079: filtro P01078, borda ou nível P01077
+      const trig = this.p.get(1079);
+      if (trig && !F.prevTrig) { F.trigSince = this.now; F.fired = false; }
+      F.prevTrig = trig;
+      const armed = trig && this.now - F.trigSince >= this.p.get(1078) / 1000;
+      const livre = !F.cur || (F.cur.done && !F.queue.length);
+      if (armed && ((this.p.get(1077) === 0 && !F.fired) || (this.p.get(1077) === 1 && livre))) { F.fired = true; this.fpTrigger(); }
+      const C = F.cur;
+      if (!C) { const r = this.fpPosition(h, F.hold, 300, 30000, 30000); return { ctl: 'speed', nRef: r.n, iqRef: 0 }; }
+      if (!C.started) {
+        if (this.now < C.tStart) { const r = this.fpPosition(h, F.hold, 300, 30000, 30000); return { ctl: 'speed', nRef: r.n, iqRef: 0 }; }
+        this.fpStart(C);
       }
-      const errDeg = L.target - posDeg;
-      const vmax = this.p.get(1102);
-      const acc = 1e6 / Math.max(1, this.p.get(1104));        // rpm/s
-      const accDeg = acc * 6;                                   // °/s²  (1 rpm = 6 °/s)
-      const vProfile = Math.sqrt(2 * accDeg * Math.abs(errDeg)) / 6;  // rpm
-      const kp = this.p.get(159) * 0.4;                         // 1/s [SIM]
-      let n = Math.sign(errDeg) * Math.min(vmax, vProfile, Math.abs(errDeg) * kp / 6);
-      L.nCmd = approach(L.nCmd, n, acc * h);
-      if (L.moving && Math.abs(errDeg) < 0.05 && Math.abs(this.rpmUser()) < 3) { L.moving = false; L.inPos = true; L.count++; this.log('Ladder: em posição.'); }
-      if (!L.moving) L.inPos = Math.abs(errDeg) < 0.2;
-      return L.nCmd;
+      const T = C.type;
+      const terminou = () => { C.done = true; F.count++; if (F.queue.length) this.fpNext(); };
+      if (T >= 3 && T <= 6) {
+        const r = this.fpPosition(h, C.target, C.vmax, C.acc, C.dec);
+        if (!C.done && Math.abs(r.errDeg) < 0.05 && Math.abs(this.rpmUser()) < 3) { this.log(`Movimento ${C.m}: em posição (${posDeg.toFixed(1)}°).`); F.hold = C.target; terminou(); }
+        return { ctl: 'speed', nRef: r.n, iqRef: 0 };
+      }
+      if (T === 2 || T === 7) {
+        const alvo = T === 7 && !trig ? 0 : C.n;
+        F.nCmd = approach(F.nCmd, alvo, (Math.abs(alvo) > Math.abs(F.nCmd) ? C.acc : C.dec) * h);
+        if (T === 2 && !C.done && F.nCmd === alvo) terminou();
+        if (T === 7 && !trig && F.nCmd === 0) { F.hold = posDeg; F.cur = null; F.count++; this.log(`Movimento ${C.m}: jog encerrado.`); }
+        if (T === 2 && F.nCmd === 0 && C.done) F.hold = posDeg;
+        return { ctl: 'speed', nRef: F.nCmd, iqRef: 0 };
+      }
+      if (T === 1) {
+        F.iqCmd = approach(F.iqCmd, C.iq, C.ramp * h);
+        if (!C.done && F.iqCmd === C.iq) terminou();
+        F.hold = posDeg;
+        return { ctl: 'torque', nRef: 0, iqRef: F.iqCmd };
+      }
+      if (C.done && !F.queue.length) F.cur = null;
+      const r = this.fpPosition(h, F.hold, 300, 30000, 30000);
+      return { ctl: 'speed', nRef: r.n, iqRef: 0 };
+    }
+    fpView() {
+      const F = this.fp, C = F.cur, posDeg = this.posUserRad() * 180 / Math.PI;
+      const alvo = C && C.started && C.target !== undefined ? C.target : F.hold;
+      const movendo = !!(C && C.started && !C.done && (C.type >= 2 && C.type <= 7));
+      return { cur: C ? C.m : 0, type: C ? C.type : 0, moving: movendo, waiting: !!(C && !C.started), done: !C || C.done,
+        inPos: !movendo && alvo !== null && Math.abs(alvo - posDeg) < 0.2, targetDeg: alvo, count: F.count, cycle: F.lastCycle, ptr: F.ptr.slice() };
     }
 
     updateReadParams(dt = 0.005) {
@@ -1053,18 +1181,11 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
       this.setRO(800, this.bench.accessorySeated ? 2 : 0);
       this.setRO(801, this.p801());
       this.setRO(92, this.bench.accessorySeated ? 257 : 0);
-      // ladder
-      const ladRun = this.p.get(1020) === 1;
-      this.setRO(1000, ladRun ? 5 : 4);
-      const posDeg = wrapDeg(this.posUserRad() * 180 / Math.PI);
-      this.setRO(1111, Math.round(posDeg * 10) % 3600);
-      const L = this.lad;
-      this.setRO(1112, Math.round((L.target - this.posUserRad() * 180 / Math.PI) * 10));
-      this.setRO(1113, L.count);
-      let s = 0; if (this.enabled) s |= 1; if (L.moving) s |= 2; if (L.inPos) s |= 4; if (this.fault) s |= 8;
-      if (this.fcState.h || this.fcState.a) s |= 16; if (this.stopActive) s |= 32;
-      this.setRO(1110, s);
-      this.setRO(48, this.p.get(202) === 4 ? Math.min(65535, Math.abs(Math.round((L.target - this.posUserRad() * 180 / Math.PI) / 360 * PULSES_PER_REV))) : 0);
+      // ladder: não há aplicativo gravado (P01000 = 0, sem programa)
+      this.setRO(1000, 0);
+      // erro de lag: só na Função Posicionador
+      const fv = this.p.get(202) === 3 ? this.fpView() : null;
+      this.setRO(48, fv && fv.targetDeg !== null ? Math.min(65535, Math.abs(Math.round((fv.targetDeg - this.posUserRad() * 180 / Math.PI) / 360 * PULSES_PER_REV))) : 0);
     }
 
     // ------------------------------------------------------------- bancada
@@ -1136,6 +1257,12 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
         const c = cells('      '); c[5] = { ch: H.busyChar, dp: false, blink: true }; if (H.busyChar === '8') return cells('888888', [0, 1, 2, 3, 4, 5]);
         return c;
       }
+      if (H.flash && this.now < H.flash.until) {           // gravação do assistente: número do parâmetro, depois o valor
+        const fn = H.flash.n, fd = DEF_MAP.get(fn);
+        if (H.flash.until - this.now > 0.8) return cells('P' + pad5(fn));
+        const fv = this.p.get(fn), fa = String(Math.abs(fv)).padStart(5, '0').slice(-5);
+        const fc = cells((fv < 0 ? '-' : ' ') + fa); if (fd.dec > 0) fc[5 - fd.dec].dp = true; return fc;
+      }
       if (this.stoActive()) return cells('   Sto');
       // nova falha/alarme → mensagem (some com qualquer tecla)
       if (this.fault && this.fault !== H.ackFault) H.overlay = 'F';
@@ -1154,6 +1281,8 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
     }
     hmiLeds() { return { usb: false, power: this.powerOK(), fault: !!this.fault }; }
     hmiParam() { return PARAM_LIST[this.hmi.idx]; }
+    /** O assistente de comunicação gravou um parâmetro: o display mostra o número e o valor por um instante. */
+    hmiFlash(n) { if (DEF_MAP.has(n)) this.hmi.flash = { n, until: this.now + 1.6 }; }
 
     // ------------------------------------------------------------- snapshot p/ interface
     view() {
@@ -1170,7 +1299,7 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
         sizes: this.ioSizes(), applied: c.applied, owner: c.owner, ioConnected: c.ioConnected, ioRun: c.ioRun, commErr: c.commErr,
         bench: Object.assign({}, this.bench), fc: this.fcState || { h: false, a: false }, di: this.diStates(),
         hmi: { cells: this.hmiDisplay(), leds: this.hmiLeds(), mode: this.hmi.mode, param: this.hmiParam() },
-        lad: { target: this.lad.target, moving: this.lad.moving, inPos: this.lad.inPos, count: this.lad.count },
+        fp: this.fpView(),
         userPosDeg: wrapDeg(this.posUserRad() * 180 / Math.PI)
       };
     }
@@ -2198,7 +2327,7 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
     async request(m) {
       const d = this.drive, sc = this.sc;
       const needLink = () => { if (!this.online()) throw new Error('Timeout (sem resposta do adapter) — cabo desconectado ou interface reiniciando'); };
-      if (m.t === 'param') return { result: d.write(m.n, m.v, 'ui') };
+      if (m.t === 'param') { const r = d.write(m.n, m.v, 'ui'); if (r.ok && m.hmi) d.hmiFlash(m.n); return { result: r }; }
       if (m.t === 'bench') { d.benchSet(m.key, !!m.value); return {}; }
       if (m.t === 'hmi') { d.hmiKey(m.key); return {}; }
       if (m.t !== 'scanner') return {};
@@ -2254,25 +2383,40 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
   function connectBackend() {
     return new Promise((resolve) => {
       if (location.protocol === 'file:' || window.FORCE_DEMO) return resolve(useDemo());
-      let done = false;
-      const ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
-      const pending = new Map(); let seq = 1;
-      const t = setTimeout(() => { if (!done) { done = true; try { ws.close(); } catch (_) { } resolve(useDemo()); } }, 1800);
-      ws.onopen = () => {
-        if (done) return; done = true; clearTimeout(t);
-        resolve({ demo: false, request: (m) => new Promise((res, rej) => { const id = seq++; pending.set(id, { res, rej }); ws.send(JSON.stringify(Object.assign({ id }, m))); setTimeout(() => { if (pending.has(id)) { pending.delete(id); rej(new Error('Sem resposta do servidor')); } }, 4000); }) });
+      // Página servida pelo simulador: sempre conversa com o servidor (o drive que o CLP enxerga).
+      // O modo demonstração é só para o arquivo aberto direto no navegador: aqui ele nunca entra,
+      // mesmo que a bancada 3D demore para carregar; se a conexão falhar, tenta de novo.
+      let resolvido = false, tentativas = 0;
+      const tentar = () => {
+        tentativas++;
+        const ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
+        const pending = new Map(); let seq = 1; let aberto = false;
+        ws.onopen = () => {
+          aberto = true;
+          if (tentativas > 1) setMsg('Conectado ao simulador.', false);
+          if (resolvido) return;   // reconexão: a página já estava usando o servidor
+          resolvido = true;
+          resolve({ demo: false, request: (m) => new Promise((res, rej) => { const id = seq++; pending.set(id, { res, rej }); ws.send(JSON.stringify(Object.assign({ id }, m))); setTimeout(() => { if (pending.has(id)) { pending.delete(id); rej(new Error('Sem resposta do servidor')); } }, 4000); }) });
+        };
+        ws.onmessage = (e) => {
+          const m = JSON.parse(e.data);
+          if (m.t === 'reply') { const p = pending.get(m.id); if (p) { pending.delete(m.id); m.error ? p.rej(new Error(m.error)) : p.res(m); } return; }
+          onMessage(m);
+        };
+        ws.onclose = () => {
+          if (!aberto) { setMsg('Conectando ao simulador…', false); setTimeout(tentar, 1000); return; }
+          setMsg('Servidor desconectado. Recarregue a página depois de iniciar o simulador.', true);
+        };
       };
-      ws.onmessage = (e) => {
-        const m = JSON.parse(e.data);
-        if (m.t === 'reply') { const p = pending.get(m.id); if (p) { pending.delete(m.id); m.error ? p.rej(new Error(m.error)) : p.res(m); } return; }
-        onMessage(m);
-      };
-      ws.onerror = () => { if (!done) { done = true; clearTimeout(t); resolve(useDemo()); } };
-      ws.onclose = () => { if (done && !S.demo) setMsg('Servidor desconectado. Recarregue a página após reiniciar o `npm start`.', true); };
+      tentar();
     });
   }
   function useDemo() { S.demo = true; const d = new window.DemoBackend(onMessage); return { demo: true, request: (m) => d.request(m) }; }
-  const req = (m) => backend ? backend.request(m) : Promise.reject(new Error('Iniciando…'));
+  // os comandos esperam a conexão ficar pronta (a bancada 3D pode segurar a página alguns segundos ao abrir)
+  let backendPronto = null;
+  // o assistente de comunicação (assistente-sca06.js) grava parâmetros e lê o estado por aqui
+  window.SCA06App = { req: (m) => req(m), S, buildParams: () => buildParams() };
+  const req = (m) => backend ? backend.request(m) : (backendPronto ? backendPronto.then((b) => b.request(m)) : Promise.reject(new Error('Iniciando…')));
 
   function onMessage(m) {
     if (m.t === 'init') {
@@ -2344,6 +2488,50 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
     for (let i = 4; i < n; i++) w.push(OUT.extra[i - 4] | 0);
     return w.map(x => Math.max(-32768, Math.min(32767, x)));
   }
+  // ---- painel Posição (aba Mestre): Função Posicionador (P0202 = 3), firmware V2.1X
+  // palavras de saída 5 a 8 = P0099 habilitação, P01079 disparo, P01171 destino do movimento 1, P0219 reset de falhas
+  // palavras de entrada 5 a 8 = P0052 fração de volta, P0053 voltas, P0006 estado, P0048 erro de lag
+  const POS_WR = [99, 1079, 1171, 219], POS_RD = [52, 53, 6, 48];
+  const EST6 = ['desabilitado', 'servo ready (habilitado)', 'falha', 'potência desligada', 'autoajuste', 'STOP ativo', 'STO ativo'];
+  function posPainelHtml() {
+    return `<div class="pos-painel">
+      <div class="wh"><span>Posição pela Função Posicionador (palavras 5 a 8)</span></div>
+      <div class="row pos-bot">
+        <button id="posHab" class="small" title="5ª palavra = P0099: 2 habilita (sem gravar na memória), 0 desabilita">Habilitar</button>
+        <button id="posPulso" class="primary" title="6ª palavra = P01079: de 0 para 1 aciona o ciclo programado em P01080">Disparar ▶</button>
+        <button id="posReset" class="small" title="8ª palavra = P0219: de 0 para 1 reseta as falhas">Reset</button>
+      </div>
+      <div class="row pos-campos">
+        <label>Destino do movimento 1 <input type="number" id="posAng" class="num" step="0.1" min="0" max="359.9" value="${fmtN((OUT.extra[2] | 0) * 360 / 16384, 1).replace(',', '.')}"> °</label>
+        <span class="hint" id="posFrac"></span>
+      </div>
+      <p class="hint" id="posExpl">O disparo executa o próximo movimento do ciclo escolhido em <b>P01080</b>. Com a configuração do assistente, é o <b>movimento 1</b> (posicionamento absoluto): o disco vai para o destino acima.</p>
+      <p class="hint pos-leitura" id="posLeitura"></p>
+      <div class="pos-hex">Pela rede: 5ª P0099 = <code id="pxo0">0000h</code> · 6ª P01079 = <code id="pxo1">0000h</code> · 7ª P01171 = <code id="pxo2">0000h</code> · 8ª P0219 = <code id="pxo3">0000h</code></div>
+    </div>`;
+  }
+  function posHex() {
+    for (let k = 0; k < 4; k++) { const el = $('#pxo' + k); if (el) el.textContent = `${h4(OUT.extra[k] | 0)} (${OUT.extra[k] | 0})`; }
+    const hab = $('#posHab'); if (hab) { const on = (OUT.extra[0] | 0) !== 0; hab.classList.toggle('on', on); hab.textContent = on ? 'Habilitado ✓' : 'Habilitar'; }
+    const fr = $('#posFrac'); if (fr) fr.innerHTML = `fração de volta = <b>${OUT.extra[2] | 0}</b> (16384 = 1 volta)`;
+  }
+  function posPulso(k) { OUT.extra[k] = 1; posHex(); pushOut(); setTimeout(() => { OUT.extra[k] = 0; posHex(); pushOut(); }, 300); }   // 300 ms em 1: o drive enxerga a subida mesmo com RPI alto
+  function ligarPosPainel() {
+    $('#posHab').onclick = () => { OUT.extra[0] = (OUT.extra[0] | 0) ? 0 : 2; posHex(); pushOut(); };
+    $('#posPulso').onclick = () => posPulso(1);
+    $('#posReset').onclick = () => posPulso(3);
+    $('#posAng').onchange = () => { const g = ((+$('#posAng').value % 360) + 360) % 360; OUT.extra[2] = Math.round(g * 16384 / 360) % 16384; posHex(); pushOut(); };
+    posHex(); pushOut();
+  }
+  function posAtualizarLeitura() {
+    const el = $('#posLeitura'); if (!el) return;
+    const iw = S.sc && S.sc.inputs; if (!iw || iw.length < 8) { el.textContent = ''; return; }
+    const graus = (iw[5] + iw[4] / 16384) * 360, lagGraus = (iw[7] & 0xFFFF) * 360 / 16384, rpm = iw[1] * 18750 / 32767;
+    const est = EST6[iw[6]] || iw[6];
+    const situacao = Math.abs(rpm) > 3 ? '<b>movendo</b>' : lagGraus < 0.2 ? '<b>em posição</b>' : 'parado';
+    el.innerHTML = `Posição atual: <b>${fmtN(graus, 1)}°</b> (P0053 = ${iw[5]} voltas + P0052 = ${iw[4]}) · ${situacao} · erro de lag ${fmtN(lagGraus, 1)}° · estado: <b>${est}</b>`;
+  }
+
   function pushOut() {
     const w = outWords();
     $('#cwHex').textContent = h4(w[0]); $('#w2Hex').textContent = h4(w[1]); $('#w3Hex').textContent = h4(w[2]); $('#w4Hex').textContent = h4(w[3]);
@@ -2396,12 +2584,19 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
     const key = (sc.io ? sc.io.outWords : 4) + ':' + wr.join(',');
     if (key !== extraBuiltFor) {
       extraBuiltFor = key; const n = sc.io ? sc.io.outWords : 4;
-      $('#extraOut').innerHTML = Array.from({ length: Math.max(0, n - 4) }, (_, i) => {
+      const posMap = n >= 8 && POS_WR.every((p, k) => wr[k] === p);
+      $('#extraOut').innerHTML = (posMap ? posPainelHtml() : '') + Array.from({ length: Math.max(0, n - 4) }, (_, i) => {
+        if (posMap && i < 4) return '';
         const pn = wr[i]; const d = S.defs.get(pn);
         return `<div class="word"><div class="wh"><span>${5 + i}ª → P${pad4(pn || 0)} ${d ? d.name : ''}</span><code id="xo${i}h">0000h</code></div><div class="row"><input type="number" class="num" data-xo="${i}" value="${OUT.extra[i] || 0}"> valor bruto${d && d.dec ? ` (${d.dec} casa${d.dec > 1 ? 's' : ''} decimal: ${d.unit})` : d && d.unit ? ' ' + d.unit : ''}</div></div>`;
       }).join('');
       $$('[data-xo]').forEach(inp => inp.onchange = () => { OUT.extra[+inp.dataset.xo] = +inp.value | 0; $(`#xo${inp.dataset.xo}h`).textContent = h4(+inp.value); pushOut(); });
+      if (posMap) ligarPosPainel();
     }
+    // nota: drive em modo posição -> as palavras 1 a 4 são ignoradas
+    const notaM = $('#modoNota');
+    if (notaM) { const emPos = S.P[202] === 3; notaM.hidden = !emPos; if (emPos) notaM.textContent = 'O drive está na Função Posicionador (P0202 = 3): as palavras 1 a 4 acima são ignoradas. Quem comanda é o painel Posição (palavras 5 a 8).'; }
+    posAtualizarLeitura();
     // entradas
     const iw = open && sc.inputs && sc.inputs.length ? sc.inputs : null;
     const st = iw ? iw[0] & 0xFFFF : 0;
@@ -2413,7 +2608,15 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
       html += `<span>2ª Velocidade</span><span class="v">${fmtN(iw[1] * 18750 / 32767, 1)} rpm</span><span class="h">${iw[1]}</span>`;
       html += `<span>3ª Corrente de torque</span><span class="v">${fmtN(iw[2] / 10, 1)} A</span><span class="h">${iw[2]}</span>`;
       html += `<span>4ª Modo de controle atual</span><span class="v">${['Torque', 'Velocidade', '–', 'Posição'][iw[3] & 0xF] || iw[3]}</span><span class="h">${iw[3]}</span>`;
-      for (let i = 4; i < iw.length; i++) { const pn = rd[i - 4], d = S.defs.get(pn); html += `<span>${i + 1}ª P${pad4(pn || 0)} ${d ? d.name : ''}</span><span class="v">${d ? fmtVal(d, iw[i]) : iw[i]}</span><span class="h">${iw[i]}</span>`; }
+      const posRd = POS_RD.every((p, k) => rd[k] === p);
+      if (posRd && iw.length >= 8) {
+        const graus = (iw[5] + iw[4] / 16384) * 360;
+        html += `<span>5ª Fração de volta (P0052)</span><span class="v">${iw[4]} → posição ${fmtN(graus, 1)}°</span><span class="h">${iw[4]}</span>`;
+        html += `<span>6ª Número de voltas (P0053)</span><span class="v">${iw[5]}</span><span class="h">${iw[5]}</span>`;
+        html += `<span>7ª Estado do servo (P0006)</span><span class="v">${EST6[iw[6]] || iw[6]}</span><span class="h">${iw[6]}</span>`;
+        html += `<span>8ª Erro de lag (P0048)</span><span class="v">${iw[7] & 0xFFFF} pulsos = ${fmtN((iw[7] & 0xFFFF) * 360 / 16384, 1)}°</span><span class="h">${iw[7]}</span>`;
+      }
+      for (let i = posRd && iw.length >= 8 ? 8 : 4; i < iw.length; i++) { const pn = rd[i - 4], d = S.defs.get(pn); html += `<span>${i + 1}ª P${pad4(pn || 0)} ${d ? d.name : ''}</span><span class="v">${d ? fmtVal(d, iw[i]) : iw[i]}</span><span class="h">${iw[i]}</span>`; }
     } else html = '<span style="grid-column:1/-1;color:var(--ink-3)">Sem conexão de I/O. Conecte e faça o Forward Open.</span>';
     $('#inDecode').innerHTML = html;
   }
@@ -2460,15 +2663,52 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
     return val + (d.unit ? ' ' + d.unit : '');
   }
   let openParam = null;
+  // ---- Preparar para EtherNet/IP (atalho) e padrão de fábrica: o mesmo que o aluno faria parâmetro por parâmetro
+  const MOTIVO = { RO: 'somente leitura (A00122)', RANGE: 'fora da faixa (A00126)', ENABLED: 'desabilite o drive antes (A00124)', NOEXIST: 'parâmetro inexistente (A00125)' };
+  const resPreset = (txt, ok) => { const el = $('#pPresetRes'); if (el) { el.textContent = txt; el.style.color = ok ? 'var(--ok, #2F9E44)' : 'var(--bad, #C0392B)'; el.style.fontWeight = '600'; } };
+  async function gravarEmSequencia(passos) {
+    for (const [n, v] of passos) {
+      const r = (await req({ t: 'param', n, v })).result;
+      if (!r.ok) return `P${pad4(n)} não foi gravado: ${MOTIVO[r.code] || r.code}.`;
+    }
+    return null;
+  }
+  // palavras extras: zeradas para velocidade/torque (conexão de 4 palavras), mapeadas no aplicativo de posição (8 palavras)
+  const SEM_EXTRAS = [[820, 0], [821, 0], [822, 0], [823, 0], [835, 0], [836, 0], [837, 0], [838, 0]];
+  // Função Posicionador (P0202 = 3): mesma configuração do assistente de comunicação (opção Posição)
+  const EXTRAS_POS = [[820, 52], [821, 53], [822, 6], [823, 48], [835, 99], [836, 1079], [837, 1171], [838, 219]];
+  const FP_CONFIG = [[1151, 5], [1161, 0], [1171, 0], [1181, 0], [1191, 100], [1201, 1000], [1211, 1000], [1077, 0], [1078, 0], [1080, 1], [1101, 1], [1102, 0]];
+  const btnPreset = $('#pPresetEip');
+  if (btnPreset) btnPreset.onclick = async () => {
+    if (!confirm('Preparar o SCA06 para velocidade e torque pela EtherNet/IP?\n\nGrava:\n  P0000 = 5  (senha)\n  P0202 = 6  (comando pela rede)\n  P0662 = 3  (erro de comunicação desabilita o drive)\n  P0820…P0823 e P0835…P0838 = 0  (sem palavras extras: conexão de 4 palavras)\n  P0849 = 1  (aplica a configuração de rede)\n\nO drive precisa estar desabilitado.')) return;
+    const erro = await gravarEmSequencia([[0, 5], [202, 6], [662, 3], ...SEM_EXTRAS, [849, 1]]);
+    resPreset(erro || 'Pronto para velocidade e torque: P0202 = 6, conexão de 4 palavras. No CODESYS, use a conexão "Exclusive Owner, 4 palavras".', !erro);
+    buildParams();
+  };
+  const btnPos = $('#pPresetPos');
+  if (btnPos) btnPos.onclick = async () => {
+    if (!confirm('Preparar o SCA06 para posição pela EtherNet/IP (Função Posicionador)?\n\nGrava:\n  P0000 = 5  (senha)\n  P0099 = 0  (começa desabilitado: quem habilita é o CLP)\n  P0202 = 3  (Função Posicionador)\n  Movimento 1: P01151 = 5 (absoluto), P01191 = 100 rpm, P01201 = P01211 = 1000 rpm/s\n  Ciclo 1 = movimento 1: P01101 = 1, P01102 = 0 · disparo: P01080 = 1, P01077 = 0 (borda)\n  P0835…P0838 = 99, 1079, 1171, 219  (habilitação, disparo, destino, reset)\n  P0820…P0823 = 52, 53, 6, 48  (fração, voltas, estado, erro de lag)\n  P0662 = 3 e P0849 = 1')) return;
+    const erro = await gravarEmSequencia([[0, 5], [99, 0], [202, 3], ...FP_CONFIG, ...EXTRAS_POS, [662, 3], [849, 1]]);
+    resPreset(erro || 'Pronto para posição: P0202 = 3 (Função Posicionador), conexão de 8 palavras. No CODESYS, use a conexão "Exclusive Owner, 8 palavras (posicao)".', !erro);
+    buildParams();
+  };
+  const btnFab = $('#pFabrica');
+  if (btnFab) btnFab.onclick = async () => {
+    if (!confirm('Restaurar o padrão de fábrica do SCA06?\n\nEquivale a P0204 = 5: todos os parâmetros voltam ao valor de fábrica (P0202 = 2, comando pela HMI). O drive precisa estar desabilitado.')) return;
+    const erro = await gravarEmSequencia([[0, 5], [204, 5]]);
+    resPreset(erro || 'Padrão de fábrica carregado (P0204 = 5). O drive voltou a ser comandado pela HMI.', !erro);
+    buildParams();
+  };
+
   function buildParams() {
     const q = ($('#pSearch').value || '').toLowerCase().trim(), grp = $('#pGroup').value;
     const rows = [];
     for (const d of S.defs.values()) {
-      if (d.n >= 1050 && !(d.n >= 1100 && d.n <= 1113) && grp !== 'changed' && !q) continue;
+      if (d.n >= 1050 && grp !== 'fp' && grp !== 'changed' && !q) continue;
       if (grp === 'read' && !(d.n < 99)) continue;
       if (grp === 'cfg' && !(d.n >= 99 && d.n < 800)) continue;
       if (grp === 'eth' && !(d.n >= 800 && d.n <= 849) && d.n !== 662) continue;
-      if (grp === 'lad' && !(d.n >= 1000 && d.n <= 1113)) continue;
+      if (grp === 'fp' && !(d.fp || d.n === 202 || d.n === 99 || d.n === 1000 || d.n === 1020 || d.n === 1024)) continue;
       if (grp === 'changed' && (d.ro || S.P[d.n] === d.def)) continue;
       if (q && !(String(d.n).includes(q.replace(/^p0*/, '')) || d.name.toLowerCase().includes(q))) continue;
       rows.push(d);
@@ -2520,16 +2760,48 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
       hint: 'Com P0662 = 0 o motor continua com a última referência: compare os dois casos.', check: c => { if (c.P[662] === 1 && c.v.fault === 47) mem.f47 = true; return !!mem.f47 && !c.v.fault && c.v.p801 === 4; } },
     { id: 'm11', title: 'Atingir um fim de curso', text: 'Monte as cames (clique numa chave de fim de curso) e gire devagar até a chave atuar. Observe o bit 14 ou 15 da palavra de estado.',
       hint: 'O fim de curso força a referência de velocidade a zero no sentido limitado. Ele não atua no modo torque.', check: c => c.v.bench.cams && (c.v.status & 0xC000) && c.v.mode === 6 },
-    { id: 'm12', title: 'Posicionar em 135,0° pelo Ladder', text: 'O manual Ethernet manda usar o modo Ladder (P0202 = 4) para posicionamento. Mapeie P0835 = 1100 e P0836 = 1101, aplique com P0849 e comande: 5ª palavra = 1 (habilita), 6ª = 1350, depois 5ª = 3 (inicia).',
-      hint: 'P1103 escolhe o caminho: 0 menor, 1 horário, 2 anti-horário, 3 relativo. Leia P1111 mapeando P0820 = 1111.', target: [135, 0.5],
-      live: c => `posição = ${fmtN(c.v.userPosDeg, 1)}°`, check: c => c.P[202] === 4 && c.v.applied && c.v.applied.wrWords.includes(1100) && c.v.applied.wrWords.includes(1101) && c.v.lad.inPos && c.v.lad.count > 0 && Math.abs(c.v.userPosDeg - 135) < 0.3 },
+    { id: 'm12', title: 'Posição pela rede: Função Posicionador', text: 'Prepare o drive para posição sem ladder: P0202 = 3 (Função Posicionador), movimento 1 absoluto (P01151 = 5), ciclo 1 = movimento 1 (P01101 = 1), disparo pelo P01079 (P01080 = 1). Mapeie P0835…P0838 = 99, 1079, 1171, 219 e P0820…P0823 = 52, 53, 6, 48, aplique com P0849 = 1 e chegue a Data Active com a conexão de 8 palavras.',
+      hint: 'O assistente "Comunicação com o CLP" (topo da tela), na opção Posição, faz a configuração explicando cada etapa. No CODESYS, escolha a conexão "Exclusive Owner, 8 palavras (posicao)". Sem o P0849 = 1 o mapeamento não vale e a conexão é recusada (0x0109).',
+      check: c => c.P[202] === 3 && c.v.applied && [99, 1079, 1171].every(n => c.v.applied.wrWords.includes(n)) && [52, 53].every(n => c.v.applied.rdWords.includes(n)) && c.v.p801 === 4 && c.v.ioRun },
+    { id: 'm13', title: 'Posicionar em 135,0°', text: 'Habilite pela rede (5ª palavra = P0099 = 2), escreva o destino 135° na 7ª palavra (P01171 = 6144, porque 16384 = 1 volta) e dê um pulso na 6ª palavra (P01079: 0 → 1).',
+      hint: 'Fração de volta = graus × 16384 / 360. A posição atual chega nas entradas 5 e 6: (P0053 + P0052 / 16384) × 360.', target: [135, 0.5],
+      live: c => `posição = ${fmtN(c.v.userPosDeg, 1)}° · movimentos concluídos: ${c.v.fp.count}`,
+      check: c => c.P[202] === 3 && [5, 6].includes(c.P[1151]) && c.v.fp.inPos && c.v.fp.count > 0 && Math.abs(c.v.userPosDeg - 135) < 0.3 },
+    { id: 'm14', title: 'Pulso: cada pulso gira 45°', text: 'Troque o movimento 1 para relativo (P01151 = 3): o destino vira incremento. Com 45° na 7ª palavra (P01171 = 2048), dê 4 pulsos na 6ª palavra: o disco deve dar meia volta, em 4 passos de 45°.',
+      hint: 'O movimento começa na borda de subida do P01079 (0 → 1): volte para 0 entre um pulso e outro. Espere o disco parar antes do próximo pulso.',
+      live: c => `posição = ${fmtN(c.v.userPosDeg, 1)}° · pulsos de 45° concluídos: ${mem.p14 ? c.v.fp.count - mem.p14.n : 0}`,
+      check: c => {
+        const rel = c.P[202] === 3 && [3, 4].includes(c.P[1151]) && c.P[1171] === 2048;
+        if (!rel) { mem.p14 = null; return false; }
+        if (!mem.p14 && c.v.fp.inPos) mem.p14 = { n: c.v.fp.count, pos: c.v.userPosDeg };
+        if (!mem.p14) return false;
+        const andou = ((c.v.userPosDeg - mem.p14.pos) % 360 + 360) % 360;
+        return c.v.fp.count - mem.p14.n >= 4 && c.v.fp.inPos && Math.abs(andou - 180) < 0.5;
+      } },
+    { id: 'm15', title: 'Posição absoluta: 90° e depois 270°', text: 'Com o movimento 1 absoluto (P01151 = 5), mande o disco para 90,0° (P01171 = 4096) e, depois de parar, para 270,0° (P01171 = 12288).',
+      hint: 'No absoluto, o destino é a posição final, e não um incremento: disparar duas vezes com 4096 deixa o disco parado em 90°.', target: [270, 0.5],
+      live: c => `posição = ${fmtN(c.v.userPosDeg, 1)}°`,
+      check: c => {
+        const pos = c.v.userPosDeg, ok = c.P[202] === 3 && [5, 6].includes(c.P[1151]) && c.v.fp.inPos;
+        if (ok && Math.abs(pos - 90) < 0.3) mem.p90 = true;
+        return !!mem.p90 && ok && Math.abs(pos - 270) < 0.3;
+      } },
+    { id: 'm16', title: 'Ciclo completo: vai a 180° e volta com um só disparo', text: 'Programe o movimento 2 absoluto em 0° (P01152 = 5, P01172 = 0, P01182 = 0, P01192 = 100, P01202 = P01212 = 1000), ponha-o no ciclo 1 (P01102 = 2) e faça o ciclo completo (P01080 = −1). Com destino 180° (P01171 = 8192), um único pulso deve levar o disco a 180° e trazê-lo de volta a 0°.',
+      hint: 'Com P01080 negativo, um disparo executa todos os movimentos do ciclo em sequência. Um timer no movimento 2 (P01162 = 1000) faz o disco esperar 1 s em 180° antes de voltar.',
+      live: c => `posição = ${fmtN(c.v.userPosDeg, 1)}°${mem.v180 ? ' · passou por 180° ✓' : ''}`,
+      check: c => {
+        const pos = c.v.userPosDeg, cfg = c.P[202] === 3 && c.P[1080] < 0 && c.P[1102] === 2 && [5, 6].includes(c.P[1152]);
+        if (!cfg) { mem.v180 = false; return false; }
+        if (Math.abs(pos - 180) < 1) mem.v180 = true;
+        return !!mem.v180 && c.v.fp.done && c.v.fp.inPos && (pos < 0.3 || pos > 359.7);
+      } },
   ];
   let done = {}; try { done = JSON.parse(localStorage.getItem('sca06-missoes') || '{}'); } catch (_) { }
   function buildMissions() {
     $('#missions').innerHTML = MISSIONS.map(m => `<li id="${m.id}"><h4>${m.title}</h4><p>${m.text}</p><div class="live" id="${m.id}l"></div><details><summary>Dica</summary>${m.hint}</details></li>`).join('');
   }
   buildMissions();
-  $('#mReset').onclick = () => { done = {}; mem.f47 = false; mem.spun = 0; try { localStorage.removeItem('sca06-missoes'); } catch (_) { } };
+  $('#mReset').onclick = () => { done = {}; mem.f47 = false; mem.spun = 0; mem.p90 = false; mem.c270 = undefined; try { localStorage.removeItem('sca06-missoes'); } catch (_) { } };
   function runMissions() {
     const c = { v: S.v, P: S.P, sc: S.sc };
     let current = null, n = 0;
@@ -2611,7 +2883,451 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
   }
 
   S.tab = 'scanner';
-  connectBackend().then(b => { backend = b; });
+  backendPronto = connectBackend().then(b => { backend = b; return b; });
+})();
+
+</script>
+<script>
+/* Assistente de comunicação com o CLP (componente comum ao CFW500 e ao SCA06).
+ *
+ * Percorre, na ordem em que um técnico faria em campo, as etapas para o equipamento conversar com o
+ * CLP pela rede: cada etapa explica o porquê, mostra "valor atual → valor novo" de cada parâmetro e
+ * como seria na HMI, e grava parâmetro por parâmetro (a HMI do equipamento mostra cada gravação).
+ * Dois ritmos: passo a passo (o aluno lê e grava cada etapa) ou "fazer tudo".
+ *
+ * Uso: AssistenteCLP.abrir({
+ *   titulo, subtitulo,
+ *   modos: [{ id, nome, texto }]            (opcional: escolha antes das etapas)
+ *   etapas(modo) -> [{ titulo, porque, hmi, itens: [{ n, v, nome, faz }] }],
+ *   ler(n) -> valor atual,  gravar(n, v) -> Promise<{ ok, msg }>,
+ *   fmt(n, v) -> texto do valor (opcional),  bloqueio() -> texto | null (opcional),
+ *   resumo(modo) -> html do "o que configurar no CLP"
+ * });
+ */
+(function () {
+  'use strict';
+  const CSS = `
+  dialog.aclp { width: min(900px, 95vw); max-height: 92vh; border: 0; border-radius: 12px; padding: 0; background: #1E2327; color: #E6EAE7;
+    font: 15px/1.45 'Barlow', system-ui, sans-serif; box-shadow: 0 18px 60px rgba(0,0,0,.55); }
+  dialog.aclp::backdrop { background: rgba(10,12,14,.6); }
+  .aclp * { box-sizing: border-box; }
+  .aclp-cab { display: flex; align-items: flex-start; gap: 12px; padding: 16px 20px 12px; border-bottom: 1px solid #343B40; }
+  .aclp-cab h2 { margin: 0; font: 600 22px/1.15 'Barlow Condensed', 'Arial Narrow', sans-serif; }
+  .aclp-cab p { margin: 2px 0 0; color: #A7B0B3; font-size: 14px; }
+  .aclp-x { margin-left: auto; background: none; border: 1px solid #485055; color: #E6EAE7; border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+  .aclp-trilha { display: flex; gap: 6px; flex-wrap: wrap; padding: 12px 20px 0; }
+  .aclp-chip { font: 500 12.5px 'Barlow', system-ui, sans-serif; padding: 3px 10px; border-radius: 999px; background: #2A3136; color: #A7B0B3; border: 1px solid #3A4247; cursor: pointer; }
+  .aclp-chip:hover:not(:disabled) { border-color: #5B8FC2; color: #E6EAE7; }
+  .aclp-chip:focus-visible { outline: 2px solid #5B8FC2; outline-offset: 2px; }
+  .aclp-chip:disabled { cursor: default; opacity: .7; }
+  .aclp-chip.atual { background: #2E5D8C; color: #fff; border-color: #2E5D8C; }
+  .aclp-chip.feita { background: #1F4D33; color: #BFE8CC; border-color: #2C6B47; }
+  .aclp-chip.feita.atual { background: #2E5D8C; color: #fff; border-color: #7FD69B; }
+  .aclp-chip.modo { border-style: dashed; color: #E6EAE7; }
+  .aclp-dica { padding: 6px 20px 0; color: #8E989C; font-size: 12.5px; }
+  .aclp-corpo { padding: 14px 20px; overflow: auto; max-height: calc(92vh - 190px); }
+  .aclp-corpo h3 { margin: 0 0 6px; font: 600 20px/1.2 'Barlow Condensed', 'Arial Narrow', sans-serif; color: #F2F4F3; }
+  dialog.aclp h2, dialog.aclp h3 { color: #F2F4F3; }
+  .aclp-porque { margin: 0 0 12px; }
+  .aclp table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 4px 0 12px; }
+  .aclp th, .aclp td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #343B40; vertical-align: top; }
+  .aclp th { color: #A7B0B3; font-weight: 600; font-size: 12.5px; text-transform: uppercase; letter-spacing: .03em; }
+  .aclp td.pn { font: 600 14px ui-monospace, Consolas, monospace; white-space: nowrap; }
+  .aclp td.val { font-family: ui-monospace, Consolas, monospace; white-space: nowrap; }
+  .aclp td.st { width: 120px; font-size: 13px; color: #A7B0B3; }
+  .aclp tr.gravando td { background: #2B3A48; }
+  .aclp tr.ok td.st { color: #7FD69B; }
+  .aclp tr.igual td.st { color: #9FC4AE; }
+  .aclp tr.erro td.st { color: #FF8A80; }
+  .aclp-hmi { border-left: 4px solid #C98A2B; background: #262C30; padding: 8px 12px; border-radius: 6px; font-size: 14px; }
+  .aclp-hmi b { color: #F0C27A; }
+  .aclp-aviso { margin: 10px 0 0; padding: 8px 12px; border-radius: 6px; background: #4A2A27; color: #FFD0CB; font-size: 14px; }
+  .aclp-ok { margin: 10px 0 0; padding: 8px 12px; border-radius: 6px; background: #1F4D33; color: #CFF1DA; font-size: 14px; }
+  .aclp-modos { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .aclp-modos button { text-align: left; padding: 12px 14px; border-radius: 8px; border: 1px solid #485055; background: #262C30; color: #E6EAE7; cursor: pointer; font: inherit; }
+  .aclp-modos button:hover { border-color: #5B8FC2; }
+  .aclp-modos b { display: block; font-size: 16px; margin-bottom: 4px; }
+  .aclp-modos small { display: block; margin-top: 8px; color: #7FB3E6; font-weight: 600; }
+  .aclp-rodape { display: flex; gap: 8px; align-items: center; padding: 12px 20px 16px; border-top: 1px solid #343B40; flex-wrap: wrap; }
+  .aclp-rodape .esp { flex: 1; }
+  .aclp-b { font: 600 14px 'Barlow', system-ui, sans-serif; padding: 8px 14px; border-radius: 6px; border: 1px solid #485055; background: #2A3136; color: #E6EAE7; cursor: pointer; }
+  .aclp-b.prim { background: #2E6FB0; border-color: #2E6FB0; color: #fff; }
+  .aclp-b:disabled { opacity: .45; cursor: default; }
+  .aclp-resumo table td:first-child { color: #A7B0B3; width: 38%; }
+  `;
+  const esc = (t) => String(t ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const pn = (n) => 'P' + String(n).padStart(4, '0');
+  const dorme = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  function abrir(cfg) {
+    if (!document.getElementById('aclpCss')) { const st = document.createElement('style'); st.id = 'aclpCss'; st.textContent = CSS; document.head.appendChild(st); }
+    let dlg = document.getElementById('aclpDlg');
+    if (!dlg) { dlg = document.createElement('dialog'); dlg.id = 'aclpDlg'; dlg.className = 'aclp'; document.body.appendChild(dlg); }
+    const fmt = cfg.fmt || ((n, v) => String(v));
+    const E = { modo: null, etapas: [], i: 0, feitas: new Set(), linhas: {}, ocupado: false, tudo: false, aviso: '', fim: false };
+    if (!cfg.modos || cfg.modos.length < 2) { E.modo = cfg.modos && cfg.modos[0] ? cfg.modos[0].id : null; E.etapas = cfg.etapas(E.modo); }
+
+    function cabecalho() {
+      return `<div class="aclp-cab"><div><h2>${esc(cfg.titulo)}</h2><p>${esc(cfg.subtitulo || '')}</p></div>
+        <button class="aclp-x" data-a="fechar" aria-label="Fechar o assistente">Fechar</button></div>`;
+    }
+    function trilha() {
+      if (!E.etapas.length) return '';
+      const modo = cfg.modos && cfg.modos.length > 1 ? cfg.modos.find((m) => m.id === E.modo) : null;
+      const chip = (alvo, cls, txt, tit) => `<button class="aclp-chip ${cls}" data-ir="${alvo}" title="${esc(tit)}" ${E.ocupado ? 'disabled' : ''}>${txt}</button>`;
+      const etapas = E.etapas.map((et, k) => {
+        const cls = [E.feitas.has(k) ? 'feita' : '', !E.fim && k === E.i ? 'atual' : ''].join(' ');
+        return chip(k, cls, `${E.feitas.has(k) ? '✓ ' : ''}${k + 1}. ${esc(et.titulo)}`, E.feitas.has(k) ? 'Etapa gravada: clique para rever' : 'Ir para esta etapa');
+      }).join('');
+      return `<nav class="aclp-trilha" aria-label="Etapas do assistente">${modo ? chip('modo', 'modo', '⇄ ' + esc(modo.nome), 'Trocar o modo (velocidade/torque ou posição)') : ''}${etapas}${chip('fim', E.fim ? 'atual' : '', '✓ No CLP', 'O que configurar no CLP')}</nav>
+        <div class="aclp-dica">Clique numa etapa para ir direto a ela, ou use as setas ← → do teclado.</div>`;
+    }
+    function ir(alvo) {
+      if (E.ocupado) return;
+      E.tudo = false; E.aviso = '';
+      if (alvo === 'modo') E.modo = null;
+      else if (alvo === 'fim') E.fim = true;
+      else { E.fim = false; E.i = Math.max(0, Math.min(E.etapas.length - 1, +alvo)); }
+      desenhar();
+    }
+    function telaModos() {
+      return `${cabecalho()}<div class="aclp-corpo"><h3>${esc(cfg.perguntaModo || 'Como o CLP vai comandar o equipamento?')}</h3>
+        <p class="aclp-porque">${esc(cfg.textoModo || 'Escolha o modo de controle. Cada modo pede uma configuração diferente no equipamento e no CLP.')}</p>
+        <div class="aclp-modos">${cfg.modos.map((m) => `<button data-modo="${esc(m.id)}"><b>${esc(m.nome)}</b>${esc(m.texto)}<small>Escolher ›</small></button>`).join('')}</div></div>
+        <div class="aclp-rodape"><span class="esp"></span><button class="aclp-b" data-a="fechar">Cancelar</button></div>`;
+    }
+    function telaEtapa() {
+      const et = E.etapas[E.i], feita = E.feitas.has(E.i), ult = E.i === E.etapas.length - 1;
+      const linhas = et.itens.map((it, k) => {
+        const atual = cfg.ler(it.n);
+        const marca = E.linhas[E.i + ':' + k];   // 'ok' (gravado) ou 'igual' (já estava assim)
+        return `<tr id="aclpL${k}" class="${marca || ''}"><td class="pn">${pn(it.n)}</td><td>${esc(it.nome)}<br><small style="color:#A7B0B3">${esc(it.faz)}</small></td>
+          <td class="val">${esc(atual === undefined ? '—' : fmt(it.n, atual))}</td><td class="val"><b>${esc(fmt(it.n, it.v))}</b></td>
+          <td class="st">${marca === 'ok' ? '✓ gravado' : marca === 'igual' ? '✓ já estava assim' : ''}</td></tr>`;
+      }).join('');
+      return `${cabecalho()}${trilha()}<div class="aclp-corpo">
+        <h3>Etapa ${E.i + 1} de ${E.etapas.length}: ${esc(et.titulo)}</h3>
+        <p class="aclp-porque">${et.porque}</p>
+        <table><thead><tr><th>Parâmetro</th><th>O que faz</th><th>Atual</th><th>Novo</th><th></th></tr></thead><tbody>${linhas}</tbody></table>
+        <div class="aclp-hmi"><b>Como seria na HMI:</b> ${et.hmi}</div>
+        ${E.aviso ? `<div class="aclp-aviso">${E.aviso}</div>` : feita ? `<div class="aclp-ok">Etapa gravada. ${ult ? 'Falta só ver o que configurar no CLP.' : 'Siga para a próxima.'}</div>` : ''}
+        </div>
+        <div class="aclp-rodape">
+          <button class="aclp-b" data-a="voltar" ${E.i === 0 && !(cfg.modos && cfg.modos.length > 1) ? 'disabled' : ''}>Voltar</button>
+          <span class="esp"></span>
+          <button class="aclp-b" data-a="tudo" ${E.ocupado ? 'disabled' : ''} title="Grava esta etapa e as seguintes, uma depois da outra">Fazer tudo</button>
+          ${feita ? `<button class="aclp-b prim" data-a="proxima" ${E.ocupado ? 'disabled' : ''}>${ult ? 'Ver o que configurar no CLP' : 'Próxima etapa'}</button>`
+            : `<button class="aclp-b" data-a="proxima" ${E.ocupado ? 'disabled' : ''} title="Ir para a próxima etapa sem gravar esta">Pular ›</button>
+               <button class="aclp-b prim" data-a="gravar" ${E.ocupado ? 'disabled' : ''}>Gravar esta etapa</button>`}
+        </div>`;
+    }
+    function telaFim() {
+      return `${cabecalho()}${trilha()}<div class="aclp-corpo aclp-resumo"><h3>Pronto. Agora, no CLP:</h3>${cfg.resumo(E.modo)}</div>
+        <div class="aclp-rodape"><button class="aclp-b" data-a="voltar">Voltar</button><span class="esp"></span><button class="aclp-b prim" data-a="fechar">Concluir</button></div>`;
+    }
+    function desenhar() {
+      const escolher = cfg.modos && cfg.modos.length > 1 && !E.modo;   // só o SCA06 tem escolha de modo
+      dlg.innerHTML = escolher ? telaModos() : E.fim ? telaFim() : telaEtapa();
+      dlg.querySelectorAll('[data-a]').forEach((b) => { b.onclick = () => acao(b.dataset.a); });
+      dlg.querySelectorAll('[data-ir]').forEach((b) => { b.onclick = () => ir(b.dataset.ir); });
+      dlg.querySelectorAll('[data-modo]').forEach((b) => { b.onclick = () => { E.modo = b.dataset.modo; E.etapas = cfg.etapas(E.modo); E.i = 0; E.feitas.clear(); E.linhas = {}; E.fim = false; desenhar(); }; });
+    }
+    async function gravarEtapa() {
+      const bloq = cfg.bloqueio ? cfg.bloqueio() : null;
+      if (bloq) { E.aviso = bloq; desenhar(); return false; }
+      E.aviso = ''; E.ocupado = true; desenhar();
+      const et = E.etapas[E.i];
+      for (let k = 0; k < et.itens.length; k++) {
+        const it = et.itens[k], tr = dlg.querySelector('#aclpL' + k), st = tr && tr.querySelector('.st');
+        if (tr) tr.className = 'gravando';
+        if (st) st.textContent = 'gravando…';
+        if (cfg.ler(it.n) === it.v) {
+          await dorme(350);
+          if (tr) tr.className = 'igual'; if (st) st.textContent = '✓ já estava assim';
+          E.linhas[E.i + ':' + k] = 'igual';
+          continue;
+        }
+        let r;
+        try { r = await cfg.gravar(it.n, it.v); } catch (e) { r = { ok: false, msg: e.message }; }
+        await dorme(450);
+        if (!r || !r.ok) {
+          if (tr) tr.className = 'erro'; if (st) st.textContent = '✕ recusado';
+          E.aviso = `${pn(it.n)} não foi gravado: ${esc((r && r.msg) || 'erro')}.`; E.ocupado = false; E.tudo = false; desenhar(); return false;
+        }
+        if (tr) { tr.className = 'ok'; tr.querySelector('td:nth-child(3)').textContent = fmt(it.n, cfg.ler(it.n) ?? it.v); }
+        if (st) st.textContent = '✓ gravado';
+        E.linhas[E.i + ':' + k] = 'ok';
+      }
+      E.feitas.add(E.i); E.ocupado = false; desenhar(); return true;
+    }
+    async function acao(a) {
+      if (a === 'fechar') { if (!E.ocupado) { E.tudo = false; dlg.close(); } return; }
+      if (E.ocupado) return;
+      if (a === 'voltar') { E.aviso = ''; if (E.fim) E.fim = false; else if (E.i > 0) E.i--; else if (cfg.modos && cfg.modos.length > 1) E.modo = null; desenhar(); return; }
+      if (a === 'gravar') { await gravarEtapa(); return; }
+      if (a === 'proxima') { E.aviso = ''; if (E.i < E.etapas.length - 1) E.i++; else E.fim = true; desenhar(); return; }
+      if (a === 'tudo') {
+        E.tudo = true;
+        while (E.tudo) {
+          if (!E.feitas.has(E.i)) { const ok = await gravarEtapa(); if (!ok) return; }
+          await dorme(700);
+          if (E.i < E.etapas.length - 1) { E.i++; desenhar(); await dorme(500); } else { E.fim = true; E.tudo = false; desenhar(); }
+        }
+      }
+    }
+    dlg.oncancel = (e) => { if (E.ocupado) e.preventDefault(); else E.tudo = false; };   // Esc não interrompe uma gravação
+    // setas ← → passam de etapa (escutadas na página toda: o foco some quando os botões são redesenhados)
+    if (!dlg._teclado) { document.addEventListener('keydown', (e) => { if (dlg.open && dlg._teclas) dlg._teclas(e); }); dlg._teclado = true; }
+    dlg._teclas = (e) => {
+      if (/^(INPUT|SELECT|TEXTAREA)$/.test((e.target && e.target.tagName) || '')) return;
+      if (E.ocupado || !E.modo && cfg.modos && cfg.modos.length > 1) return;
+      if (e.key === 'ArrowRight') { e.preventDefault(); if (!E.fim) ir(E.i < E.etapas.length - 1 ? E.i + 1 : 'fim'); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); if (E.fim) ir(E.etapas.length - 1); else if (E.i > 0) ir(E.i - 1); }
+    };
+    desenhar();
+    if (!dlg.open) dlg.showModal();
+  }
+  window.AssistenteCLP = { abrir };
+})();
+
+</script>
+<script>
+/* Assistente de comunicação com o CLP — etapas do SCA06 + ECO5 (EtherNet/IP), firmware V2.1X.
+ * Dois modos: velocidade e torque (P0202 = 6, conexão de 4 palavras) ou posição pela Função
+ * Posicionador (P0202 = 3, conexão de 8 palavras, sem programar ladder). Usa assistente-clp.js e window.SCA06App. */
+(function () {
+  'use strict';
+  const A = () => window.SCA06App;
+  const ler = (n) => { const a = A(); return a && a.S.P ? a.S.P[n] : undefined; };
+
+  const OPC = {
+    0: { 0: 'bloqueada', 5: 'liberada' },
+    202: { 1: 'Modo Torque', 2: 'Modo Velocidade (HMI)', 3: 'Função Posicionador', 4: 'Ladder', 5: 'CANopen/DeviceNet/EtherCAT', 6: 'Profibus DP/Ethernet' },
+    662: { 0: 'Mostra alarme', 1: 'Gera falha', 2: 'Executa função STOP', 3: 'Desabilita drive' },
+    810: { 0: 'Parâmetros', 1: 'DHCP' },
+    849: { 0: 'Operação normal', 1: 'Atualiza configuração' },
+    99: { 0: 'Não habilitado', 1: 'Habilita', 2: 'Habilita sem salvar' },
+    1077: { 0: 'Borda de subida', 1: 'Nível' },
+    1151: { 1: 'Controle de Iq', 2: 'Controle de velocidade', 3: 'Posicionamento relativo', 5: 'Posicionamento absoluto', 7: 'Jog' },
+  };
+  const MAPA = { 52: 'fração de volta P0052', 53: 'voltas P0053', 6: 'estado do servo P0006', 48: 'erro de lag P0048', 99: 'habilitação P0099', 1079: 'disparo P01079', 1171: 'destino do movimento 1 P01171', 219: 'reset de falhas P0219' };
+  const fmt = (n, v) => {
+    if (OPC[n] && OPC[n][v] !== undefined) return `${v} (${OPC[n][v]})`;
+    if ((n >= 820 && n <= 823) || (n >= 835 && n <= 838)) return v ? `${v} (${MAPA[v] || 'P' + v})` : '0 (nenhuma)';
+    return String(v);
+  };
+
+  function ipDoDrive() {
+    const a = A(); const ip = String((a && (a.S.deviceIp || (a.S.info && a.S.info.deviceIp))) || '');
+    return /^\d+\.\d+\.\d+\.\d+$/.test(ip) && ip !== '0.0.0.0' && !ip.startsWith('127.') ? ip : '192.168.100.22';
+  }
+
+  function etapas(modo) {
+    const ip = ipDoDrive(), o = ip.split('.').map(Number), pos = modo === 'pos';
+    const mudam = ['P0810', ...[192, 168, 0, 10].map((f, k) => (o[k] !== f ? 'P081' + (k + 1) : null)).filter(Boolean)].join(', ');
+    const extras = pos
+      ? [[820, 52, 'Palavra de entrada #5', 'o drive manda a fração de volta da posição (P0052, 16384 = 1 volta)'], [821, 53, 'Palavra de entrada #6', 'o número de voltas (P0053)'],
+        [822, 6, 'Palavra de entrada #7', 'o estado do servo (P0006: 1 = habilitado, 2 = falha…)'], [823, 48, 'Palavra de entrada #8', 'o erro de lag (P0048): quanto falta para chegar'],
+        [835, 99, 'Palavra de saída #5', 'o CLP habilita o drive (P0099: 2 habilita, 0 desabilita)'], [836, 1079, 'Palavra de saída #6', 'o CLP dispara o movimento (P01079: pulso 0 → 1)'],
+        [837, 1171, 'Palavra de saída #7', 'o CLP escreve o destino do movimento 1 (P01171, fração de volta)'], [838, 219, 'Palavra de saída #8', 'o CLP reseta falhas (P0219: pulso 0 → 1)']]
+      : [[820, 0, 'Palavra de entrada #5', 'sem palavra extra'], [821, 0, 'Palavra de entrada #6', 'sem palavra extra'], [822, 0, 'Palavra de entrada #7', 'sem palavra extra'],
+        [823, 0, 'Palavra de entrada #8', 'sem palavra extra'], [835, 0, 'Palavra de saída #5', 'sem palavra extra'], [836, 0, 'Palavra de saída #6', 'sem palavra extra'],
+        [837, 0, 'Palavra de saída #7', 'sem palavra extra'], [838, 0, 'Palavra de saída #8', 'sem palavra extra']];
+    return [
+      { titulo: 'Liberar a senha',
+        porque: 'O SCA06 protege os parâmetros com <b>senha</b>: sem ela, a HMI só mostra os valores e recusa alterações. Com <b>P0000 = 5</b> os parâmetros podem ser alterados.',
+        hmi: 'display em <b>P00000</b> → <b>P</b> → <b>▲ 5 vezes</b> → <b>P</b>.',
+        itens: [{ n: 0, v: 5, nome: 'Acesso aos parâmetros', faz: 'a senha: 5 libera a alteração' }] },
+      { titulo: 'Endereço IP',
+        porque: `O CLP encontra o drive pelo <b>endereço IP</b> do módulo ECO5. De fábrica ele vem em <b>DHCP</b>: pede um IP a um servidor da rede. Numa máquina, normalmente não há esse servidor e o CLP precisa saber o IP de antemão, por isso se usa <b>IP fixo, programado nos parâmetros</b>. Ele precisa estar na mesma rede do CLP e ser único: aqui, <b>${ip}</b> (o CODESYS é o 192.168.100.10).`,
+        hmi: `<b>▲</b> até <b>P00810</b> → 0 · P00811…P00814 = ${ip} · P00815 = 24. Partindo da fábrica (192.168.0.10), mudam: ${mudam}.`,
+        itens: [
+          { n: 810, v: 0, nome: 'Configuração do endereço IP', faz: 'de onde vem o IP: dos parâmetros ou de um servidor DHCP' },
+          { n: 811, v: o[0], nome: 'IP, 1º número', faz: `${o[0]}.x.x.x` },
+          { n: 812, v: o[1], nome: 'IP, 2º número', faz: `x.${o[1]}.x.x` },
+          { n: 813, v: o[2], nome: 'IP, 3º número', faz: `x.x.${o[2]}.x` },
+          { n: 814, v: o[3], nome: 'IP, 4º número', faz: `x.x.x.${o[3]}: o número do drive na rede` },
+          { n: 815, v: 24, nome: 'Máscara (CIDR)', faz: '24 = 255.255.255.0: a rede é a dos três primeiros números' },
+        ] },
+      pos
+        ? { titulo: 'Quem manda no drive',
+          porque: 'De fábrica, o SCA06 vem com <b>P0202 = 2</b>: a velocidade vem da própria HMI. Com <b>P0202 = 3</b> entra a <b>Função Posicionador</b> do firmware: os movimentos ficam programados em parâmetros e o CLP só habilita, escolhe o destino e dispara, tudo pela rede. Não é preciso programar ladder. Nesse modo a palavra de controle fixa não vale: a habilitação é pelo <b>P0099</b>, que fica em 0 agora e é escrito pelo CLP depois. O drive precisa estar desabilitado.',
+          hmi: '<b>▲ 37 vezes</b> até <b>P00202</b> → <b>P</b> → <b>P</b> → ▲ 1 vez (00003) → <b>P</b> · <b>P00099</b>: confira que vale 0.',
+          itens: [
+            { n: 202, v: 3, nome: 'Modo de operação', faz: 'Função Posicionador: movimentos programados em parâmetros' },
+            { n: 99, v: 0, nome: 'Habilitação', faz: 'começa desabilitado; quem habilita é o CLP, pela 5ª palavra de saída' },
+          ] }
+        : { titulo: 'Quem manda no drive',
+          porque: 'De fábrica, o SCA06 vem com <b>P0202 = 2</b>: a velocidade vem da própria HMI. Com <b>P0202 = 6</b> ele passa a obedecer às <b>palavras de saída do CLP</b>: palavra de controle, referência de velocidade, referência de torque e modo de controle. Sem isso, o CLP conecta, mas o drive ignora o que ele manda. O drive precisa estar desabilitado.',
+          hmi: '<b>▲ 37 vezes</b> até <b>P00202</b> → <b>P</b> (mostra o valor) → <b>P</b> (o dígito pisca) → ▲ 4 vezes (00006) → <b>P</b>.',
+          itens: [{ n: 202, v: 6, nome: 'Modo de operação', faz: 'Profibus DP/Ethernet: quem manda é o CLP pela rede' }] },
+      ...(pos ? [
+        { titulo: 'O movimento',
+          porque: 'A Função Posicionador guarda até <b>10 movimentos</b> (P01151 a P01230). Aqui se programa o <b>movimento 1</b> como <b>posicionamento absoluto</b>: o disco vai até um destino. O destino (P01171, em fração de volta: <b>16384 = 1 volta</b>, 4096 = 90°) quem escreve é o CLP, pela rede. A velocidade e as rampas ficam aqui.',
+          hmi: 'segure <b>▲</b> até <b>P01151</b> → 5 · <b>P01191</b> = 100 · <b>P01201</b> = 1000 · <b>P01211</b> = 1000.',
+          itens: [
+            { n: 1151, v: 5, nome: 'Tipo do movimento 01', faz: 'posicionamento absoluto: vai até o destino' },
+            { n: 1191, v: 100, nome: 'Velocidade do movimento 01', faz: '100 rpm durante o posicionamento' },
+            { n: 1201, v: 1000, nome: 'Aceleração do movimento 01', faz: '1000 rpm/s para ganhar velocidade' },
+            { n: 1211, v: 1000, nome: 'Desaceleração do movimento 01', faz: '1000 rpm/s para frear até o destino' },
+          ] },
+        { titulo: 'O ciclo e o disparo',
+          porque: 'Os movimentos são executados em <b>ciclos</b> (até 10, cada um com até 5 movimentos). O <b>ciclo 1</b> fica só com o movimento 1. O <b>P01080 = 1</b> diz que o disparo pelo parâmetro <b>P01079</b> aciona o ciclo 1, e o <b>P01077 = 0</b> faz o disparo na <b>borda de subida</b>: cada vez que o CLP muda o P01079 de 0 para 1, o disco vai para o destino.',
+          hmi: 'segure <b>▲</b> até <b>P01077</b> → 0 · <b>P01080</b> = 1 · <b>P01101</b> = 1 · <b>P01102</b> = 0.',
+          itens: [
+            { n: 1077, v: 0, nome: 'Acionamento por borda ou nível', faz: 'borda de subida: um disparo por pulso' },
+            { n: 1080, v: 1, nome: 'Ciclo acionado pelo P01079', faz: 'o disparo aciona o ciclo 1' },
+            { n: 1101, v: 1, nome: 'Primeiro movimento do ciclo 01', faz: 'o ciclo 1 executa o movimento 1' },
+            { n: 1102, v: 0, nome: 'Segundo movimento do ciclo 01', faz: '0 = fim do ciclo' },
+          ] },
+      ] : []),
+      { titulo: 'O que vai nas palavras de troca',
+        porque: pos
+          ? 'A conexão sempre troca <b>4 palavras fixas</b> em cada sentido (no modo 3 as saídas fixas são ignoradas). Para posicionar, o CLP precisa de mais 4 em cada sentido, e cada uma aponta para um parâmetro: nas <b>saídas</b> (P0835…P0838) o CLP escreve a habilitação, o disparo, o destino e o reset; nas <b>entradas</b> (P0820…P0823) o drive manda a posição (fração e voltas), o estado e o erro de lag. A conexão no CLP passa a ter <b>8 palavras (16 bytes) em cada sentido</b>.'
+          : 'A conexão troca <b>4 palavras fixas</b> em cada sentido: no CLP, 8 bytes de entrada e 8 de saída. As palavras extras (P0820…P0823 e P0835…P0838) ficam <b>zeradas</b>: assim, se o drive já tinha sido configurado para posição, a conexão volta a ter 4 palavras.',
+        hmi: pos ? '<b>P00820</b> = 52, P00821 = 53, P00822 = 6, P00823 = 48 · <b>P00835</b> = 99, P00836 = 1079, P00837 = 1171, P00838 = 219.'
+          : 'confira <b>P00820</b>…P00823 e <b>P00835</b>…P00838 = 0 (de fábrica já vêm zerados).',
+        itens: extras.map(([n, v, nome, faz]) => ({ n, v, nome, faz })) },
+      { titulo: 'Segurança se a comunicação cair',
+        porque: 'Se o cabo romper ou o CLP parar, o que o drive faz? De fábrica (<b>P0662 = 0</b>) ele só mostra o alarme e o motor <b>continua girando</b> com a última referência: perigoso numa máquina. Com <b>P0662 = 3</b> ele <b>desabilita</b> o motor.',
+        hmi: '<b>▲</b> até <b>P00662</b> → <b>P</b> → ▲ 3 vezes → <b>P</b>.',
+        itens: [{ n: 662, v: 3, nome: 'Ação para erro de comunicação', faz: 'o que fazer se a rede cair: desabilitar o drive' }] },
+      { titulo: 'Aplicar',
+        porque: 'As mudanças de rede (o IP e as palavras de troca) só passam a valer depois de <b>aplicadas</b>, como no drive real. <b>P0849 = 1</b> reinicia a interface Ethernet: se o CLP estiver conectado, a conexão cai e volta. O P0849 volta sozinho para 0.',
+        hmi: '<b>▲</b> até <b>P00849</b> → <b>P</b> → ▲ → <b>P</b>.',
+        itens: [{ n: 849, v: 1, nome: 'Atualiza a configuração Ethernet', faz: 'aplica o IP e as palavras de troca' }] },
+    ];
+  }
+
+  function resumo(modo) {
+    const ip = ipDoDrive(), pos = modo === 'pos';
+    const l = (a, b) => `<tr><td>${a}</td><td>${b}</td></tr>`;
+    return `<p class="aclp-porque">O drive está pronto. No CODESYS, configure o SCA06 com estes valores (o passo a passo completo está no <b>Guia</b> do HUB, ${pos ? 'Parte 8' : 'Partes 2 e 3'}):</p>
+      <table><tbody>
+      ${l('Placa de rede do CLP (Ethernet)', '<b>SIM-HUB (192.168.100.10)</b>')}
+      ${l('Arquivo EDS', '<b>0355002B00060200_SCA06_SIM.eds</b> (no HUB: Dispositivos → Servomotor → Arquivos para o CLP)')}
+      ${l('IP do SCA06 (aba General)', `<b>${ip}</b>`)}
+      ${l('Conexão', pos ? '<b>Exclusive Owner, 8 palavras (posicao)</b>' : '<b>Exclusive Owner, 4 palavras (velocidade e torque)</b>')}
+      ${l('O→T e T→O', pos ? '<b>16 bytes</b> em cada sentido' : '<b>8 bytes</b> em cada sentido')}
+      ${l('RPI', '10 a 30 ms')}
+      ${pos ? l('Para habilitar', '5ª palavra de saída (P0099) = <b>2</b>; 0 desabilita') + l('Destino', '7ª palavra de saída (P01171): fração de volta, <b>16384 = 1 volta</b> (90° = 4096)') + l('Disparar', '6ª palavra de saída (P01079): pulso <b>0 → 1</b>') + l('Posição atual', '5ª e 6ª palavras de entrada: (P0053 + P0052 / 16384) × 360 = graus')
+        : l('Para habilitar', 'bit 3 da 1ª palavra de saída (palavra de controle)') + l('Modo de controle (4ª palavra de saída)', '<b>1 = velocidade</b>, 0 = torque')}
+      </tbody></table>
+      <p class="aclp-porque">Como conferir aqui no simulador: o chip <b>P0202</b> do topo mostra <b>${pos ? 3 : 6}</b> e, quando o CODESYS entrar em RUN, o chip <b>P0801</b> fica em <b>Data Active</b>.</p>`;
+  }
+
+  function abrir() {
+    if (!A()) return;
+    window.AssistenteCLP.abrir({
+      titulo: 'Assistente de comunicação com o CLP',
+      subtitulo: 'SCA06 + ECO5 · EtherNet/IP · o mesmo que você faria parâmetro por parâmetro na HMI',
+      perguntaModo: 'Como o CLP vai comandar o servomotor?',
+      textoModo: 'Escolha o modo de controle. Cada modo pede uma configuração diferente no drive e uma conexão diferente no CLP; o assistente mostra as etapas do modo escolhido.',
+      modos: [
+        { id: 'vel', nome: 'Velocidade e torque', texto: 'O CLP diz quão rápido girar (rpm) ou com quanta força (A). No drive: P0202 = 6. No CLP: conexão de 4 palavras.' },
+        { id: 'pos', nome: 'Posição (Função Posicionador)', texto: 'O CLP diz para onde o disco vai (ex.: 90°) e dispara o movimento. No drive: P0202 = 3, movimentos programados em parâmetros, sem ladder. No CLP: conexão de 8 palavras.' },
+      ],
+      etapas, ler, fmt, resumo,
+      gravar: async (n, v) => {
+        const r = (await A().req({ t: 'param', n, v, hmi: true })).result;
+        const MOT = { RO: 'parâmetro somente leitura', RANGE: 'valor fora da faixa', ENABLED: 'desabilite o drive antes (A00124)', NOEXIST: 'parâmetro inexistente', LOCKED: 'senha não liberada (P0000 = 5)' };
+        if (r && r.ok && A().buildParams) A().buildParams();
+        return r && r.ok ? { ok: true } : { ok: false, msg: MOT[r && r.code] || (r && r.code) || 'erro' };
+      },
+      bloqueio: () => {
+        const v = A().S.v || {};
+        if (v.enabled) return 'O drive está habilitado. Desabilite-o antes (pelo CLP ou pela aba Mestre): o modo de operação só muda com o drive desabilitado.';
+        return null;
+      },
+    });
+  }
+  document.querySelectorAll('[data-assistente]').forEach((b) => { b.addEventListener('click', abrir); });
+})();
+
+</script>
+<script>
+/* Divisórias arrastáveis entre os painéis (drive | painel do meio | bancada 3D).
+   Arraste para mudar a largura; dois cliques voltam ao padrão. As larguras ficam guardadas neste PC. */
+(() => {
+  const layout = document.querySelector('.layout');
+  if (!layout) return;
+  const largo = matchMedia('(min-width: 1200px)');
+  const medio = matchMedia('(min-width: 901px)');
+  const CHAVE = 'sca06.paineis';
+  const MIN = { front: 220, side: 340, stage: 360 };
+  let salvo = {};
+  try { salvo = JSON.parse(localStorage.getItem(CHAVE) || '{}'); } catch (_) { salvo = {}; }
+  const front = () => layout.querySelector('.front');
+  const side = () => layout.querySelector('.side');
+
+  const criar = (id, titulo) => {
+    const d = document.createElement('div');
+    d.className = 'splitter'; d.id = id; d.title = titulo;
+    d.setAttribute('role', 'separator'); d.setAttribute('aria-orientation', 'vertical');
+    layout.appendChild(d);
+    return d;
+  };
+  const spFront = criar('spFront', 'Arraste para mudar a largura do drive. Dois cliques voltam ao padrão.');
+  const spSide = criar('spSide', 'Arraste para mudar a largura do painel. Dois cliques voltam ao padrão.');
+
+  let pedido = 0;
+  const avisar3D = () => { cancelAnimationFrame(pedido); pedido = requestAnimationFrame(() => window.dispatchEvent(new Event('resize'))); };
+
+  function posicionar() {
+    if (!medio.matches) { spFront.hidden = true; spSide.hidden = true; return; }
+    const base = layout.getBoundingClientRect().left;
+    const s = side().getBoundingClientRect();
+    spSide.hidden = false;
+    spSide.style.left = (s.right - base) + 'px';
+    if (largo.matches) {
+      spFront.hidden = false;
+      spFront.style.left = (front().getBoundingClientRect().right - base) + 'px';
+    } else spFront.hidden = true;
+  }
+  function aplicar() {
+    if (salvo.front) layout.style.setProperty('--col-front', salvo.front + 'px'); else layout.style.removeProperty('--col-front');
+    if (salvo.side) layout.style.setProperty('--col-side', salvo.side + 'px'); else layout.style.removeProperty('--col-side');
+    requestAnimationFrame(() => { posicionar(); avisar3D(); });
+  }
+  const guardar = () => { try { localStorage.setItem(CHAVE, JSON.stringify(salvo)); } catch (_) { /* sem armazenamento: só nesta sessão */ } };
+
+  function arrastar(sp, qual) {
+    sp.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      sp.setPointerCapture(e.pointerId);
+      sp.classList.add('drag'); document.body.classList.add('arrastando');
+      const total = layout.getBoundingClientRect();
+      const mover = (ev) => {
+        if (qual === 'front') {
+          const f = front().getBoundingClientRect();
+          const maxF = total.width - side().getBoundingClientRect().width - MIN.stage;
+          salvo.front = Math.round(Math.max(MIN.front, Math.min(maxF, ev.clientX - f.left)));
+          layout.style.setProperty('--col-front', salvo.front + 'px');
+        } else {
+          const s = side().getBoundingClientRect();
+          const antes = largo.matches ? front().getBoundingClientRect().width : 0;
+          const maxS = total.width - antes - MIN.stage;
+          salvo.side = Math.round(Math.max(MIN.side, Math.min(maxS, ev.clientX - s.left)));
+          layout.style.setProperty('--col-side', salvo.side + 'px');
+        }
+        posicionar(); avisar3D();
+      };
+      const soltar = () => {
+        sp.classList.remove('drag'); document.body.classList.remove('arrastando');
+        sp.removeEventListener('pointermove', mover); sp.removeEventListener('pointerup', soltar); sp.removeEventListener('pointercancel', soltar);
+        guardar();
+      };
+      sp.addEventListener('pointermove', mover); sp.addEventListener('pointerup', soltar); sp.addEventListener('pointercancel', soltar);
+    });
+    sp.addEventListener('dblclick', () => { delete salvo[qual]; guardar(); aplicar(); });
+  }
+  arrastar(spFront, 'front');
+  arrastar(spSide, 'side');
+
+  window.addEventListener('resize', posicionar);
+  largo.addEventListener('change', aplicar);
+  medio.addEventListener('change', aplicar);
+  aplicar();
 })();
 
 </script>

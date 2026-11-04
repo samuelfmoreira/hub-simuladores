@@ -126,19 +126,25 @@ Teste rápido em Node: `npm run teste` (faz o papel de CLP contra o simulador).
 | 4ª | Modo de controle | 0 torque · 1 velocidade |
 | 5ª…16ª | Parâmetro apontado em P0835…P0846 | valor inteiro |
 
-Para **posicionamento**, o manual Ethernet manda usar o modo Ladder (P0202 = 4) com parâmetros do
-usuário como interface. A bancada traz um aplicativo ladder didático simulado, *DISCO_POS*:
+Para **posicionamento**, o simulador segue o firmware **V2.1X** e usa a **Função Posicionador** (P0202 = 3,
+capítulo 20 do Manual de Programação): até 10 movimentos programados em parâmetros (P01151…P01230), executados
+em ciclos (P01101…P01150) e disparados pelo **P01079** (ciclo em P01080). O CLP comanda tudo pela rede,
+mapeando nas palavras extras:
 
-| Parâmetro | Função |
-|---|---|
-| P1100 | Comando: bit0 habilita · bit1 inicia (borda) · bit2 STOP · bit3 reset · bit4 zera posição |
-| P1101 | Posição alvo em décimos de grau (1350 = 135,0°) ou incremento no modo relativo |
-| P1102 | Velocidade de posicionamento (rpm) |
-| P1103 | 0 menor caminho · 1 horário · 2 anti-horário · 3 relativo |
-| P1104 | Rampa (ms/krpm) |
-| P1110…P1113 | Status, posição atual (0,1°), erro de posição, contador de posicionamentos |
+| Palavra | Parâmetro | Função |
+|---|---|---|
+| Saída 5 | P0099 | habilitação (2 habilita sem gravar, 0 desabilita) |
+| Saída 6 | P01079 | disparo (borda 0 → 1, com P01077 = 0) |
+| Saída 7 | P01171 | destino do movimento 1 (fração de volta, 16384 = 1 volta) |
+| Saída 8 | P0219 | reset de falhas (borda) |
+| Entradas 5 e 6 | P0052, P0053 | posição: fração de volta e voltas |
+| Entradas 7 e 8 | P0006, P0048 | estado do servo e erro de lag (pulsos) |
 
-Exemplo: P0835 = 1100, P0836 = 1101, P0820 = 1111, P0849 = 1, refazer o Forward Open com 5 entradas e 6 saídas.
+Simulados: tipos 1 (Iq), 2 (velocidade), 3/4 (relativo), 5/6 (absoluto) e 7 (jog), timer, ciclos simples e
+completos, borda/nível e filtro. Não simulados: seguidor (8/9), busca de zero (10/11), disparo por entrada
+digital e curva S (o jerk é aceito, o perfil é trapezoidal). O modo **P0202 = 4 (Ladder)** existe, mas o drive
+não tem aplicativo gravado, como um SCA06 novo: o eixo não é controlado (no equipamento real, o programa é feito
+no WLP/WPS). Parâmetros gravados por versões antigas do simulador em P01100…P01113 são descartados uma vez.
 
 ## 5. O que o "firmware" simula
 
@@ -194,10 +200,11 @@ módulo ECO5 (desencaixa) · emergência (STO) · botoeira STOP (DI1) · disjunt
 peso de desbalanceamento · chaves de fim de curso (monta/retira as cames) · CLP (abre o painel do mestre).
 O sinaleiro mostra verde = habilitado, âmbar = alarme/STOP, vermelho = falha.
 
-**16 missões** guiam a aula (as 4 últimas comandam a posição pela rede: 8 palavras, pulsos de 45°, posição absoluta
-e sentido forçado): abrir sessão, P0202 = 6, Data Active, habilitar, 300 rpm, inversão em
+**16 missões** guiam a aula: abrir sessão, P0202 = 6, Data Active, habilitar, 300 rpm, inversão em
 complemento de dois, função STOP, mapear P0003 na 5ª palavra, equilibrar o peso em modo torque,
-diagnosticar F00047 com cabo rompido, fim de curso e posicionamento em 135,0° pelo Ladder.
+diagnosticar F00047 com cabo rompido e fim de curso. As 5 últimas comandam a **posição pela Função
+Posicionador** (P0202 = 3), tudo pela rede: configurar e conectar com 8 palavras, posicionar em 135,0°,
+pulsos de 45°, posição absoluta (90° e 270°) e ciclo completo (ida e volta com um só disparo).
 
 ## 8. Limitações e pontos para conferir
 

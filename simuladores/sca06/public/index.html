@@ -91,7 +91,7 @@
         <div class="word">
           <div class="wh"><span>4ª Modo de controle</span><code id="w4Hex">0001h</code></div>
           <div class="seg" id="modeSeg"><button data-m="0">0 · Torque</button><button data-m="1" class="on">1 · Velocidade</button></div>
-          <p class="hint">Posição e pulso não são um modo desta palavra: são o <b>modo posição</b> do drive (P0202 = 4), comandado pelas <b>palavras 5 a 8</b>. Configure pelo assistente <b>Comunicação com o CLP → Posição</b> e abra a conexão com 8 palavras: o painel Posição aparece aqui embaixo.</p>
+          <p class="hint">Posição não é um modo desta palavra: é a <b>Função Posicionador</b> do drive (P0202 = 3), comandada pelas <b>palavras 5 a 8</b> (habilitação P0099, disparo P01079, destino P01171 e reset P0219). Configure pelo assistente <b>Comunicação com o CLP → Posição</b> e abra a conexão com 8 palavras: o painel Posição aparece aqui embaixo.</p>
           <p class="hint" id="modoNota" style="font-weight:600" hidden></p>
         </div>
         <div id="extraOut"></div>
@@ -135,7 +135,7 @@
         <p class="hint" id="pPresetRes" aria-live="polite"></p>
       </div>
       <div class="row"><input type="search" id="pSearch" placeholder="Buscar: 202, rampa, Ethernet, ladder…" aria-label="Buscar parâmetro">
-        <select id="pGroup"><option value="">Todos</option><option value="read">Leitura</option><option value="cfg">Configuração</option><option value="eth">Ethernet</option><option value="lad">Ladder/usuário (1100–1113)</option><option value="changed">Diferentes do padrão</option></select></div>
+        <select id="pGroup"><option value="">Todos</option><option value="read">Leitura</option><option value="cfg">Configuração</option><option value="eth">Ethernet</option><option value="fp">Função Posicionador (P1070–P1230)</option><option value="changed">Diferentes do padrão</option></select></div>
       <p class="hint">Fonte: <span class="src ETH">ETH</span> manual Ethernet · <span class="src PROG">PROG</span> manual de programação V2.1X · <span class="src SIM">SIM</span> valor do simulador, confira no equipamento. Escrever aqui equivale a usar o WPS pela USB.</p>
       <div class="ptable" id="ptable"></div>
     </div>
