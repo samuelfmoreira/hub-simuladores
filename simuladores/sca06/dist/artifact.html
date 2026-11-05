@@ -1,3 +1,5 @@
+<script>/* [HUB] Restaurar original: o HUB abre esta tela com ?hubRestaurar=1 e ela apaga o que guardou neste navegador */
+try { var u = new URL(location.href); if (u.searchParams.has('hubRestaurar')) { localStorage.clear(); sessionStorage.clear(); u.searchParams.delete('hubRestaurar'); history.replaceState(null, '', u.pathname + u.search + u.hash); } } catch (e) { /* sem armazenamento */ }</script>
 <title>Bancada SCA06 EtherNet/IP</title>
 <style>html, body { height: 100%; background: #d5d8d3; }</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">

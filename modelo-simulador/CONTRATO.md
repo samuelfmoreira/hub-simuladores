@@ -46,6 +46,18 @@ Também ajuda:
 - gravar dados do usuário numa pasta `data/` e listar essa pasta em `preservarAoAtualizar`;
 - se o simulador tiver um "CLP virtual" interno, conectar no `SIM_IP` em vez de `127.0.0.1`.
 
+## Restaurar original
+
+Todo cartão tem o botão **Restaurar original**, que volta o simulador ao estado de quando foi instalado. Ele para o simulador, **apaga os itens de `preservarAoAtualizar`** (só dentro da pasta do simulador), devolve IP, porta, modo e endereço remoto ao padrão e inicia de novo se estava rodando. Para funcionar:
+
+- grave **todos** os dados do usuário (parâmetros, configurações, sessões) em itens listados em `preservarAoAtualizar`, e recrie a pasta ao gravar (`fs.mkdirSync(..., { recursive: true })`);
+- não deixe arquivos de fábrica dentro desses itens: eles são apagados;
+- se a tela guarda coisas no navegador (localStorage), ponha este trecho como **primeiro script** do `<head>`. Na primeira abertura depois de restaurar, o HUB abre a tela com `?hubRestaurar=1`:
+
+```
+<script>try { var u = new URL(location.href); if (u.searchParams.has('hubRestaurar')) { localStorage.clear(); sessionStorage.clear(); u.searchParams.delete('hubRestaurar'); history.replaceState(null, '', u.pathname + u.search + u.hash); } } catch (e) {}</script>
+```
+
 ## A ficha `simulador.json`
 
 ```

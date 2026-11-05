@@ -36,7 +36,7 @@
   ],
   "cor": "#C0392B",
   "icone": "icone.svg",
-  "versao": "1.9.3.2",
+  "versao": "1.9.3.3",
   "pacote": "simulador-incendio-modbus",
   "ordem": 900
 }

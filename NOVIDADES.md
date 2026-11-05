@@ -2,6 +2,9 @@
 
 As notas de cada versão aparecem no HUB quando a atualização é oferecida. Escreva a seção da versão nova antes do push.
 
+## 1.11.0
+- Novo em todos os simuladores: botão "Restaurar original", no painel do cartão. Volta o simulador ao estado de quando foi instalado: apaga parâmetros, configurações, sessões, progresso das missões e preferências da tela, e devolve IP, porta, modo e endereço da VM ao padrão. Se estiver rodando, ele é parado e iniciado de novo. A versão do simulador não muda.
+
 ## 1.10.6
 - Ordem dos cartões em Dispositivos: o Sistema de Incêndio + Soft SSW-05 fica por último. A ficha dos simuladores ganhou o campo opcional "ordem" (menor primeiro; sem o campo, a ordem alfabética continua).
 

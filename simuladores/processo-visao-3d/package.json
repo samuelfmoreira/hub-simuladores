@@ -1,6 +1,6 @@
 {
   "name": "simulador-processo-visao-3d",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Simulador de processo com sistema de visão em 3D: esteira, inspeção, rejeito e robô controlados por CLP via Modbus TCP",
   "main": "server.js",
   "private": true,

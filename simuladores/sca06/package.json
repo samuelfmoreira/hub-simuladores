@@ -1,6 +1,6 @@
 {
   "name": "sca06-ethernetip-sim",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Simulador didático do servoconversor WEG SCA06 com acessório ECO5 (adapter EtherNet/IP) e bancada 3D com disco graduado",
   "main": "server.js",
   "scripts": {

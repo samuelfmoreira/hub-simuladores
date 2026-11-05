@@ -27,6 +27,7 @@ const PADRAO = {
   },
   ips: {},                         // id do simulador -> IP escolhido (sobrepõe o ipSugerido da ficha)
   portasWeb: {},                   // id do simulador -> porta web escolhida
+  limparNavegador: {},             // id do simulador -> a tela apaga o que guardou no navegador (Restaurar original)
   modos: {},                       // id do simulador -> modo de execução escolhido (fichas com "modos")
   urlsRemotas: {},                 // id do simulador -> endereço da instância remota (ex.: VM Linux)
 };

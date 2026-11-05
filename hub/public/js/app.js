@@ -171,6 +171,9 @@
         ${arquivos.length ? `<h3>Arquivos para o CLP</h3><div class="acoes">${arquivos.map((a) => `<a class="btn peq" href="/api/sim/${esc(s.id)}/arquivo/${a.split('/').map(encodeURIComponent).join('/')}" download>${esc(a.split('/').pop())}</a>`).join('')}</div>` : ''}
         ${aulas.length ? `<h3>Estudar o protocolo</h3><div class="acoes">${aulas.map((a) => `<a class="btn peq" href="#/aprender/${esc(a.id)}">${esc(a.titulo)}</a>`).join('')}</div>` : ''}
         ${E.dev && s.backups.length ? `<h3>Versões anteriores</h3><table class="tabela">${s.backups.map((b) => `<tr><td>${esc(b.versao)}</td><td>${esc(formatarCarimbo(b.quando))}</td><td><button class="btn peq" data-restaurar="${esc(b.nome)}">Restaurar</button></td></tr>`).join('')}</table>` : ''}
+        <h3>Restaurar original</h3>
+        <p style="font-size:15px">Volta este simulador ao estado de quando foi instalado: apaga os parâmetros, configurações, sessões, o progresso das missões e as preferências da tela, e devolve IP, porta, modo e endereço da VM ao padrão. A versão do simulador não muda.</p>
+        <p><button class="btn peq" id="detOriginal">Restaurar original</button></p>
         ${E.dev ? '<p style="margin-top:22px"><button class="btn peq" id="detFicha">Editar ficha</button></p>' : ''}
       </div>
       <div class="placa">
@@ -202,6 +205,14 @@
       verificar();
     }
 
+    $('#detOriginal').onclick = async () => {
+      if (!confirm(`Restaurar "${s.nome}" ao original?\n\nVai apagar tudo o que foi mudado neste simulador: parâmetros, configurações, sessões, progresso das missões e preferências da tela. IP, porta, modo e endereço da VM voltam ao padrão.\n\nSe estiver rodando, ele é parado e iniciado de novo. Isto não pode ser desfeito.`)) return;
+      try {
+        const r = await api('POST', `/api/sim/${s.id}/original`);
+        toast(`Restaurado ao original${r.reiniciou ? ' e iniciado de novo' : ''}. Abra a tela para começar do zero.`);
+        await carregar(); await carregarRede(false);
+      } catch (e) { toast(e.message); }
+    };
     $('#detSalvar').onclick = async () => {
       try {
         await api('PUT', `/api/sim/${s.id}/atribuicao`, { ip: s.rede.precisaIp ? $('#detIp').value.trim() : undefined, portaWeb: $('#detPorta').value.trim() });

@@ -192,6 +192,27 @@ async function rotear(req, res) {
       } catch (e) { return json(res, e.bloqueio ? 409 : 400, { erro: e.message }); }
     }
     if (acao === 'parar' && m === 'POST') return json(res, 200, await ger.parar(id));
+    // Restaurar original: volta o simulador ao estado de quando foi instalado (a versão não muda)
+    if (acao === 'original' && m === 'POST') {
+      const antes = ger.resumo(id) || {};
+      const estavaRodando = ['rodando', 'iniciando'].includes(antes.estado);
+      if (estavaRodando) await ger.parar(id);
+      const base = path.resolve(ficha.pasta), apagados = [];
+      for (const item of ficha.preservarAoAtualizar || []) {          // dados do usuário: ficam fora do pacote do simulador
+        const rel = String(item).replace(/[\\/]+$/, '');
+        const alvo = rel && !/node_modules/i.test(rel) ? dentro(base, rel) : null;
+        if (!alvo || alvo === base) continue;                           // nunca a pasta inteira nem algo fora dela
+        if (fs.existsSync(alvo)) { fs.rmSync(alvo, { recursive: true, force: true }); apagados.push(item); }
+      }
+      config.alterar((c) => {
+        for (const k of ['ips', 'portasWeb', 'modos', 'urlsRemotas']) if (c[k]) delete c[k][id];
+        c.limparNavegador = c.limparNavegador || {}; c.limparNavegador[id] = true;
+      });
+      let reiniciou = false;
+      if (estavaRodando) { try { await ger.iniciar(catalogo.obter(id), cfg, null); reiniciou = true; } catch (_) { /* fica parado */ } }
+      console.log(`  Restaurar original: ${ficha.nome}${apagados.length ? ` (apagado: ${apagados.join(', ')})` : ' (não havia dados do usuário)'}`);
+      return json(res, 200, { ok: true, apagados, reiniciou });
+    }
     if (acao === 'abrir' && m === 'POST') {
       if (!['rodando', 'iniciando'].includes((ger.resumo(id) || {}).estado)) return json(res, 409, { erro: 'O simulador não está em execução.' });
       abrirTelaSimulador(ficha); return json(res, 200, { ok: true });
@@ -463,6 +484,15 @@ function abrirTelaSimulador(f) {
   ger.log(f.id, `Abrindo a tela do simulador: ${urlDoSimulador(f)}`, 'hub');
   abrirTela(url);
 }
+/** Endereço da tela; depois de "Restaurar original", leva ?hubRestaurar=1 uma vez (a tela apaga o que guardou no navegador). */
+function urlTelaComLimpeza(f) {
+  const url = urlDoSimulador(f);
+  if (!(cfg.limparNavegador || {})[f.id]) return url;
+  config.alterar((c) => { delete c.limparNavegador[f.id]; });
+  const [semHash, hash = ''] = url.split('#');
+  return `${semHash}${semHash.includes('?') ? '&' : '?'}hubRestaurar=1${hash ? `#${hash}` : ''}`;
+}
+
 function molduraSimulador(res, f) {
   const e = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
@@ -470,7 +500,7 @@ function molduraSimulador(res, f) {
 <style>html,body{margin:0;height:100%;background:#1A1E20;overflow:hidden}iframe{border:0;width:100%;height:100%;display:block}
 #aviso{position:fixed;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;background:rgba(20,23,25,.92);color:#E6EAE7;font:16px system-ui,sans-serif;text-align:center;padding:24px}
 #aviso b{font-size:26px}#aviso button{font:inherit;padding:8px 16px;border-radius:6px;border:1px solid #485055;background:#2A3136;color:#E6EAE7;cursor:pointer}</style></head>
-<body><iframe id="sim" src="${e(urlDoSimulador(f))}" allow="fullscreen; clipboard-read; clipboard-write" allowfullscreen></iframe>
+<body><iframe id="sim" src="${e(urlTelaComLimpeza(f))}" allow="fullscreen; clipboard-read; clipboard-write" allowfullscreen></iframe>
 <div id="aviso"><b>Simulador parado</b><span>Pode fechar esta janela. Para usar de novo, inicie o simulador no HUB.</span><button onclick="window.close()">Fechar esta janela</button></div>
 <script>
   const sim = document.getElementById('sim');

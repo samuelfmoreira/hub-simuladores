@@ -1,6 +1,6 @@
 {
   "name": "tben-l-sim",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Simulador de remoto IO-Link TBEN-L 8 portas com PROFINET real (p-net) e célula de paletização 3D",
   "main": "src/server.js",
   "private": true,

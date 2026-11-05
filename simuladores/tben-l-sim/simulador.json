@@ -3,7 +3,7 @@
   "nome": "Remoto IO-Link TBEN-L",
   "fabricante": "Turck (simulado)",
   "tipo": "Remoto IO-Link, 8 portas",
-  "versao": "0.3.0",
+  "versao": "0.3.1",
   "pacote": "tben-l-sim",
   "descricao": "Remoto IO-Link de 8 portas no estilo TBEN-L comandando uma célula 3D de paletização com elevador. Como o TBEN-L real, é multiprotocolo: EtherNet/IP direto no Windows (padrão) ou PROFINET na VM Linux. Mestre IO-Link simulado: estados de porta, PQI, validação, Data Storage, eventos e ISDU.",
   "protocolos": [

@@ -1,6 +1,6 @@
 {
   "name": "simulador-visao-keyence",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Simulador do sistema de visão Keyence CV-X400 como adapter EtherNet/IP (leitura de etiquetas com QR codes)",
   "main": "server.js",
   "scripts": {
