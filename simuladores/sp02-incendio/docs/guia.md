@@ -415,11 +415,15 @@ Marque **Mostrar frames TX/RX** embaixo do Diagnóstico. Cada mensagem aparece e
 O simulador traz um CLP de teste embutido, com uma lógica de referência simplificada da SP02. Use para conhecer o simulador, demonstrar em aula ou descobrir se um problema está no simulador ou no CLP.
 
 1. Se estiver conectado, clique em **Desconectar**.
-2. No campo **Porta**, deixe `502`. Se a 502 já estiver ocupada no PC (CODESYS Control Win, outro simulador), use `5020`.
+2. No campo **Porta**, deixe `502`. Se a porta estiver ocupada (CODESYS Control Win, outro simulador ou o CLP virtual de outra sessão), o simulador escolhe sozinho a próxima livre: 5020, 5021…
 3. Clique em **Ligar CLP virtual de teste**, logo abaixo dos botões de conexão.
-4. Aparece a mensagem *CLP virtual ligado em 127.0.0.1:502* e o IP é preenchido sozinho com `127.0.0.1`.
+4. Aparece a mensagem *CLP virtual desta sessão ligado em 127.0.0.1:502* (ou a porta escolhida) e o IP e a porta são preenchidos sozinhos.
 5. Clique em **Conectar**. O selo fica verde.
 6. Para desligar: **Desconectar** e depois **Desligar CLP virtual**.
+
+**Cada sessão tem o seu próprio CLP virtual.** Se duas sessões (dois PCs, ou duas abas de bancada) ligarem o CLP virtual, cada uma recebe o seu, numa porta diferente, com estado separado. Antes, havia um CLP virtual só para todas: duas sessões conectadas nele misturavam as entradas (a pressão baixa de uma ligava a jockey da outra, e a jockey ficava ligando e desligando com a rede cheia).
+
+O simulador também **não deixa duas sessões conectarem no mesmo CLP** (mesmo IP e porta): aparece o aviso *O CLP … já está em uso pela sessão …*. Isso vale para CLP real também: duas sessões escrevendo as mesmas coils fazem um processo comandar o outro.
 
 **O que a lógica de referência faz**
 

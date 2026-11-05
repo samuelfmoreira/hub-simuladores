@@ -127,17 +127,17 @@ function renderTestPlc() {
 $('btnTestPlc').addEventListener('click', async () => {
   try {
     if (testPlc.running) {
-      testPlc = await api('test-plc/stop', 'POST', {});
+      testPlc = await api(`sessions/${sessionId}/test-plc/stop`, 'POST', {});
     } else {
       const port = form.elements.port.disabled ? 502 : (Number(form.elements.port.value) || 502);
-      testPlc = await api('test-plc/start', 'POST', { port });
+      testPlc = await api(`sessions/${sessionId}/test-plc/start`, 'POST', { port });
       if (!form.elements.host.disabled) { form.elements.host.value = '127.0.0.1'; form.elements.port.value = testPlc.port; }
-      toast(`CLP virtual ligado em 127.0.0.1:${testPlc.port}. Clique em Conectar.`);
+      toast(`CLP virtual desta sessão ligado em 127.0.0.1:${testPlc.port}. Clique em Conectar.`);
     }
+    renderTestPlc();
   } catch (e) { toast(e.message); }
-  renderTestPlc();
 });
-setInterval(async () => { try { testPlc = await api('test-plc'); renderTestPlc(); } catch { /* */ } }, 4000);
+setInterval(async () => { if (!sessionId) return; try { testPlc = await api(`sessions/${sessionId}/test-plc`); renderTestPlc(); } catch { /* */ } }, 3000);
 
 // ------------------------------------------------------------------ Diagnóstico
 const LEVEL = { ok: 'OK ', erro: 'ERR', warn: 'AVS', info: '   ', frame: '   ' };

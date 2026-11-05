@@ -1,6 +1,6 @@
 {
   "name": "hub-simuladores-industriais",
-  "version": "1.10.3",
+  "version": "1.10.4",
   "description": "HUB de simuladores industriais: catálogo, rede virtual, aulas de protocolo e atualização",
   "main": "server.js",
   "private": true,

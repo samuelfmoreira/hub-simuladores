@@ -24,7 +24,7 @@ const DATA_DIR = PACKAGED
   ? path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), '.local', 'share'), 'SimuladorSP02')
   : path.join(__dirname, 'config');
 process.title = 'Simulador Sistema de Incendio (Modbus TCP)';
-let plcTest = null; // CLP virtual de teste embutido
+const plcTests = new Map(); // sessionId -> CLP virtual próprio da sessão (nunca compartilhado)
 
 /** Na primeira execução do .exe no Windows, cria o atalho na área de trabalho. */
 function firstRunShortcut() {
@@ -94,26 +94,8 @@ async function api(req, res, parts) {
   if (parts[0] === 'meta' && m === 'GET') {
     return json(res, 200, { version: pkg.version, coils: COILS, discreteInputs: DISCRETE_INPUTS, kp: KP, ssw: sswMeta() });
   }
-  // /api/test-plc  — CLP virtual de teste embutido
-  if (parts[0] === 'test-plc') {
-    if (m === 'GET') return json(res, 200, { running: !!plcTest, port: plcTest?.port || null });
-    if (m === 'POST' && parts[1] === 'start') {
-      const b = await body(req);
-      const port = Math.min(65535, Math.max(1, parseInt(b.port, 10) || 502));
-      if (plcTest) return json(res, 200, { running: true, port: plcTest.port });
-      try {
-        plcTest = await testPlc.start(port, (t) => console.log('  ' + t));
-      } catch (e) {
-        const msg = e.code === 'EADDRINUSE' ? `A porta ${port} já está em uso por outro programa (CLP, CODESYS ou outro simulador).` : e.message;
-        return json(res, 409, { error: msg });
-      }
-      return json(res, 200, { running: true, port: plcTest.port });
-    }
-    if (m === 'POST' && parts[1] === 'stop') {
-      if (plcTest) { await plcTest.close(); plcTest = null; }
-      return json(res, 200, { running: false });
-    }
-  }
+  // /api/test-plc — compatibilidade: estado geral dos CLPs virtuais
+  if (parts[0] === 'test-plc' && m === 'GET') return json(res, 200, { running: plcTests.size > 0, ports: [...plcTests.values()].map((p) => p.port) });
   if (parts[0] !== 'sessions') return json(res, 404, { error: 'Rota inexistente' });
 
   // /api/sessions/mine — sessão própria deste PC (pelo IP de quem acessa)
@@ -134,7 +116,7 @@ async function api(req, res, parts) {
 
   if (parts.length === 2) {
     if (m === 'PATCH') { const b = await body(req); manager.rename(s.id, b.name); return json(res, 200, { id: s.id, name: s.name }); }
-    if (m === 'DELETE') { manager.remove(s.id); return json(res, 200, { ok: true }); }
+    if (m === 'DELETE') { const t = plcTests.get(s.id); if (t) { t.close(); plcTests.delete(s.id); } manager.remove(s.id); return json(res, 200, { ok: true }); }
   }
 
   switch (parts[2]) {
@@ -147,7 +129,39 @@ async function api(req, res, parts) {
       return undefined;
     }
     case 'config': { const b = await body(req); s.setConfig(b); return json(res, 200, s.config); }
-    case 'connect': s.connect(); return json(res, 200, { ok: true });
+    case 'connect': {
+      // Duas sessões no mesmo CLP misturam as entradas (cada uma escreve o seu processo): bloqueia.
+      const c = s.config;
+      const other = manager.list().find((o) => o.id !== s.id && o.host === c.host && Number(o.port) === Number(c.port) && ['conectado', 'conectando', 'reconectando'].includes(o.status));
+      if (other) return json(res, 409, { error: `O CLP ${c.host}:${c.port} já está em uso pela sessão "${other.name}". Duas sessões no mesmo CLP misturam as entradas (uma liga o que a outra desliga). Use outro CLP ou o CLP virtual desta sessão.` });
+      s.connect(); return json(res, 200, { ok: true });
+    }
+    case 'test-plc': {
+      // CLP virtual próprio desta sessão
+      const cur = plcTests.get(s.id);
+      if (m === 'GET' || !parts[3]) return json(res, 200, { running: !!cur, port: cur?.port || null });
+      if (parts[3] === 'stop') {
+        if (cur) { await cur.close(); plcTests.delete(s.id); }
+        return json(res, 200, { running: false, port: null });
+      }
+      if (parts[3] === 'start') {
+        if (cur) return json(res, 200, { running: true, port: cur.port });
+        const b = await body(req);
+        const used = new Set([...plcTests.values()].map((p) => p.port));
+        const wanted = Math.min(65535, Math.max(1, parseInt(b.port, 10) || 502));
+        const tries = [wanted, 502, ...Array.from({ length: 80 }, (_, i) => 5020 + i)].filter((p, i, a) => a.indexOf(p) === i && !used.has(p));
+        let plc = null, lastErr = null;
+        for (const port of tries) {
+          try { plc = await testPlc.start(port, (t) => console.log(`  [${s.name}] ${t}`)); break; } catch (e) { lastErr = e; }
+        }
+        if (!plc) return json(res, 409, { error: `Não achei porta livre para o CLP virtual (${lastErr?.message || ''}).` });
+        plcTests.set(s.id, plc);
+        // aponta a sessão para o seu CLP virtual (se estiver desconectada)
+        if (!['conectado', 'conectando', 'reconectando'].includes(s.status)) { try { s.setConfig({ host: '127.0.0.1', port: plc.port }); } catch (_) { /* */ } }
+        return json(res, 200, { running: true, port: plc.port });
+      }
+      return json(res, 404, { error: 'Rota inexistente' });
+    }
     case 'disconnect': s.disconnect(); return json(res, 200, { ok: true });
     case 'clear-log': s.clearLogs(); return json(res, 200, { ok: true });
     case 'action': { const b = await body(req); s.sim.action(b); return json(res, 200, { ok: true }); }

@@ -2,6 +2,9 @@
 
 As notas de cada versão aparecem no HUB quando a atualização é oferecida. Escreva a seção da versão nova antes do push.
 
+## 1.10.4
+- Sistema de Incêndio + Soft SSW-05 atualizado para a versão 1.9.3: cada sessão (bancada) tem o seu próprio CLP virtual de teste; se a porta 502 estiver ocupada, o simulador escolhe sozinho a próxima livre e preenche IP e porta. O simulador também não deixa duas sessões conectarem no mesmo CLP.
+
 ## 1.10.3
 - Sistema de Incêndio + Soft SSW-05 atualizado para a versão 1.9.2: na casa de bombas 3D, manômetro, PJ e PB ganharam um rótulo único ("Instrumentos") acima deles, que mostra a pressão e o estado dos pressostatos sem cobrir os instrumentos.
 

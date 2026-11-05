@@ -13,7 +13,7 @@
       <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3c3.5 6 8 8 8 15a8 8 0 0 1-16 0c0-3.5 2-6 3.5-8 1 3.5 2.5 4.5 4.5 4.5-1-4.5-1-8 0-11.5z"/></svg>
       <div>
         <h1>Guia passo a passo</h1>
-        <p>Simulador Sistema de Incêndio · Modbus TCP · versão 1.9.2</p>
+        <p>Simulador Sistema de Incêndio · Modbus TCP · versão 1.9.3</p>
       </div>
     </div>
     <div class="g-actions">
@@ -896,12 +896,14 @@ GVL_SIM.xSimOut[9] := Q11;  GVL_SIM.xSimOut[10] := Q12;
 <p>O simulador traz um CLP de teste embutido, com uma lógica de referência simplificada da SP02. Use para conhecer o simulador, demonstrar em aula ou descobrir se um problema está no simulador ou no CLP.</p>
 <ol>
 <li>Se estiver conectado, clique em <strong>Desconectar</strong>.</li>
-<li>No campo <strong>Porta</strong>, deixe <code>502</code>. Se a 502 já estiver ocupada no PC (CODESYS Control Win, outro simulador), use <code>5020</code>.</li>
+<li>No campo <strong>Porta</strong>, deixe <code>502</code>. Se a porta estiver ocupada (CODESYS Control Win, outro simulador ou o CLP virtual de outra sessão), o simulador escolhe sozinho a próxima livre: 5020, 5021…</li>
 <li>Clique em <strong>Ligar CLP virtual de teste</strong>, logo abaixo dos botões de conexão.</li>
-<li>Aparece a mensagem <em>CLP virtual ligado em 127.0.0.1:502</em> e o IP é preenchido sozinho com <code>127.0.0.1</code>.</li>
+<li>Aparece a mensagem <em>CLP virtual desta sessão ligado em 127.0.0.1:502</em> (ou a porta escolhida) e o IP e a porta são preenchidos sozinhos.</li>
 <li>Clique em <strong>Conectar</strong>. O selo fica verde.</li>
 <li>Para desligar: <strong>Desconectar</strong> e depois <strong>Desligar CLP virtual</strong>.</li>
 </ol>
+<p><strong>Cada sessão tem o seu próprio CLP virtual.</strong> Se duas sessões (dois PCs, ou duas abas de bancada) ligarem o CLP virtual, cada uma recebe o seu, numa porta diferente, com estado separado. Antes, havia um CLP virtual só para todas: duas sessões conectadas nele misturavam as entradas (a pressão baixa de uma ligava a jockey da outra, e a jockey ficava ligando e desligando com a rede cheia).</p>
+<p>O simulador também <strong>não deixa duas sessões conectarem no mesmo CLP</strong> (mesmo IP e porta): aparece o aviso <em>O CLP … já está em uso pela sessão …</em>. Isso vale para CLP real também: duas sessões escrevendo as mesmas coils fazem um processo comandar o outro.</p>
 <p><strong>O que a lógica de referência faz</strong></p>
 <div class="tw"><table>
 <thead>
