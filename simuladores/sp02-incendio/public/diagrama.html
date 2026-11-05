@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Diagrama elétrico interativo — Simulador Sistema de Incêndio · Altus XP325</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/diagrama.css">
+</head>
+<body>
+  <header class="d-top">
+    <div class="d-brand">
+      <img src="favicon.svg" alt="" width="34" height="34">
+      <div>
+        <h1>Diagrama elétrico interativo</h1>
+        <p>Simulador Sistema de Incêndio · CLP Altus XP325 · ao vivo com o simulador</p>
+      </div>
+    </div>
+    <div class="d-session">
+      <label>Sessão <select id="selSession" aria-label="Sessão do simulador"></select></label>
+      <span id="connBadge" class="badge">—</span>
+      <a href="/" id="lnkSim" class="btn">Abrir o simulador</a>
+      <a href="guia.html" target="_blank" rel="noopener" class="btn">Guia</a>
+      <a href="guia-programacao.html" target="_blank" rel="noopener" class="btn">Programar o CLP</a>
+    </div>
+  </header>
+
+  <nav class="d-tabs" role="tablist" aria-label="Folhas do diagrama">
+    <button role="tab" data-sheet="1" aria-selected="true">1 · Potência</button>
+    <button role="tab" data-sheet="2">2 · Entradas XP325</button>
+    <button role="tab" data-sheet="3">3 · Saídas XP325</button>
+    <button role="tab" data-sheet="4">4 · Sinalização e softs</button>
+    <button role="tab" data-sheet="5">5 · Lista de I/O</button>
+  </nav>
+
+  <div class="d-layout">
+    <main class="d-sheet-wrap">
+      <div id="sheetHost" class="d-sheet"></div>
+      <div id="ioHost" class="d-io" hidden></div>
+      <div class="d-legend" aria-label="Legenda">
+        <span><i class="lg phase"></i>Fase energizada</span>
+        <span><i class="lg plus"></i>+24 Vcc</span>
+        <span><i class="lg zero"></i>0 V / neutro</span>
+        <span><i class="lg sig"></i>Sinal em 1</span>
+        <span><i class="lg off"></i>Sem tensão</span>
+        <span class="hint">Clique nos símbolos para operar · passe o mouse num fio para ver o potencial</span>
+      </div>
+    </main>
+
+    <aside class="d-info" aria-live="polite">
+      <div id="infoHost"></div>
+    </aside>
+  </div>
+
+  <div id="tip" class="d-tip" hidden></div>
+  <script type="module" src="js/diagram.js"></script>
+</body>
+</html>

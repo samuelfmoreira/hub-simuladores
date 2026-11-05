@@ -1,0 +1,27 @@
+{
+  "name": "simulador-incendio-modbus",
+  "version": "1.9.2",
+  "description": "Simulador Sistema de Incêndio — cliente Modbus TCP com fila priorizada, soft-starters WEG SSW-05 Plus e pressostatos KP",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "clp-teste": "node tools/clp-teste.js",
+    "build": "pkg . --compress Brotli"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "author": "Professor Samuel",
+  "license": "UNLICENSED",
+  "private": true,
+  "bin": "server.js",
+  "pkg": {
+    "assets": [
+      "public/**/*"
+    ],
+    "targets": [
+      "node22-win-x64"
+    ],
+    "outputPath": "dist"
+  }
+}

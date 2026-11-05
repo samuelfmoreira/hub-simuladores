@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simulador Sistema de Incêndio · Modbus TCP</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <script type="importmap">{ "imports": { "three": "./vendor/three/three.module.min.js", "three/addons/": "./vendor/three/addons/" } }</script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3c3.5 6 8 8 8 15a8 8 0 0 1-16 0c0-3.5 2-6 3.5-8 1 3.5 2.5 4.5 4.5 4.5-1-4.5-1-8 0-11.5z"/></svg>
+      <div>
+        <h1>Simulador Sistema de Incêndio</h1>
+        <p class="brand-line">Cliente Modbus TCP · bombas principal, reserva e jockey <button id="btnEnunciado" class="enun-link" type="button" title="Ver o enunciado original da Situação-Problema 02">Enunciado</button></p>
+      </div>
+    </div>
+    <nav class="sessions" aria-label="Sessões">
+      <div id="sessionTabs" class="session-tabs" role="tablist"></div>
+      <button id="btnNewSession" class="btn ghost" title="Criar uma sessão para outro CLP">+ Nova sessão</button>
+      <button id="btnComm" class="btn ghost comm-toggle" aria-expanded="false" aria-controls="commPanel" title="Mostrar ou ocultar a conexão com o CLP e o diagnóstico"><span class="cdot" id="commDot"></span><span id="commTxt">Conexão com o CLP</span></button>
+      <a href="diagrama.html" id="lnkDiagram" target="_blank" rel="noopener" class="btn ghost" title="Diagrama elétrico ao vivo desta sessão, em nova guia">Diagrama elétrico</a>
+      <a href="guia-programacao.html" target="_blank" rel="noopener" class="btn ghost" title="Lógica em Ladder, pressostatos e SSW-05 — em nova guia">Programar o CLP</a>
+      <a href="guia.html" target="_blank" rel="noopener" class="btn guide" title="Abre o guia em uma nova guia do navegador">Guia passo a passo</a>
+    </nav>
+  </header>
+
+  <div class="layout" id="layout">
+    <!-- ================= COLUNA DE COMUNICAÇÃO ================= -->
+    <aside class="comm" id="commPanel" hidden>
+      <button id="btnCommHide" class="btn small comm-hide" title="Ocultar este painel">Ocultar painel ✕</button>
+      <section class="block" aria-labelledby="hConn">
+        <div class="block-head">
+          <h2 id="hConn">Conexão com o CLP</h2>
+          <span id="connStatus" class="status s-desconectado" role="status">Desconectado</span>
+        </div>
+        <form id="connForm" class="conn-form" autocomplete="off" onsubmit="return false">
+          <label class="f-ip">Endereço IP
+            <input name="host" type="text" value="127.0.0.1" spellcheck="false">
+          </label>
+          <label class="f-port">Porta
+            <input name="port" type="number" min="1" max="65535" value="502">
+          </label>
+          <label>Unit ID
+            <input name="unitId" type="number" min="0" max="255" value="1">
+          </label>
+          <label>1ª coil (I0.0)
+            <input name="coilBase" type="number" min="0" value="0">
+          </label>
+          <label>1ª entrada (Q0.0)
+            <input name="diBase" type="number" min="0" value="0">
+          </label>
+          <label>Leitura a cada (ms)
+            <input name="pollMs" type="number" min="20" max="5000" value="100">
+          </label>
+          <label>Timeout (ms)
+            <input name="timeoutMs" type="number" min="100" max="10000" value="1000">
+          </label>
+          <label>Intervalo entre frames (ms)
+            <input name="gapMs" type="number" min="0" max="1000" value="10">
+          </label>
+          <label>Sincronismo (ms)
+            <input name="syncMs" type="number" min="200" max="60000" value="1000">
+          </label>
+          <label class="f-wide">Escrita das coils
+            <select name="writeMode">
+              <option value="multiple">FC15 — bloco único (recomendado)</option>
+              <option value="single">FC05 — uma coil por vez</option>
+            </select>
+          </label>
+          <label class="check f-wide"><input name="autoReconnect" type="checkbox" checked> Reconectar sozinho se cair</label>
+        </form>
+        <div class="conn-actions">
+          <button id="btnConnect" class="btn go">Conectar</button>
+          <button id="btnDisconnect" class="btn stop" disabled>Desconectar</button>
+        </div>
+        <div class="testplc">
+          <span>Sem CLP à mão? <b id="tpState">CLP virtual desligado</b></span>
+          <button id="btnTestPlc" class="btn small ghost">Ligar CLP virtual de teste</button>
+        </div>
+      </section>
+
+      <section class="block" aria-labelledby="hQueue">
+        <div class="block-head"><h2 id="hQueue">Fila de requisições</h2><span id="qRate" class="muted">0 req/s</span></div>
+        <div class="queue">
+          <div class="q-row"><span>P0 evento</span><div class="q-bar"><i id="qb0"></i></div><b id="qn0">0</b></div>
+          <div class="q-row"><span>P1 leitura</span><div class="q-bar"><i id="qb1"></i></div><b id="qn1">0</b></div>
+          <div class="q-row"><span>P2 sincronismo</span><div class="q-bar"><i id="qb2"></i></div><b id="qn2">0</b></div>
+          <div class="q-row"><span>P3 diagnóstico</span><div class="q-bar"><i id="qb3"></i></div><b id="qn3">0</b></div>
+        </div>
+        <dl class="kv" id="commStats"></dl>
+        <label class="check"><input id="chkVerify" type="checkbox"> Verificar coils no CLP (FC01, prioridade 3)</label>
+      </section>
+
+      <section class="block diag" aria-labelledby="hDiag">
+        <div class="block-head">
+          <h2 id="hDiag">Diagnóstico</h2>
+          <button id="btnClearLog" class="btn small ghost">Limpar</button>
+        </div>
+        <textarea id="diagBox" wrap="off" readonly spellcheck="false" aria-label="Mensagens de diagnóstico"></textarea>
+        <div class="diag-opts">
+          <label class="check"><input id="chkFrames" type="checkbox"> Mostrar frames TX/RX</label>
+          <label class="check"><input id="chkAutoscroll" type="checkbox" checked> Rolar automático</label>
+        </div>
+      </section>
+    </aside>
+
+    <!-- ================= PROCESSO ================= -->
+    <main class="plant">
+      <section class="block process" aria-labelledby="hProc">
+        <div class="block-head">
+          <h2 id="hProc">Casa de bombas</h2>
+          <span id="v24Badge" class="badge">24 Vcc</span>
+        </div>
+        <div class="process-grid">
+          <div class="viewwrap">
+            <div class="view-bar" role="toolbar" aria-label="Vista do processo">
+              <div class="seg">
+                <button data-view="3d" aria-pressed="true">3D</button>
+                <button data-view="2d" aria-pressed="false">P&amp;ID</button>
+              </div>
+              <div class="seg cams" id="camBtns">
+                <button data-cam="geral">Visão geral</button>
+                <button data-cam="bombas">Bombas</button>
+                <button data-cam="hidrante">Hidrante</button>
+                <button data-cam="painel">Painel</button>
+                <button id="btnLabels" aria-pressed="true">Rótulos</button>
+              </div>
+            </div>
+            <div id="p3dHost" class="p3d"><p class="p3d-hint">Arraste para girar · rolagem para zoom · clique no hidrante para abrir/fechar · no painel, clique nas chaves e segure as botoeiras</p></div>
+            <div id="pidHost" class="pid" hidden></div>
+          </div>
+          <div class="gauge-col">
+            <div id="gaugeHost"></div>
+            <div class="readout"><b id="pBar">0,00</b> bar <span id="pKgf">0,00 kgf/cm²</span></div>
+          </div>
+        </div>
+        <div class="process-bottom">
+          <div class="trend-box"><canvas id="trend" aria-label="Pressão nos últimos 2 minutos"></canvas></div>
+          <div class="proc-ctrl">
+            <label>Vazamento da rede <output id="oLeak">0,05</output>
+              <input id="rngLeak" type="range" min="0" max="0.5" step="0.01" value="0.05">
+            </label>
+            <label>Abertura do hidrante <output id="oHyd">0 %</output>
+              <input id="rngHyd" type="range" min="0" max="100" step="1" value="0">
+            </label>
+            <div class="btn-row">
+              <button class="btn fire" data-hyd="100">Abrir hidrante (incêndio)</button>
+              <button class="btn ghost" data-hyd="0">Fechar hidrante</button>
+            </div>
+            <div class="btn-row">
+              <button class="btn ghost" data-press="9.8">Pressurizar rede (9,8 bar)</button>
+              <button class="btn ghost" data-press="0">Despressurizar</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="block door" aria-labelledby="hDoor">
+        <div class="block-head"><h2 id="hDoor">Painel de operação</h2><span class="muted">Botões NA ligam, NF desligam · pulso mínimo garantido</span></div>
+        <div id="doorHost" class="door-panel"></div>
+      </section>
+
+      <section class="block" aria-labelledby="hSoft">
+        <div class="block-head"><h2 id="hSoft">Soft-starters WEG SSW-05 Plus</h2><span class="muted">Ajuste por trimpots e DIP-switches · DI1 pelo contato de K-B1/K-B2 · não trocam dados com o CLP</span></div>
+        <div class="softs">
+          <div id="ssw0" class="soft-host"></div>
+          <div id="ssw1" class="soft-host"></div>
+        </div>
+      </section>
+
+      <section class="block" aria-labelledby="hKp">
+        <div class="block-head"><h2 id="hKp">Pressostatos (tipo KP 5, rearme automático)</h2><span class="muted">Faixa 8–32 bar · DIF 1,8–6 bar · 1 kgf/cm² = 0,981 bar</span></div>
+        <div class="kps">
+          <div id="kpPJ" class="kp-host"></div>
+          <div id="kpPB" class="kp-host"></div>
+        </div>
+      </section>
+
+      <section class="block" aria-labelledby="hElec">
+        <div class="block-head"><h2 id="hElec">Quadro elétrico</h2><span class="muted">Desarme disjuntores para simular falhas</span></div>
+        <div id="elecHost" class="elec"></div>
+      </section>
+
+      <section class="block" aria-labelledby="hIo">
+        <div class="block-head"><h2 id="hIo">Endereçamento Modbus</h2><span class="muted">Endereços usados pelo simulador — copie para o mapeamento do seu CLP</span></div>
+        <div class="addr-bar">
+          <label>Modo
+            <select id="addrMode">
+              <option value="base">Contíguo (a partir da 1ª coil e da 1ª entrada)</option>
+              <option value="table">Tabela: endereço individual por ponto</option>
+            </select>
+          </label>
+          <button id="btnAddrApply" class="btn small go">Aplicar endereços</button>
+          <span class="sep"></span>
+          <button id="btnAddrCopy" class="btn small">Copiar tabela</button>
+          <button id="btnAddrCsv" class="btn small">Baixar CSV</button>
+          <button id="btnAddrMt" class="btn small">Baixar mapeamento MasterTool</button>
+        </div>
+        <p class="muted addr-help" id="addrHelp"></p>
+        <div class="io-tables">
+          <div>
+            <h3>Saídas do simulador → coils (o simulador escreve) → entradas do CLP</h3>
+            <div class="tw"><table id="tblCoils" class="io"><thead><tr><th>Endereço</th><th>Notação 0x</th><th>XP325 (SP02)</th><th>Tag</th><th>Variável XP325</th><th>Descrição</th><th>Estado</th></tr></thead><tbody></tbody></table></div>
+          </div>
+          <div>
+            <h3>Saídas do CLP → discrete inputs (o simulador lê) → entradas do simulador</h3>
+            <div class="tw"><table id="tblDis" class="io"><thead><tr><th>Endereço</th><th>Notação 1x</th><th>XP325 (SP02)</th><th>Tag</th><th>Variável XP325</th><th>Descrição</th><th>Estado</th></tr></thead><tbody></tbody></table></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="dlgEnunciado" class="enun" aria-labelledby="enunTitle">
+    <div class="enun-head">
+      <h2 id="enunTitle">Situação-Problema 02 — enunciado original</h2>
+      <button class="btn small ghost" id="btnEnunClose" type="button" aria-label="Fechar o enunciado">Fechar ✕</button>
+    </div>
+    <div class="enun-body">
+      <img src="enunciado/sp02-pag1.png" alt="Contextualização e informações técnicas do sistema: indicadores luminosos, chave seletora B_Sel e pressostatos PJ e PB" loading="lazy">
+      <img src="enunciado/sp02-pag2.png" alt="Conjunto motor/bomba com chave de três posições: desligado e manual por botoeiras locais" loading="lazy">
+      <img src="enunciado/sp02-pag3.png" alt="Modo automático, tabelas dos pressostatos PJ e PB, desafio e entregas esperadas" loading="lazy">
+      <div class="enun-anexos">
+        <b>Anexos do exercício</b>
+        <a href="enunciado/sp02-diagrama-eletrico.pdf" target="_blank" rel="noopener">Diagrama elétrico (PDF)</a>
+        <a href="enunciado/sp02-tabela-de-variaveis.pdf" target="_blank" rel="noopener">Tabela de variáveis (PDF)</a>
+        <a href="enunciado/sp02-ficha-tecnica-pressostato.pdf" target="_blank" rel="noopener">Ficha técnica do pressostato (PDF)</a>
+      </div>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast" role="alert" hidden></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

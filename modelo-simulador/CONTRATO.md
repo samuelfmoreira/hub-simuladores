@@ -101,6 +101,8 @@ Também ajuda:
 | 192.168.100.20 | CFW500 |
 | 192.168.100.21 | Keyence CV-X (câmera 1) |
 | 192.168.100.22 | SCA06 |
+| 192.168.100.23 | TBEN-L (EtherNet/IP) |
+| — | Sistema de Incêndio + Soft SSW-05: cliente Modbus TCP, não ocupa IP (conecta no CLP) |
 
 ## Publicar e atualizar
 

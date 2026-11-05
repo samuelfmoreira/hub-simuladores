@@ -1,0 +1,1889 @@
+<!DOCTYPE html>
+  <html lang="pt-BR">
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Guia passo a passo — Simulador Sistema de Incêndio</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/guia.css">
+  </head>
+  <body>
+  <header class="g-top">
+    <div class="g-brand">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3c3.5 6 8 8 8 15a8 8 0 0 1-16 0c0-3.5 2-6 3.5-8 1 3.5 2.5 4.5 4.5 4.5-1-4.5-1-8 0-11.5z"/></svg>
+      <div>
+        <h1>Guia passo a passo</h1>
+        <p>Simulador Sistema de Incêndio · Modbus TCP · versão 1.9.2</p>
+      </div>
+    </div>
+    <div class="g-actions">
+      <a href="guia-programacao.html">Programar o CLP</a>
+    <button type="button" onclick="window.print()">Imprimir ou salvar PDF</button>
+      <a href="/" class="primary">Abrir o simulador</a>
+    </div>
+  </header>
+  <div class="g-layout">
+    <nav class="g-toc" aria-label="Sumário">
+      <h2>Sumário</h2>
+      <ol>
+  <li><a href="#antes-de-começar">Antes de começar</a></li>
+<li><a href="#passo-1-abrir-o-simulador-pela-primeira-vez">Passo 1 — Abrir o simulador pela primeira vez</a></li>
+<li><a href="#passo-2-conhecer-cada-área-da-tela">Passo 2 — Conhecer cada área da tela</a></li>
+<li><a href="#passo-3-entender-o-mapa-de-io-e-os-endereços-modbus">Passo 3 — Entender o mapa de I/O e os endereços Modbus</a></li>
+<li><a href="#passo-4a-configurar-o-clp-como-servidor-modbus-no-codesys">Passo 4A — Configurar o CLP como servidor Modbus no CODESYS</a></li>
+<li><a href="#passo-4b-configurar-o-clp-siemens-s7-1200-tia-portal-mb_server">Passo 4B — Configurar o CLP Siemens S7-1200 (TIA Portal, MB_SERVER)</a></li>
+<li><a href="#passo-4c-configurar-o-altus-xp325-mastertool-iec-xe">Passo 4C — Configurar o Altus XP325 (MasterTool IEC XE)</a></li>
+<li><a href="#passo-5-conectar-o-simulador-ao-clp-e-conferir-a-comunicação">Passo 5 — Conectar o simulador ao CLP e conferir a comunicação</a></li>
+<li><a href="#passo-6-testar-sem-clp-usando-o-clp-virtual">Passo 6 — Testar sem CLP usando o CLP virtual</a></li>
+<li><a href="#passo-7-ajustar-a-soft-starter-ssw-05-plus-trimpots-e-dip-switch">Passo 7 — Ajustar a soft-starter SSW-05 Plus (trimpots e dip-switch)</a></li>
+<li><a href="#passo-8-ajustar-os-pressostatos-pj-e-pb">Passo 8 — Ajustar os pressostatos PJ e PB</a></li>
+<li><a href="#passo-9-painel-de-operação-quadro-elétrico-e-processo">Passo 9 — Painel de operação, quadro elétrico e processo</a></li>
+<li><a href="#passo-10-roteiro-de-teste-completo-da-sp02">Passo 10 — Roteiro de teste completo da SP02</a></li>
+<li><a href="#passo-11-simulação-de-falhas-ssw-05-pressostatos-e-jockey">Passo 11 — Simulação de falhas: SSW-05, pressostatos e jockey</a></li>
+<li><a href="#passo-12-várias-bancadas-e-acesso-por-outros-pcs">Passo 12 — Várias bancadas e acesso por outros PCs</a></li>
+<li><a href="#passo-13-diagrama-elétrico-interativo">Passo 13 — Diagrama elétrico interativo</a></li>
+<li><a href="#solução-de-problemas">Solução de problemas</a></li>
+      </ol>
+    </nav>
+    <main class="g-body">
+  <h2 id="antes-de-começar">Antes de começar</h2>
+<p>O simulador faz o papel do campo da SP02 (painel, chaves, botões, pressostatos, soft-starters, motores e rede de água). O CLP faz o papel dele mesmo: roda o programa do sistema de incêndio. Os dois conversam por Modbus TCP, com o <strong>simulador como cliente</strong> e o <strong>CLP como servidor</strong>.</p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Quem</th>
+<th>Faz o quê</th>
+<th>Pela rede</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Simulador</td>
+<td>Envia o estado das chaves, botões e pressostatos</td>
+<td>Escreve <strong>coils</strong> no CLP</td>
+</tr>
+<tr>
+<td>CLP</td>
+<td>Lê essas coils como entradas I0.0 … I1.7 e roda o programa</td>
+<td>—</td>
+</tr>
+<tr>
+<td>CLP</td>
+<td>Liga as saídas Q0.0 … Q1.2 (contatoras e sinaleiros)</td>
+<td>Expõe como <strong>discrete inputs</strong></td>
+</tr>
+<tr>
+<td>Simulador</td>
+<td>Lê as discrete inputs e liga contatoras, soft-starters, motores e lâmpadas</td>
+<td>Lê com FC02</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>O que você precisa</strong></p>
+<ul>
+<li>PC com Windows 10 ou 11, 64 bits.</li>
+<li>Arquivo <code>SimuladorSistemaIncendio.exe</code>.</li>
+<li>Um CLP com servidor Modbus TCP. Na bancada: <strong>Altus XP325</strong> (Passo 4C). Também servem o CODESYS Control Win no próprio PC (Passo 4A) ou um S7-1200 (Passo 4B).</li>
+<li>PC e CLP na mesma rede e na mesma faixa de IP (ex.: PC 192.168.0.10 e CLP 192.168.0.1). Se o CLP for o CODESYS no mesmo PC, não precisa de rede.</li>
+<li>O programa da SP02 no CLP, usando as variáveis da tabela do Passo 3.</li>
+</ul>
+<p><strong>Dois guias</strong></p>
+<p>Este guia ensina a usar o simulador e a comunicar com o CLP. O guia <strong><a href="guia-programacao.html">Programar o CLP</a></strong> ensina a lógica da SP02 no XP325, rede por rede, e o ajuste dos pressostatos e da SSW-05. Os dois abrem pelos botões no topo do simulador.</p>
+<p><strong>Como seguir o guia</strong></p>
+<p>Faça os passos na ordem. Os passos 4A, 4B e 4C são alternativos: faça só o do seu CLP (na bancada, o 4C). Se ainda não tem CLP pronto, pule para o Passo 6 e use o CLP virtual de teste que vem dentro do simulador.</p>
+<h2 id="passo-1-abrir-o-simulador-pela-primeira-vez">Passo 1 — Abrir o simulador pela primeira vez</h2>
+<p>O <code>.exe</code> não instala nada: ele já leva tudo dentro. Basta copiar e abrir.</p>
+<ol>
+<li>Copie <code>SimuladorSistemaIncendio.exe</code> para uma pasta fixa, por exemplo <code>C:\Simuladores\</code>. Evite rodar direto do e-mail ou do WhatsApp, porque o atalho criado vai apontar para onde o arquivo estiver.</li>
+<li>Dê <strong>dois cliques</strong> no arquivo.</li>
+<li>Se aparecer a tela azul <strong>"O Windows protegeu o computador"</strong>:<ol>
+<li>Clique em <strong>Mais informações</strong> (texto pequeno, logo abaixo da mensagem).</li>
+<li>Clique em <strong>Executar assim mesmo</strong>.</li>
+<li>Isso só acontece na primeira vez, porque o arquivo não tem assinatura digital.</li>
+</ol>
+</li>
+<li>Abre uma <strong>janela preta</strong>. Ela mostra o endereço do simulador e os IPs do PC. <strong>Não feche essa janela</strong> enquanto usar o simulador: fechar a janela desliga o simulador.</li>
+<li>Se aparecer o aviso do <strong>Firewall do Windows</strong>:<ol>
+<li>Marque <strong>Redes privadas</strong>.</li>
+<li>Clique em <strong>Permitir acesso</strong>.</li>
+<li>Isso só é necessário se outros PCs forem abrir o simulador pelo navegador. Para usar só neste PC, pode clicar em Cancelar.</li>
+</ol>
+</li>
+<li>O navegador abre sozinho em <code>http://localhost:3000</code>. Se não abrir, abra o Chrome ou o Edge e digite esse endereço.</li>
+<li>Na área de trabalho aparece o atalho <strong>Simulador Sistema de Incêndio</strong>. Das próximas vezes, abra por ele.</li>
+</ol>
+<p><strong>Para fechar:</strong> feche a janela preta. Tudo o que você configurou (IP, parâmetros das soft-starters, pressostatos, sessões) fica salvo automaticamente em <code>%LOCALAPPDATA%\SimuladorSP02</code>.</p>
+<p><strong>Para atualizar para uma versão nova:</strong> substitua o <code>.exe</code> antigo pelo novo, com o mesmo nome. As configurações continuam.</p>
+<h2 id="passo-2-conhecer-cada-área-da-tela">Passo 2 — Conhecer cada área da tela</h2>
+<p>A tela mostra o processo em largura total. A comunicação fica num painel à esquerda que começa <strong>oculto</strong>: clique no botão <strong>Conectar ao CLP</strong> no topo para abrir e em <strong>Ocultar painel ✕</strong> para fechar. O botão do topo mostra o estado da conexão o tempo todo: bolinha verde = conectado (com o IP), amarela = conectando, vermelha = erro, cinza = desconectado. O simulador lembra se você deixou o painel aberto ou fechado.</p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Área</th>
+<th>Onde fica</th>
+<th>Para que serve</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Abas de sessão</td>
+<td>Topo, à direita</td>
+<td>Cada aba é uma bancada (um CLP). Bolinha verde = conectada. <strong>+ Nova sessão</strong> cria outra.</td>
+</tr>
+<tr>
+<td>Diagrama elétrico</td>
+<td>Topo, à direita</td>
+<td>Abre o diagrama elétrico interativo da sessão, ao vivo, em nova guia (Passo 13).</td>
+</tr>
+<tr>
+<td>Guia passo a passo</td>
+<td>Topo, à direita</td>
+<td>Abre este guia em uma nova guia do navegador.</td>
+</tr>
+<tr>
+<td>Conexão com o CLP</td>
+<td>Painel da esquerda (botão <strong>Conectar ao CLP</strong> no topo)</td>
+<td>IP, porta, endereços, botões Conectar/Desconectar e o selo de status. Embaixo, o botão do CLP virtual de teste.</td>
+</tr>
+<tr>
+<td>Fila de requisições</td>
+<td>Painel da esquerda, meio</td>
+<td>Quantas mensagens estão esperando em cada prioridade, velocidade (req/s), tempo de resposta e erros.</td>
+</tr>
+<tr>
+<td>Diagnóstico</td>
+<td>Painel da esquerda, embaixo</td>
+<td>Mensagens de conexão, erros e, se marcado, cada frame enviado e recebido.</td>
+</tr>
+<tr>
+<td>Casa de bombas</td>
+<td>Direita, topo</td>
+<td>Processo em 3D (ou P&amp;ID), manômetro, gráfico dos últimos 2 minutos, vazamento e hidrante.</td>
+</tr>
+<tr>
+<td>Painel de operação</td>
+<td>Abaixo da casa de bombas</td>
+<td>A porta do painel: sinaleiros, chaves seletoras e botoeiras.</td>
+</tr>
+<tr>
+<td>Soft-starters SSW-05 Plus</td>
+<td>Abaixo do painel</td>
+<td>As duas softs (SS_01 e SS_02) desenhadas como o equipamento: tampa, trimpots, dip-switch, LEDs e RESET.</td>
+</tr>
+<tr>
+<td>Pressostatos</td>
+<td>Abaixo das softs</td>
+<td>PJ e PB, com ajuste de faixa e diferencial.</td>
+</tr>
+<tr>
+<td>Quadro elétrico</td>
+<td>Abaixo dos pressostatos</td>
+<td>Disjuntores DG, D1, D4, D2, D3, DB1, DB2, DBJ e o estado das contatoras.</td>
+</tr>
+<tr>
+<td>Endereçamento Modbus</td>
+<td>No fim da página</td>
+<td>Endereço Modbus de cada ponto (editável no modo Tabela), notação 0x/1x, borne do XP325, variável <code>GVL_SIM</code>, estado ao vivo e botões para copiar ou baixar a tabela.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Cores que se repetem</strong></p>
+<ul>
+<li>Selo verde <strong>Conectado</strong>: comunicação funcionando.</li>
+<li>Selo amarelo <strong>Conectando</strong> ou <strong>Sem conexão — nova tentativa em 3 s</strong>: o simulador está tentando sozinho.</li>
+<li>Selo vermelho <strong>Falha na conexão</strong>: precisa da sua ação (veja Solução de problemas).</li>
+<li>No mapa de I/O, <strong>1</strong> em verde = ligado; <strong>0</strong> em cinza = desligado.</li>
+</ul>
+<p>Os campos de conexão ficam acinzentados enquanto está conectado. Para alterar IP, porta ou endereços, clique antes em <strong>Desconectar</strong>.</p>
+<h2 id="passo-3-entender-o-mapa-de-io-e-os-endereços-modbus">Passo 3 — Entender o mapa de I/O e os endereços Modbus</h2>
+<p>O diagrama da SP02 foi feito para um S7-1200 (I0.0, Q0.0…). Na bancada o CLP é o Altus XP325, cujos bornes têm nomes diretos: I0.0 vira <strong>I00</strong>, I1.0 vira <strong>I10</strong>, Q0.0 vira <strong>Q00</strong> e assim por diante. As tabelas mostram os dois.</p>
+<p>São 16 coils (saídas do simulador = entradas do CLP) e 11 discrete inputs (saídas do CLP = entradas do simulador). O endereço Modbus é sempre <strong>base + posição</strong>. Com as bases padrão (0 e 0), I0.0 é a coil 0 e Q0.0 é a discrete input 0.</p>
+<p><strong>Coils — o simulador escreve, o CLP lê como entrada</strong></p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Coil (base 0)</th>
+<th>Entrada XP325 (SP02)</th>
+<th>Tag</th>
+<th>Vale 1 quando…</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>I00 (I0.0)</td>
+<td>B_SEL</td>
+<td>chave de seleção em Bomba 01</td>
+</tr>
+<tr>
+<td>1</td>
+<td>I01 (I0.1)</td>
+<td>B_SEL</td>
+<td>chave de seleção em Bomba 02</td>
+</tr>
+<tr>
+<td>2</td>
+<td>I02 (I0.2)</td>
+<td>B1_MA</td>
+<td>Bomba 01 em Manual</td>
+</tr>
+<tr>
+<td>3</td>
+<td>I03 (I0.3)</td>
+<td>B1_MA</td>
+<td>Bomba 01 em Automático</td>
+</tr>
+<tr>
+<td>4</td>
+<td>I04 (I0.4)</td>
+<td>B2_MA</td>
+<td>Bomba 02 em Manual</td>
+</tr>
+<tr>
+<td>5</td>
+<td>I05 (I0.5)</td>
+<td>B2_MA</td>
+<td>Bomba 02 em Automático</td>
+</tr>
+<tr>
+<td>6</td>
+<td>I06 (I0.6)</td>
+<td>BJ_MA</td>
+<td>Jockey em Manual</td>
+</tr>
+<tr>
+<td>7</td>
+<td>I07 (I0.7)</td>
+<td>BJ_MA</td>
+<td>Jockey em Automático</td>
+</tr>
+<tr>
+<td>8</td>
+<td>I10 (I1.0)</td>
+<td>B1_L</td>
+<td>botão Liga da Bomba 01 pressionado (NA)</td>
+</tr>
+<tr>
+<td>9</td>
+<td>I11 (I1.1)</td>
+<td>B1_D</td>
+<td>botão Desliga da Bomba 01 <strong>solto</strong> (NF)</td>
+</tr>
+<tr>
+<td>10</td>
+<td>I12 (I1.2)</td>
+<td>B2_L</td>
+<td>botão Liga da Bomba 02 pressionado (NA)</td>
+</tr>
+<tr>
+<td>11</td>
+<td>I13 (I1.3)</td>
+<td>B2_D</td>
+<td>botão Desliga da Bomba 02 <strong>solto</strong> (NF)</td>
+</tr>
+<tr>
+<td>12</td>
+<td>I14 (I1.4)</td>
+<td>BJ_L</td>
+<td>botão Liga da Jockey pressionado (NA)</td>
+</tr>
+<tr>
+<td>13</td>
+<td>I15 (I1.5)</td>
+<td>BJ_D</td>
+<td>botão Desliga da Jockey <strong>solto</strong> (NF)</td>
+</tr>
+<tr>
+<td>14</td>
+<td>I16 (I1.6)</td>
+<td>PJ</td>
+<td>pressão baixa no pressostato da jockey (contato fechado)</td>
+</tr>
+<tr>
+<td>15</td>
+<td>I17 (I1.7)</td>
+<td>PB</td>
+<td>pressão baixa no pressostato das principais (contato fechado)</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Discrete inputs — o CLP liga, o simulador lê</strong></p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>DI (base 0)</th>
+<th>Saída XP325 (SP02)</th>
+<th>Tag</th>
+<th>O que acontece no simulador</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>Q00 (Q0.0)</td>
+<td>K-B1</td>
+<td>contatora fecha a DI1 da SS_01 (parte a Bomba 01)</td>
+</tr>
+<tr>
+<td>1</td>
+<td>Q01 (Q0.1)</td>
+<td>K-B2</td>
+<td>contatora fecha a DI1 da SS_02 (parte a Bomba 02)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Q02 (Q0.2)</td>
+<td>K-BJ</td>
+<td>parte a jockey em partida direta</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Q03 (Q0.3)</td>
+<td>RAX1</td>
+<td>acende LB1_S (Bomba 01 selecionada)</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Q04 (Q0.4)</td>
+<td>RAX2</td>
+<td>acende LB2_S (Bomba 02 selecionada)</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Q05 (Q0.5)</td>
+<td>RAX3</td>
+<td>acende LB1_L (Bomba 01 ligada)</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Q06 (Q0.6)</td>
+<td>RAX4</td>
+<td>acende LB2_L (Bomba 02 ligada)</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Q07 (Q0.7)</td>
+<td>RAX5</td>
+<td>acende LBJ_L (Jockey ligada)</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Q10 (Q1.0)</td>
+<td>RAX6</td>
+<td>acende LB1_D (Bomba 01 desligada)</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Q11 (Q1.1)</td>
+<td>RAX7</td>
+<td>acende LB2_D (Bomba 02 desligada)</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Q12 (Q1.2)</td>
+<td>RAX8</td>
+<td>acende LBJ_D (Jockey desligada)</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Três cuidados que confundem alunos</strong></p>
+<ol>
+<li><strong>Botões Desliga são NF.</strong> Solto = 1, pressionado = 0. No programa, a parada é pela <strong>queda</strong> do sinal.</li>
+<li><strong>Pressostato "fechado" = pressão baixa.</strong> PJ = 1 pede a jockey; PB = 1 pede a principal.</li>
+<li><strong>Sem 24 Vcc no campo</strong> (disjuntor D1 ou D4 aberto no quadro elétrico), o simulador envia <strong>todas as coils em 0</strong>, como no painel real. Isso inclui os NF, que passam a parecer "pressionados".</li>
+</ol>
+<p><strong>3.1 — Como escolher os endereços no simulador</strong></p>
+<p>Tudo fica na seção <strong>Endereçamento Modbus</strong>, no fim da página do simulador. Há dois modos:</p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Modo</th>
+<th>Como funciona</th>
+<th>Quando usar</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Contíguo</strong> (padrão)</td>
+<td>Coils = <strong>1ª coil</strong> + posição (I00 = 1ª coil, I01 = 1ª coil + 1 …). Discrete inputs = <strong>1ª entrada</strong> + posição. Os dois campos ficam na seção <strong>Conexão com o CLP</strong></td>
+<td>Quando o CLP tem as 16 coils e as 11 entradas em sequência (Passos 4A, 4B e 4C)</td>
+</tr>
+<tr>
+<td><strong>Tabela</strong></td>
+<td>Você digita o endereço Modbus de cada ponto, um por um</td>
+<td>Quando o programa do CLP já existe com endereços espalhados, ou para treinar endereçamento</td>
+</tr>
+</tbody>
+</table></div>
+<p>Passo a passo:</p>
+<ol>
+<li>Clique em <strong>Desconectar</strong> (os endereços só mudam desconectado).</li>
+<li>Em <strong>Modo</strong>, escolha <strong>Contíguo</strong> ou <strong>Tabela</strong>.</li>
+<li>No modo Tabela, digite o endereço na coluna <strong>Endereço</strong> de cada linha (0 a 65535, sem repetir).</li>
+<li>Clique em <strong>Aplicar endereços</strong>. Se houver erro (endereço repetido ou fora da faixa), aparece um aviso e nada muda.</li>
+<li>Conecte de novo. O <strong>Diagnóstico</strong> mostra as faixas usadas, por exemplo <em>coils 0–15; discrete inputs 0–10</em>.</li>
+</ol>
+<p>O simulador agrupa sozinho os pontos de endereços seguidos numa só mensagem (FC15 para escrever, FC02 para ler). Endereços espalhados geram mais mensagens, mas a fila continua protegendo o CLP.</p>
+<p><strong>3.2 — A tabela para copiar para o CLP</strong></p>
+<p>A tabela mostra, para cada ponto: <strong>Endereço</strong> (o número que vai no protocolo, começando em 0), <strong>Notação 0x / 1x</strong> (o mesmo endereço no estilo 1-based que muitos manuais e IHMs usam: coil 0 = 00001, discrete input 0 = 10001), borne do XP325 com o endereço da SP02, tag, a <strong>variável do XP325</strong> (<code>GVL_SIM.xSimIn[n]</code> / <code>GVL_SIM.xSimOut[n]</code>), descrição e estado ao vivo.</p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Botão</th>
+<th>O que gera</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Copiar tabela</strong></td>
+<td>A tabela inteira na área de transferência. Cole no Excel, no Word ou num e-mail</td>
+</tr>
+<tr>
+<td><strong>Baixar CSV</strong></td>
+<td>O mesmo conteúdo em arquivo <code>.csv</code> (abre no Excel)</td>
+</tr>
+<tr>
+<td><strong>Baixar mapeamento MasterTool</strong></td>
+<td>Uma linha por ponto: variável, tipo (Coil / Input Status), endereço e tamanho, prontos para preencher o MODBUS Symbol Server do XP325 (Passo 4C.3)</td>
+</tr>
+</tbody>
+</table></div>
+<p>Atenção ao 0-based e 1-based: o simulador sempre usa o endereço do protocolo (começa em 0). Se o seu CLP ou software numerar a partir de 1, some 1 ao preencher (é para isso que serve a coluna de notação 0x/1x).</p>
+<h2 id="passo-4a-configurar-o-clp-como-servidor-modbus-no-codesys">Passo 4A — Configurar o CLP como servidor Modbus no CODESYS</h2>
+<p>No CODESYS, o servidor Modbus tem uma área própria para coils e outra para discrete inputs. As coils chegam ao programa como <strong>entradas</strong> e as discrete inputs saem do programa como <strong>saídas</strong>, exatamente o que o simulador espera. Faça este passo se o seu CLP for CODESYS (CODESYS Control Win no PC ou um CLP baseado em CODESYS). Os nomes dos menus seguem a ajuda oficial; em versões antigas o dispositivo se chama "Slave" em vez de "Server".</p>
+<p><strong>4A.1 — Adicionar a rede Ethernet</strong></p>
+<ol>
+<li>Abra o projeto da SP02 no CODESYS.</li>
+<li>Na árvore de dispositivos, clique com o botão direito no <strong>Device</strong> (o CLP) → <strong>Adicionar dispositivo…</strong></li>
+<li>Em <strong>Fieldbuses → Ethernet Adapter</strong>, escolha <strong>Ethernet</strong> e clique em <strong>Adicionar dispositivo</strong>.</li>
+<li>Dê dois cliques em <strong>Ethernet</strong>. Na aba <strong>Geral</strong>, escolha a placa de rede. No CODESYS Control Win, escolha a placa do PC que está na rede do simulador.</li>
+</ol>
+<p><strong>4A.2 — Adicionar o servidor Modbus TCP</strong></p>
+<ol>
+<li>Botão direito em <strong>Ethernet</strong> → <strong>Adicionar dispositivo…</strong></li>
+<li>Em <strong>Fieldbuses → Modbus → ModbusTCP Server</strong>, escolha <strong>ModbusTCP Server Device</strong> e adicione.</li>
+<li>Dê dois cliques nele e abra a aba <strong>Geral</strong>. Configure:</li>
+</ol>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+<th>Por quê</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Server port</td>
+<td>502</td>
+<td>Mesma porta configurada no simulador</td>
+</tr>
+<tr>
+<td>Bind to Adapter</td>
+<td><strong>desmarcado</strong></td>
+<td>Assim o servidor aceita conexões de qualquer IP do PC, inclusive 127.0.0.1</td>
+</tr>
+<tr>
+<td>Watchdog</td>
+<td>marcado, 1000 ms</td>
+<td>Se a comunicação cair, as entradas vindas do simulador são zeradas</td>
+</tr>
+<tr>
+<td>Discrete Bit Areas</td>
+<td><strong>marcado</strong></td>
+<td>Cria áreas próprias para coils e discrete inputs</td>
+</tr>
+<tr>
+<td>Coils</td>
+<td>16</td>
+<td>I0.0 a I1.7</td>
+</tr>
+<tr>
+<td>Discrete inputs</td>
+<td>16</td>
+<td>Q0.0 a Q1.2 (11 usadas; 16 fecha 2 bytes)</td>
+</tr>
+<tr>
+<td>Endereço inicial (se a sua versão mostrar)</td>
+<td>0</td>
+<td>Igual à 1ª coil e à 1ª entrada do simulador</td>
+</tr>
+</tbody>
+</table></div>
+<p>Se <strong>Discrete Bit Areas</strong> ficar desmarcado, as coils passam a ocupar os bits dos holding registers e as discrete inputs os bits dos input registers. Funciona, mas confunde; mantenha marcado.</p>
+<p><strong>4A.3 — Ligar as variáveis do programa (I/O Mapping)</strong></p>
+<ol>
+<li>Ainda no ModbusTCP Server Device, abra a aba <strong>ModbusTCP Server I/O Mapping</strong> (ou <strong>I/O Mapping</strong>).</li>
+<li>Expanda <strong>Coils</strong>. Cada bit é uma entrada (%IX). Na coluna <strong>Variável</strong>, digite o nome da variável do programa na ordem do Passo 3: bit 0 = seleção Bomba 01 (I0.0), bit 1 = seleção Bomba 02 (I0.1), e assim até o bit 15 = PB (I1.7).</li>
+<li>Expanda <strong>Discrete inputs</strong>. Cada bit é uma saída (%QX). Ligue bit 0 = K-B1 (Q0.0), bit 1 = K-B2 (Q0.1) … bit 10 = RAX8 (Q1.2).</li>
+<li>Em <strong>Sempre atualizar variáveis</strong>, escolha <strong>Habilitado 2 (sempre na tarefa de ciclo de barramento)</strong> ou a opção equivalente da sua versão. Sem isso, saídas não usadas no programa podem não ser enviadas.</li>
+<li>Compile (<strong>F11</strong>). Não pode haver erro.</li>
+</ol>
+<p><strong>4A.4 — Carregar e rodar</strong></p>
+<ol>
+<li>Se usar o CODESYS Control Win, inicie-o pelo ícone da bandeja do Windows (<strong>Start PLC</strong>).</li>
+<li>No CODESYS, <strong>Online → Login</strong> (Alt+F8) e confirme o download.</li>
+<li><strong>Online → Start</strong> (F5).</li>
+<li>Na árvore, o Ethernet e o ModbusTCP Server Device devem ficar com o ícone verde.</li>
+<li>Se o Windows perguntar sobre o firewall para o CODESYS, permita em <strong>Redes privadas</strong>.</li>
+</ol>
+<p>IP que você vai digitar no simulador:</p>
+<ul>
+<li>CODESYS Control Win <strong>no mesmo PC</strong> do simulador: <code>127.0.0.1</code>.</li>
+<li>CLP CODESYS <strong>físico</strong>: o IP configurado na aba Geral do Ethernet.</li>
+</ul>
+<p>Referência: <a href="https://content.helpme-codesys.com/en/CODESYS%20Modbus/_mod_edt_slave_device_tcp.html" target="_blank" rel="noopener">ajuda do CODESYS — ModbusTCP Server Device, aba Geral</a>.</p>
+<h2 id="passo-4b-configurar-o-clp-siemens-s7-1200-tia-portal-mb_server">Passo 4B — Configurar o CLP Siemens S7-1200 (TIA Portal, MB_SERVER)</h2>
+<p>No S7-1200 o MB_SERVER, por padrão, liga as coils às <strong>saídas reais</strong> (%Q) e as discrete inputs às <strong>entradas reais</strong> (%I). Isso é o contrário do que o simulador precisa. A solução é mapear as duas áreas para blocos de dados (DB) pelo <strong>Data_Area_Array</strong> do MB_SERVER, que existe a partir da CPU S7-1200 com firmware <strong>V4.2</strong>. Confira o firmware em <strong>Configuração de dispositivos → CPU → Propriedades → Geral</strong>.</p>
+<p><strong>4B.1 — Rede</strong></p>
+<ol>
+<li>Em <strong>Configuração de dispositivos</strong>, clique na porta PROFINET da CPU → <strong>Propriedades → Endereços Ethernet</strong>.</li>
+<li>Anote o IP do CLP (ex.: 192.168.0.1, máscara 255.255.255.0).</li>
+<li>Configure a placa de rede do PC com IP fixo na mesma faixa (ex.: 192.168.0.10, máscara 255.255.255.0). No Windows: <strong>Configurações → Rede e Internet → Ethernet → Editar atribuição de IP → Manual</strong>.</li>
+</ol>
+<p><strong>4B.2 — Criar os DBs de troca</strong></p>
+<p>Crie três DBs globais. Nos três: botão direito → <strong>Propriedades → Atributos</strong> → <strong>desmarque "Acesso otimizado ao bloco"</strong>. Sem isso o Data_Area não funciona.</p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>DB</th>
+<th>Nome sugerido</th>
+<th>Conteúdo</th>
+<th>Para quê</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DB10</td>
+<td>MB_Coils</td>
+<td><code>Bit</code> : Array[0..15] of Bool</td>
+<td>Coils escritas pelo simulador (I0.0 … I1.7)</td>
+</tr>
+<tr>
+<td>DB11</td>
+<td>MB_DI</td>
+<td><code>Bit</code> : Array[0..15] of Bool</td>
+<td>Discrete inputs lidas pelo simulador (Q0.0 … Q1.2)</td>
+</tr>
+<tr>
+<td>DB12</td>
+<td>MB_HR</td>
+<td><code>Reg</code> : Array[0..9] of Word</td>
+<td>Holding registers. Não são usados, mas o MB_SERVER exige este parâmetro</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>4B.3 — Chamar o MB_SERVER</strong></p>
+<ol>
+<li>Em <strong>Instruções → Comunicação → Outros → MODBUS TCP</strong>, arraste o <strong>MB_SERVER</strong> para o OB1. Aceite o DB de instância (ex.: <code>MB_SERVER_DB</code>).</li>
+<li>Crie uma variável do tipo <strong>TCON_IP_v4</strong> (por exemplo em um DB <code>MB_Conexao</code>) com estes valores iniciais:</li>
+</ol>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>InterfaceId</td>
+<td>identificador de HW da interface PROFINET (normalmente 64; veja em Propriedades → Identificador de hardware)</td>
+</tr>
+<tr>
+<td>ID</td>
+<td>1</td>
+</tr>
+<tr>
+<td>ConnectionType</td>
+<td>11 (TCP)</td>
+</tr>
+<tr>
+<td>ActiveEstablished</td>
+<td>FALSE</td>
+</tr>
+<tr>
+<td>RemoteAddress</td>
+<td>0.0.0.0 (aceita qualquer cliente)</td>
+</tr>
+<tr>
+<td>RemotePort</td>
+<td>0</td>
+</tr>
+<tr>
+<td>LocalPort</td>
+<td>502</td>
+</tr>
+</tbody>
+</table></div>
+<ol start="3">
+<li>Ligue os parâmetros do MB_SERVER: <strong>DISCONNECT</strong> = FALSE, <strong>MB_HOLD_REG</strong> = <code>"MB_HR".Reg</code>, <strong>CONNECT</strong> = a variável TCON_IP_v4.</li>
+</ol>
+<p><strong>4B.4 — Configurar o Data_Area_Array</strong></p>
+<ol>
+<li>Abra o DB de instância <code>MB_SERVER_DB</code> e expanda a variável estática <strong>Data_Area_Array</strong>.</li>
+<li>Preencha a coluna <strong>Valor de partida</strong> (start value) dos dois primeiros elementos. Os elementos usados precisam ser consecutivos, sem buraco.</li>
+</ol>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Elemento</th>
+<th>data_type</th>
+<th>db</th>
+<th>start</th>
+<th>length</th>
+<th>Efeito</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data_Area_Array[1]</td>
+<td>1 (coils: FC 1, 5 e 15)</td>
+<td>10</td>
+<td>0</td>
+<td>16</td>
+<td>Coils 0 a 15 vão para o DB10</td>
+</tr>
+<tr>
+<td>Data_Area_Array[2]</td>
+<td>2 (entradas: FC 2)</td>
+<td>11</td>
+<td>0</td>
+<td>16</td>
+<td>Discrete inputs 0 a 15 vêm do DB11</td>
+</tr>
+<tr>
+<td>Data_Area_Array[3] a [8]</td>
+<td>0</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>Não usados</td>
+</tr>
+</tbody>
+</table></div>
+<p>Com isso, o simulador nunca escreve nas saídas físicas %Q. O campo <strong>start</strong> deve ser igual à <strong>1ª coil</strong> e à <strong>1ª entrada</strong> configuradas no simulador (0 e 0).</p>
+<p><strong>4B.5 — Ligar o programa aos DBs</strong></p>
+<p>No início do OB1, use os bits do DB10 no lugar das entradas físicas. No fim do OB1, copie as saídas para o DB11.</p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Entrada no programa</th>
+<th>Vem de</th>
+<th>Saída do programa</th>
+<th>Vai para</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>I0.0 seleção B01</td>
+<td><code>"MB_Coils".Bit[0]</code></td>
+<td>Q0.0 K-B1</td>
+<td><code>"MB_DI".Bit[0]</code></td>
+</tr>
+<tr>
+<td>I0.1 seleção B02</td>
+<td><code>"MB_Coils".Bit[1]</code></td>
+<td>Q0.1 K-B2</td>
+<td><code>"MB_DI".Bit[1]</code></td>
+</tr>
+<tr>
+<td>…</td>
+<td>…</td>
+<td>…</td>
+<td>…</td>
+</tr>
+<tr>
+<td>I1.7 PB</td>
+<td><code>"MB_Coils".Bit[15]</code></td>
+<td>Q1.2 RAX8</td>
+<td><code>"MB_DI".Bit[10]</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Forma mais simples: no início do OB1, copie cada bit do DB10 para um marcador com nome (ex.: <code>"MB_Coils".Bit[0]</code> → <code>%M10.0 B_SEL_B1</code>) e use esses marcadores no programa. Para a bancada física depois, basta trocar essa cópia por %I0.0 → %M10.0.</p>
+<p><strong>4B.6 — Carregar e conferir</strong></p>
+<ol>
+<li>Compile (<strong>Compilar → Hardware e software</strong>).</li>
+<li>Carregue na CPU e coloque em <strong>RUN</strong>.</li>
+<li>Monitore o MB_SERVER: com o simulador conectado, <strong>NDR</strong> e <strong>DR</strong> pulsam e <strong>ERROR</strong> fica em FALSE.</li>
+<li><strong>STATUS = 16#8383</strong> indica que o simulador pediu um endereço fora das áreas definidas: confira start/length do Data_Area_Array e as bases no simulador.</li>
+</ol>
+<p>Firmware abaixo de V4.2 não tem Data_Area_Array. Nesse caso, use o CODESYS (Passo 4A) ou atualize o firmware da CPU.</p>
+<p>Referência: <a href="https://docs.tia.siemens.cloud/r/es-es/v20/modbus-rtu-s7-1200-s7-1500/modbus_slave-s7-1200-s7-1500/acceso-a-areas-de-datos-en-db-en-lugar-del-acceso-directo-a-direcciones-modbus-a-partir-de-la-version-v4.0-s7-1200-s7-1500" target="_blank" rel="noopener">Siemens — acesso a áreas de dados em DB a partir da V4.0</a> (página do Modbus_Slave; o MB_SERVER usa a mesma estrutura MB_DataArea).</p>
+<h2 id="passo-4c-configurar-o-altus-xp325-mastertool-iec-xe">Passo 4C — Configurar o Altus XP325 (MasterTool IEC XE)</h2>
+<p>O XP325 (Nexto Xpress) tem servidor Modbus TCP na porta NET 1 e é programado no MasterTool IEC XE. Como as entradas integradas (I00 a I17) são escritas pelo hardware a cada ciclo, o Modbus não consegue escrever nelas. Por isso o simulador escreve numa lista de variáveis própria, e o programa escolhe se lê os bornes reais ou o simulador.</p>
+<p>O passo a passo completo do programa (Ladder rede por rede), dos pressostatos e da SSW-05 está no guia <strong><a href="guia-programacao.html">Programar o CLP</a></strong>. Aqui fica só a comunicação.</p>
+<p><strong>4C.1 — Rede</strong></p>
+<ol>
+<li>No MasterTool IEC XE, abra o projeto da SP02 (modelo XP325).</li>
+<li>Na árvore de dispositivos, dê dois cliques em <strong>NET 1</strong> e confira o endereço IP e a máscara do XP325 (ex.: 192.168.0.1 / 255.255.255.0).</li>
+<li>Coloque a placa de rede do PC na mesma faixa (ex.: 192.168.0.10), como no Passo 4B.1.</li>
+</ol>
+<p><strong>4C.2 — Criar a lista de variáveis de troca</strong></p>
+<ol>
+<li>Botão direito em <strong>Application</strong> → <strong>Acrescentar objeto</strong> → <strong>Lista de variáveis globais (GVL)</strong>. Nome: <code>GVL_SIM</code>.</li>
+<li>Digite:</li>
+</ol>
+<pre><code>VAR_GLOBAL
+    xSimIn         : ARRAY[0..15] OF BOOL;  // escrito pelo simulador (coils): I00..I17
+    xSimOut        : ARRAY[0..15] OF BOOL;  // lido pelo simulador (input status): Q00..Q12
+    xUsarSimulador : BOOL := TRUE;          // TRUE = simulador; FALSE = bornes reais
+END_VAR
+</code></pre>
+<p><strong>4C.3 — Adicionar o servidor Modbus</strong></p>
+<ol>
+<li>Botão direito em <strong>NET 1</strong> → <strong>Acrescentar dispositivo…</strong></li>
+<li>Escolha <strong>MODBUS Symbol Server</strong> (servidor MODBUS por símbolo) e clique em <strong>Acrescentar dispositivo</strong>.</li>
+<li>Dê dois cliques no servidor criado. Nos parâmetros gerais, confira a <strong>porta TCP 502</strong>.</li>
+<li>Na aba de mapeamentos, crie duas linhas:</li>
+</ol>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Variável</th>
+<th>Tipo de dado</th>
+<th>Endereço inicial</th>
+<th>Tamanho</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GVL_SIM.xSimIn</code></td>
+<td>Coil</td>
+<td>primeiro endereço</td>
+<td>16</td>
+</tr>
+<tr>
+<td><code>GVL_SIM.xSimOut</code></td>
+<td>Input Status</td>
+<td>primeiro endereço</td>
+<td>16</td>
+</tr>
+</tbody>
+</table></div>
+<p>O endereço inicial deve casar com <strong>1ª coil</strong> e <strong>1ª entrada</strong> do simulador. O Modbus no fio começa em 0; algumas telas do MasterTool numeram a partir de 1. Para conferir, no Passo 5 gire a seleção para B01: o valor tem de aparecer em <code>xSimIn[0]</code>. Se aparecer em <code>xSimIn[1]</code>, ou se o diagnóstico mostrar <em>Exceção 2</em>, ajuste 1 unidade na <strong>1ª coil</strong> (e na <strong>1ª entrada</strong>) do simulador.</p>
+<p><strong>4C.4 — Ligar o programa</strong></p>
+<p>No início do programa principal, escolha a origem das entradas. No fim, copie as saídas para o simulador. Exemplo em texto estruturado (use os nomes de variável do seu programa):</p>
+<pre><code>// ---- Entradas: simulador ou bornes reais
+IF GVL_SIM.xUsarSimulador THEN
+    xSelB1 := GVL_SIM.xSimIn[0];   xSelB2 := GVL_SIM.xSimIn[1];
+    xB1Man := GVL_SIM.xSimIn[2];   xB1Aut := GVL_SIM.xSimIn[3];
+    xB2Man := GVL_SIM.xSimIn[4];   xB2Aut := GVL_SIM.xSimIn[5];
+    xBJMan := GVL_SIM.xSimIn[6];   xBJAut := GVL_SIM.xSimIn[7];
+    xB1_L  := GVL_SIM.xSimIn[8];   xB1_D  := GVL_SIM.xSimIn[9];
+    xB2_L  := GVL_SIM.xSimIn[10];  xB2_D  := GVL_SIM.xSimIn[11];
+    xBJ_L  := GVL_SIM.xSimIn[12];  xBJ_D  := GVL_SIM.xSimIn[13];
+    xPJ    := GVL_SIM.xSimIn[14];  xPB    := GVL_SIM.xSimIn[15];
+ELSE
+    xSelB1 := I00;  xSelB2 := I01;  xB1Man := I02;  xB1Aut := I03;
+    xB2Man := I04;  xB2Aut := I05;  xBJMan := I06;  xBJAut := I07;
+    xB1_L  := I10;  xB1_D  := I11;  xB2_L  := I12;  xB2_D  := I13;
+    xBJ_L  := I14;  xBJ_D  := I15;  xPJ    := I16;  xPB    := I17;
+END_IF
+
+// ... lógica da SP02 ligando Q00 a Q12 ...
+
+// ---- Saídas: o simulador lê o mesmo que vai para os bornes
+GVL_SIM.xSimOut[0] := Q00;  GVL_SIM.xSimOut[1] := Q01;  GVL_SIM.xSimOut[2]  := Q02;
+GVL_SIM.xSimOut[3] := Q03;  GVL_SIM.xSimOut[4] := Q04;  GVL_SIM.xSimOut[5]  := Q05;
+GVL_SIM.xSimOut[6] := Q06;  GVL_SIM.xSimOut[7] := Q07;  GVL_SIM.xSimOut[8]  := Q10;
+GVL_SIM.xSimOut[9] := Q11;  GVL_SIM.xSimOut[10] := Q12;
+</code></pre>
+<p>Os LEDs das saídas do XP325 acendem junto com o simulador. Se a bancada física estiver energizada e ligada às saídas, as cargas reais também acionam.</p>
+<p><strong>4C.5 — Carregar e rodar</strong></p>
+<ol>
+<li>Ligue o cabo de rede entre o PC e o XP325.</li>
+<li>Em <strong>Comunicação → Easy Connection</strong> (ou <strong>Configurações de comunicação</strong>), procure o gateway e selecione o IP do XP325 (fica em negrito).</li>
+<li><strong>Login</strong> (Alt+F8), confirme o download e coloque em <strong>Run</strong> (F5).</li>
+<li>No simulador (Passo 5): IP do XP325, porta 502, Unit ID 1, 1ª coil e 1ª entrada iguais ao endereço inicial do mapeamento.</li>
+</ol>
+<p>Referências: <a href="https://www.altus.com.br/wp-content/uploads/2024/10/XP3xx_PT_CT116100.pdf" target="_blank" rel="noopener">Altus — características técnicas do XP3xx</a> e <a href="https://suporte.altus.com.br/hc/en-us/articles/8285804575117-Nexto-Xpress-Communication-with-Nexto-Xpress-using-Modbus-TCP-IP-protocol" target="_blank" rel="noopener">Altus — comunicação Modbus TCP com Nexto Xpress (Symbol Server)</a>.</p>
+<h2 id="passo-5-conectar-o-simulador-ao-clp-e-conferir-a-comunicação">Passo 5 — Conectar o simulador ao CLP e conferir a comunicação</h2>
+<p>Com o CLP em RUN e o servidor Modbus ativo, preencha a seção <strong>Conexão com o CLP</strong> e clique em Conectar. A conexão está boa quando o selo fica verde e a linha <strong>Última leitura do CLP</strong> mostra poucos milissegundos.</p>
+<p><strong>5.1 — Preencher os campos</strong></p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>O que colocar</th>
+<th>Padrão</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Endereço IP</td>
+<td>IP do CLP. CODESYS no mesmo PC: <code>127.0.0.1</code></td>
+<td>127.0.0.1</td>
+</tr>
+<tr>
+<td>Porta</td>
+<td>Porta do servidor Modbus do CLP</td>
+<td>502</td>
+</tr>
+<tr>
+<td>Unit ID</td>
+<td>Normalmente 1. Se o CLP recusar, teste 255 ou 0</td>
+<td>1</td>
+</tr>
+<tr>
+<td>1ª coil (I0.0)</td>
+<td>Endereço Modbus da primeira coil no CLP</td>
+<td>0</td>
+</tr>
+<tr>
+<td>1ª entrada (Q0.0)</td>
+<td>Endereço Modbus da primeira discrete input no CLP</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Leitura a cada (ms)</td>
+<td>De quanto em quanto tempo lê as saídas do CLP</td>
+<td>100</td>
+</tr>
+<tr>
+<td>Timeout (ms)</td>
+<td>Quanto espera a resposta antes de desistir</td>
+<td>1000</td>
+</tr>
+<tr>
+<td>Intervalo entre frames (ms)</td>
+<td>Pausa mínima entre uma mensagem e outra</td>
+<td>10</td>
+</tr>
+<tr>
+<td>Sincronismo (ms)</td>
+<td>De quanto em quanto tempo reenvia todas as coils</td>
+<td>1000</td>
+</tr>
+<tr>
+<td>Escrita das coils</td>
+<td>FC15 (bloco único) é o normal. Use FC05 só se o CLP der "exceção 1"</td>
+<td>FC15</td>
+</tr>
+<tr>
+<td>Reconectar sozinho</td>
+<td>Marcado: se cair, tenta de novo a cada 3 s</td>
+<td>marcado</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>5.2 — Testar a rede antes (opcional, recomendado com CLP físico)</strong></p>
+<ol>
+<li>Tecla <strong>Windows</strong>, digite <code>cmd</code> e tecle Enter.</li>
+<li>Digite <code>ping 192.168.0.1</code> (troque pelo IP do CLP) e tecle Enter.</li>
+<li>Deve aparecer <strong>Resposta de 192.168.0.1</strong>. Se aparecer "Esgotado o tempo limite", o problema é cabo, IP ou máscara, não o simulador.</li>
+</ol>
+<p><strong>5.3 — Conectar</strong></p>
+<ol>
+<li>Clique em <strong>Conectar</strong>.</li>
+<li>O selo passa de amarelo <strong>Conectando…</strong> para verde <strong>Conectado a IP:porta</strong>.</li>
+<li>No <strong>Diagnóstico</strong> aparece: <em>Conectado. Coils … a partir de 0, discrete inputs … a partir de 0.</em></li>
+</ol>
+<p><strong>5.4 — Conferir se os dados estão indo e voltando</strong></p>
+<ol>
+<li>Em <strong>Fila de requisições</strong>, veja <strong>req/s</strong>: perto de 11 com os valores padrão (10 leituras + 1 sincronismo por segundo).</li>
+<li><strong>Enviadas / respondidas</strong> devem crescer juntas.</li>
+<li><strong>Timeouts</strong> e <strong>Exceções Modbus</strong> devem ficar em 0.</li>
+<li>Gire a chave <strong>Seleção de bombas</strong> para <strong>B01</strong> no painel de operação. Na tabela de <strong>Endereçamento Modbus</strong>, a linha I00 vira <strong>1</strong>. No CLP online, a variável correspondente também vira TRUE.</li>
+<li>Force uma saída no CLP (ex.: Q0.3 / RAX1). O sinaleiro <strong>Bomba 01 selecionada</strong> acende e a DI 3 vira <strong>1</strong> no mapa.</li>
+</ol>
+<p>Se o passo 4 funciona e o 5 não (ou o contrário), a comunicação está boa e o problema é o mapeamento de uma das áreas no CLP. Volte ao Passo 4A ou 4B.</p>
+<p><strong>5.5 — Ver os frames (para aula de protocolo)</strong></p>
+<p>Marque <strong>Mostrar frames TX/RX</strong> embaixo do Diagnóstico. Cada mensagem aparece em hexadecimal com a prioridade e a função, por exemplo <code>TX 00 1f 00 00 00 06 01 02 00 00 00 0b [P1 leitura · FC02 ler entradas]</code>. Desmarque depois: com frames ligados, o log enche rápido.</p>
+<p><strong>Para desconectar:</strong> clique em <strong>Desconectar</strong>. Por segurança, o simulador zera todas as saídas do CLP do lado dele (contatoras abrem e motores param).</p>
+<h2 id="passo-6-testar-sem-clp-usando-o-clp-virtual">Passo 6 — Testar sem CLP usando o CLP virtual</h2>
+<p>O simulador traz um CLP de teste embutido, com uma lógica de referência simplificada da SP02. Use para conhecer o simulador, demonstrar em aula ou descobrir se um problema está no simulador ou no CLP.</p>
+<ol>
+<li>Se estiver conectado, clique em <strong>Desconectar</strong>.</li>
+<li>No campo <strong>Porta</strong>, deixe <code>502</code>. Se a 502 já estiver ocupada no PC (CODESYS Control Win, outro simulador), use <code>5020</code>.</li>
+<li>Clique em <strong>Ligar CLP virtual de teste</strong>, logo abaixo dos botões de conexão.</li>
+<li>Aparece a mensagem <em>CLP virtual ligado em 127.0.0.1:502</em> e o IP é preenchido sozinho com <code>127.0.0.1</code>.</li>
+<li>Clique em <strong>Conectar</strong>. O selo fica verde.</li>
+<li>Para desligar: <strong>Desconectar</strong> e depois <strong>Desligar CLP virtual</strong>.</li>
+</ol>
+<p><strong>O que a lógica de referência faz</strong></p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Situação</th>
+<th>Resposta do CLP virtual</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Chave de seleção em B01 ou B02</td>
+<td>Acende LB1_S ou LB2_S</td>
+</tr>
+<tr>
+<td>Bomba em Manual + botão Liga</td>
+<td>Liga e mantém (selo)</td>
+</tr>
+<tr>
+<td>Bomba principal em Automático, selecionada, PB fechado</td>
+<td>Liga e mantém até o botão Desliga</td>
+</tr>
+<tr>
+<td>Jockey em Automático</td>
+<td>Liga com PJ fechado, desliga com PJ aberto ou com uma principal ligada</td>
+</tr>
+<tr>
+<td>Botão Desliga (NF) ou chave em 0</td>
+<td>Desliga a bomba correspondente</td>
+</tr>
+<tr>
+<td>Sinaleiros L e D</td>
+<td>Seguem o estado de cada bomba</td>
+</tr>
+</tbody>
+</table></div>
+<p>Ela serve só para fechar o laço do teste. Não é o gabarito da SP02 e não trata todos os casos (por exemplo, ausência de 24 Vcc).</p>
+<h2 id="passo-7-ajustar-a-soft-starter-ssw-05-plus-trimpots-e-dip-switch">Passo 7 — Ajustar a soft-starter SSW-05 Plus (trimpots e dip-switch)</h2>
+<p>A SSW-05 Plus não tem IHM: tudo se ajusta atrás da <strong>tampa frontal articulada</strong>, nos <strong>4 trimpots</strong> e no <strong>dip-switch de 6 chaves</strong>, como no equipamento. O desenho do simulador segue a Figura 5.1 do manual WEG 0899.5119. Para a SP02, em cada soft: <strong>ACCEL TIME = 5 s</strong> e <strong>DECEL TIME = 10 s</strong>.</p>
+<p><strong>7.1 — A frente da SSW-05 Plus</strong></p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Função</th>
+<th>Faixa / posições</th>
+<th>Padrão de fábrica (ponto vermelho)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Trimpot <strong>ACCEL TIME</strong></td>
+<td>Tempo da rampa de aceleração</td>
+<td>1–20 s</td>
+<td>meio da escala (≈ 12 s)</td>
+</tr>
+<tr>
+<td>Trimpot <strong>MOTOR CURRENT</strong></td>
+<td>Corrente do motor em % da corrente nominal da chave; base de todas as proteções</td>
+<td>30–100 %</td>
+<td>100 %</td>
+</tr>
+<tr>
+<td>Trimpot <strong>PEDESTAL VOLTAGE</strong></td>
+<td>Tensão inicial da rampa</td>
+<td>30–80 %</td>
+<td>30 %</td>
+</tr>
+<tr>
+<td>Trimpot <strong>DECEL TIME</strong></td>
+<td>Tempo da rampa de desaceleração (só para bombas, contra golpe de aríete)</td>
+<td>OFF–20 s</td>
+<td>OFF</td>
+</tr>
+<tr>
+<td>Chave 1 <strong>OVERCURRENT</strong></td>
+<td>Proteção de sobrecorrente</td>
+<td>OFF / ON</td>
+<td>ON</td>
+</tr>
+<tr>
+<td>Chave 2 <strong>PHASE LOSS</strong></td>
+<td>Proteção de falta de fase</td>
+<td>OFF / ON</td>
+<td>ON</td>
+</tr>
+<tr>
+<td>Chave 3 <strong>PHASE SEQ</strong></td>
+<td>Proteção de sequência de fase</td>
+<td>OFF / ON</td>
+<td>ON</td>
+</tr>
+<tr>
+<td>Chave 4 <strong>STALL</strong></td>
+<td>Proteção de rotor bloqueado</td>
+<td>OFF / ON</td>
+<td>ON</td>
+</tr>
+<tr>
+<td>Chave 5 <strong>OVERLOAD</strong></td>
+<td>Sobrecarga do motor, classe 10</td>
+<td>OFF / ON</td>
+<td>ON</td>
+</tr>
+<tr>
+<td>Chave 6 <strong>MAN / AUTO</strong></td>
+<td>Reset manual ou automático das falhas</td>
+<td>MAN / AUTO</td>
+<td>MAN</td>
+</tr>
+<tr>
+<td>Botão <strong>RESET</strong></td>
+<td>Reseta a falha (também pela DI2 ou desligando A1-A2)</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>LEDs <strong>MOTOR PROTECTION</strong></td>
+<td>Acende o LED da proteção que atuou</td>
+<td>OVERCURRENT, PHASE LOSS, PHASE SEQ, STALL, OVERLOAD</td>
+<td>—</td>
+</tr>
+<tr>
+<td>LEDs <strong>STARTER STATUS</strong></td>
+<td><strong>READY</strong>: aceso pronta ou em tensão plena, pisca nas rampas. <strong>RUN</strong>: aceso só em tensão plena. <strong>FAULT</strong>: falhas internas (pisca em código)</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Bornes <strong>A1-A2</strong></td>
+<td>Alimentação da eletrônica, 90–250 Vca (vem do D2/D3)</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Relés <strong>13 – 14/23 – 24</strong></td>
+<td>13–14/23: operação (fecha com o comando, abre no fim da rampa de parada). 14/23–24: tensão plena (by-pass)</td>
+<td>1 A 250 Vca</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>DI1</strong> / <strong>DI2</strong></td>
+<td>DI1 habilita/desabilita o motor; DI2 reseta por pulso. Ambas na tensão de A1 (90–250 Vca)</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<p>As setas impressas na frente ligam cada chave 1–5 ao LED da proteção correspondente.</p>
+<p><strong>7.2 — Como operar no simulador</strong></p>
+<ul>
+<li><strong>Tampa</strong>: a soft começa com a tampa aberta, com os ajustes à mostra. Para fechar, clique na aba à esquerda; para abrir de novo, clique na tampa. Fechada, os trimpots não giram (como no real).</li>
+<li><strong>Trimpot</strong>: arraste para cima (aumenta) ou para baixo (diminui), use a rodinha do mouse ou as setas do teclado. A seta preta no knob mostra a posição na escala.</li>
+<li><strong>Ajuste fino</strong>: botões − e + no painel ao lado da soft, com o valor exato em negrito.</li>
+<li><strong>Dip-switch</strong>: clique em cada chave. ON é com a alavanca à direita.</li>
+<li><strong>RESET</strong>: clique no botão redondo abaixo do dip-switch.</li>
+</ul>
+<p><strong>7.3 — Receita da SP02 na SS_01 (repita na SS_02)</strong></p>
+<ol>
+<li>Abra a tampa.</li>
+<li><strong>ACCEL TIME = 5 s</strong>: ajuste até o ajuste fino mostrar <code>5,0 s</code>. Abaixo de ~2 s a bomba não chega à rotação a tempo e a soft desarma por <strong>STALL</strong>.</li>
+<li><strong>DECEL TIME = 10 s</strong>. Em <code>OFF</code> a bomba para por inércia.</li>
+<li><strong>PEDESTAL VOLTAGE</strong>: 30–40 %. Se o motor demorar a começar a girar, aumente um pouco.</li>
+<li><strong>MOTOR CURRENT</strong> = corrente de placa ÷ corrente da chave × 100. O painel lateral mostra <strong>Motor ligado (corrente de placa)</strong>: 14,4 A numa chave de 16 A = <strong>90 %</strong>. Exemplo do manual: motor de 25 A numa chave de 30 A = 83 %.</li>
+<li><strong>Dip-switch</strong>: chaves 1 a 5 em <strong>ON</strong>; chave 6 em <strong>MAN</strong> (numa bomba de incêndio o reset deve ser consciente).</li>
+<li>Feche a tampa e dê partida (Passo 10). <strong>READY</strong> pisca durante os 5 s de rampa; ao chegar em tensão plena <strong>RUN</strong> acende e o relé 14/23–24 fecha.</li>
+</ol>
+<p><strong>7.4 — Falhas e reset</strong></p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>LED aceso</th>
+<th>Código</th>
+<th>Quando atua</th>
+<th>O que fazer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>PHASE LOSS</strong></td>
+<td>E03</td>
+<td>Comando de partida sem tensão na entrada (DB1/DB2 aberto) ou falta de fase em operação</td>
+<td>Corrija a alimentação e aperte <strong>RESET</strong></td>
+</tr>
+<tr>
+<td><strong>OVERLOAD</strong></td>
+<td>E05</td>
+<td>Corrente real acima da ajustada no MOTOR CURRENT por tempo demais (classe 10)</td>
+<td>Corrija o trimpot; espere esfriar e dê <strong>RESET</strong></td>
+</tr>
+<tr>
+<td><strong>STALL</strong></td>
+<td>E63</td>
+<td>No fim da rampa a corrente ainda está ≥ 2 × a ajustada: rampa curta demais ou eixo travado</td>
+<td>Aumente o ACCEL TIME ou destrave a bomba; <strong>RESET</strong></td>
+</tr>
+<tr>
+<td><strong>OVERCURRENT</strong></td>
+<td>E66</td>
+<td>Em tensão plena, corrente &gt; 3 × a ajustada por mais de 1 s (eixo travou com o motor rodando)</td>
+<td>Verifique a bomba; <strong>RESET</strong></td>
+</tr>
+<tr>
+<td><strong>PHASE SEQ</strong></td>
+<td>E67</td>
+<td>Sequência de fases da rede invertida na entrada</td>
+<td>Inverta duas fases da <strong>entrada</strong>; <strong>RESET</strong>. Não tem reset automático</td>
+</tr>
+</tbody>
+</table></div>
+<p>Com a chave 6 em <strong>AUTO</strong>, as falhas (exceto PHASE SEQ) se resetam sozinhas após 15 minutos; a sobrecarga, quando o motor esfria. Desligar a chave de uma proteção faz a soft ignorar aquela falha: com PHASE SEQ em OFF e a sequência invertida, a bomba <strong>gira ao contrário</strong> e quase não pressuriza.</p>
+<p><strong>7.5 — Modelo e defeitos para treino</strong></p>
+<ul>
+<li><strong>Modelo</strong>: corrente nominal da chave, de SSW050003 (3 A) a SSW050085 (85 A). O MOTOR CURRENT é uma porcentagem desse valor.</li>
+<li><strong>Defeitos para treino</strong> (embaixo do painel lateral): <em>sequência de fases invertida na entrada</em> e <em>eixo do motor travado</em>. Servem para provocar PHASE SEQ, STALL e OVERCURRENT.</li>
+</ul>
+<h2 id="passo-8-ajustar-os-pressostatos-pj-e-pb">Passo 8 — Ajustar os pressostatos PJ e PB</h2>
+<p>Os pressostatos já vêm ajustados para a SP02. Este passo serve para conferir, explicar aos alunos ou criar um defeito de ajuste. O modelo simulado é o KP 5 (alta pressão, rearme automático): escala <strong>Faixa</strong> de 8 a 32 bar e escala <strong>DIF</strong> de 1,8 a 6 bar.</p>
+<p><strong>8.1 — Como o KP funciona</strong></p>
+<ul>
+<li><strong>Faixa</strong> = pressão em que o contato <strong>abre</strong> (pressão alta).</li>
+<li><strong>DIF</strong> (diferencial) = quanto a pressão precisa cair abaixo da faixa para o contato <strong>fechar</strong> de novo.</li>
+<li>Fecha em: <strong>Faixa − DIF</strong>. Entre os dois valores, o contato fica como estava (histerese).</li>
+<li>As escalas são em <strong>bar</strong>. A SP02 fala em <strong>kgf/cm²</strong>: 1 kgf/cm² = 0,981 bar. O simulador mostra as duas unidades.</li>
+</ul>
+<p><strong>8.2 — Valores da SP02</strong></p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Pressostato</th>
+<th>Pedido da SP02</th>
+<th>Faixa</th>
+<th>DIF</th>
+<th>Fecha em</th>
+<th>Abre em</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PJ (jockey)</td>
+<td>liga &lt; 6, desliga ≥ 10 kgf/cm²</td>
+<td>9,8 bar</td>
+<td>3,9 bar</td>
+<td>5,9 bar (6,0 kgf/cm²)</td>
+<td>9,8 bar (10,0 kgf/cm²)</td>
+</tr>
+<tr>
+<td>PB (principais)</td>
+<td>liga ≤ 4, desliga ≥ 10 kgf/cm²</td>
+<td>9,8 bar</td>
+<td>5,9 bar</td>
+<td>3,9 bar (4,0 kgf/cm²)</td>
+<td>9,8 bar (10,0 kgf/cm²)</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>8.3 — Ajustar, passo a passo (exemplo no PJ)</strong></p>
+<ol>
+<li>Role até <strong>Pressostatos</strong>. À esquerda fica o desenho do KP; à direita, os controles.</li>
+<li>Em <strong>Faixa (abre)</strong>, clique <strong>+</strong> ou <strong>−</strong> até <code>9,8 bar · 10,0 kgf/cm²</code>. Cada clique muda 0,1 bar; segure para repetir. Também dá para girar a rodinha do mouse sobre o eixo <strong>Range</strong> do desenho.</li>
+<li>Em <strong>Diferencial</strong>, clique <strong>+</strong> ou <strong>−</strong> até <code>3,9 bar</code>. O ponteiro vermelho da escala DIF acompanha.</li>
+<li>Leia a caixa branca: <em>Contato fecha em ≤ 5,9 bar (6,0 kgf/cm²) e abre em ≥ 9,8 bar (10,0 kgf/cm²)</em>.</li>
+<li>Em <strong>Contato ligado ao CLP</strong>, deixe <strong>fecha em baixa pressão</strong>. Esse é o contato pedido na SP02.</li>
+<li>Repita no PB com Faixa 9,8 e DIF 5,9.</li>
+</ol>
+<p><strong>8.4 — Conferir o contato</strong></p>
+<ul>
+<li>A linha embaixo dos controles mostra, por exemplo, <em>Contato fechado → I1.6 = 1</em>.</li>
+<li>No desenho do KP, o LED verde acende com o contato fechado.</li>
+<li>No desenho da casa de bombas, os quadradinhos PJ e PB também acendem.</li>
+<li>No gráfico de tendência, as linhas tracejadas azuis são o PJ (fecha e abre) e a vermelha é o fechamento do PB.</li>
+</ul>
+<p><strong>8.5 — Alavanca de teste</strong></p>
+<p>Segure <strong>Segurar alavanca de teste</strong> (ou clique e segure a alavanca "teste" no desenho). Enquanto estiver segurando, o contato inverte, como a função de desarme manual do KP real. Serve para testar a lógica do CLP sem mexer na pressão.</p>
+<p><strong>8.6 — Ligação invertida (defeito proposital)</strong></p>
+<p>Mudando <strong>Contato ligado ao CLP</strong> para <strong>fecha em alta pressão</strong>, o pressostato passa a mandar 1 com a rede cheia. A jockey liga com pressão alta e para com pressão baixa. É um bom defeito para os alunos diagnosticarem.</p>
+<h2 id="passo-9-painel-de-operação-quadro-elétrico-e-processo">Passo 9 — Painel de operação, quadro elétrico e processo</h2>
+<p>O painel de operação é a porta do quadro; o quadro elétrico é o interior; a casa de bombas é o campo. Tudo funciona por clique.</p>
+<p><strong>9.1 — Painel de operação</strong></p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Elemento</th>
+<th>Como usar</th>
+<th>O que vai para o CLP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Chave <strong>Seleção de bombas</strong></td>
+<td>Clique em <strong>B01</strong>, <strong>0</strong> ou <strong>B02</strong>, ou clique no próprio knob: metade esquerda gira para a esquerda, metade direita para a direita</td>
+<td>I0.0 (B01) ou I0.1 (B02); em 0, os dois ficam 0</td>
+</tr>
+<tr>
+<td>Chave <strong>Manual / automático</strong> (uma por bomba)</td>
+<td>Clique em <strong>Auto</strong>, <strong>0</strong> ou <strong>Man</strong>, ou clique no lado do knob para onde quer girar</td>
+<td>Auto → I0.3 / I0.5 / I0.7; Man → I0.2 / I0.4 / I0.6</td>
+</tr>
+<tr>
+<td>Botão verde <strong>Liga local</strong> (NA)</td>
+<td>Clique e segure; ao soltar, desliga</td>
+<td>1 enquanto pressionado</td>
+</tr>
+<tr>
+<td>Botão vermelho <strong>Desliga local</strong> (NF)</td>
+<td>Clique e segure; ao soltar, volta</td>
+<td>1 solto, 0 pressionado</td>
+</tr>
+<tr>
+<td>Sinaleiros</td>
+<td>Só mostram</td>
+<td>Acendem conforme as saídas Q0.3 a Q1.2</td>
+</tr>
+</tbody>
+</table></div>
+<p>Cor dos sinaleiros, conforme a SP02: <strong>verde</strong> para selecionada e desligada; <strong>vermelho</strong> para em operação.</p>
+<p>Um clique rápido no botão vira um pulso de pelo menos 300 ms, para o CLP não perder. Os botões também funcionam pelo teclado: Tab até o botão e segure Espaço.</p>
+<p><strong>9.2 — Quadro elétrico</strong></p>
+<p>Clique no disjuntor para ligar ou desligar. Alavanca vermelha em cima e faixa verde = ligado.</p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Disjuntor</th>
+<th>Alimenta</th>
+<th>Se desligar</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DG</td>
+<td>Tudo</td>
+<td>Para tudo: sem 24 Vcc, softs apagadas, motores param</td>
+</tr>
+<tr>
+<td>D1</td>
+<td>Fonte 24 Vcc</td>
+<td>Sem 24 Vcc no campo: todas as coils vão a 0 e as saídas do CLP não acionam nada</td>
+</tr>
+<tr>
+<td>D4</td>
+<td>Saída 24 Vcc (LL+)</td>
+<td>Mesmo efeito do D1</td>
+</tr>
+<tr>
+<td>D2</td>
+<td>Controle da SS_01 (A1-A2)</td>
+<td>SS_01 apaga e um erro ativo é resetado</td>
+</tr>
+<tr>
+<td>D3</td>
+<td>Controle da SS_02</td>
+<td>Display da SS_02 apaga</td>
+</tr>
+<tr>
+<td>DB1</td>
+<td>Potência da Bomba 01</td>
+<td>Com comando de partida, a SS_01 acusa falta de fase (LED <strong>PHASE LOSS</strong>)</td>
+</tr>
+<tr>
+<td>DB2</td>
+<td>Potência da Bomba 02</td>
+<td>Com comando de partida, a SS_02 acusa falta de fase (LED <strong>PHASE LOSS</strong>)</td>
+</tr>
+<tr>
+<td>DBJ</td>
+<td>Motor da jockey</td>
+<td>A contatora fecha, mas o motor não gira</td>
+</tr>
+</tbody>
+</table></div>
+<p>Ao lado, os indicadores mostram o 24 Vcc no campo e se K-B1, K-B2 e K-BJ estão fechadas. A caixa <strong>Motor da jockey ligado ao painel</strong> representa a ligação que, na SP02, ainda precisa ser feita. Desmarcada, a jockey nunca gira.</p>
+<p><strong>9.3 — Casa de bombas</strong></p>
+<ul>
+<li><strong>Vista 3D</strong> (padrão): reservatório, as três bombas com motores WEG, válvulas, barrilete, manômetro, pressostatos, painel e hidrante. Arraste para girar, use a rodinha para zoom e os botões <strong>Visão geral</strong>, <strong>Bombas</strong>, <strong>Hidrante</strong> e <strong>Painel</strong> para ir direto a cada ponto. Os eixos giram com a rotação real, as setas brancas mostram o sentido do fluxo, os sinaleiros do painel acendem e o hidrante jorra. <strong>Clique no hidrante</strong> para abrir ou fechar. O botão <strong>Painel</strong> leva até o painel de operação em 3D, igual ao 2D: os sinaleiros acendem, as chaves giram com um clique no lado do knob e as botoeiras funcionam enquanto você segura. Tudo o que muda num painel muda no outro. <strong>Rótulos</strong> liga e desliga as etiquetas.</li>
+<li><strong>P&amp;ID</strong>: o desenho 2D. Use se o PC não tiver aceleração 3D (o simulador troca sozinho).</li>
+<li><strong>Manômetro</strong>: escala externa em bar, interna em vermelho em kgf/cm². A faixa azul é a zona da jockey (PJ); a vermelha, abaixo do PB.</li>
+<li><strong>Gráfico</strong>: últimos 2 minutos. Linha preta = pressão. Barrinhas embaixo: azul = jockey, vermelha = Bomba 01, laranja = Bomba 02.</li>
+<li><strong>Vazamento da rede</strong>: perda pequena e contínua. Em 0,05 (padrão), a pressão cai de 10 para 6 bar em cerca de meio minuto, e a jockey dá conta.</li>
+<li><strong>Abertura do hidrante</strong>: grande consumo. Em 100 %, só a jockey não segura e a pressão cai abaixo do PB.</li>
+<li><strong>Abrir hidrante (incêndio)</strong> e <strong>Fechar hidrante</strong>: atalhos para 100 % e 0 %.</li>
+<li><strong>Pressurizar rede (9,8 bar)</strong> e <strong>Despressurizar</strong>: colocam a pressão direto em um valor, para começar um teste rápido.</li>
+</ul>
+<p>As bombas giram e mostram a rotação em %. As principais partem e param seguindo a rampa da soft; a jockey parte direto.</p>
+<h2 id="passo-10-roteiro-de-teste-completo-da-sp02">Passo 10 — Roteiro de teste completo da SP02</h2>
+<p>Com o simulador conectado ao CLP, as duas softs ajustadas (aceleração 5 s e desaceleração 10 s nos trimpots) e todos os disjuntores ligados, siga a ordem abaixo. Se cada linha der o resultado esperado, o programa atende ao Corpo de Bombeiros conforme descrito na SP02.</p>
+<p><strong>10.1 — Preparação</strong></p>
+<ol>
+<li>Clique em <strong>Pressurizar rede (9,8 bar)</strong>.</li>
+<li>Vazamento em <strong>0,05</strong> e hidrante em <strong>0 %</strong>.</li>
+<li>Todas as chaves em <strong>0</strong>.</li>
+</ol>
+<p><strong>10.2 — Testes</strong></p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Ação</th>
+<th>Resultado esperado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Chaves em 0</td>
+<td>LB1_D, LB2_D e LBJ_D acesos (verdes); nenhuma bomba gira</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Seleção em <strong>B01</strong></td>
+<td>LB1_S acende; LB2_S apagado</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Bomba 01 em <strong>Man</strong>, clique <strong>Liga local</strong></td>
+<td>K-B1 fecha; SS_01 sobe a tensão em 5 s; LB1_L acende e LB1_D apaga</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Clique <strong>Desliga local</strong> da Bomba 01</td>
+<td>K-B1 abre; SS_01 desce em 10 s até parar; LB1_D acende</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Repita 3 e 4 na Bomba 02</td>
+<td>Mesmo comportamento pela SS_02</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Jockey em <strong>Man</strong>, Liga e depois Desliga</td>
+<td>Jockey parte direto (sem rampa) e para; LBJ_L / LBJ_D alternam</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Jockey em <strong>Auto</strong>, Bomba 01 em <strong>Auto</strong>, Bomba 02 em <strong>Auto</strong>, seleção em <strong>B01</strong></td>
+<td>Nada parte enquanto a pressão estiver acima de 6 kgf/cm²</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Aguarde o vazamento levar a pressão abaixo de 6 kgf/cm² (5,9 bar)</td>
+<td>PJ fecha (I1.6 = 1); jockey parte</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Aguarde a pressão chegar a 10 kgf/cm² (9,8 bar)</td>
+<td>PJ abre; jockey para</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Clique <strong>Abrir hidrante (incêndio)</strong></td>
+<td>Pressão cai; jockey liga, mas não segura</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Pressão chega a 4 kgf/cm² (3,9 bar)</td>
+<td>PB fecha (I1.7 = 1); <strong>Bomba 01 parte em rampa de 5 s</strong>; <strong>jockey desliga</strong></td>
+</tr>
+<tr>
+<td>12</td>
+<td>Clique <strong>Fechar hidrante</strong></td>
+<td>Pressão sobe acima de 10 kgf/cm²; <strong>Bomba 01 continua ligada</strong></td>
+</tr>
+<tr>
+<td>13</td>
+<td>Clique <strong>Desliga local</strong> da Bomba 01</td>
+<td>Só agora a Bomba 01 para, em rampa de 10 s</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Seleção em <strong>B02</strong> e repita 10 a 13</td>
+<td>Quem parte é a Bomba 02</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>10.3 — Onde olhar se algo não bater</strong></p>
+<ul>
+<li><strong>Endereçamento Modbus</strong>: confirma se o simulador está mandando a entrada certa e recebendo a saída certa.</li>
+<li><strong>Display e painel lateral da soft</strong>: confirma se a DI1 fechou e se a rampa está correndo.</li>
+<li><strong>Gráfico de tendência</strong>: mostra em que pressão cada bomba ligou e desligou.</li>
+</ul>
+<h2 id="passo-11-simulação-de-falhas-ssw-05-pressostatos-e-jockey">Passo 11 — Simulação de falhas: SSW-05, pressostatos e jockey</h2>
+<p>Este passo é o roteiro para provocar e diagnosticar falhas. Cada falha tem: <strong>como provocar</strong>, <strong>o que observar</strong> e <strong>como corrigir</strong>. Prepare a falha antes da aula, sem o aluno ver, e peça o diagnóstico.</p>
+<p><strong>11.1 — Antes de começar</strong></p>
+<ol>
+<li>Simulador conectado ao CLP (ou ao CLP virtual, Passo 6) e todos os disjuntores ligados.</li>
+<li>SSW-05 com o ajuste de referência da SP02 (11.2) e pressostatos no padrão (PJ 9,8 / 3,9; PB 9,8 / 5,9; contato "fecha em baixa pressão").</li>
+<li>Saiba onde olhar:</li>
+</ol>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Onde</th>
+<th>O que mostra</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LEDs da SSW-05</td>
+<td>Qual proteção atuou (PHASE LOSS, PHASE SEQ, STALL, OVERLOAD, OVERCURRENT)</td>
+</tr>
+<tr>
+<td>Painel ao lado da soft</td>
+<td><strong>Falha</strong> com código e nome, corrente real, imagem térmica, rotação</td>
+</tr>
+<tr>
+<td>Gráfico de pressão</td>
+<td>Quando cada bomba ligou e o que a pressão fez</td>
+</tr>
+<tr>
+<td>Vista 3D</td>
+<td>Bomba girando, girando ao contrário ou parada</td>
+</tr>
+<tr>
+<td>Diagrama, botão "Siga o sinal"</td>
+<td>O primeiro elo que falhou na cadeia de cada componente</td>
+</tr>
+<tr>
+<td>Diagnóstico (painel de conexão)</td>
+<td>Mensagens do processo, como disjuntor desarmado</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>11.2 — Ajuste de referência da SSW-05</strong></p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Ajuste</th>
+<th>Valor</th>
+<th>Como chegar</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MOTOR CURRENT</td>
+<td><strong>90 %</strong></td>
+<td>Corrente de placa ÷ corrente da chave: 14,4 A ÷ 16 A. Na bancada real, use a placa do seu motor</td>
+</tr>
+<tr>
+<td>ACCEL TIME</td>
+<td><strong>5 s</strong></td>
+<td>Exigência da SP02</td>
+</tr>
+<tr>
+<td>DECEL TIME</td>
+<td><strong>10 s</strong></td>
+<td>Exigência da SP02</td>
+</tr>
+<tr>
+<td>PEDESTAL VOLTAGE</td>
+<td><strong>30–40 %</strong></td>
+<td>Partida sem tranco</td>
+</tr>
+<tr>
+<td>Chaves 1 a 5</td>
+<td><strong>ON</strong></td>
+<td>Todas as proteções ligadas</td>
+</tr>
+<tr>
+<td>Chave 6</td>
+<td><strong>MAN</strong></td>
+<td>Reset manual</td>
+</tr>
+</tbody>
+</table></div>
+<p>Para dar partida nos testes, use a Bomba 01 em <strong>Man</strong> e o botão <strong>Liga local</strong>. Para parar, <strong>Desliga local</strong>.</p>
+<p><strong>11.3 — Falhas na SSW-05</strong></p>
+<p><strong>Falta de fase (PHASE LOSS · E03)</strong></p>
+<ol>
+<li>Com a bomba parada, desligue o <strong>DB1</strong> no quadro elétrico.</li>
+<li>Dê partida na Bomba 01.</li>
+<li>Observe: K-B1 fecha e a DI1 da soft acende, mas o LED <strong>PHASE LOSS</strong> acende e o motor não gira. Variação: desligue o DB1 com a bomba rodando; ela desarma na hora.</li>
+<li>Corrija: ligue o DB1 e aperte <strong>RESET</strong> na soft.</li>
+</ol>
+<p><strong>Sequência de fases invertida (PHASE SEQ · E67)</strong></p>
+<ol>
+<li>Na soft, abra <strong>Defeitos para treino</strong> e marque <em>Sequência de fases da rede invertida</em>.</li>
+<li>Dê partida.</li>
+<li>Observe: LED <strong>PHASE SEQ</strong>; a soft não parte. Esta falha não tem reset automático, mesmo com a chave 6 em AUTO.</li>
+<li>Corrija: desmarque o defeito (na bancada real, inverta duas fases na <strong>entrada</strong> R/S/T) e aperte <strong>RESET</strong>.</li>
+</ol>
+<p><strong>Sequência invertida sem a proteção</strong></p>
+<ol>
+<li>Mesmo defeito do item anterior, mas com a <strong>chave 3 (PHASE SEQ) em OFF</strong>.</li>
+<li>Dê partida.</li>
+<li>Observe: a soft não acusa nada, mas na vista 3D a bomba gira ao contrário e, no gráfico, a pressão quase não sobe. É o perigo de desligar uma proteção.</li>
+<li>Corrija: chave 3 em ON e desmarque o defeito.</li>
+</ol>
+<p><strong>Sobrecarga do motor (OVERLOAD · E05)</strong></p>
+<ol>
+<li>Dê partida com o ajuste de referência e espere o LED <strong>RUN</strong> acender (tensão plena).</li>
+<li>Com a bomba rodando, gire <strong>MOTOR CURRENT</strong> para <strong>30 %</strong> (4,8 A, bem abaixo dos ~13,7 A reais).</li>
+<li>Observe: a <strong>imagem térmica</strong> sobe no painel lateral e, em cerca de 1 minuto, acende o LED <strong>OVERLOAD</strong> e a bomba para.</li>
+<li>Corrija: volte para 90 % e espere a imagem térmica cair abaixo de 100 % (cerca de 2 minutos). Só então o <strong>RESET</strong> funciona; antes disso o motor ainda está "quente".</li>
+</ol>
+<p>Atenção: se você colocar 30 % <strong>antes</strong> da partida, a soft desarma por <strong>STALL</strong> no fim da rampa, porque a corrente da partida passa de 2 vezes a ajustada. Também é uma falha válida para treinar ("corrente mal ajustada impede a partida").</p>
+<p><strong>Rotor bloqueado (STALL · E63)</strong></p>
+<ol>
+<li>Em <strong>Defeitos para treino</strong>, marque <em>Eixo do motor travado</em>.</li>
+<li>Dê partida.</li>
+<li>Observe: a rampa sobe, o motor não gira (3D parado, corrente alta) e, no fim da rampa, acende o LED <strong>STALL</strong>.</li>
+<li>Corrija: desmarque o defeito e aperte <strong>RESET</strong>.</li>
+</ol>
+<p>Outra forma: <strong>ACCEL TIME</strong> em 1 s com o eixo livre. O motor não chega à rotação a tempo e a soft desarma em STALL. Corrija voltando a rampa para 5 s.</p>
+<p><strong>Sobrecorrente (OVERCURRENT · E66)</strong></p>
+<ol>
+<li>Dê partida e espere o LED <strong>RUN</strong> acender.</li>
+<li>Com a bomba rodando, marque <em>Eixo do motor travado</em>.</li>
+<li>Observe: a corrente dispara e, em cerca de 1 segundo, acende o LED <strong>OVERCURRENT</strong>.</li>
+<li>Corrija: desmarque o defeito e aperte <strong>RESET</strong>.</li>
+</ol>
+<p><strong>Ajustes errados (sem LED de falha)</strong></p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Ajuste errado</th>
+<th>O que acontece</th>
+<th>Correção</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DECEL TIME em OFF</td>
+<td>A bomba para na hora, por inércia (golpe de aríete na tubulação real)</td>
+<td>10 s</td>
+</tr>
+<tr>
+<td>ACCEL TIME em 20 s</td>
+<td>Partida lenta demais para um sistema de incêndio</td>
+<td>5 s</td>
+</tr>
+<tr>
+<td>PEDESTAL VOLTAGE em 80 %</td>
+<td>Corrente alta logo no começo da partida (tranco)</td>
+<td>30–40 %</td>
+</tr>
+<tr>
+<td>D2 desligado</td>
+<td>Soft apagada (A1 sem tensão); a bomba não parte, nenhum LED acende</td>
+<td>Ligue o D2</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>11.4 — Falhas nos pressostatos</strong></p>
+<p>Baixar a pressão <strong>não é falha</strong>: é o funcionamento normal (o contato fecha em pressão baixa e pede a bomba). As falhas abaixo são de <strong>ajuste</strong>, de <strong>ligação</strong> e de <strong>contato</strong>.</p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Falha</th>
+<th>Como provocar</th>
+<th>O que observar</th>
+<th>Como corrigir</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PJ liga e desliga sem parar</td>
+<td>PJ com <strong>Diferencial 1,8 bar</strong></td>
+<td>A jockey liga em ~8 bar e desliga em 9,8 bar, várias vezes por minuto (veja a faixa da jockey no gráfico)</td>
+<td>Diferencial 3,9 bar</td>
+</tr>
+<tr>
+<td>Principal parte antes da jockey</td>
+<td>PB com <strong>Diferencial 1,8 bar</strong> (fecha em ~8 bar)</td>
+<td>Com vazamento, a principal parte antes da jockey ter chance</td>
+<td>Diferencial 5,9 bar</td>
+</tr>
+<tr>
+<td>Bomba que não desliga</td>
+<td><strong>Faixa</strong> do PJ bem acima de 10 bar</td>
+<td>O contato só abre numa pressão que a jockey pode não alcançar: ela fica ligada direto</td>
+<td>Faixa 9,8 bar</td>
+</tr>
+<tr>
+<td>Contato errado no PJ</td>
+<td>PJ em <strong>fecha em alta pressão</strong></td>
+<td>A jockey liga com a rede cheia e desliga quando a pressão cai</td>
+<td><strong>Fecha em baixa pressão</strong></td>
+</tr>
+<tr>
+<td>Contato errado no PB</td>
+<td>PB em <strong>fecha em alta pressão</strong></td>
+<td>A principal parte com a rede pressurizada</td>
+<td><strong>Fecha em baixa pressão</strong></td>
+</tr>
+<tr>
+<td>Contato forçado</td>
+<td>Segure a <strong>alavanca de teste</strong> do PJ (ou do PB)</td>
+<td>Com a rede cheia, a bomba parte enquanto a alavanca estiver segurada</td>
+<td>Solte a alavanca</td>
+</tr>
+<tr>
+<td>Sem sinal dos pressostatos</td>
+<td>Desligue o <strong>D4</strong></td>
+<td>Nenhuma entrada chega ao CLP; nada parte em automático</td>
+<td>Ligue o D4</td>
+</tr>
+</tbody>
+</table></div>
+<p>Para todos: a caixa branca do pressostato mostra em que pressão o contato abre e fecha. Compare com a especificação (PJ: fecha em 6 e abre em 10 kgf/cm²; PB: fecha em 4).</p>
+<p><strong>11.5 — Falhas na jockey (diagrama, folha 1)</strong></p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Falha</th>
+<th>Como provocar</th>
+<th>O que observar</th>
+<th>Como corrigir</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Motor não ligado</td>
+<td>Solte os 3 cabos do motor</td>
+<td>K-BJ fecha e LBJ_L acende, mas a jockey não gira e a pressão cai</td>
+<td>Ligue os cabos (exercício da folha 1)</td>
+</tr>
+<tr>
+<td>Falta de fase</td>
+<td>Ligue só 2 cabos</td>
+<td>O motor não parte e, em cerca de 4 s, o <strong>DBJ</strong> desarma</td>
+<td>Ligue as 3 fases e rearme o DBJ</td>
+</tr>
+<tr>
+<td>Giro invertido</td>
+<td>Botão <strong>Trocar 2 fases</strong></td>
+<td>Gira ao contrário (3D), a pressão quase não sobe e a principal acaba partindo</td>
+<td><strong>Ligar corretamente</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>11.6 — Comunicação e alimentação</strong></p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Falha</th>
+<th>Como provocar</th>
+<th>O que observar</th>
+<th>Como corrigir</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sem 24 Vcc no campo</td>
+<td>Desligue o <strong>D4</strong></td>
+<td>Entradas do CLP em 0; os botões NF parecem apertados; nada aciona</td>
+<td>Ligue o D4</td>
+</tr>
+<tr>
+<td>Endereço errado</td>
+<td><strong>1ª coil</strong> = 100</td>
+<td>Diagnóstico: <strong>Exceção Modbus 2</strong> (endereço ilegal)</td>
+<td>1ª coil = 0</td>
+</tr>
+<tr>
+<td>CLP desligado</td>
+<td>CLP em STOP ou cabo de rede fora</td>
+<td>3 timeouts, conexão encerrada, nova tentativa a cada 3 s; as contatoras abrem</td>
+<td>CLP em RUN</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>11.7 — Roteiro de aula sugerido</strong></p>
+<ol>
+<li><strong>Aquecimento:</strong> falta de fase com o DB1 (sintoma claro, correção simples).</li>
+<li><strong>Proteção x ajuste:</strong> sobrecarga reduzindo o MOTOR CURRENT com a bomba rodando. Pergunta: por que o RESET não funciona logo?</li>
+<li><strong>Proteção desligada:</strong> sequência invertida com a chave 3 em OFF. Pergunta: o que o 3D e o gráfico mostram que a soft não mostrou?</li>
+<li><strong>Mecânica:</strong> eixo travado na partida (STALL) e com a bomba rodando (OVERCURRENT). Pergunta: por que os LEDs são diferentes?</li>
+<li><strong>Pressostatos:</strong> PJ com diferencial 1,8 bar. Pergunta: qual o risco para o motor de tantas partidas por hora?</li>
+<li><strong>Desafio final:</strong> combine duas falhas (por exemplo, PB com contato errado e ACCEL TIME em 1 s) e peça o diagnóstico completo.</li>
+</ol>
+<p>Na SSW-05 não há reset de fábrica: o ajuste é a posição física dos trimpots e chaves DIP. Ao terminar a aula, volte ao ajuste de referência (11.2).</p>
+<h2 id="passo-12-várias-bancadas-e-acesso-por-outros-pcs">Passo 12 — Várias bancadas e acesso por outros PCs</h2>
+<p>Um único simulador aberto atende várias bancadas ao mesmo tempo. Cada sessão tem seu próprio CLP, fila, processo, soft-starters, pressostatos e endereçamento, sem interferir nas outras.</p>
+<p><strong>Cada PC ganha a sua sessão automaticamente.</strong> Quando outro computador abre o endereço do simulador, o servidor cria (na primeira vez) uma sessão só dele, com o nome <strong>PC 192.168.x.x</strong>, e abre direto nela. Nas próximas vezes, o mesmo PC volta para a mesma sessão, com tudo o que configurou. O PC onde o simulador está rodando usa a primeira sessão. A aba do próprio computador aparece marcada com <strong>este PC</strong>.</p>
+<p>As outras abas continuam visíveis: o professor pode clicar na sessão de qualquer aluno para acompanhar. Mexer na aba de outro PC mexe no processo daquele aluno.</p>
+<p><strong>12.1 — Criar uma sessão por bancada</strong></p>
+<ol>
+<li>No topo, clique em <strong>+ Nova sessão</strong>.</li>
+<li>Digite o nome (ex.: <code>Bancada 02</code>) e clique OK. A aba nova abre.</li>
+<li>Configure IP e porta do CLP dessa bancada e clique em <strong>Conectar</strong>.</li>
+<li>Para renomear uma aba: dois cliques no nome.</li>
+<li>Para excluir: clique no <strong>×</strong> da aba e confirme. A conexão dela é encerrada. Sempre fica pelo menos uma sessão.</li>
+</ol>
+<p>A bolinha da aba mostra o estado: verde = conectada, laranja = tentando reconectar, cinza = desconectada.</p>
+<p><strong>12.2 — Abrir de outro PC (aluno na própria bancada)</strong></p>
+<ol>
+<li>No PC onde o <code>.exe</code> está aberto, veja na janela preta a linha <strong>Em outros PCs: http://192.168.x.x:3000</strong>.</li>
+<li>Na primeira vez, o Windows deve ter mostrado o aviso do firewall. Se você cancelou, veja Solução de problemas.</li>
+<li>No PC do aluno, abra o Chrome ou o Edge e digite esse endereço.</li>
+<li>A sessão dele abre sozinha (aba <strong>este PC</strong>). Configure o IP do CLP da bancada e conecte.</li>
+<li>Se dois alunos dividirem o mesmo PC, crie outra sessão com <strong>+ Nova sessão</strong> e salve o endereço com <code>#s…</code> nos favoritos.</li>
+</ol>
+<p>Vários navegadores podem abrir a mesma sessão: todos veem e mexem no mesmo processo (útil para o professor acompanhar). O guia também abre no PC do aluno pelo botão <strong>Guia passo a passo</strong>.</p>
+<p><strong>12.3 — Onde o CLP de cada bancada é acessado</strong></p>
+<p>Quem conversa com os CLPs é o PC onde o <code>.exe</code> está aberto, não o PC do aluno. Esse PC precisa alcançar o IP de todos os CLPs (mesma rede ou rotas configuradas).</p>
+<h2 id="passo-13-diagrama-elétrico-interativo">Passo 13 — Diagrama elétrico interativo</h2>
+<p>O botão <strong>Diagrama elétrico</strong>, no topo do simulador, abre em nova guia o diagrama da SP02 adaptado ao XP325, ligado ao vivo na mesma sessão. Tudo o que muda no simulador muda no diagrama, e o contrário também.</p>
+<p><strong>13.1 — As folhas</strong></p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Folha</th>
+<th>Mostra</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1 · Potência</td>
+<td>DG, disjuntores das bombas, soft-starters com estado ao vivo, K-BJ, motores, fonte 24 Vcc, D1, D4, D2 e D3</td>
+</tr>
+<tr>
+<td>2 · Entradas XP325</td>
+<td>L+, chaves, botoeiras e pressostatos até os bornes I00 a I17; comuns C0 e C1 no 0 V (ligação sink)</td>
+</tr>
+<tr>
+<td>3 · Saídas XP325</td>
+<td>Q+ e Q−, saídas Q00 a Q12 até as bobinas K-B1, K-B2, K-BJ e RAX1 a RAX8</td>
+</tr>
+<tr>
+<td>4 · Sinalização e softs</td>
+<td>Contatos dos RAX acendendo os sinaleiros; contato 13-14 da K-B1/K-B2 levando a fase do A1 até a DI1 de cada soft</td>
+</tr>
+<tr>
+<td>5 · Lista de I/O</td>
+<td>Bornes do XP325, endereço SP02, endereço Modbus e estado de cada ponto</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>13.2 — Cores dos fios</strong></p>
+<p>Vermelho = fase energizada, laranja = +24 Vcc, azul = 0 V ou neutro, âmbar = sinal em 1, cinza = sem tensão, verde tracejado = terra. Passe o mouse num fio para ver o nome do potencial; todos os trechos do mesmo potencial se destacam.</p>
+<p><strong>13.3 — Operar pelo diagrama</strong></p>
+<ul>
+<li>Disjuntores e chaves seletoras: um clique.</li>
+<li>Botoeiras e pressostatos: clique e segure (no pressostato, é a alavanca de teste).</li>
+<li>Links azuis sublinhados (ex.: <em>→ DI1 SS_01</em>) levam à folha onde o mesmo componente continua.</li>
+</ul>
+<p><strong>13.4 — Siga o sinal</strong></p>
+<p>Clique em qualquer componente. O painel da direita mostra o que ele faz, os endereços (borne do XP325, SP02 e Modbus) e a cadeia completa do sinal, com ✓ ou ✗ em cada elo. Exemplo para a K-B1: simulador conectado → programa liga Q00 → 24 Vcc no Q+ → bobina energizada → contato 13-14 leva a fase do A1 até a DI1 → soft alimentada → potência presente → sem erro → rampa → bomba girando. O aviso amarelo mostra o primeiro elo que falhou: é ali que o aluno deve procurar o defeito.</p>
+<p><strong>13.5 — Exercício: ligar o motor da jockey</strong></p>
+<p>A SP02 diz que o motor da jockey ainda não foi ligado ao painel. Na folha 1:</p>
+<ol>
+<li>Clique no borne <strong>2/T1</strong> da K-BJ e depois no borne <strong>U1</strong> do motor. Aparece o cabo.</li>
+<li>Faça o mesmo com <strong>4/T2 → V1</strong> e <strong>6/T3 → W1</strong>.</li>
+<li>Para soltar um cabo, clique no borne do motor já ligado.</li>
+<li>Clique no motor <strong>MJ</strong> para ver as fases ligadas, o sentido de giro e a cadeia do sinal.</li>
+</ol>
+<p>O que acontece com cada ligação:</p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Ligação</th>
+<th>Resultado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>3 fases na sequência certa</td>
+<td>A jockey gira e pressuriza normalmente</td>
+</tr>
+<tr>
+<td>3 fases com 2 trocadas</td>
+<td>Gira ao contrário (↺): a pressão quase não sobe e a principal acaba partindo</td>
+</tr>
+<tr>
+<td>Só 2 fases</td>
+<td>Falta de fase: o motor não parte e o DBJ desarma em cerca de 4 s</td>
+</tr>
+<tr>
+<td>Nenhuma</td>
+<td>A K-BJ fecha, mas nada gira</td>
+</tr>
+</tbody>
+</table></div>
+<p>Os botões <strong>Ligar corretamente</strong>, <strong>Trocar 2 fases</strong> e <strong>Soltar todos os cabos</strong>, no painel do motor, preparam o exercício rápido. A caixa <strong>Motor da jockey ligado ao painel</strong>, no quadro elétrico do simulador, faz o mesmo que ligar ou soltar os três cabos.</p>
+<h2 id="solução-de-problemas">Solução de problemas</h2>
+<p>Comece pela caixa <strong>Diagnóstico</strong>: a última mensagem quase sempre diz o que aconteceu.</p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Mensagem ou sintoma</th>
+<th>Causa provável</th>
+<th>O que fazer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ECONNREFUSED</code></td>
+<td>O IP respondeu, mas não há servidor Modbus na porta</td>
+<td>CLP em RUN? Servidor Modbus no programa? Porta certa? No CODESYS, "Bind to Adapter" desmarcado se usar 127.0.0.1</td>
+</tr>
+<tr>
+<td><code>Sem resposta de IP:502 em 3000 ms</code> ou <code>ETIMEDOUT</code></td>
+<td>O PC não alcança o CLP</td>
+<td>Faça o <code>ping</code> do Passo 5.2. Confira cabo, IP e máscara do PC</td>
+</tr>
+<tr>
+<td><code>EHOSTUNREACH</code> / <code>ENETUNREACH</code></td>
+<td>IP em outra faixa de rede</td>
+<td>Coloque o PC na mesma faixa do CLP</td>
+</tr>
+<tr>
+<td><code>3 timeouts seguidos — CLP não está respondendo</code></td>
+<td>Conectou, mas o CLP não responde às mensagens</td>
+<td>Unit ID (teste 1, 255, 0); CLP em STOP; aumente o Timeout</td>
+</tr>
+<tr>
+<td><code>Exceção Modbus 1 (função ilegal)</code></td>
+<td>O CLP não aceita FC15</td>
+<td><strong>Escrita das coils</strong> = FC05</td>
+</tr>
+<tr>
+<td><code>Exceção Modbus 2 (endereço de dado ilegal)</code></td>
+<td>Endereço fora da área do CLP</td>
+<td>Ajuste <strong>1ª coil</strong> / <strong>1ª entrada</strong>, ou aumente a área no CLP (16 coils, 16 discrete inputs)</td>
+</tr>
+<tr>
+<td>S7-1200 com STATUS 16#8383</td>
+<td>Pedido fora do Data_Area_Array</td>
+<td>Confira start e length no Passo 4B.4</td>
+</tr>
+<tr>
+<td>Simulador manda, CLP não vê (ou o contrário)</td>
+<td>Só uma das áreas mapeada</td>
+<td>Confira na tabela de Endereçamento Modbus qual lado muda; refaça o mapeamento dessa área</td>
+</tr>
+<tr>
+<td><code>Verificação FC01: CLP diferente do simulador</code></td>
+<td>O programa do CLP escreve nas mesmas variáveis das coils</td>
+<td>Não escreva no programa as variáveis ligadas às coils</td>
+</tr>
+<tr>
+<td>A soft não parte com K-B1 fechada</td>
+<td>D2/DB1/DG desligados ou erro ativo (LED piscando)</td>
+<td>Veja os LEDs e o painel lateral da soft; Passo 7</td>
+</tr>
+<tr>
+<td>Outro PC não abre o simulador</td>
+<td>Firewall bloqueou a porta 3000</td>
+<td>Painel de Controle → Firewall do Windows → Permitir um aplicativo → marque o SimuladorSistemaIncendio em Privada. Ou peça à TI</td>
+</tr>
+<tr>
+<td>"A porta 3000 já está em uso"</td>
+<td>O simulador já está aberto</td>
+<td>O navegador abre no que já está rodando; feche a janela preta duplicada</td>
+</tr>
+<tr>
+<td>A porta 502 do CLP virtual já está em uso</td>
+<td>CODESYS Control Win ou outro simulador na 502</td>
+<td>Use a porta 5020 no CLP virtual</td>
+</tr>
+<tr>
+<td>Antivírus apagou ou bloqueou o <code>.exe</code></td>
+<td>Falso positivo comum em executáveis feitos com Node.js</td>
+<td>Libere o arquivo no antivírus ou peça à TI</td>
+</tr>
+<tr>
+<td>A tela parou de atualizar</td>
+<td>A janela preta foi fechada</td>
+<td>Abra o simulador de novo; tudo o que foi salvo volta</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Onde ficam os dados salvos:</strong> <code>%LOCALAPPDATA%\SimuladorSP02\sessions.json</code>. Para recomeçar do zero, feche o simulador e apague essa pasta (cole o caminho na barra de endereço do Explorer).</p>
+      <p class="g-end"><a href="#top" onclick="window.scrollTo(0,0);return false">Voltar ao início</a></p>
+    </main>
+  </div>
+  <script>
+  // Destaca no sumário a seção que está na tela
+  (function () {
+    var links = Array.prototype.slice.call(document.querySelectorAll('.g-toc a'));
+    var map = {};
+    links.forEach(function (a) { map[a.getAttribute('href').slice(1)] = a; });
+    if (!('IntersectionObserver' in window)) return;
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting && map[e.target.id]) {
+          links.forEach(function (l) { l.removeAttribute('aria-current'); });
+          map[e.target.id].setAttribute('aria-current', 'true');
+        }
+      });
+    }, { rootMargin: '0px 0px -70% 0px' });
+    document.querySelectorAll('.g-body h2[id]').forEach(function (h) { io.observe(h); });
+  })();
+  </script>
+  </body>
+  </html>
+  

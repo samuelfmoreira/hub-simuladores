@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256"><defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a535a"/><stop offset="1" stop-color="#2a3035"/></linearGradient>
+    <linearGradient id="fl" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#b8160f"/><stop offset=".55" stop-color="#ef3a1d"/><stop offset="1" stop-color="#ffb02e"/></linearGradient>
+    <linearGradient id="fi" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ffd23f"/><stop offset="1" stop-color="#fff3c4"/></linearGradient>
+    <clipPath id="c"><rect x="8" y="8" width="240" height="240" rx="46"/></clipPath>
+  </defs>
+  <g clip-path="url(#c)">
+    <rect x="0" y="0" width="256" height="256" fill="url(#bg)"/>
+    <rect x="0" y="202" width="256" height="54" fill="#a51e22"/>
+  </g>
+  <g transform="translate(128 106) scale(0.86)">
+    <g fill="#d6d8d2">
+      <circle r="78"/>
+      <g id="t"><rect x="-15" y="-100" width="30" height="34" rx="5"/></g>
+      <use href="#t" transform="rotate(45)"/><use href="#t" transform="rotate(90)"/><use href="#t" transform="rotate(135)"/>
+      <use href="#t" transform="rotate(180)"/><use href="#t" transform="rotate(225)"/><use href="#t" transform="rotate(270)"/><use href="#t" transform="rotate(315)"/>
+    </g>
+    <circle r="60" fill="#2f363b"/>
+    <path d="M2 -52 C 20 -28, 42 -16, 40 14 C 38 40, 20 54, 0 54 C -22 54, -40 38, -40 14 C -40 -6, -28 -18, -20 -30 C -16 -14, -10 -8, -2 -6 C -10 -24, -8 -38, 2 -52 Z" fill="url(#fl)"/>
+    <path d="M2 -6 C 12 6, 22 14, 20 30 C 18 44, 10 50, 0 50 C -12 50, -20 42, -20 30 C -20 18, -12 12, -6 4 C -4 12, 0 14, 4 14 C 0 6, -2 2, 2 -6 Z" fill="url(#fi)"/></g>
+  <text x="128" y="238" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="32" fill="#fff" letter-spacing="2">SP02</text>
+</svg>

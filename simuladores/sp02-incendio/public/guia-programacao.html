@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+  <html lang="pt-BR">
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Programar o CLP e configurar o campo — Simulador Sistema de Incêndio</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/guia.css">
+  </head>
+  <body>
+  <header class="g-top">
+    <div class="g-brand">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3c3.5 6 8 8 8 15a8 8 0 0 1-16 0c0-3.5 2-6 3.5-8 1 3.5 2.5 4.5 4.5 4.5-1-4.5-1-8 0-11.5z"/></svg>
+      <div>
+        <h1>Programar o CLP e configurar o campo</h1>
+        <p>Simulador Sistema de Incêndio · Modbus TCP · versão 1.9.2</p>
+      </div>
+    </div>
+    <div class="g-actions">
+      <a href="guia.html">Guia do simulador</a>
+    <button type="button" onclick="window.print()">Imprimir ou salvar PDF</button>
+      <a href="/" class="primary">Abrir o simulador</a>
+    </div>
+  </header>
+  <div class="g-layout">
+    <nav class="g-toc" aria-label="Sumário">
+      <h2>Sumário</h2>
+      <ol>
+  <li><a href="#antes-de-começar">Antes de começar</a></li>
+<li><a href="#parte-1-entender-a-lógica-da-sp02">Parte 1 — Entender a lógica da SP02</a></li>
+<li><a href="#parte-2-criar-o-projeto-no-mastertool-iec-xe">Parte 2 — Criar o projeto no MasterTool IEC XE</a></li>
+<li><a href="#parte-3-declarar-as-variáveis">Parte 3 — Declarar as variáveis</a></li>
+<li><a href="#parte-4-programa-sp02_entradas-escolha-simulador-ou-bornes">Parte 4 — Programa SP02_Entradas (escolha simulador ou bornes)</a></li>
+<li><a href="#parte-5-programa-sp02_logica-em-ladder-rede-por-rede">Parte 5 — Programa SP02_Logica em Ladder, rede por rede</a></li>
+<li><a href="#parte-6-programa-sp02_saidas-o-simulador-lê-as-saídas">Parte 6 — Programa SP02_Saidas (o simulador lê as saídas)</a></li>
+<li><a href="#parte-7-chamar-os-programas-compilar-e-carregar">Parte 7 — Chamar os programas, compilar e carregar</a></li>
+<li><a href="#parte-8-conectar-o-simulador-e-monitorar">Parte 8 — Conectar o simulador e monitorar</a></li>
+<li><a href="#parte-9-configurar-os-pressostatos-kp">Parte 9 — Configurar os pressostatos KP</a></li>
+<li><a href="#parte-10-configurar-a-soft-starter-ssw-05-plus">Parte 10 — Configurar a soft-starter SSW-05 Plus</a></li>
+<li><a href="#parte-11-testar-o-sistema-completo">Parte 11 — Testar o sistema completo</a></li>
+<li><a href="#parte-12-o-programa-inteiro-em-texto-estruturado">Parte 12 — O programa inteiro em texto estruturado</a></li>
+<li><a href="#erros-comuns-na-lógica">Erros comuns na lógica</a></li>
+      </ol>
+    </nav>
+    <main class="g-body">
+  <h2 id="antes-de-começar">Antes de começar</h2>
+<p>Este guia leva da folha em branco até o sistema de incêndio funcionando: programa do Altus XP325 em Ladder, ajuste dos pressostatos KP e ajuste da soft-starter SSW-05 Plus. Cada parte tem a versão para a <strong>bancada real</strong> e a versão no <strong>simulador</strong>.</p>
+<p><strong>O que você vai montar</strong></p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Programa</th>
+<th>Linguagem</th>
+<th>Função</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SP02_Entradas</code></td>
+<td>Texto estruturado (ST)</td>
+<td>Escolhe se as entradas vêm dos bornes I00–I17 ou do simulador</td>
+</tr>
+<tr>
+<td><code>SP02_Logica</code></td>
+<td>Ladder (LD)</td>
+<td>A lógica da SP02: seleção, bombas principais, jockey e sinalização</td>
+</tr>
+<tr>
+<td><code>SP02_Saidas</code></td>
+<td>Texto estruturado (ST)</td>
+<td>Copia as saídas Q00–Q12 para o simulador ler</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>O que você precisa</strong></p>
+<ul>
+<li>MasterTool IEC XE instalado (gratuito no site da Altus) e o XP325 ligado ao PC por cabo de rede.</li>
+<li>O simulador aberto e, de preferência, já testado com o <strong>CLP virtual</strong> (Guia do simulador, Passo 6).</li>
+<li>A tabela de I/O da SP02 (Guia do simulador, Passo 3).</li>
+</ul>
+<p>Antes de programar, leia a Parte 1 com calma: quem entende a sequência, escreve o Ladder sem esforço.</p>
+<h2 id="parte-1-entender-a-lógica-da-sp02">Parte 1 — Entender a lógica da SP02</h2>
+<p>A SP02 pede três comportamentos. Transformar cada frase do enunciado numa condição elétrica é o primeiro passo.</p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>O enunciado diz</th>
+<th>Vira esta condição no programa</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Chave de cada bomba em <strong>Manual</strong>: liga e desliga pelas botoeiras locais</td>
+<td>Liga com o botão NA; desliga com o botão NF; precisa de <strong>selo</strong> (o botão é pulsante)</td>
+</tr>
+<tr>
+<td>Jockey em <strong>Automático</strong>: liga com pressão abaixo de 6 kgf/cm² e desliga com 10 kgf/cm² ou mais</td>
+<td>Jockey = <strong>PJ fechado</strong>. A histerese 6–10 já é feita pelo próprio pressostato</td>
+</tr>
+<tr>
+<td>Pressão continua caindo até 4 kgf/cm²: a <strong>principal selecionada</strong> liga e a jockey desliga</td>
+<td>Principal liga com <strong>PB fechado</strong> e a chave de seleção nela; jockey automática só roda se <strong>nenhuma principal</strong> estiver ligada</td>
+</tr>
+<tr>
+<td>A principal <strong>só desliga manualmente</strong>, pela botoeira desliga</td>
+<td>A principal em automático tem <strong>selo</strong>: não depende mais do PB depois de partir. Só o botão NF (ou a chave em 0) desfaz o selo</td>
+</tr>
+<tr>
+<td>Principais com soft-starter: rampa de 5 s na partida e 10 s na parada</td>
+<td>Isso é ajuste da SSW-05 (Parte 10), não do CLP. O CLP só liga a contatora K-B1/K-B2</td>
+</tr>
+<tr>
+<td>Jockey em partida direta</td>
+<td>O CLP liga a contatora K-BJ</td>
+</tr>
+<tr>
+<td>Sinaleiros: selecionada, em operação e desligada</td>
+<td>Copiam o estado da chave de seleção e das bombas</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>A sequência de um incêndio, na prática</strong></p>
+<ol>
+<li>Rede pressurizada (10 kgf/cm²): tudo parado, sinaleiros "desligada" acesos.</li>
+<li>Pequeno vazamento: pressão cai abaixo de 6 → <strong>PJ fecha</strong> → jockey liga.</li>
+<li>Pressão volta a 10 → <strong>PJ abre</strong> → jockey desliga. Isso se repete.</li>
+<li>Hidrante aberto: a jockey não segura, a pressão cai a 4 → <strong>PB fecha</strong> → a principal selecionada parte (rampa de 5 s) e a <strong>jockey desliga</strong>.</li>
+<li>A principal continua ligada mesmo com a pressão de volta acima de 10.</li>
+<li>Bombeiro aperta <strong>Desliga</strong> no painel → a principal para (rampa de 10 s).</li>
+</ol>
+<p><strong>Duas decisões que você precisa saber explicar</strong></p>
+<ul>
+<li><strong>Botão desliga NF</strong>: no programa ele aparece como contato <strong>NA</strong> (aberto em repouso no desenho Ladder), porque a entrada vale 1 quando o botão está solto. Ao apertar, a entrada vai a 0 e abre o caminho. Fio rompido também desliga: é a ligação segura.</li>
+<li><strong>Se o bombeiro desligar a principal com o PB ainda fechado</strong> (pressão baixa), ela volta a partir na hora. Em sistema de incêndio isso é desejável: ninguém deve conseguir deixar a rede sem pressão por engano. Para parar de vez, gire a chave para 0.</li>
+</ul>
+<h2 id="parte-2-criar-o-projeto-no-mastertool-iec-xe">Parte 2 — Criar o projeto no MasterTool IEC XE</h2>
+<ol>
+<li>Abra o <strong>MasterTool IEC XE</strong>.</li>
+<li><strong>Arquivo → Novo projeto</strong>. Escolha <strong>MasterTool Standard Project</strong>, dê o nome <code>SP02_Incendio</code> e escolha a pasta. Clique em <strong>OK</strong>.</li>
+<li>Na janela do projeto padrão, escolha o modelo <strong>XP325</strong> e avance até concluir. O MasterTool cria a árvore com a CPU, a porta <strong>NET 1</strong>, a <strong>Application</strong>, a <strong>MainTask</strong> e o programa <code>UserPrg</code>.</li>
+<li>Dê dois cliques em <strong>NET 1</strong> e confira o IP do XP325 (Guia do simulador, Passo 4C.1).</li>
+<li><strong>Arquivo → Salvar projeto</strong>. Salve com frequência a partir daqui.</li>
+</ol>
+<p>As entradas e saídas integradas do XP325 já existem no projeto com os nomes dos bornes: <strong>I00 a I17</strong> e <strong>Q00 a Q17</strong>. Não precisa declarar.</p>
+<h2 id="parte-3-declarar-as-variáveis">Parte 3 — Declarar as variáveis</h2>
+<p><strong>3.1 — Lista global de troca com o simulador</strong></p>
+<ol>
+<li>Botão direito em <strong>Application → Acrescentar objeto → Lista de variáveis globais (GVL)</strong>. Nome: <code>GVL_SIM</code>.</li>
+<li>Apague o conteúdo e cole:</li>
+</ol>
+<pre><code>VAR_GLOBAL
+    xSimIn         : ARRAY[0..15] OF BOOL;  // escrito pelo simulador (coils): I00..I17
+    xSimOut        : ARRAY[0..15] OF BOOL;  // lido pelo simulador (input status): Q00..Q12
+    xUsarSimulador : BOOL := TRUE;          // TRUE = simulador; FALSE = bornes reais
+END_VAR
+</code></pre>
+<p><strong>3.2 — Lista global do processo</strong></p>
+<p>Crie outra GVL chamada <code>GVL_SP02</code>. Estas são as variáveis que a lógica usa. Elas não dependem de onde o sinal vem.</p>
+<pre><code>VAR_GLOBAL
+    // Entradas (sempre lidas de SP02_Entradas)
+    xSelB1   : BOOL;  // I00 - chave de seleção em Bomba 01
+    xSelB2   : BOOL;  // I01 - chave de seleção em Bomba 02
+    xB1Man   : BOOL;  // I02 - Bomba 01 em manual
+    xB1Aut   : BOOL;  // I03 - Bomba 01 em automático
+    xB2Man   : BOOL;  // I04 - Bomba 02 em manual
+    xB2Aut   : BOOL;  // I05 - Bomba 02 em automático
+    xBJMan   : BOOL;  // I06 - Jockey em manual
+    xBJAut   : BOOL;  // I07 - Jockey em automático
+    xB1_L    : BOOL;  // I10 - liga Bomba 01 (NA)
+    xB1_D    : BOOL;  // I11 - desliga Bomba 01 (NF: 1 = solto)
+    xB2_L    : BOOL;  // I12 - liga Bomba 02 (NA)
+    xB2_D    : BOOL;  // I13 - desliga Bomba 02 (NF)
+    xBJ_L    : BOOL;  // I14 - liga jockey (NA)
+    xBJ_D    : BOOL;  // I15 - desliga jockey (NF)
+    xPJ      : BOOL;  // I16 - pressostato jockey (1 = pressão baixa)
+    xPB      : BOOL;  // I17 - pressostato principais (1 = pressão baixa)
+    // Memórias da lógica
+    xBomba1     : BOOL;  // Bomba 01 deve estar ligada
+    xBomba2     : BOOL;  // Bomba 02 deve estar ligada
+    xJockeyMan  : BOOL;  // jockey ligada em manual
+    xJockeyAut  : BOOL;  // jockey ligada em automático
+END_VAR
+</code></pre>
+<p>Os comentários com o número do borne ajudam muito na monitoração online e na correção das provas.</p>
+<h2 id="parte-4-programa-sp02_entradas-escolha-simulador-ou-bornes">Parte 4 — Programa SP02_Entradas (escolha simulador ou bornes)</h2>
+<ol>
+<li>Botão direito em <strong>Application → Acrescentar objeto → POU</strong>.</li>
+<li>Nome <code>SP02_Entradas</code>, tipo <strong>Programa</strong>, linguagem <strong>Texto estruturado (ST)</strong>. <strong>Acrescentar</strong>.</li>
+<li>Cole no corpo:</li>
+</ol>
+<pre><code>IF GVL_SIM.xUsarSimulador THEN
+    xSelB1 := GVL_SIM.xSimIn[0];   xSelB2 := GVL_SIM.xSimIn[1];
+    xB1Man := GVL_SIM.xSimIn[2];   xB1Aut := GVL_SIM.xSimIn[3];
+    xB2Man := GVL_SIM.xSimIn[4];   xB2Aut := GVL_SIM.xSimIn[5];
+    xBJMan := GVL_SIM.xSimIn[6];   xBJAut := GVL_SIM.xSimIn[7];
+    xB1_L  := GVL_SIM.xSimIn[8];   xB1_D  := GVL_SIM.xSimIn[9];
+    xB2_L  := GVL_SIM.xSimIn[10];  xB2_D  := GVL_SIM.xSimIn[11];
+    xBJ_L  := GVL_SIM.xSimIn[12];  xBJ_D  := GVL_SIM.xSimIn[13];
+    xPJ    := GVL_SIM.xSimIn[14];  xPB    := GVL_SIM.xSimIn[15];
+ELSE
+    xSelB1 := I00;  xSelB2 := I01;  xB1Man := I02;  xB1Aut := I03;
+    xB2Man := I04;  xB2Aut := I05;  xBJMan := I06;  xBJAut := I07;
+    xB1_L  := I10;  xB1_D  := I11;  xB2_L  := I12;  xB2_D  := I13;
+    xBJ_L  := I14;  xBJ_D  := I15;  xPJ    := I16;  xPB    := I17;
+END_IF
+</code></pre>
+<p>Com <code>xUsarSimulador = TRUE</code> o painel do simulador comanda o CLP. Para a bancada física, mude para <code>FALSE</code> (na declaração ou forçando online).</p>
+<h2 id="parte-5-programa-sp02_logica-em-ladder-rede-por-rede">Parte 5 — Programa SP02_Logica em Ladder, rede por rede</h2>
+<p><strong>5.1 — Criar o programa</strong></p>
+<ol>
+<li><strong>Application → Acrescentar objeto → POU</strong>. Nome <code>SP02_Logica</code>, tipo <strong>Programa</strong>, linguagem <strong>Diagrama Ladder (LD)</strong>.</li>
+<li>O editor abre com a <strong>Rede 1</strong> vazia. A <strong>Caixa de ferramentas</strong> (à direita) tem os elementos: <strong>Contato</strong>, <strong>Contato negado</strong>, <strong>Bobina</strong>, <strong>Contato paralelo</strong> e outros.</li>
+</ol>
+<p><strong>5.2 — Como desenhar no editor (vale para todas as redes)</strong></p>
+<ul>
+<li><strong>Contato em série</strong>: arraste <strong>Contato</strong> da caixa de ferramentas para cima da linha da rede. Clique em <code>???</code> acima dele e digite o nome da variável (ex.: <code>xB1Man</code>). O MasterTool sugere os nomes enquanto você digita.</li>
+<li><strong>Contato negado</strong> (NF no desenho): igual, usando <strong>Contato negado</strong>.</li>
+<li><strong>Ramo em paralelo</strong>: clique com o botão direito num contato e escolha <strong>Inserir contato paralelo (abaixo)</strong>. Para um ramo com dois contatos em série, insira o paralelo e depois arraste outro contato para dentro desse ramo.</li>
+<li><strong>Bobina</strong>: arraste <strong>Bobina</strong> para a ponta direita da rede e digite a variável.</li>
+<li><strong>Nova rede</strong>: botão direito na área da rede → <strong>Inserir rede (abaixo)</strong>.</li>
+<li><strong>Comentário da rede</strong>: clique na área de comentário acima da rede e escreva o que ela faz. Ajuda na correção.</li>
+</ul>
+<p>Os nomes das ferramentas podem variar um pouco entre versões do MasterTool; os elementos são sempre os mesmos do Ladder IEC 61131-3.</p>
+<p><strong>5.3 — Redes 1 e 2: sinaleiros de seleção</strong></p>
+<p>A chave de seleção em B01 acende LB1_S (relé RAX1, saída Q03). Em B02 acende LB2_S (RAX2, Q04).</p>
+<div class="ladder"><svg viewBox="0 0 322 108" width="322" role="img" aria-label="Rede 1 — Sinaleiro Bomba 01 selecionada"><text x="8" y="18" class="lt">Rede 1 — Sinaleiro Bomba 01 selecionada</text><line x1="20" y1="24" x2="20" y2="108" class="lr"/><line x1="302" y1="24" x2="302" y2="108" class="lr"/><line x1="20" y1="67.0" x2="30" y2="67.0" class="lw"/><line x1="30" y1="67.0" x2="70" y2="67.0" class="lw"/><line x1="70" y1="54.0" x2="70" y2="80.0" class="ls"/><line x1="102" y1="54.0" x2="102" y2="80.0" class="ls"/><line x1="102" y1="67.0" x2="142" y2="67.0" class="lw"/><text x="86" y="48.0" class="lv">xSelB1</text><text x="86" y="95.0" class="lc">I00 seleção B01</text><line x1="142" y1="67.0" x2="192" y2="67.0" class="lw"/><path d="M200 53.0 q-9 14 0 28 M224 53.0 q9 14 0 28" class="ls" fill="none"/><line x1="232" y1="67.0" x2="302" y2="67.0" class="lw"/><text x="212" y="48.0" class="lv">Q03</text><text x="212" y="95.0" class="lc">RAX1 → LB1_S</text></svg></div>
+
+<div class="ladder"><svg viewBox="0 0 322 108" width="322" role="img" aria-label="Rede 2 — Sinaleiro Bomba 02 selecionada"><text x="8" y="18" class="lt">Rede 2 — Sinaleiro Bomba 02 selecionada</text><line x1="20" y1="24" x2="20" y2="108" class="lr"/><line x1="302" y1="24" x2="302" y2="108" class="lr"/><line x1="20" y1="67.0" x2="30" y2="67.0" class="lw"/><line x1="30" y1="67.0" x2="70" y2="67.0" class="lw"/><line x1="70" y1="54.0" x2="70" y2="80.0" class="ls"/><line x1="102" y1="54.0" x2="102" y2="80.0" class="ls"/><line x1="102" y1="67.0" x2="142" y2="67.0" class="lw"/><text x="86" y="48.0" class="lv">xSelB2</text><text x="86" y="95.0" class="lc">I01 seleção B02</text><line x1="142" y1="67.0" x2="192" y2="67.0" class="lw"/><path d="M200 53.0 q-9 14 0 28 M224 53.0 q9 14 0 28" class="ls" fill="none"/><line x1="232" y1="67.0" x2="302" y2="67.0" class="lw"/><text x="212" y="48.0" class="lv">Q04</text><text x="212" y="95.0" class="lc">RAX2 → LB2_S</text></svg></div>
+
+<p><strong>5.4 — Rede 3: Bomba 01 (o coração do programa)</strong></p>
+<p>Esta rede junta manual, automático e o selo numa única memória, <code>xBomba1</code>. Leia de cima para baixo os três caminhos que ligam a bomba:</p>
+<ol>
+<li><strong>Manual</strong>: chave em Man <strong>e</strong> botão Liga apertado.</li>
+<li><strong>Automático</strong>: chave em Auto <strong>e</strong> seleção em B01 <strong>e</strong> PB fechado (pressão ≤ 4 kgf/cm²).</li>
+<li><strong>Selo</strong>: a própria <code>xBomba1</code> mantém a bomba ligada depois que o botão é solto ou o PB abre.</li>
+</ol>
+<p>Em série com os três caminhos ficam as condições de desligar: botão <strong>Desliga</strong> (NF, por isso contato NA no Ladder) e chave fora do 0 (Man <strong>ou</strong> Auto).</p>
+<div class="ladder"><svg viewBox="0 0 770 256" width="770" role="img" aria-label="Rede 3 — Bomba 01: manual, automático e selo"><text x="8" y="18" class="lt">Rede 3 — Bomba 01: manual, automático e selo</text><line x1="20" y1="24" x2="20" y2="256" class="lr"/><line x1="750" y1="24" x2="750" y2="256" class="lr"/><line x1="20" y1="67.0" x2="30" y2="67.0" class="lw"/><line x1="30" y1="67.0" x2="70" y2="67.0" class="lw"/><line x1="70" y1="54.0" x2="70" y2="80.0" class="ls"/><line x1="102" y1="54.0" x2="102" y2="80.0" class="ls"/><line x1="102" y1="67.0" x2="142" y2="67.0" class="lw"/><text x="86" y="48.0" class="lv">xB1Man</text><text x="86" y="95.0" class="lc">I02 Man</text><line x1="142" y1="67.0" x2="182" y2="67.0" class="lw"/><line x1="182" y1="54.0" x2="182" y2="80.0" class="ls"/><line x1="214" y1="54.0" x2="214" y2="80.0" class="ls"/><line x1="214" y1="67.0" x2="254" y2="67.0" class="lw"/><text x="198" y="48.0" class="lv">xB1_L</text><text x="198" y="95.0" class="lc">I10 Liga</text><line x1="254" y1="67.0" x2="366" y2="67.0" class="lw"/><line x1="30" y1="141.0" x2="70" y2="141.0" class="lw"/><line x1="70" y1="128.0" x2="70" y2="154.0" class="ls"/><line x1="102" y1="128.0" x2="102" y2="154.0" class="ls"/><line x1="102" y1="141.0" x2="142" y2="141.0" class="lw"/><text x="86" y="122.0" class="lv">xB1Aut</text><text x="86" y="169.0" class="lc">I03 Auto</text><line x1="142" y1="141.0" x2="182" y2="141.0" class="lw"/><line x1="182" y1="128.0" x2="182" y2="154.0" class="ls"/><line x1="214" y1="128.0" x2="214" y2="154.0" class="ls"/><line x1="214" y1="141.0" x2="254" y2="141.0" class="lw"/><text x="198" y="122.0" class="lv">xSelB1</text><text x="198" y="169.0" class="lc">I00 Sel B01</text><line x1="254" y1="141.0" x2="294" y2="141.0" class="lw"/><line x1="294" y1="128.0" x2="294" y2="154.0" class="ls"/><line x1="326" y1="128.0" x2="326" y2="154.0" class="ls"/><line x1="326" y1="141.0" x2="366" y2="141.0" class="lw"/><text x="310" y="122.0" class="lv">xPB</text><text x="310" y="169.0" class="lc">I17 PB baixa</text><line x1="30" y1="215.0" x2="70" y2="215.0" class="lw"/><line x1="70" y1="202.0" x2="70" y2="228.0" class="ls"/><line x1="102" y1="202.0" x2="102" y2="228.0" class="ls"/><line x1="102" y1="215.0" x2="142" y2="215.0" class="lw"/><text x="86" y="196.0" class="lv">xBomba1</text><text x="86" y="243.0" class="lc">selo</text><line x1="142" y1="215.0" x2="366" y2="215.0" class="lw"/><line x1="30" y1="67.0" x2="30" y2="215.0" class="lw"/><line x1="366" y1="67.0" x2="366" y2="215.0" class="lw"/><line x1="366" y1="67.0" x2="406" y2="67.0" class="lw"/><line x1="406" y1="54.0" x2="406" y2="80.0" class="ls"/><line x1="438" y1="54.0" x2="438" y2="80.0" class="ls"/><line x1="438" y1="67.0" x2="478" y2="67.0" class="lw"/><text x="422" y="48.0" class="lv">xB1_D</text><text x="422" y="95.0" class="lc">I11 Desliga (NF)</text><line x1="478" y1="67.0" x2="518" y2="67.0" class="lw"/><line x1="518" y1="54.0" x2="518" y2="80.0" class="ls"/><line x1="550" y1="54.0" x2="550" y2="80.0" class="ls"/><line x1="550" y1="67.0" x2="590" y2="67.0" class="lw"/><text x="534" y="48.0" class="lv">xB1Man</text><text x="534" y="95.0" class="lc">I02 Man</text><line x1="478" y1="141.0" x2="518" y2="141.0" class="lw"/><line x1="518" y1="128.0" x2="518" y2="154.0" class="ls"/><line x1="550" y1="128.0" x2="550" y2="154.0" class="ls"/><line x1="550" y1="141.0" x2="590" y2="141.0" class="lw"/><text x="534" y="122.0" class="lv">xB1Aut</text><text x="534" y="169.0" class="lc">I03 Auto</text><line x1="478" y1="67.0" x2="478" y2="141.0" class="lw"/><line x1="590" y1="67.0" x2="590" y2="141.0" class="lw"/><line x1="590" y1="67.0" x2="640" y2="67.0" class="lw"/><path d="M648 53.0 q-9 14 0 28 M672 53.0 q9 14 0 28" class="ls" fill="none"/><line x1="680" y1="67.0" x2="750" y2="67.0" class="lw"/><text x="660" y="48.0" class="lv">xBomba1</text><text x="660" y="95.0" class="lc">memória Bomba 01</text></svg></div>
+
+<p>Como desenhar esta rede:</p>
+<ol>
+<li>Arraste um contato <code>xB1Man</code> e, à direita dele, um contato <code>xB1_L</code>.</li>
+<li>Botão direito em <code>xB1Man</code> → <strong>Inserir contato paralelo (abaixo)</strong> → <code>xB1Aut</code>. Arraste mais dois contatos para dentro desse ramo: <code>xSelB1</code> e <code>xPB</code>.</li>
+<li>Insira mais um paralelo abaixo com <code>xBomba1</code> (o selo).</li>
+<li>À direita do bloco paralelo, um contato <code>xB1_D</code>.</li>
+<li>À direita, um contato <code>xB1Man</code> com um paralelo abaixo <code>xB1Aut</code>.</li>
+<li>Na ponta, a bobina <code>xBomba1</code>.</li>
+</ol>
+<p>Equivalente em texto estruturado, para conferir o raciocínio:</p>
+<pre><code>xBomba1 := ((xB1Man AND xB1_L) OR (xB1Aut AND xSelB1 AND xPB) OR xBomba1)
+           AND xB1_D AND (xB1Man OR xB1Aut);
+</code></pre>
+<p><strong>5.5 — Rede 4: Bomba 02</strong></p>
+<p>Igual à Rede 3, trocando 1 por 2 e a seleção por <code>xSelB2</code>.</p>
+<div class="ladder"><svg viewBox="0 0 770 256" width="770" role="img" aria-label="Rede 4 — Bomba 02: manual, automático e selo"><text x="8" y="18" class="lt">Rede 4 — Bomba 02: manual, automático e selo</text><line x1="20" y1="24" x2="20" y2="256" class="lr"/><line x1="750" y1="24" x2="750" y2="256" class="lr"/><line x1="20" y1="67.0" x2="30" y2="67.0" class="lw"/><line x1="30" y1="67.0" x2="70" y2="67.0" class="lw"/><line x1="70" y1="54.0" x2="70" y2="80.0" class="ls"/><line x1="102" y1="54.0" x2="102" y2="80.0" class="ls"/><line x1="102" y1="67.0" x2="142" y2="67.0" class="lw"/><text x="86" y="48.0" class="lv">xB2Man</text><text x="86" y="95.0" class="lc">I04 Man</text><line x1="142" y1="67.0" x2="182" y2="67.0" class="lw"/><line x1="182" y1="54.0" x2="182" y2="80.0" class="ls"/><line x1="214" y1="54.0" x2="214" y2="80.0" class="ls"/><line x1="214" y1="67.0" x2="254" y2="67.0" class="lw"/><text x="198" y="48.0" class="lv">xB2_L</text><text x="198" y="95.0" class="lc">I12 Liga</text><line x1="254" y1="67.0" x2="366" y2="67.0" class="lw"/><line x1="30" y1="141.0" x2="70" y2="141.0" class="lw"/><line x1="70" y1="128.0" x2="70" y2="154.0" class="ls"/><line x1="102" y1="128.0" x2="102" y2="154.0" class="ls"/><line x1="102" y1="141.0" x2="142" y2="141.0" class="lw"/><text x="86" y="122.0" class="lv">xB2Aut</text><text x="86" y="169.0" class="lc">I05 Auto</text><line x1="142" y1="141.0" x2="182" y2="141.0" class="lw"/><line x1="182" y1="128.0" x2="182" y2="154.0" class="ls"/><line x1="214" y1="128.0" x2="214" y2="154.0" class="ls"/><line x1="214" y1="141.0" x2="254" y2="141.0" class="lw"/><text x="198" y="122.0" class="lv">xSelB2</text><text x="198" y="169.0" class="lc">I01 Sel B02</text><line x1="254" y1="141.0" x2="294" y2="141.0" class="lw"/><line x1="294" y1="128.0" x2="294" y2="154.0" class="ls"/><line x1="326" y1="128.0" x2="326" y2="154.0" class="ls"/><line x1="326" y1="141.0" x2="366" y2="141.0" class="lw"/><text x="310" y="122.0" class="lv">xPB</text><text x="310" y="169.0" class="lc">I17 PB baixa</text><line x1="30" y1="215.0" x2="70" y2="215.0" class="lw"/><line x1="70" y1="202.0" x2="70" y2="228.0" class="ls"/><line x1="102" y1="202.0" x2="102" y2="228.0" class="ls"/><line x1="102" y1="215.0" x2="142" y2="215.0" class="lw"/><text x="86" y="196.0" class="lv">xBomba2</text><text x="86" y="243.0" class="lc">selo</text><line x1="142" y1="215.0" x2="366" y2="215.0" class="lw"/><line x1="30" y1="67.0" x2="30" y2="215.0" class="lw"/><line x1="366" y1="67.0" x2="366" y2="215.0" class="lw"/><line x1="366" y1="67.0" x2="406" y2="67.0" class="lw"/><line x1="406" y1="54.0" x2="406" y2="80.0" class="ls"/><line x1="438" y1="54.0" x2="438" y2="80.0" class="ls"/><line x1="438" y1="67.0" x2="478" y2="67.0" class="lw"/><text x="422" y="48.0" class="lv">xB2_D</text><text x="422" y="95.0" class="lc">I13 Desliga (NF)</text><line x1="478" y1="67.0" x2="518" y2="67.0" class="lw"/><line x1="518" y1="54.0" x2="518" y2="80.0" class="ls"/><line x1="550" y1="54.0" x2="550" y2="80.0" class="ls"/><line x1="550" y1="67.0" x2="590" y2="67.0" class="lw"/><text x="534" y="48.0" class="lv">xB2Man</text><text x="534" y="95.0" class="lc">I04 Man</text><line x1="478" y1="141.0" x2="518" y2="141.0" class="lw"/><line x1="518" y1="128.0" x2="518" y2="154.0" class="ls"/><line x1="550" y1="128.0" x2="550" y2="154.0" class="ls"/><line x1="550" y1="141.0" x2="590" y2="141.0" class="lw"/><text x="534" y="122.0" class="lv">xB2Aut</text><text x="534" y="169.0" class="lc">I05 Auto</text><line x1="478" y1="67.0" x2="478" y2="141.0" class="lw"/><line x1="590" y1="67.0" x2="590" y2="141.0" class="lw"/><line x1="590" y1="67.0" x2="640" y2="67.0" class="lw"/><path d="M648 53.0 q-9 14 0 28 M672 53.0 q9 14 0 28" class="ls" fill="none"/><line x1="680" y1="67.0" x2="750" y2="67.0" class="lw"/><text x="660" y="48.0" class="lv">xBomba2</text><text x="660" y="95.0" class="lc">memória Bomba 02</text></svg></div>
+
+<p>Dica: no editor, copie a Rede 3 (botão direito → <strong>Copiar</strong>), cole abaixo e troque os nomes.</p>
+<p><strong>5.6 — Rede 5: jockey em manual</strong></p>
+<p>Liga e desliga pelas botoeiras, com selo, só com a chave em Man.</p>
+<div class="ladder"><svg viewBox="0 0 546 182" width="546" role="img" aria-label="Rede 5 — Jockey em manual"><text x="8" y="18" class="lt">Rede 5 — Jockey em manual</text><line x1="20" y1="24" x2="20" y2="182" class="lr"/><line x1="526" y1="24" x2="526" y2="182" class="lr"/><line x1="20" y1="67.0" x2="30" y2="67.0" class="lw"/><line x1="30" y1="67.0" x2="70" y2="67.0" class="lw"/><line x1="70" y1="54.0" x2="70" y2="80.0" class="ls"/><line x1="102" y1="54.0" x2="102" y2="80.0" class="ls"/><line x1="102" y1="67.0" x2="142" y2="67.0" class="lw"/><text x="86" y="48.0" class="lv">xBJ_L</text><text x="86" y="95.0" class="lc">I14 Liga</text><line x1="30" y1="141.0" x2="70" y2="141.0" class="lw"/><line x1="70" y1="128.0" x2="70" y2="154.0" class="ls"/><line x1="102" y1="128.0" x2="102" y2="154.0" class="ls"/><line x1="102" y1="141.0" x2="142" y2="141.0" class="lw"/><text x="86" y="122.0" class="lv">xJockeyMan</text><text x="86" y="169.0" class="lc">selo</text><line x1="30" y1="67.0" x2="30" y2="141.0" class="lw"/><line x1="142" y1="67.0" x2="142" y2="141.0" class="lw"/><line x1="142" y1="67.0" x2="182" y2="67.0" class="lw"/><line x1="182" y1="54.0" x2="182" y2="80.0" class="ls"/><line x1="214" y1="54.0" x2="214" y2="80.0" class="ls"/><line x1="214" y1="67.0" x2="254" y2="67.0" class="lw"/><text x="198" y="48.0" class="lv">xBJ_D</text><text x="198" y="95.0" class="lc">I15 Desliga (NF)</text><line x1="254" y1="67.0" x2="294" y2="67.0" class="lw"/><line x1="294" y1="54.0" x2="294" y2="80.0" class="ls"/><line x1="326" y1="54.0" x2="326" y2="80.0" class="ls"/><line x1="326" y1="67.0" x2="366" y2="67.0" class="lw"/><text x="310" y="48.0" class="lv">xBJMan</text><text x="310" y="95.0" class="lc">I06 Man</text><line x1="366" y1="67.0" x2="416" y2="67.0" class="lw"/><path d="M424 53.0 q-9 14 0 28 M448 53.0 q9 14 0 28" class="ls" fill="none"/><line x1="456" y1="67.0" x2="526" y2="67.0" class="lw"/><text x="436" y="48.0" class="lv">xJockeyMan</text><text x="436" y="95.0" class="lc">jockey manual</text></svg></div>
+
+<p><strong>5.7 — Rede 6: jockey em automático</strong></p>
+<p>A jockey roda enquanto o PJ estiver fechado e <strong>nenhuma</strong> principal estiver ligada. Os contatos <strong>negados</strong> de <code>xBomba1</code> e <code>xBomba2</code> fazem a jockey desligar sozinha quando a principal parte. O botão Desliga também vale no automático, como parada de emergência local.</p>
+<div class="ladder"><svg viewBox="0 0 770 108" width="770" role="img" aria-label="Rede 6 — Jockey em automático"><text x="8" y="18" class="lt">Rede 6 — Jockey em automático</text><line x1="20" y1="24" x2="20" y2="108" class="lr"/><line x1="750" y1="24" x2="750" y2="108" class="lr"/><line x1="20" y1="67.0" x2="30" y2="67.0" class="lw"/><line x1="30" y1="67.0" x2="70" y2="67.0" class="lw"/><line x1="70" y1="54.0" x2="70" y2="80.0" class="ls"/><line x1="102" y1="54.0" x2="102" y2="80.0" class="ls"/><line x1="102" y1="67.0" x2="142" y2="67.0" class="lw"/><text x="86" y="48.0" class="lv">xBJAut</text><text x="86" y="95.0" class="lc">I07 Auto</text><line x1="142" y1="67.0" x2="182" y2="67.0" class="lw"/><line x1="182" y1="54.0" x2="182" y2="80.0" class="ls"/><line x1="214" y1="54.0" x2="214" y2="80.0" class="ls"/><line x1="214" y1="67.0" x2="254" y2="67.0" class="lw"/><text x="198" y="48.0" class="lv">xPJ</text><text x="198" y="95.0" class="lc">I16 PJ baixa</text><line x1="254" y1="67.0" x2="294" y2="67.0" class="lw"/><line x1="294" y1="54.0" x2="294" y2="80.0" class="ls"/><line x1="326" y1="54.0" x2="326" y2="80.0" class="ls"/><line x1="290" y1="79.0" x2="330" y2="55.0" class="ls"/><line x1="326" y1="67.0" x2="366" y2="67.0" class="lw"/><text x="310" y="48.0" class="lv">xBomba1</text><text x="310" y="95.0" class="lc">B01 parada</text><line x1="366" y1="67.0" x2="406" y2="67.0" class="lw"/><line x1="406" y1="54.0" x2="406" y2="80.0" class="ls"/><line x1="438" y1="54.0" x2="438" y2="80.0" class="ls"/><line x1="402" y1="79.0" x2="442" y2="55.0" class="ls"/><line x1="438" y1="67.0" x2="478" y2="67.0" class="lw"/><text x="422" y="48.0" class="lv">xBomba2</text><text x="422" y="95.0" class="lc">B02 parada</text><line x1="478" y1="67.0" x2="518" y2="67.0" class="lw"/><line x1="518" y1="54.0" x2="518" y2="80.0" class="ls"/><line x1="550" y1="54.0" x2="550" y2="80.0" class="ls"/><line x1="550" y1="67.0" x2="590" y2="67.0" class="lw"/><text x="534" y="48.0" class="lv">xBJ_D</text><text x="534" y="95.0" class="lc">I15 Desliga (NF)</text><line x1="590" y1="67.0" x2="640" y2="67.0" class="lw"/><path d="M648 53.0 q-9 14 0 28 M672 53.0 q9 14 0 28" class="ls" fill="none"/><line x1="680" y1="67.0" x2="750" y2="67.0" class="lw"/><text x="660" y="48.0" class="lv">xJockeyAut</text><text x="660" y="95.0" class="lc">jockey automática</text></svg></div>
+
+<p>Não precisa de selo: o PJ só abre quando a pressão chega a 10 kgf/cm². A histerese (liga em 6, desliga em 10) está no pressostato, não no CLP.</p>
+<p><strong>5.8 — Redes 7, 8 e 9: contatoras</strong></p>
+<div class="ladder"><svg viewBox="0 0 322 108" width="322" role="img" aria-label="Rede 7 — Contatora Bomba 01 (DI1 da SS_01)"><text x="8" y="18" class="lt">Rede 7 — Contatora Bomba 01 (DI1 da SS_01)</text><line x1="20" y1="24" x2="20" y2="108" class="lr"/><line x1="302" y1="24" x2="302" y2="108" class="lr"/><line x1="20" y1="67.0" x2="30" y2="67.0" class="lw"/><line x1="30" y1="67.0" x2="70" y2="67.0" class="lw"/><line x1="70" y1="54.0" x2="70" y2="80.0" class="ls"/><line x1="102" y1="54.0" x2="102" y2="80.0" class="ls"/><line x1="102" y1="67.0" x2="142" y2="67.0" class="lw"/><text x="86" y="48.0" class="lv">xBomba1</text><text x="86" y="95.0" class="lc">memória B01</text><line x1="142" y1="67.0" x2="192" y2="67.0" class="lw"/><path d="M200 53.0 q-9 14 0 28 M224 53.0 q9 14 0 28" class="ls" fill="none"/><line x1="232" y1="67.0" x2="302" y2="67.0" class="lw"/><text x="212" y="48.0" class="lv">Q00</text><text x="212" y="95.0" class="lc">K-B1</text></svg></div>
+
+<div class="ladder"><svg viewBox="0 0 322 108" width="322" role="img" aria-label="Rede 8 — Contatora Bomba 02 (DI1 da SS_02)"><text x="8" y="18" class="lt">Rede 8 — Contatora Bomba 02 (DI1 da SS_02)</text><line x1="20" y1="24" x2="20" y2="108" class="lr"/><line x1="302" y1="24" x2="302" y2="108" class="lr"/><line x1="20" y1="67.0" x2="30" y2="67.0" class="lw"/><line x1="30" y1="67.0" x2="70" y2="67.0" class="lw"/><line x1="70" y1="54.0" x2="70" y2="80.0" class="ls"/><line x1="102" y1="54.0" x2="102" y2="80.0" class="ls"/><line x1="102" y1="67.0" x2="142" y2="67.0" class="lw"/><text x="86" y="48.0" class="lv">xBomba2</text><text x="86" y="95.0" class="lc">memória B02</text><line x1="142" y1="67.0" x2="192" y2="67.0" class="lw"/><path d="M200 53.0 q-9 14 0 28 M224 53.0 q9 14 0 28" class="ls" fill="none"/><line x1="232" y1="67.0" x2="302" y2="67.0" class="lw"/><text x="212" y="48.0" class="lv">Q01</text><text x="212" y="95.0" class="lc">K-B2</text></svg></div>
+
+<div class="ladder"><svg viewBox="0 0 322 182" width="322" role="img" aria-label="Rede 9 — Contatora da jockey (partida direta)"><text x="8" y="18" class="lt">Rede 9 — Contatora da jockey (partida direta)</text><line x1="20" y1="24" x2="20" y2="182" class="lr"/><line x1="302" y1="24" x2="302" y2="182" class="lr"/><line x1="20" y1="67.0" x2="30" y2="67.0" class="lw"/><line x1="30" y1="67.0" x2="70" y2="67.0" class="lw"/><line x1="70" y1="54.0" x2="70" y2="80.0" class="ls"/><line x1="102" y1="54.0" x2="102" y2="80.0" class="ls"/><line x1="102" y1="67.0" x2="142" y2="67.0" class="lw"/><text x="86" y="48.0" class="lv">xJockeyMan</text><text x="86" y="95.0" class="lc">manual</text><line x1="30" y1="141.0" x2="70" y2="141.0" class="lw"/><line x1="70" y1="128.0" x2="70" y2="154.0" class="ls"/><line x1="102" y1="128.0" x2="102" y2="154.0" class="ls"/><line x1="102" y1="141.0" x2="142" y2="141.0" class="lw"/><text x="86" y="122.0" class="lv">xJockeyAut</text><text x="86" y="169.0" class="lc">automático</text><line x1="30" y1="67.0" x2="30" y2="141.0" class="lw"/><line x1="142" y1="67.0" x2="142" y2="141.0" class="lw"/><line x1="142" y1="67.0" x2="192" y2="67.0" class="lw"/><path d="M200 53.0 q-9 14 0 28 M224 53.0 q9 14 0 28" class="ls" fill="none"/><line x1="232" y1="67.0" x2="302" y2="67.0" class="lw"/><text x="212" y="48.0" class="lv">Q02</text><text x="212" y="95.0" class="lc">K-BJ</text></svg></div>
+
+<p>Por que separar memória e saída? Porque a memória pode ser usada em outras redes (sinaleiros, intertravamento da jockey) e porque, na monitoração, fica claro se o problema está na lógica (memória) ou na saída.</p>
+<p><strong>5.9 — Redes 10 a 15: sinaleiros de operação e de desligada</strong></p>
+<p>"Em operação" copia a bomba; "desligada" é o contrário dela (contato negado).</p>
+<div class="ladder"><svg viewBox="0 0 322 108" width="322" role="img" aria-label="Rede 10 — Bomba 01 em operação"><text x="8" y="18" class="lt">Rede 10 — Bomba 01 em operação</text><line x1="20" y1="24" x2="20" y2="108" class="lr"/><line x1="302" y1="24" x2="302" y2="108" class="lr"/><line x1="20" y1="67.0" x2="30" y2="67.0" class="lw"/><line x1="30" y1="67.0" x2="70" y2="67.0" class="lw"/><line x1="70" y1="54.0" x2="70" y2="80.0" class="ls"/><line x1="102" y1="54.0" x2="102" y2="80.0" class="ls"/><line x1="102" y1="67.0" x2="142" y2="67.0" class="lw"/><text x="86" y="48.0" class="lv">xBomba1</text><text x="86" y="95.0" class="lc">memória B01</text><line x1="142" y1="67.0" x2="192" y2="67.0" class="lw"/><path d="M200 53.0 q-9 14 0 28 M224 53.0 q9 14 0 28" class="ls" fill="none"/><line x1="232" y1="67.0" x2="302" y2="67.0" class="lw"/><text x="212" y="48.0" class="lv">Q05</text><text x="212" y="95.0" class="lc">RAX3 → LB1_L</text></svg></div>
+
+<div class="ladder"><svg viewBox="0 0 322 108" width="322" role="img" aria-label="Rede 13 — Bomba 01 desligada"><text x="8" y="18" class="lt">Rede 13 — Bomba 01 desligada</text><line x1="20" y1="24" x2="20" y2="108" class="lr"/><line x1="302" y1="24" x2="302" y2="108" class="lr"/><line x1="20" y1="67.0" x2="30" y2="67.0" class="lw"/><line x1="30" y1="67.0" x2="70" y2="67.0" class="lw"/><line x1="70" y1="54.0" x2="70" y2="80.0" class="ls"/><line x1="102" y1="54.0" x2="102" y2="80.0" class="ls"/><line x1="66" y1="79.0" x2="106" y2="55.0" class="ls"/><line x1="102" y1="67.0" x2="142" y2="67.0" class="lw"/><text x="86" y="48.0" class="lv">xBomba1</text><text x="86" y="95.0" class="lc">memória B01</text><line x1="142" y1="67.0" x2="192" y2="67.0" class="lw"/><path d="M200 53.0 q-9 14 0 28 M224 53.0 q9 14 0 28" class="ls" fill="none"/><line x1="232" y1="67.0" x2="302" y2="67.0" class="lw"/><text x="212" y="48.0" class="lv">Q10</text><text x="212" y="95.0" class="lc">RAX6 → LB1_D</text></svg></div>
+
+<p>As outras quatro seguem o mesmo modelo:</p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Rede</th>
+<th>Contato</th>
+<th>Bobina</th>
+<th>Sinaleiro</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>11</td>
+<td><code>xBomba2</code></td>
+<td><code>Q06</code></td>
+<td>RAX4 → LB2_L (vermelho)</td>
+</tr>
+<tr>
+<td>12</td>
+<td><code>Q02</code></td>
+<td><code>Q07</code></td>
+<td>RAX5 → LBJ_L (vermelho)</td>
+</tr>
+<tr>
+<td>14</td>
+<td><code>xBomba2</code> negado</td>
+<td><code>Q11</code></td>
+<td>RAX7 → LB2_D (verde)</td>
+</tr>
+<tr>
+<td>15</td>
+<td><code>Q02</code> negado</td>
+<td><code>Q12</code></td>
+<td>RAX8 → LBJ_D (verde)</td>
+</tr>
+</tbody>
+</table></div>
+<p>Para a jockey usamos a própria saída <code>Q02</code>, porque ela pode estar ligada por dois caminhos (manual ou automático).</p>
+<p><strong>5.10 — Conferir a lógica antes de compilar</strong></p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Situação</th>
+<th><code>xBomba1</code></th>
+<th><code>Q02</code> (jockey)</th>
+<th>Por quê</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tudo em 0</td>
+<td>0</td>
+<td>0</td>
+<td>Sem chave em Man/Auto não há caminho</td>
+</tr>
+<tr>
+<td>B1 em Man, aperta Liga</td>
+<td>1</td>
+<td>—</td>
+<td>Caminho manual + selo</td>
+</tr>
+<tr>
+<td>B1 em Man, aperta Desliga</td>
+<td>0</td>
+<td>—</td>
+<td><code>xB1_D</code> vai a 0 e corta a rede</td>
+</tr>
+<tr>
+<td>Jockey Auto, PJ fecha</td>
+<td>—</td>
+<td>1</td>
+<td>Rede 6 completa</td>
+</tr>
+<tr>
+<td>PB fecha, B1 Auto, seleção B01</td>
+<td>1</td>
+<td>0</td>
+<td>Rede 3 liga; Rede 6 corta pelo contato negado</td>
+</tr>
+<tr>
+<td>Pressão volta a 10 (PB abre)</td>
+<td>1</td>
+<td>0</td>
+<td>O selo mantém a principal</td>
+</tr>
+<tr>
+<td>Aperta Desliga da B1</td>
+<td>0</td>
+<td>—</td>
+<td>Única forma de parar no automático</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="parte-6-programa-sp02_saidas-o-simulador-lê-as-saídas">Parte 6 — Programa SP02_Saidas (o simulador lê as saídas)</h2>
+<ol>
+<li><strong>Acrescentar objeto → POU</strong> → <code>SP02_Saidas</code>, <strong>Programa</strong>, <strong>ST</strong>.</li>
+<li>Cole:</li>
+</ol>
+<pre><code>GVL_SIM.xSimOut[0]  := Q00;  // K-B1
+GVL_SIM.xSimOut[1]  := Q01;  // K-B2
+GVL_SIM.xSimOut[2]  := Q02;  // K-BJ
+GVL_SIM.xSimOut[3]  := Q03;  // RAX1 LB1_S
+GVL_SIM.xSimOut[4]  := Q04;  // RAX2 LB2_S
+GVL_SIM.xSimOut[5]  := Q05;  // RAX3 LB1_L
+GVL_SIM.xSimOut[6]  := Q06;  // RAX4 LB2_L
+GVL_SIM.xSimOut[7]  := Q07;  // RAX5 LBJ_L
+GVL_SIM.xSimOut[8]  := Q10;  // RAX6 LB1_D
+GVL_SIM.xSimOut[9]  := Q11;  // RAX7 LB2_D
+GVL_SIM.xSimOut[10] := Q12;  // RAX8 LBJ_D
+</code></pre>
+<h2 id="parte-7-chamar-os-programas-compilar-e-carregar">Parte 7 — Chamar os programas, compilar e carregar</h2>
+<p><strong>7.1 — Ordem de execução na MainTask</strong></p>
+<p>A ordem importa: primeiro ler as entradas, depois a lógica, por fim copiar as saídas.</p>
+<ol>
+<li>Na árvore, abra <strong>Configuração de tarefas → MainTask</strong>.</li>
+<li>Clique em <strong>Acrescentar chamada</strong> e escolha <code>SP02_Entradas</code>. Repita para <code>SP02_Logica</code> e <code>SP02_Saidas</code>.</li>
+<li>Use as setas <strong>Mover para cima/baixo</strong> até ficar: <code>SP02_Entradas</code>, <code>SP02_Logica</code>, <code>SP02_Saidas</code>.</li>
+<li>Se o <code>UserPrg</code> do projeto padrão estiver vazio, pode deixá-lo na lista; não atrapalha.</li>
+</ol>
+<p><strong>7.2 — Servidor Modbus</strong></p>
+<p>Configure o <strong>MODBUS Symbol Server</strong> na NET 1 com <code>GVL_SIM.xSimIn</code> (Coil) e <code>GVL_SIM.xSimOut</code> (Input Status), como no Guia do simulador, Passo 4C.3.</p>
+<p><strong>7.3 — Compilar</strong></p>
+<ol>
+<li><strong>Compilar → Compilar</strong> (F11).</li>
+<li>A janela de mensagens deve mostrar <strong>0 erros</strong>. Os erros mais comuns: nome de variável digitado diferente da GVL, ou contato sem variável (<code>???</code>).</li>
+</ol>
+<p><strong>7.4 — Carregar e rodar</strong></p>
+<ol>
+<li>Ligue o cabo de rede entre o PC e o XP325.</li>
+<li><strong>Comunicação → Easy Connection</strong>: selecione o XP325 pelo IP.</li>
+<li><strong>Login</strong> (Alt+F8) e confirme o download.</li>
+<li><strong>Iniciar</strong> (F5). O XP325 entra em RUN.</li>
+</ol>
+<h2 id="parte-8-conectar-o-simulador-e-monitorar">Parte 8 — Conectar o simulador e monitorar</h2>
+<ol>
+<li>No simulador: IP do XP325, porta 502, Unit ID 1, <strong>Conectar</strong> (Guia do simulador, Passo 5).</li>
+<li>No MasterTool, com o CLP online, abra <code>SP02_Logica</code>. Os contatos fechados e as bobinas ligadas ficam <strong>azuis</strong>; ao lado de cada variável aparece o valor.</li>
+<li>Gire a seleção para B01 no simulador: na Rede 1, <code>xSelB1</code> fica azul e <code>Q03</code> liga. No simulador, LB1_S acende.</li>
+<li>Se nada mudar no CLP, o problema está no Modbus ou em <code>SP02_Entradas</code>. Abra <code>GVL_SIM</code> online e veja se <code>xSimIn[0]</code> muda.</li>
+</ol>
+<p>Dica de aula: <strong>forçar valores</strong> (botão direito → Preparar valor, depois <strong>Forçar valores</strong>) ajuda a mostrar uma rede funcionando isolada. Desforce tudo antes de testar a sequência completa.</p>
+<h2 id="parte-9-configurar-os-pressostatos-kp">Parte 9 — Configurar os pressostatos KP</h2>
+<p>Os dois pressostatos são do tipo KP de alta pressão com rearme automático (KP 5: faixa 8–32 bar, diferencial 1,8–6 bar). A SP02 fala em kgf/cm²: <strong>1 kgf/cm² = 0,981 bar</strong>.</p>
+<p><strong>9.1 — Valores</strong></p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Pressostato</th>
+<th>Contato fecha (pede a bomba)</th>
+<th>Contato abre</th>
+<th>Faixa (escala RANGE)</th>
+<th>Diferencial (escala DIF)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PJ (jockey)</td>
+<td>&lt; 6 kgf/cm² (5,9 bar)</td>
+<td>≥ 10 kgf/cm² (9,8 bar)</td>
+<td>9,8 bar</td>
+<td>3,9 bar</td>
+</tr>
+<tr>
+<td>PB (principais)</td>
+<td>≤ 4 kgf/cm² (3,9 bar)</td>
+<td>≥ 10 kgf/cm² (9,8 bar)</td>
+<td>9,8 bar</td>
+<td>5,9 bar</td>
+</tr>
+</tbody>
+</table></div>
+<p>Regra do KP de alta: o contato comuta na <strong>faixa</strong> (pressão subindo) e volta em <strong>faixa − diferencial</strong> (pressão descendo).</p>
+<p><strong>9.2 — Na bancada real</strong></p>
+<ol>
+<li>Desligue a bomba e alivie a pressão do trecho do pressostato. Desligue o 24 Vcc do comando (D4).</li>
+<li>Tire a tampa do KP. Aparecem os dois eixos de ajuste e as escalas <strong>RANGE</strong> e <strong>DIF</strong>.</li>
+<li>Gire o eixo <strong>RANGE</strong> até 9,8 bar. Pela ficha técnica, uma volta ≈ 2,3 bar.</li>
+<li>Gire o eixo <strong>DIF</strong>: 3,9 bar no PJ, 5,9 bar no PB. Uma volta ≈ 0,3 bar.</li>
+<li><strong>Escolha o contato certo</strong>. O KP tem contato reversível (SPDT). Com a rede despressurizada, meça continuidade com o multímetro entre o comum e cada um dos outros dois terminais: use o par que está <strong>fechado</strong> sem pressão.</li>
+<li>Ligue esse contato entre o L+ e a entrada: <strong>PJ → I16</strong>, <strong>PB → I17</strong>.</li>
+<li>Recoloque a tampa, religue o D4 e confira no MasterTool online: sem pressão, <code>xPJ</code> e <code>xPB</code> = TRUE.</li>
+<li><strong>Confira com manômetro de precisão</strong>. Pressurize devagar e anote em que pressão cada contato abre (deve ser ≈ 10 kgf/cm²). Alivie devagar e anote onde fecha (≈ 6 no PJ, ≈ 4 no PB). As escalas do KP são aproximadas; o fabricante recomenda sempre conferir com manômetro.</li>
+</ol>
+<p><strong>9.3 — No simulador</strong></p>
+<ol>
+<li>Role até <strong>Pressostatos</strong>.</li>
+<li>PJ: <strong>Faixa</strong> 9,8 e <strong>Diferencial</strong> 3,9. PB: <strong>Faixa</strong> 9,8 e <strong>Diferencial</strong> 5,9 (botões − e +, ou rodinha do mouse sobre os eixos do desenho).</li>
+<li><strong>Contato ligado ao CLP</strong>: "fecha em baixa pressão".</li>
+<li>A caixa branca confirma, por exemplo: <em>Contato fecha em ≤ 5,9 bar (6,0 kgf/cm²) e abre em ≥ 9,8 bar (10,0 kgf/cm²)</em>.</li>
+<li>Teste o programa sem mexer na pressão: segure a <strong>alavanca de teste</strong> do PJ. A jockey (em Auto) deve ligar.</li>
+</ol>
+<h2 id="parte-10-configurar-a-soft-starter-ssw-05-plus">Parte 10 — Configurar a soft-starter SSW-05 Plus</h2>
+<p>A SSW-05 Plus não tem IHM: o ajuste é feito atrás da tampa frontal, nos 4 trimpots e no dip-switch de 6 chaves (manual WEG 0899.5119). O CLP não conversa com ela; só liga a contatora, e o contato 13-14 da contatora fecha a DI1.</p>
+<p><strong>10.1 — Valores para a SP02</strong></p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Ajuste</th>
+<th>Valor</th>
+<th>Motivo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Trimpot <strong>ACCEL TIME</strong></td>
+<td><strong>5 s</strong></td>
+<td>Exigência da SP02</td>
+</tr>
+<tr>
+<td>Trimpot <strong>DECEL TIME</strong></td>
+<td><strong>10 s</strong></td>
+<td>Exigência da SP02; o manual indica a rampa de parada justamente para bombas, contra golpe de aríete</td>
+</tr>
+<tr>
+<td>Trimpot <strong>PEDESTAL VOLTAGE</strong></td>
+<td>30–40 %</td>
+<td>O motor começa a girar assim que recebe o comando, sem tranco</td>
+</tr>
+<tr>
+<td>Trimpot <strong>MOTOR CURRENT</strong></td>
+<td>corrente de placa ÷ corrente da chave × 100</td>
+<td>Base de todas as proteções. Ex.: motor 14,4 A numa chave de 16 A = 90 %; exemplo do manual: 25 A ÷ 30 A = 83 %</td>
+</tr>
+<tr>
+<td>Chaves 1 a 5 (OVERCURRENT, PHASE LOSS, PHASE SEQ, STALL, OVERLOAD)</td>
+<td>ON</td>
+<td>Mantém todas as proteções do motor</td>
+</tr>
+<tr>
+<td>Chave 6 (MAN / AUTO)</td>
+<td>MAN</td>
+<td>Numa bomba de incêndio o reset deve ser consciente</td>
+</tr>
+</tbody>
+</table></div>
+<p>Padrão de fábrica (pontos vermelhos na frente): PEDESTAL 30 %, ACCEL no meio da escala, DECEL OFF, MOTOR CURRENT 100 %, chaves 1–5 ON e chave 6 MAN. Ou seja: <strong>ACCEL e DECEL precisam ser mexidos</strong> para a SP02.</p>
+<p><strong>10.2 — Ligação (confira antes de ajustar)</strong></p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Borne</th>
+<th>Ligado a</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R/1L1, S/3L2, T/5L3</td>
+<td>Saída do disjuntor-motor DB1 (ou DB2)</td>
+</tr>
+<tr>
+<td>U/2T1, V/4T2, W/6T3</td>
+<td>Motor da bomba</td>
+</tr>
+<tr>
+<td>A1, A2</td>
+<td>Alimentação da eletrônica pelo D2 (ou D3), 90–250 Vca. Ligue a eletrônica antes da potência</td>
+</tr>
+<tr>
+<td>DI1</td>
+<td>Contato 13-14 da contatora K-B1 (ou K-B2), que leva a mesma fase do A1 até a DI1</td>
+</tr>
+<tr>
+<td>DI2</td>
+<td>Reset por pulso de 0,5 s (opcional; não usado na SP02)</td>
+</tr>
+<tr>
+<td>13 – 14/23</td>
+<td>Relé de operação (livre; pode ir a uma entrada do CLP como retorno)</td>
+</tr>
+<tr>
+<td>14/23 – 24</td>
+<td>Relé de tensão plena / by-pass (livre)</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>10.3 — Na bancada real</strong></p>
+<ol>
+<li><strong>Desligue e bloqueie</strong> DG, DB1 e D2. Os trimpots ficam perto de partes energizadas.</li>
+<li>Abra a tampa frontal.</li>
+<li>Com chave de fenda pequena e isolada, gire <strong>ACCEL TIME</strong> até a marca de 5 s.</li>
+<li><strong>DECEL TIME</strong> até 10 s.</li>
+<li><strong>PEDESTAL VOLTAGE</strong> em torno de 30–40 %.</li>
+<li><strong>MOTOR CURRENT</strong>: calcule a porcentagem com a placa do motor (tabela 10.1).</li>
+<li>Dip-switch com uma caneta: chaves 1 a 5 em <strong>ON</strong>, chave 6 em <strong>MAN</strong>.</li>
+<li>Feche a tampa. Religue D2: o LED <strong>READY</strong> acende.</li>
+<li>Religue DB1 e DG. Dê partida em <strong>manual</strong> pelo painel: <strong>READY</strong> pisca durante a rampa; em tensão plena <strong>RUN</strong> acende. Cronometre: ≈ 5 s.</li>
+<li>Desligue: a bomba deve parar em ≈ 10 s (READY pisca durante a rampa de parada).</li>
+<li>Com o motor girando, confira o <strong>sentido de rotação</strong> e a <strong>corrente</strong> com alicate amperímetro. Se a soft acusar <strong>PHASE SEQ</strong>, inverta duas fases na <strong>entrada</strong> (R/S/T).</li>
+<li>Repita na SS_02.</li>
+</ol>
+<p>As escalas impressas dos trimpots são aproximadas: o cronômetro é quem confirma o tempo.</p>
+<p><strong>10.4 — No simulador</strong></p>
+<ol>
+<li>Role até <strong>Soft-starters WEG SSW-05 Plus</strong> e clique na tampa, se estiver fechada.</li>
+<li>Em cada soft, use o <strong>ajuste fino</strong> ao lado: ACCEL TIME <code>5,0 s</code>, DECEL TIME <code>10,0 s</code>, PEDESTAL V. <code>40 %</code>, MOTOR CURRENT <code>90 %</code> (14,4 A numa chave de 16 A).</li>
+<li>Dip-switch: chaves 1–5 com a alavanca à direita (ON), chave 6 à esquerda (MAN).</li>
+<li>Dê partida em manual: <strong>READY</strong> pisca durante 5 s, depois <strong>RUN</strong> acende; no gráfico e na vista 3D a bomba acelera.</li>
+</ol>
+<h2 id="parte-11-testar-o-sistema-completo">Parte 11 — Testar o sistema completo</h2>
+<p>Com o programa rodando, o simulador conectado, os pressostatos e as softs ajustados, siga o <strong>roteiro de 14 testes</strong> do Guia do simulador (Passo 10). Ele cobre manual, automático, jockey, incêndio e desligamento manual.</p>
+<p>Três testes extras que pegam erros comuns de lógica:</p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Teste</th>
+<th>Resultado certo</th>
+<th>Se der errado, olhe</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Com a Bomba 01 rodando em automático, gire a seleção para B02</td>
+<td>A Bomba 01 continua (está selada); a Bomba 02 não parte enquanto o PB estiver aberto</td>
+<td>Rede 3: o selo não pode passar pela seleção</td>
+</tr>
+<tr>
+<td>Com PB fechado (pressão baixa), aperte Desliga da principal</td>
+<td>Ela para e volta a partir assim que você solta o botão</td>
+<td>Comportamento esperado (Parte 1); para parar de vez, chave em 0</td>
+</tr>
+<tr>
+<td>Desligue o D4 (sem 24 Vcc no campo)</td>
+<td>Todas as bombas param e os sinaleiros apagam</td>
+<td>Os NF vão a 0 e cortam as redes 3, 4, 5 e 6</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="parte-12-o-programa-inteiro-em-texto-estruturado">Parte 12 — O programa inteiro em texto estruturado</h2>
+<p>Se preferir ST (ou para conferir o Ladder), o <code>SP02_Logica</code> completo fica assim:</p>
+<pre><code>// Sinaleiros de seleção
+Q03 := xSelB1;
+Q04 := xSelB2;
+
+// Bombas principais: manual, automático e selo
+xBomba1 := ((xB1Man AND xB1_L) OR (xB1Aut AND xSelB1 AND xPB) OR xBomba1)
+           AND xB1_D AND (xB1Man OR xB1Aut);
+xBomba2 := ((xB2Man AND xB2_L) OR (xB2Aut AND xSelB2 AND xPB) OR xBomba2)
+           AND xB2_D AND (xB2Man OR xB2Aut);
+
+// Jockey
+xJockeyMan := (xBJ_L OR xJockeyMan) AND xBJ_D AND xBJMan;
+xJockeyAut := xBJAut AND xPJ AND NOT xBomba1 AND NOT xBomba2 AND xBJ_D;
+
+// Contatoras
+Q00 := xBomba1;                      // K-B1 -&gt; DI1 SS_01
+Q01 := xBomba2;                      // K-B2 -&gt; DI1 SS_02
+Q02 := xJockeyMan OR xJockeyAut;     // K-BJ
+
+// Sinaleiros de operação e de desligada
+Q05 := xBomba1;      Q10 := NOT xBomba1;
+Q06 := xBomba2;      Q11 := NOT xBomba2;
+Q07 := Q02;          Q12 := NOT Q02;
+</code></pre>
+<h2 id="erros-comuns-na-lógica">Erros comuns na lógica</h2>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Sintoma no simulador</th>
+<th>Causa provável</th>
+<th>Correção</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A bomba só roda enquanto o botão Liga está apertado</td>
+<td>Falta o contato de selo</td>
+<td>Paralelo com a própria memória (Redes 3, 4 e 5)</td>
+</tr>
+<tr>
+<td>A bomba não liga de jeito nenhum</td>
+<td>Botão Desliga programado como contato negado</td>
+<td>NF no campo = contato <strong>NA</strong> no Ladder (entrada vale 1 em repouso)</td>
+</tr>
+<tr>
+<td>A principal desliga sozinha quando a pressão volta</td>
+<td>Selo ausente ou o PB em série com tudo</td>
+<td>O PB só pode estar no caminho de <strong>ligar</strong>, não em série com o selo</td>
+</tr>
+<tr>
+<td>Jockey e principal ligadas juntas no automático</td>
+<td>Faltam os contatos negados <code>xBomba1</code>/<code>xBomba2</code> na Rede 6</td>
+<td>Acrescente os dois contatos negados</td>
+</tr>
+<tr>
+<td>Jockey liga e desliga muito rápido</td>
+<td>Diferencial do PJ pequeno</td>
+<td>Ajuste o DIF (Parte 9), não o programa</td>
+</tr>
+<tr>
+<td>Sinaleiro "desligada" e "operação" acesos juntos</td>
+<td>Mesma variável sem negar</td>
+<td>"Desligada" usa contato negado (Redes 13–15)</td>
+</tr>
+<tr>
+<td>Nada responde ao simulador</td>
+<td><code>xUsarSimulador = FALSE</code> ou Modbus sem mapeamento</td>
+<td>Parte 4 e Guia do simulador, Passo 4C</td>
+</tr>
+<tr>
+<td>A bomba não para em 10 s</td>
+<td>Ajuste da soft, não do CLP</td>
+<td>Trimpot de desaceleração (Parte 10)</td>
+</tr>
+</tbody>
+</table></div>
+      <p class="g-end"><a href="#top" onclick="window.scrollTo(0,0);return false">Voltar ao início</a></p>
+    </main>
+  </div>
+  <script>
+  // Destaca no sumário a seção que está na tela
+  (function () {
+    var links = Array.prototype.slice.call(document.querySelectorAll('.g-toc a'));
+    var map = {};
+    links.forEach(function (a) { map[a.getAttribute('href').slice(1)] = a; });
+    if (!('IntersectionObserver' in window)) return;
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting && map[e.target.id]) {
+          links.forEach(function (l) { l.removeAttribute('aria-current'); });
+          map[e.target.id].setAttribute('aria-current', 'true');
+        }
+      });
+    }, { rootMargin: '0px 0px -70% 0px' });
+    document.querySelectorAll('.g-body h2[id]').forEach(function (h) { io.observe(h); });
+  })();
+  </script>
+  </body>
+  </html>
+  

@@ -2,6 +2,20 @@
 
 As notas de cada versão aparecem no HUB quando a atualização é oferecida. Escreva a seção da versão nova antes do push.
 
+## 1.10.3
+- Sistema de Incêndio + Soft SSW-05 atualizado para a versão 1.9.2: na casa de bombas 3D, manômetro, PJ e PB ganharam um rótulo único ("Instrumentos") acima deles, que mostra a pressão e o estado dos pressostatos sem cobrir os instrumentos.
+
+## 1.10.2
+- Sistema de Incêndio atualizado para a versão 1.9.0 (novo nome: Simulador Sistema de Incêndio; SP02 é o exercício). Novidades: botão Enunciado com a Situação-Problema 02 (páginas, diagrama elétrico, ficha do pressostato e tabela de variáveis) e endereçamento do Altus XP325 (I00, I17…).
+- Cartão novo: "Sistema de Incêndio + Soft SSW-05", com um ícone que junta a casa de bombas (chama, bomba, motor, manômetro e registro) e a soft-starter SSW-05 ligada ao motor.
+
+## 1.10.1
+- Sistema de incêndio SP02 atualizado para a versão 1.7.9: gráfico de pressão redesenhado e, no guia, o Passo 11 virou um roteiro de simulação de falhas (SSW-05, pressostatos e jockey), com como provocar, o que observar e como corrigir cada falha.
+
+## 1.10.0
+- Novo dispositivo: Sistema de incêndio SP02. Simula a casa de bombas de um sistema de prevenção e combate a incêndio, que mantém a rede pressurizada e responde sozinho a emergências: bomba jockey, principal e reserva, duas soft-starters WEG SSW-05 Plus, pressostatos KP, painel de operação, quadro elétrico e casa de bombas em 3D. É cliente Modbus TCP: conecta no CLP (CODESYS na SIM-HUB: 192.168.100.10, porta 502) e traz um CLP virtual de teste.
+- Guia do SP02 no botão Guia, com uma parte "No HUB" (qual IP usar para cada CLP) e o passo a passo completo do simulador.
+
 ## 1.9.0
 - Servomotor SCA06 segue o firmware V2.1X e funciona só por controle via rede. Velocidade e torque continuam pelas palavras fixas (P0202 = 6). A posição passa a ser pela Função Posicionador do drive (P0202 = 3): movimentos programados em parâmetros, habilitados, disparados e com destino escritos pelo CLP nas palavras 5 a 8, sem programar ladder.
 - O aplicativo ladder didático DISCO_POS saiu (no drive real, o ladder é feito no WLP). Com P0202 = 4 o drive avisa que não há programa ladder gravado. Valores antigos dele em P1100…P1113 são descartados uma vez.
