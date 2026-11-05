@@ -2,7 +2,7 @@
   "id": "sp02-incendio",
   "nome": "Sistema de Incêndio + Soft SSW-05",
   "fabricante": "Didático · WEG SSW-05 Plus",
-  "tipo": "Processo: casa de bombas de incêndio",
+  "tipo": "Casa de bombas de incêndio",
   "descricao": "Simulador Sistema de Incêndio (exercício SP02): a casa de bombas de um sistema de prevenção e combate a incêndio, que mantém a rede pressurizada e responde sozinho a emergências. Bomba jockey, principal e reserva, duas soft-starters WEG SSW-05 Plus, pressostatos KP, painel de operação, quadro elétrico, enunciado da SP02 e casa de bombas em 3D. O CLP comanda tudo pela rede Modbus TCP.",
   "protocolos": [
     "Modbus TCP"
@@ -20,7 +20,6 @@
   },
   "rede": {
     "precisaIp": false,
-    "descricaoIp": "Cliente: conecta no CLP (CODESYS na SIM-HUB: 192.168.100.10, porta 502)",
     "portas": []
   },
   "variaveis": {},
@@ -37,6 +36,7 @@
   ],
   "cor": "#C0392B",
   "icone": "icone.svg",
-  "versao": "1.9.3",
-  "pacote": "simulador-incendio-modbus"
+  "versao": "1.9.3.2",
+  "pacote": "simulador-incendio-modbus",
+  "ordem": 900
 }

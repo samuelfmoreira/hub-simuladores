@@ -98,6 +98,9 @@ function listar() {
     f.contrato = verificarContrato(f, pasta);
     lista.push(f);
   }
+  // ordem dos cartões: campo "ordem" da ficha (menor primeiro; sem o campo = 100), depois o nome da pasta
+  const ordem = (f) => (Number.isFinite(+f.ordem) && f.ordem !== null && f.ordem !== '' ? +f.ordem : 100);
+  lista.sort((a, b) => ordem(a) - ordem(b) || a.pastaNome.localeCompare(b.pastaNome));
   // ids repetidos: o segundo ganha o nome da pasta
   const vistos = new Set();
   for (const f of lista) {
@@ -116,7 +119,7 @@ function salvarFicha(id, dados) {
   const atual = obter(id);
   if (!atual) throw new Error(`Simulador ${id} não encontrado`);
   const campos = ['id', 'nome', 'fabricante', 'tipo', 'versao', 'descricao', 'protocolos', 'papel', 'iniciar', 'web',
-    'rede', 'variaveis', 'arquivos', 'preservarAoAtualizar', 'aprender', 'cor', 'icone', 'modos', 'remoto', 'pacote'];
+    'rede', 'variaveis', 'arquivos', 'preservarAoAtualizar', 'aprender', 'cor', 'icone', 'modos', 'remoto', 'pacote', 'ordem'];
   const ficha = {};
   for (const c of campos) if (dados[c] !== undefined) ficha[c] = dados[c];
   ficha.id = id;   // o id não muda pela tela

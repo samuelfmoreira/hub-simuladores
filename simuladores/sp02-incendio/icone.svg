@@ -1,94 +1,85 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240" role="img" aria-label="Sistema de incêndio com soft-starter SSW-05">
   <defs>
-    <linearGradient id="fundo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#454b54"/><stop offset="1" stop-color="#262a30"/></linearGradient>
-    <linearGradient id="faixa" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d23b2e"/><stop offset="1" stop-color="#a51f17"/></linearGradient>
-    <linearGradient id="chama" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#e5261b"/><stop offset=".55" stop-color="#ff7a1a"/><stop offset="1" stop-color="#ffc23d"/></linearGradient>
-    <linearGradient id="chama2" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ffb02e"/><stop offset="1" stop-color="#fff2a8"/></linearGradient>
-    <linearGradient id="tubo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f05a4a"/><stop offset=".5" stop-color="#d0281c"/><stop offset="1" stop-color="#9b1a12"/></linearGradient>
-    <linearGradient id="tuboV" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f05a4a"/><stop offset=".5" stop-color="#d0281c"/><stop offset="1" stop-color="#9b1a12"/></linearGradient>
-    <linearGradient id="motor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b82d6"/><stop offset=".5" stop-color="#1f5fae"/><stop offset="1" stop-color="#143f78"/></linearGradient>
-    <linearGradient id="corpo" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#d7dade"/><stop offset=".5" stop-color="#eef0f2"/><stop offset="1" stop-color="#c3c7ce"/></linearGradient>
-    <radialGradient id="led"><stop offset="0" stop-color="#d8ffe3"/><stop offset=".5" stop-color="#3fe06a"/><stop offset="1" stop-color="#1c9a43"/></radialGradient>
-    <clipPath id="canto"><rect width="512" height="512" rx="76"/></clipPath>
+    <linearGradient id="tb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#EE5A4B"/><stop offset=".5" stop-color="#D2382C"/><stop offset="1" stop-color="#A3241B"/></linearGradient>
+    <linearGradient id="tbv" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#EE5A4B"/><stop offset=".5" stop-color="#D2382C"/><stop offset="1" stop-color="#A3241B"/></linearGradient>
+    <radialGradient id="vol" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#F06A5B"/><stop offset=".6" stop-color="#D2382C"/><stop offset="1" stop-color="#9C2219"/></radialGradient>
+    <linearGradient id="mot" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4A8BD8"/><stop offset=".45" stop-color="#2463B3"/><stop offset="1" stop-color="#173F78"/></linearGradient>
+    <linearGradient id="corpo" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#DCDFE2"/><stop offset=".5" stop-color="#F3F4F5"/><stop offset="1" stop-color="#C9CDD3"/></linearGradient>
+    <linearGradient id="ch" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#E5261B"/><stop offset=".55" stop-color="#FF7A1A"/><stop offset="1" stop-color="#FFC23D"/></linearGradient>
+    <linearGradient id="ch2" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#FFB02E"/><stop offset="1" stop-color="#FFF2A8"/></linearGradient>
+    <radialGradient id="led"><stop offset="0" stop-color="#E4FFEA"/><stop offset=".5" stop-color="#3FE06A"/><stop offset="1" stop-color="#1C9A43"/></radialGradient>
   </defs>
-  <g clip-path="url(#canto)">
-    <rect width="512" height="512" fill="url(#fundo)"/>
-    <!-- título -->
-    <text x="256" y="66" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="35" letter-spacing="1" fill="#ffffff">SISTEMA DE INCÊNDIO</text>
-    <rect x="40" y="84" width="432" height="3" rx="1.5" fill="#d23b2e" opacity=".9"/>
 
-    <!-- ===== sistema de incêndio ===== -->
-    <!-- chama -->
-    <path d="M78 214 C38 196 34 150 62 120 C62 142 74 150 82 150 C74 124 86 100 110 92 C102 118 120 132 128 150 C134 140 132 128 128 120 C152 140 158 182 132 204 C122 212 100 218 78 214 Z" fill="url(#chama)"/>
-    <path d="M90 210 C72 200 72 178 84 166 C86 178 94 182 98 182 C96 168 102 156 114 150 C112 166 124 176 124 190 C124 204 108 214 90 210 Z" fill="url(#chama2)"/>
-    <!-- tubulação: subida da bomba e barrilete -->
-    <rect x="131" y="214" width="20" height="104" fill="url(#tuboV)"/>
-    <rect x="131" y="202" width="176" height="20" rx="4" fill="url(#tubo)"/>
-    <circle cx="141" cy="212" r="13" fill="#c42a1e"/>
-    <!-- manômetro -->
-    <rect x="214" y="176" width="6" height="28" fill="#8a9099"/>
-    <circle cx="217" cy="160" r="27" fill="#f4f4f1" stroke="#8a9099" stroke-width="5"/>
-    <path d="M198 168 A21 21 0 0 1 236 168" fill="none" stroke="#d23b2e" stroke-width="4"/>
-    <line x1="217" y1="160" x2="231" y2="148" stroke="#262a30" stroke-width="3.5" stroke-linecap="round"/>
-    <circle cx="217" cy="160" r="3.5" fill="#262a30"/>
-    <!-- registro (volante) -->
-    <rect x="276" y="196" width="18" height="32" rx="3" fill="#b8231a"/>
-    <rect x="283" y="178" width="4" height="20" fill="#8a9099"/>
-    <ellipse cx="285" cy="176" rx="20" ry="6" fill="none" stroke="#c7ccd3" stroke-width="5"/>
-    <!-- base, bomba e motor -->
-    <rect x="96" y="374" width="214" height="12" rx="3" fill="#7d838c"/>
-    <circle cx="141" cy="340" r="32" fill="url(#tubo)"/>
-    <circle cx="141" cy="340" r="12" fill="#9b1a12"/>
-    <rect x="128" y="300" width="26" height="12" fill="#b8231a"/>
-    <rect x="172" y="333" width="16" height="14" fill="#7d838c"/>
-    <rect x="186" y="312" width="114" height="58" rx="10" fill="url(#motor)"/>
-    <g stroke="#0f325f" stroke-width="2.5" opacity=".7">
-      <line x1="200" y1="318" x2="200" y2="364"/><line x1="214" y1="318" x2="214" y2="364"/><line x1="228" y1="318" x2="228" y2="364"/>
-      <line x1="242" y1="318" x2="242" y2="364"/><line x1="256" y1="318" x2="256" y2="364"/><line x1="270" y1="318" x2="270" y2="364"/>
-    </g>
-    <rect x="232" y="302" width="26" height="12" rx="2" fill="#174a8c"/>
-    <rect x="196" y="368" width="12" height="8" fill="#5f656e"/><rect x="276" y="368" width="12" height="8" fill="#5f656e"/>
+  <!-- sombras no piso -->
+  <ellipse cx="116" cy="214" rx="92" ry="7" fill="#000" opacity=".16"/>
+  <ellipse cx="257" cy="218" rx="44" ry="6" fill="#000" opacity=".16"/>
 
-    <!-- cabo: saída da SSW-05 (U/V/W) até o motor -->
-    <path d="M405 404 C405 420 336 420 300 350" fill="none" stroke="#1d2024" stroke-width="9" stroke-linecap="round"/>
-    <path d="M405 404 C405 420 336 420 300 350" fill="none" stroke="#3a3f46" stroke-width="4" stroke-linecap="round"/>
+  <!-- chama -->
+  <path d="M34 104 C14 95 12 72 26 57 C26 68 32 72 36 72 C32 59 38 47 50 43 C46 56 55 63 59 72 C62 67 61 61 59 57 C71 67 74 88 61 99 C56 103 45 106 34 104 Z" fill="url(#ch)"/>
+  <path d="M40 102 C31 97 31 86 37 80 C38 86 42 88 44 88 C43 81 46 75 52 72 C51 80 57 85 57 92 C57 99 49 104 40 102 Z" fill="url(#ch2)"/>
 
-    <!-- ===== SSW-05 Plus ===== -->
-    <rect x="342" y="98" width="126" height="310" rx="8" fill="#17478a"/>
-    <rect x="336" y="104" width="138" height="300" rx="9" fill="url(#corpo)" stroke="#a7acb5" stroke-width="2"/>
-    <text x="405" y="124" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="14" fill="#2b2f33">SSW-05</text>
-    <!-- bornes de entrada -->
-    <g fill="#2b2f33"><circle cx="360" cy="146" r="13"/><circle cx="405" cy="146" r="13"/><circle cx="450" cy="146" r="13"/></g>
-    <g fill="#6b7078"><circle cx="360" cy="146" r="6"/><circle cx="405" cy="146" r="6"/><circle cx="450" cy="146" r="6"/></g>
-    <!-- aletas -->
-    <g fill="#9aa0aa"><path d="M350 166 h10 l-7 20 h-10 z"/><path d="M366 166 h10 l-7 20 h-10 z"/><path d="M382 166 h10 l-7 20 h-10 z"/></g>
-    <g fill="#b9bec6"><rect x="404" y="174" width="14" height="6"/><rect x="422" y="174" width="14" height="6"/><rect x="440" y="174" width="14" height="6"/></g>
-    <!-- tampa aberta: trimpots e dip-switch -->
-    <rect x="344" y="194" width="66" height="160" rx="3" fill="#cfd3d9" stroke="#a7acb5" stroke-width="1.5"/>
-    <g fill="#f8f8f6" stroke="#55595f" stroke-width="2">
-      <circle cx="362" cy="268" r="11"/><circle cx="392" cy="268" r="11"/><circle cx="362" cy="324" r="11"/><circle cx="392" cy="324" r="11"/>
-    </g>
-    <g stroke="#55595f" stroke-width="2.5" stroke-linecap="round">
-      <line x1="356" y1="262" x2="368" y2="274"/><line x1="368" y1="262" x2="356" y2="274"/>
-      <line x1="386" y1="262" x2="398" y2="274"/><line x1="398" y1="262" x2="386" y2="274"/>
-      <line x1="356" y1="318" x2="368" y2="330"/><line x1="368" y1="318" x2="356" y2="330"/>
-      <line x1="386" y1="318" x2="398" y2="330"/><line x1="398" y1="318" x2="386" y2="330"/>
-    </g>
-    <rect x="364" y="204" width="24" height="42" rx="2" fill="#f6f6f3" stroke="#888" stroke-width="1"/>
-    <g fill="#2b2f33"><rect x="378" y="207" width="7" height="5"/><rect x="378" y="214" width="7" height="5"/><rect x="378" y="221" width="7" height="5"/><rect x="378" y="228" width="7" height="5"/><rect x="378" y="235" width="7" height="5"/><rect x="367" y="241" width="7" height="3"/></g>
-    <!-- LEDs de proteção e de estado -->
-    <g fill="#3a3d42"><rect x="420" y="204" width="12" height="7" rx="1"/><rect x="420" y="217" width="12" height="7" rx="1"/><rect x="420" y="230" width="12" height="7" rx="1"/><rect x="420" y="243" width="12" height="7" rx="1"/><rect x="420" y="256" width="12" height="7" rx="1"/></g>
-    <g fill="#9aa0aa"><rect x="437" y="206" width="26" height="3"/><rect x="437" y="219" width="26" height="3"/><rect x="437" y="232" width="26" height="3"/><rect x="437" y="245" width="26" height="3"/><rect x="437" y="258" width="26" height="3"/></g>
-    <circle cx="430" cy="290" r="10" fill="#3fe06a" opacity=".35"/>
-    <circle cx="430" cy="290" r="6.5" fill="url(#led)"/>
-    <rect x="442" y="288" width="22" height="4" fill="#9aa0aa"/>
-    <rect x="420" y="312" width="44" height="34" rx="4" fill="#e6e8eb" stroke="#a7acb5" stroke-width="1.5"/>
-    <!-- bornes de saída (U/V/W) -->
-    <g fill="#2b2f33"><circle cx="360" cy="380" r="13"/><circle cx="405" cy="380" r="13"/><circle cx="450" cy="380" r="13"/></g>
-    <g fill="#6b7078"><circle cx="360" cy="380" r="6"/><circle cx="405" cy="380" r="6"/><circle cx="450" cy="380" r="6"/></g>
+  <!-- tubulação: subida da bomba e barrilete -->
+  <rect x="64" y="84" width="13" height="74" fill="url(#tbv)"/>
+  <rect x="64" y="76" width="134" height="13" rx="3" fill="url(#tb)"/>
+  <circle cx="70.5" cy="82.5" r="9" fill="#C42F23"/>
+  <rect x="62" y="104" width="17" height="5" rx="1.5" fill="#A3241B"/>
+  <!-- manômetro -->
+  <rect x="117" y="60" width="4" height="17" fill="#7C8689"/>
+  <circle cx="119" cy="49" r="15" fill="#F7F7F4" stroke="#7C8689" stroke-width="3.5"/>
+  <path d="M108 54 A12 12 0 0 1 130 54" fill="none" stroke="#D9473B" stroke-width="2.6"/>
+  <line x1="119" y1="49" x2="127" y2="42" stroke="#2B3134" stroke-width="2.4" stroke-linecap="round"/>
+  <circle cx="119" cy="49" r="2.2" fill="#2B3134"/>
+  <!-- registro com volante -->
+  <rect x="180" y="72" width="13" height="22" rx="2.5" fill="#B8291F"/>
+  <rect x="185" y="58" width="3" height="15" fill="#7C8689"/>
+  <ellipse cx="186.5" cy="57" rx="13" ry="4" fill="none" stroke="#B9C0C4" stroke-width="3.5"/>
 
-    <!-- faixa: + SOFT SSW-05 -->
-    <rect x="0" y="428" width="512" height="84" fill="url(#faixa)"/>
-    <text x="256" y="486" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="44" letter-spacing="1" fill="#ffffff">+ SOFT SSW-05</text>
+  <!-- base, bomba e motor -->
+  <rect x="38" y="196" width="160" height="9" rx="2" fill="#7C8689"/>
+  <rect x="38" y="203" width="160" height="3" rx="1.5" fill="#5E676B"/>
+  <circle cx="71" cy="174" r="23" fill="url(#vol)"/>
+  <circle cx="71" cy="174" r="8.5" fill="#9C2219"/>
+  <circle cx="71" cy="174" r="3" fill="#7C8689"/>
+  <rect x="61" y="150" width="20" height="9" fill="#B8291F"/>
+  <rect x="94" y="168" width="12" height="11" fill="#7C8689"/>
+  <rect x="104" y="152" width="86" height="44" rx="7" fill="url(#mot)"/>
+  <g stroke="#123766" stroke-width="2" opacity=".55">
+    <line x1="114" y1="157" x2="114" y2="191"/><line x1="124" y1="157" x2="124" y2="191"/><line x1="134" y1="157" x2="134" y2="191"/>
+    <line x1="144" y1="157" x2="144" y2="191"/><line x1="154" y1="157" x2="154" y2="191"/><line x1="164" y1="157" x2="164" y2="191"/><line x1="174" y1="157" x2="174" y2="191"/>
   </g>
+  <rect x="138" y="143" width="20" height="10" rx="2" fill="#1B4C8E"/>
+  <rect x="112" y="194" width="10" height="4" fill="#5E676B"/><rect x="172" y="194" width="10" height="4" fill="#5E676B"/>
+
+  <!-- cabo: saída U/V/W da SSW-05 até o motor -->
+  <path d="M257 206 C257 226 214 226 191 180" fill="none" stroke="#161B1E" stroke-width="6" stroke-linecap="round"/>
+  <path d="M257 206 C257 226 214 226 191 180" fill="none" stroke="#3A4146" stroke-width="2.4" stroke-linecap="round"/>
+
+  <!-- SSW-05 Plus -->
+  <rect x="219" y="30" width="76" height="186" rx="5" fill="#1D4F96"/>
+  <rect x="223" y="26" width="68" height="190" rx="6" fill="url(#corpo)" stroke="#8E979A" stroke-width="1.4"/>
+  <text x="257" y="39" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="8" fill="#2B3134">SSW-05</text>
+  <g fill="#2B3134"><circle cx="236" cy="53" r="7"/><circle cx="257" cy="53" r="7"/><circle cx="278" cy="53" r="7"/></g>
+  <g fill="#6B7378"><circle cx="236" cy="53" r="3.2"/><circle cx="257" cy="53" r="3.2"/><circle cx="278" cy="53" r="3.2"/></g>
+  <g fill="#9AA0AA"><path d="M229 66 h6 l-4 11 h-6 z"/><path d="M238 66 h6 l-4 11 h-6 z"/><path d="M247 66 h6 l-4 11 h-6 z"/></g>
+  <g fill="#B9BEC6"><rect x="259" y="70" width="8" height="4"/><rect x="270" y="70" width="8" height="4"/></g>
+  <!-- tampa aberta: dip-switch e trimpots -->
+  <rect x="227" y="84" width="33" height="104" rx="2" fill="#D3D7DC" stroke="#A7ACB5" stroke-width="1"/>
+  <rect x="236" y="90" width="15" height="28" rx="1.5" fill="#F7F7F4" stroke="#8E979A" stroke-width=".8"/>
+  <g fill="#2B3134"><rect x="244" y="92.5" width="5" height="3.2"/><rect x="244" y="97.3" width="5" height="3.2"/><rect x="244" y="102.1" width="5" height="3.2"/><rect x="244" y="106.9" width="5" height="3.2"/><rect x="244" y="111.7" width="5" height="3.2"/></g>
+  <g fill="#FBFBF9" stroke="#55595F" stroke-width="1.4"><circle cx="236" cy="140" r="6.5"/><circle cx="251" cy="140" r="6.5"/><circle cx="236" cy="168" r="6.5"/><circle cx="251" cy="168" r="6.5"/></g>
+  <g stroke="#55595F" stroke-width="1.6" stroke-linecap="round">
+    <line x1="232.5" y1="136.5" x2="239.5" y2="143.5"/><line x1="239.5" y1="136.5" x2="232.5" y2="143.5"/>
+    <line x1="247.5" y1="136.5" x2="254.5" y2="143.5"/><line x1="254.5" y1="136.5" x2="247.5" y2="143.5"/>
+    <line x1="232.5" y1="164.5" x2="239.5" y2="171.5"/><line x1="239.5" y1="164.5" x2="232.5" y2="171.5"/>
+    <line x1="247.5" y1="164.5" x2="254.5" y2="171.5"/><line x1="254.5" y1="164.5" x2="247.5" y2="171.5"/>
+  </g>
+  <!-- LEDs -->
+  <g fill="#3A3D42"><rect x="265" y="90" width="7" height="4" rx=".8"/><rect x="265" y="98" width="7" height="4" rx=".8"/><rect x="265" y="106" width="7" height="4" rx=".8"/><rect x="265" y="114" width="7" height="4" rx=".8"/><rect x="265" y="122" width="7" height="4" rx=".8"/></g>
+  <g fill="#A7ACB5"><rect x="275" y="91" width="12" height="2"/><rect x="275" y="99" width="12" height="2"/><rect x="275" y="107" width="12" height="2"/><rect x="275" y="115" width="12" height="2"/><rect x="275" y="123" width="12" height="2"/></g>
+  <circle cx="269" cy="140" r="6.5" fill="#3FE06A" opacity=".3"/>
+  <circle cx="269" cy="140" r="4" fill="url(#led)"/>
+  <rect x="276" y="139" width="11" height="2.4" fill="#A7ACB5"/>
+  <rect x="265" y="154" width="22" height="20" rx="2.5" fill="#E7E9EC" stroke="#A7ACB5" stroke-width="1"/>
+  <g fill="#2B3134"><circle cx="236" cy="201" r="7"/><circle cx="257" cy="201" r="7"/><circle cx="278" cy="201" r="7"/></g>
+  <g fill="#6B7378"><circle cx="236" cy="201" r="3.2"/><circle cx="257" cy="201" r="3.2"/><circle cx="278" cy="201" r="3.2"/></g>
 </svg>

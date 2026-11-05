@@ -2,6 +2,12 @@
 
 As notas de cada versão aparecem no HUB quando a atualização é oferecida. Escreva a seção da versão nova antes do push.
 
+## 1.10.6
+- Ordem dos cartões em Dispositivos: o Sistema de Incêndio + Soft SSW-05 fica por último. A ficha dos simuladores ganhou o campo opcional "ordem" (menor primeiro; sem o campo, a ordem alfabética continua).
+
+## 1.10.5
+- Cartão do Sistema de Incêndio + Soft SSW-05 no mesmo estilo dos outros: desenho da casa de bombas (bomba, motor, manômetro, registro e chama) com a soft-starter SSW-05 ligada ao motor, sobre fundo claro. Embaixo, "cliente, sem IP próprio", como no Processo 3D.
+
 ## 1.10.4
 - Sistema de Incêndio + Soft SSW-05 atualizado para a versão 1.9.3: cada sessão (bancada) tem o seu próprio CLP virtual de teste; se a porta 502 estiver ocupada, o simulador escolhe sozinho a próxima livre e preenche IP e porta. O simulador também não deixa duas sessões conectarem no mesmo CLP.
 

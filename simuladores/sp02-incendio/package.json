@@ -1,6 +1,6 @@
 {
   "name": "simulador-incendio-modbus",
-  "version": "1.9.3",
+  "version": "1.9.3.2",
   "description": "Simulador Sistema de Incêndio — cliente Modbus TCP com fila priorizada, soft-starters WEG SSW-05 Plus e pressostatos KP",
   "main": "server.js",
   "scripts": {

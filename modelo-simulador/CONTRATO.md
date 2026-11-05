@@ -89,6 +89,7 @@ Também ajuda:
 | `preservarAoAtualizar` | arquivos e pastas mantidos ao importar uma versão nova |
 | `aprender` | aulas relacionadas, pelo id (`modbus-tcp`, `ethernetip-cip`, `arquivo-eds`, `redes-ip`, `diagnostico`) |
 | `cor` | cor de destaque do cartão e da ilustração |
+| `ordem` | opcional: posição do cartão em Dispositivos (menor primeiro). Sem o campo vale 100, e os empates seguem o nome da pasta. Ex.: o Sistema de Incêndio usa 900 para ficar por último |
 | `modos` | opcional: jeitos de iniciar, escolhidos na tela. Lista de `{ "id", "nome", "args", "plataformas": ["win32", "linux"], "requerRoot", "observacao" }`. Modos de outro sistema aparecem desativados. Ex.: TBEN-L com "Demonstração" e "PROFINET real" |
 | `remoto` | opcional: instância rodando em outra máquina (ex.: VM Linux). `{ "titulo", "texto", "urlPadrao" }`; o HUB guarda o endereço, verifica se está no ar e abre a tela |
 | `icone` | desenho do cartão: o nome de um arquivo `.png`/`.svg` da pasta do simulador (ex.: `"icone.png"`, fundo transparente; o CFW500 e o SCA06 usam o desenho da própria tela) ou uma ilustração do HUB: `inversor`, `servo`, `visao` (controlador com câmera), `processo`, `remoto-io` (bloco de I/O IP67), `modbus`, `clp`, `ihm`, `robo`, `sensor`, `generico`. Sem o campo, o HUB escolhe pelo `tipo`. O arquivo é mantido nas atualizações por .zip |
