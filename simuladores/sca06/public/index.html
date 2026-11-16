@@ -43,6 +43,7 @@ try { var u = new URL(location.href); if (u.searchParams.has('hubRestaurar')) { 
   <aside class="side">
     <nav class="tabs" role="tablist">
       <button role="tab" data-tab="scanner" aria-selected="true">Mestre</button>
+      <button role="tab" data-tab="ihm">IHM</button>
       <button role="tab" data-tab="hmi">SCA06</button>
       <button role="tab" data-tab="params">Parâmetros</button>
       <button role="tab" data-tab="missions">Missões</button>
@@ -117,6 +118,9 @@ try { var u = new URL(location.href); if (u.searchParams.has('hubRestaurar')) { 
       </div>
     </div>
 
+    <!-- ===================== IHM do painel (cliente Modbus TCP do CLP) ===================== -->
+    <div class="pane" data-pane="ihm" hidden><div id="ihmHost"></div></div>
+
     <!-- ===================== HMI ===================== -->
     <div class="pane" data-pane="hmi" hidden>
       <div id="paneHost"></div>
@@ -190,6 +194,7 @@ try { var u = new URL(location.href); if (u.searchParams.has('hubRestaurar')) { 
 <script src="app.js"></script>
 <script src="assistente-clp.js"></script>
 <script src="assistente-sca06.js"></script>
+<script src="ihm-servo.js"></script>
 <script src="divisorias.js"></script>
 </body>
 </html>

@@ -1,0 +1,23 @@
+{
+  "name": "estacao-bombeamento-sim",
+  "version": "0.12.1.3",
+  "description": "Simulador da estação de bombeamento TQ-01 (OPC UA, Altus XP325) — HUB de simuladores",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "demo": "node server/server.js --clp-falso 4840",
+    "clp-falso": "node server/fake/xp325-fake-server.js 4840",
+    "test": "node tools/test-sim.js tudo",
+    "test:fisica": "node tools/test-sim.js fisica",
+    "test:fila": "node tools/test-sim.js fila",
+    "test:opcua": "node tools/test-sim.js opcua"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "node-opcua": "^2.133.0",
+    "ws": "^8.18.0"
+  },
+  "private": true
+}

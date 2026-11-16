@@ -59,6 +59,8 @@ function verificarContrato(ficha, pasta) {
     // .js da raiz e os scripts citados nos argumentos (ex.: src/server.js)
     const arquivos = new Set(fs.readdirSync(pasta).filter((a) => a.endsWith('.js')));
     for (const a of todosArgs) if (/\.c?js$/.test(a)) arquivos.add(a);
+    // e o arquivo principal do package.json (ex.: "main": "server/server.js", quando a raiz só faz require dele)
+    try { const pkg = JSON.parse(fs.readFileSync(path.join(pasta, 'package.json'), 'utf8')); if (pkg.main && /\.c?js$/.test(pkg.main)) arquivos.add(pkg.main); } catch (_) { /* sem package.json */ }
     for (const a of arquivos) {
       const arq = path.join(pasta, a);
       if (fs.existsSync(arq)) fonte += fs.readFileSync(arq, 'utf8');

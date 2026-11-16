@@ -29,16 +29,21 @@
   }
 
   function etapas(modo) {
-    const ip = ipDoDrive(), o = ip.split('.').map(Number), pos = modo === 'pos';
+    const ip = ipDoDrive(), o = ip.split('.').map(Number), ihmM = modo === 'ihm', pos = modo === 'pos' || ihmM;
     const mudam = ['P0810', ...[192, 168, 0, 10].map((f, k) => (o[k] !== f ? 'P081' + (k + 1) : null)).filter(Boolean)].join(', ');
     const extras = pos
       ? [[820, 52, 'Palavra de entrada #5', 'o drive manda a fração de volta da posição (P0052, 16384 = 1 volta)'], [821, 53, 'Palavra de entrada #6', 'o número de voltas (P0053)'],
         [822, 6, 'Palavra de entrada #7', 'o estado do servo (P0006: 1 = habilitado, 2 = falha…)'], [823, 48, 'Palavra de entrada #8', 'o erro de lag (P0048): quanto falta para chegar'],
         [835, 99, 'Palavra de saída #5', 'o CLP habilita o drive (P0099: 2 habilita, 0 desabilita)'], [836, 1079, 'Palavra de saída #6', 'o CLP dispara o movimento (P01079: pulso 0 → 1)'],
-        [837, 1171, 'Palavra de saída #7', 'o CLP escreve o destino do movimento 1 (P01171, fração de volta)'], [838, 219, 'Palavra de saída #8', 'o CLP reseta falhas (P0219: pulso 0 → 1)']]
+        [837, 1171, 'Palavra de saída #7', 'o CLP escreve o destino do movimento 1 (P01171, fração de volta)'], [838, 219, 'Palavra de saída #8', 'o CLP reseta falhas (P0219: pulso 0 → 1)'],
+        ...(ihmM ? [[839, 1151, 'Palavra de saída #9', 'o CLP escolhe o tipo do movimento (P01151: 2 velocidade, 1 torque, 5 absoluto, 3 relativo)'],
+          [840, 1191, 'Palavra de saída #10', 'velocidade (rpm) ou corrente (décimos de A) do movimento (P01191)'],
+          [841, 1181, 'Palavra de saída #11', 'voltas do destino absoluto (P01181)']]
+          : [[839, 0, 'Palavra de saída #9', 'sem palavra extra'], [840, 0, 'Palavra de saída #10', 'sem palavra extra'], [841, 0, 'Palavra de saída #11', 'sem palavra extra']])]
       : [[820, 0, 'Palavra de entrada #5', 'sem palavra extra'], [821, 0, 'Palavra de entrada #6', 'sem palavra extra'], [822, 0, 'Palavra de entrada #7', 'sem palavra extra'],
         [823, 0, 'Palavra de entrada #8', 'sem palavra extra'], [835, 0, 'Palavra de saída #5', 'sem palavra extra'], [836, 0, 'Palavra de saída #6', 'sem palavra extra'],
-        [837, 0, 'Palavra de saída #7', 'sem palavra extra'], [838, 0, 'Palavra de saída #8', 'sem palavra extra']];
+        [837, 0, 'Palavra de saída #7', 'sem palavra extra'], [838, 0, 'Palavra de saída #8', 'sem palavra extra'],
+        [839, 0, 'Palavra de saída #9', 'sem palavra extra'], [840, 0, 'Palavra de saída #10', 'sem palavra extra'], [841, 0, 'Palavra de saída #11', 'sem palavra extra']];
     return [
       { titulo: 'Liberar a senha',
         porque: 'O SCA06 protege os parâmetros com <b>senha</b>: sem ela, a HMI só mostra os valores e recusa alterações. Com <b>P0000 = 5</b> os parâmetros podem ser alterados.',
@@ -88,10 +93,12 @@
           ] },
       ] : []),
       { titulo: 'O que vai nas palavras de troca',
-        porque: pos
+        porque: ihmM
+          ? 'Com a IHM, o CLP troca de modo sem reconfigurar o drive: além das 4 palavras de posição (habilitação, disparo, destino e reset), ele escreve o <b>tipo do movimento</b> (P01151), a <b>velocidade ou corrente</b> (P01191) e as <b>voltas do destino</b> (P01181). A conexão no CLP passa a ter <b>8 palavras de entrada (16 bytes) e 11 de saída (22 bytes)</b>: Exclusive Owner, IHM (8 entrada / 11 saida).'
+          : pos
           ? 'A conexão sempre troca <b>4 palavras fixas</b> em cada sentido (no modo 3 as saídas fixas são ignoradas). Para posicionar, o CLP precisa de mais 4 em cada sentido, e cada uma aponta para um parâmetro: nas <b>saídas</b> (P0835…P0838) o CLP escreve a habilitação, o disparo, o destino e o reset; nas <b>entradas</b> (P0820…P0823) o drive manda a posição (fração e voltas), o estado e o erro de lag. A conexão no CLP passa a ter <b>8 palavras (16 bytes) em cada sentido</b>.'
           : 'A conexão troca <b>4 palavras fixas</b> em cada sentido: no CLP, 8 bytes de entrada e 8 de saída. As palavras extras (P0820…P0823 e P0835…P0838) ficam <b>zeradas</b>: assim, se o drive já tinha sido configurado para posição, a conexão volta a ter 4 palavras.',
-        hmi: pos ? '<b>P00820</b> = 52, P00821 = 53, P00822 = 6, P00823 = 48 · <b>P00835</b> = 99, P00836 = 1079, P00837 = 1171, P00838 = 219.'
+        hmi: pos ? '<b>P00820</b> = 52, P00821 = 53, P00822 = 6, P00823 = 48 · <b>P00835</b> = 99, P00836 = 1079, P00837 = 1171, P00838 = 219' + (ihmM ? ', <b>P00839</b> = 1151, P00840 = 1191, P00841 = 1181.' : ', P00839…P00841 = 0.')
           : 'confira <b>P00820</b>…P00823 e <b>P00835</b>…P00838 = 0 (de fábrica já vêm zerados).',
         itens: extras.map(([n, v, nome, faz]) => ({ n, v, nome, faz })) },
       { titulo: 'Segurança se a comunicação cair',
@@ -106,15 +113,16 @@
   }
 
   function resumo(modo) {
-    const ip = ipDoDrive(), pos = modo === 'pos';
+    const ip = ipDoDrive(), ihmM = modo === 'ihm', pos = modo === 'pos' || ihmM;
     const l = (a, b) => `<tr><td>${a}</td><td>${b}</td></tr>`;
-    return `<p class="aclp-porque">O drive está pronto. No CODESYS, configure o SCA06 com estes valores (o passo a passo completo está no <b>Guia</b> do HUB, ${pos ? 'Parte 8' : 'Partes 2 e 3'}):</p>
+    return `<p class="aclp-porque">O drive está pronto. No CODESYS, configure o SCA06 com estes valores (o passo a passo completo está no <b>Guia</b> do HUB, ${ihmM ? 'Parte 9' : pos ? 'Parte 8' : 'Partes 2 e 3'}):</p>
       <table><tbody>
       ${l('Placa de rede do CLP (Ethernet)', '<b>SIM-HUB (192.168.100.10)</b>')}
       ${l('Arquivo EDS', '<b>0355002B00060200_SCA06_SIM.eds</b> (no HUB: Dispositivos → Servomotor → Arquivos para o CLP)')}
       ${l('IP do SCA06 (aba General)', `<b>${ip}</b>`)}
-      ${l('Conexão', pos ? '<b>Exclusive Owner, 8 palavras (posicao)</b>' : '<b>Exclusive Owner, 4 palavras (velocidade e torque)</b>')}
-      ${l('O→T e T→O', pos ? '<b>16 bytes</b> em cada sentido' : '<b>8 bytes</b> em cada sentido')}
+      ${l('Conexão', ihmM ? '<b>Exclusive Owner, IHM (8 entrada / 11 saida)</b>' : pos ? '<b>Exclusive Owner, 8 palavras (posicao)</b>' : '<b>Exclusive Owner, 4 palavras (velocidade e torque)</b>')}
+      ${l('O→T e T→O', ihmM ? 'O→T <b>22 bytes</b> (saída) · T→O <b>16 bytes</b> (entrada)' : pos ? '<b>16 bytes</b> em cada sentido' : '<b>8 bytes</b> em cada sentido')}
+      ${ihmM ? l('Programa', '<b>PRG_IHM_Servo</b> (Guia, Parte 9) · ou, para testar sem o CODESYS, aba <b>IHM</b> → <b>Ligar CLP de demonstração</b>') : ''}
       ${l('RPI', '10 a 30 ms')}
       ${pos ? l('Para habilitar', '5ª palavra de saída (P0099) = <b>2</b>; 0 desabilita') + l('Destino', '7ª palavra de saída (P01171): fração de volta, <b>16384 = 1 volta</b> (90° = 4096)') + l('Disparar', '6ª palavra de saída (P01079): pulso <b>0 → 1</b>') + l('Posição atual', '5ª e 6ª palavras de entrada: (P0053 + P0052 / 16384) × 360 = graus')
         : l('Para habilitar', 'bit 3 da 1ª palavra de saída (palavra de controle)') + l('Modo de controle (4ª palavra de saída)', '<b>1 = velocidade</b>, 0 = torque')}
@@ -132,6 +140,7 @@
       modos: [
         { id: 'vel', nome: 'Velocidade e torque', texto: 'O CLP diz quão rápido girar (rpm) ou com quanta força (A). No drive: P0202 = 6. No CLP: conexão de 4 palavras.' },
         { id: 'pos', nome: 'Posição (Função Posicionador)', texto: 'O CLP diz para onde o disco vai (ex.: 90°) e dispara o movimento. No drive: P0202 = 3, movimentos programados em parâmetros, sem ladder. No CLP: conexão de 8 palavras.' },
+        { id: 'ihm', nome: 'IHM (todos os modos)', texto: 'A IHM do painel escolhe velocidade, torque, posição absoluta ou pulso, sem reconfigurar o drive. No drive: P0202 = 3. No CLP: conexão de 8 entrada / 11 saída e o programa PRG_IHM_Servo (Guia, Parte 9).' },
       ],
       etapas, ler, fmt, resumo,
       gravar: async (n, v) => {

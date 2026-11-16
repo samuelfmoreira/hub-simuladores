@@ -12,9 +12,10 @@ const { ProcessSim, COILS, DISCRETE_INPUTS } = require('./process-sim');
 const DEFAULT_CONN = {
   host: '127.0.0.1',
   port: 502,
-  unitId: 1,
+  unitId: 255,
   coilBase: 0,          // endereço da 1ª coil (I0.0)
   diBase: 0,            // endereço da 1ª discrete input (Q0.0)
+  addrOffset: 0,        // deslocamento somado a todos os endereços Modbus (0 = sem offset; 1 = base-1)
   pollMs: 100,          // ciclo de leitura das saídas do CLP
   syncMs: 1000,         // reescrita periódica de todas as coils
   verifyMs: 3000,       // leitura de verificação (FC01)
@@ -119,6 +120,7 @@ class Session {
     if (cfg.unitId !== undefined) c.unitId = num(cfg.unitId, 0, 255, c.unitId);
     if (cfg.coilBase !== undefined) c.coilBase = num(cfg.coilBase, 0, 65535 - COILS.length, c.coilBase);
     if (cfg.diBase !== undefined) c.diBase = num(cfg.diBase, 0, 65535 - DISCRETE_INPUTS.length, c.diBase);
+    if (cfg.addrOffset !== undefined) c.addrOffset = num(cfg.addrOffset, 0, 1, c.addrOffset);
     if (cfg.pollMs !== undefined) c.pollMs = num(cfg.pollMs, 20, 5000, c.pollMs);
     if (cfg.syncMs !== undefined) c.syncMs = num(cfg.syncMs, 200, 60000, c.syncMs);
     if (cfg.verifyMs !== undefined) c.verifyMs = num(cfg.verifyMs, 500, 60000, c.verifyMs);
@@ -149,18 +151,21 @@ class Session {
   nCoils() { return COILS.length; }
 
   coilAddrs() {
-    const c = this.config, n = this.nCoils();
+    const c = this.config, n = this.nCoils(), off = c.addrOffset || 0;
+    let base;
     if (c.addrMode === 'table' && c.coilMap) {
-      const m = c.coilMap.slice(0, n);
-      while (m.length < n) m.push(Math.max(...m) + 1); // tabela antiga de 16 pontos
-      return m;
+      base = c.coilMap.slice(0, n);
+      while (base.length < n) base.push(Math.max(...base) + 1); // tabela antiga de 16 pontos
+    } else {
+      base = Array.from({ length: n }, (_, i) => c.coilBase + i);
     }
-    return Array.from({ length: n }, (_, i) => c.coilBase + i);
+    return base.map((a) => a + off); // offset aplicado ao endereço enviado no protocolo
   }
 
   diAddrs() {
-    const c = this.config;
-    return c.addrMode === 'table' && c.diMap ? c.diMap.slice() : DISCRETE_INPUTS.map((_, i) => c.diBase + i);
+    const c = this.config, off = c.addrOffset || 0;
+    const base = c.addrMode === 'table' && c.diMap ? c.diMap.slice() : DISCRETE_INPUTS.map((_, i) => c.diBase + i);
+    return base.map((a) => a + off);
   }
 
   setStatus(status, text) {
@@ -378,6 +383,19 @@ class Session {
     return { id: this.id, name: this.name, owner: this.owner, config: this.config, sim: this.sim.serialize() };
   }
 
+  /** Volta a sessão ao padrão de instalação: conexão, processo, softs, pressostatos e endereços. */
+  reset() {
+    this.disconnect();
+    this.config = Object.assign({}, DEFAULT_CONN);
+    this.sim = new ProcessSim({});
+    this.coils = this.sim.getCoils();
+    this.plcBits.fill(false);
+    this.logs = [];
+    for (const res of this.sse) send(res, 'logs', []);
+    this.log('ok', 'Sessão restaurada para o padrão de instalação.');
+    this.manager.scheduleSave();
+  }
+
   destroy() {
     this.userDisconnected = true;
     clearTimeout(this.reconnectTimer);
@@ -433,6 +451,14 @@ class SessionManager {
     this.sessions.set(id, s);
     this.scheduleSave();
     return s;
+  }
+
+  /** Como recém-instalado: apaga todas as sessões e cria só a "Bancada 01" com tudo no padrão. */
+  resetAll() {
+    for (const s of this.sessions.values()) s.destroy();
+    this.sessions.clear();
+    this.sessions.set('s1', new Session({ id: 's1', name: 'Bancada 01' }, this));
+    this.saveNow();
   }
 
   rename(id, name) {

@@ -58,6 +58,68 @@ As entradas e saídas integradas do XP325 já existem no projeto com os nomes do
 
 ## Parte 3 — Declarar as variáveis
 
+Este guia usa exatamente os nomes do seu projeto: **B_SEL1, B_SEL2, B1_MAN, B1_AUT …** para as entradas e **K_B1, K_B2, K_BJ, RAX1 … RAX8** para as saídas. O selo das bombas principais é feito na própria variável da contatora. A única variável interna é a memória **M_BJ_MAN** (o selo da jockey em manual), explicada na Parte 5.
+
+**3.0 — Forma direta (recomendada): variáveis no `UserPrg` e Modbus direto nelas**
+
+É o jeito mais simples: as variáveis ficam como `VAR` dentro do `UserPrg`, a lógica também, e o **MODBUS Symbol Server** liga cada variável a uma coil ou input status. Não precisa da `GVL_SIM` nem dos programas `SP02_Entradas` e `SP02_Saidas`.
+
+**1) Declare no `UserPrg`** as 27 variáveis do projeto **mais a memória `M_BJ_MAN`** (é a única que costuma faltar):
+
+```
+VAR
+    B_SEL1, B_SEL2                 : BOOL;  // seleção da bomba 01 / 02
+    B1_MAN, B1_AUT, B2_MAN, B2_AUT : BOOL;  // chaves Man/Auto das principais
+    BJ_MAN, BJ_AUT                 : BOOL;  // chave Man/Auto da jockey
+    B1_L, B1_D, B2_L, B2_D         : BOOL;  // botoeiras das principais (L = NA, D = NF)
+    BJ_L, BJ_D                     : BOOL;  // botoeiras da jockey
+    PJ, PB                         : BOOL;  // pressostatos (1 = pressão baixa)
+    K_B1, K_B2, K_BJ               : BOOL;  // contatoras
+    RAX1, RAX2, RAX3, RAX4         : BOOL;  // relés dos sinaleiros
+    RAX5, RAX6, RAX7, RAX8         : BOOL;
+    M_BJ_MAN                       : BOOL;  // memória: selo da jockey em manual
+END_VAR
+```
+
+**2) Desenhe as redes da Parte 5 no próprio `UserPrg`** (em Ladder).
+
+**3) Mapeie no MODBUS Symbol Server** (NET 1 → MODBUS Symbol Server → mapeamentos), na ordem abaixo. É a mesma ordem do simulador:
+
+| Variável | Tipo | Endereço no MasterTool |
+| --- | --- | --- |
+| `UserPrg.B_SEL1` | Coil | 1 |
+| `UserPrg.B_SEL2` | Coil | 2 |
+| `UserPrg.B1_MAN` | Coil | 3 |
+| `UserPrg.B1_AUT` | Coil | 4 |
+| `UserPrg.B2_MAN` | Coil | 5 |
+| `UserPrg.B2_AUT` | Coil | 6 |
+| `UserPrg.BJ_MAN` | Coil | 7 |
+| `UserPrg.BJ_AUT` | Coil | 8 |
+| `UserPrg.B1_L` | Coil | 9 |
+| `UserPrg.B1_D` | Coil | 10 |
+| `UserPrg.B2_L` | Coil | 11 |
+| `UserPrg.B2_D` | Coil | 12 |
+| `UserPrg.BJ_L` | Coil | 13 |
+| `UserPrg.BJ_D` | Coil | 14 |
+| `UserPrg.PJ` | Coil | 15 |
+| `UserPrg.PB` | Coil | 16 |
+| `UserPrg.K_B1` | Input Status | 1 |
+| `UserPrg.K_B2` | Input Status | 2 |
+| `UserPrg.K_BJ` | Input Status | 3 |
+| `UserPrg.RAX1` … `UserPrg.RAX8` | Input Status | 4 … 11 |
+
+A `M_BJ_MAN` **não** é mapeada: é interna do programa.
+
+**4) No simulador**, seção **Endereçamento Modbus**: modo **Contíguo**, 1ª coil `0`, 1ª entrada `0` e **Offset: Sem offset (base 0)**. O MasterTool conta a partir de 1: o endereço **1** dele é o endereço **0** do protocolo (por isso ele mostra `100001` para o input status 1). A coluna **No MasterTool** da tabela do simulador mostra exatamente esses números (1 a 16 e 1 a 11).
+
+**5) Teste de uma vez:** gire a seleção para **B01** no simulador e veja no MasterTool online se `UserPrg.B_SEL1` vai a **TRUE**.
+- Foi `B_SEL1`: está certo.
+- Foi outra variável, ou o diagnóstico do simulador mostra **Exceção Modbus 2**: troque o offset para **Offset +1 (base 1)**, clique em Aplicar endereços e teste de novo.
+
+**Bancada física também:** na forma direta o simulador escreve nas variáveis de entrada, então os bornes I00…I17 não são lidos. Se quiser que as saídas acionem a bancada real, acrescente no fim do `UserPrg`: `Q00 := K_B1; Q01 := K_B2; Q02 := K_BJ; Q03 := RAX1; … Q12 := RAX8;`. Para alternar entre bancada e simulador sem mexer no mapeamento, use a forma com `GVL_SIM` (itens 3.1 a 3.2 e Partes 4 e 6).
+
+**Forma alternativa, com troca entre simulador e bornes reais**
+
 **3.1 — Lista global de troca com o simulador**
 
 1. Botão direito em **Application → Acrescentar objeto → Lista de variáveis globais (GVL)**. Nome: `GVL_SIM`.
@@ -71,38 +133,47 @@ VAR_GLOBAL
 END_VAR
 ```
 
-**3.2 — Lista global do processo**
+**3.2 — As variáveis do programa**
 
-Crie outra GVL chamada `GVL_SP02`. Estas são as variáveis que a lógica usa. Elas não dependem de onde o sinal vem.
+São as 27 variáveis do seu projeto (16 entradas + 11 saídas) mais **uma memória interna**. Declare numa GVL chamada `GVL_SP02`, como abaixo:
 
 ```
 VAR_GLOBAL
-    // Entradas (sempre lidas de SP02_Entradas)
-    xSelB1   : BOOL;  // I00 - chave de seleção em Bomba 01
-    xSelB2   : BOOL;  // I01 - chave de seleção em Bomba 02
-    xB1Man   : BOOL;  // I02 - Bomba 01 em manual
-    xB1Aut   : BOOL;  // I03 - Bomba 01 em automático
-    xB2Man   : BOOL;  // I04 - Bomba 02 em manual
-    xB2Aut   : BOOL;  // I05 - Bomba 02 em automático
-    xBJMan   : BOOL;  // I06 - Jockey em manual
-    xBJAut   : BOOL;  // I07 - Jockey em automático
-    xB1_L    : BOOL;  // I10 - liga Bomba 01 (NA)
-    xB1_D    : BOOL;  // I11 - desliga Bomba 01 (NF: 1 = solto)
-    xB2_L    : BOOL;  // I12 - liga Bomba 02 (NA)
-    xB2_D    : BOOL;  // I13 - desliga Bomba 02 (NF)
-    xBJ_L    : BOOL;  // I14 - liga jockey (NA)
-    xBJ_D    : BOOL;  // I15 - desliga jockey (NF)
-    xPJ      : BOOL;  // I16 - pressostato jockey (1 = pressão baixa)
-    xPB      : BOOL;  // I17 - pressostato principais (1 = pressão baixa)
-    // Memórias da lógica
-    xBomba1     : BOOL;  // Bomba 01 deve estar ligada
-    xBomba2     : BOOL;  // Bomba 02 deve estar ligada
-    xJockeyMan  : BOOL;  // jockey ligada em manual
-    xJockeyAut  : BOOL;  // jockey ligada em automático
+    // ---- Entradas
+    B_SEL1 : BOOL;  // I00 - Seleção da bomba 01
+    B_SEL2 : BOOL;  // I01 - Seleção da bomba 02
+    B1_MAN : BOOL;  // I02 - Bomba 01 em manual
+    B1_AUT : BOOL;  // I03 - Bomba 01 em automático
+    B2_MAN : BOOL;  // I04 - Bomba 02 em manual
+    B2_AUT : BOOL;  // I05 - Bomba 02 em automático
+    BJ_MAN : BOOL;  // I06 - Jockey em manual
+    BJ_AUT : BOOL;  // I07 - Jockey em automático
+    B1_L   : BOOL;  // I10 - Liga bomba 01 (NA)
+    B1_D   : BOOL;  // I11 - Desliga bomba 01 (NF: 1 = solto)
+    B2_L   : BOOL;  // I12 - Liga bomba 02 (NA)
+    B2_D   : BOOL;  // I13 - Desliga bomba 02 (NF)
+    BJ_L   : BOOL;  // I14 - Liga jockey (NA)
+    BJ_D   : BOOL;  // I15 - Desliga jockey (NF)
+    PJ     : BOOL;  // I16 - Pressostato da jockey (1 = pressão baixa)
+    PB     : BOOL;  // I17 - Pressostato das principais (1 = pressão baixa)
+    // ---- Saídas
+    K_B1   : BOOL;  // Q00 - Contatora bomba 01 (DI1 da SS_01)
+    K_B2   : BOOL;  // Q01 - Contatora bomba 02 (DI1 da SS_02)
+    K_BJ   : BOOL;  // Q02 - Contatora bomba jockey
+    RAX1   : BOOL;  // Q03 - LB1_S bomba 01 selecionada
+    RAX2   : BOOL;  // Q04 - LB2_S bomba 02 selecionada
+    RAX3   : BOOL;  // Q05 - LB1_L bomba 01 ligada
+    RAX4   : BOOL;  // Q06 - LB2_L bomba 02 ligada
+    RAX5   : BOOL;  // Q07 - LBJ_L jockey ligada
+    RAX6   : BOOL;  // Q10 - LB1_D bomba 01 desligada
+    RAX7   : BOOL;  // Q11 - LB2_D bomba 02 desligada
+    RAX8   : BOOL;  // Q12 - LBJ_D jockey desligada
+    // ---- Memória interna (não é entrada nem saída)
+    M_BJ_MAN : BOOL;  // selo da jockey em manual
 END_VAR
 ```
 
-Os comentários com o número do borne ajudam muito na monitoração online e na correção das provas.
+**Se no seu projeto elas estão como `VAR` (locais), dentro de um programa só:** tudo bem, os nomes continuam os mesmos. Nesse caso, faça as Partes 4, 5 e 6 **no mesmo programa** (por exemplo, o `UserPrg`): primeiro o trecho das entradas, depois as redes da lógica e por último o das saídas. Variáveis `VAR` não são vistas por outros programas; por isso a GVL é necessária quando se separa em três programas.
 
 ## Parte 4 — Programa SP02_Entradas (escolha simulador ou bornes)
 
@@ -112,19 +183,19 @@ Os comentários com o número do borne ajudam muito na monitoração online e na
 
 ```
 IF GVL_SIM.xUsarSimulador THEN
-    xSelB1 := GVL_SIM.xSimIn[0];   xSelB2 := GVL_SIM.xSimIn[1];
-    xB1Man := GVL_SIM.xSimIn[2];   xB1Aut := GVL_SIM.xSimIn[3];
-    xB2Man := GVL_SIM.xSimIn[4];   xB2Aut := GVL_SIM.xSimIn[5];
-    xBJMan := GVL_SIM.xSimIn[6];   xBJAut := GVL_SIM.xSimIn[7];
-    xB1_L  := GVL_SIM.xSimIn[8];   xB1_D  := GVL_SIM.xSimIn[9];
-    xB2_L  := GVL_SIM.xSimIn[10];  xB2_D  := GVL_SIM.xSimIn[11];
-    xBJ_L  := GVL_SIM.xSimIn[12];  xBJ_D  := GVL_SIM.xSimIn[13];
-    xPJ    := GVL_SIM.xSimIn[14];  xPB    := GVL_SIM.xSimIn[15];
+    B_SEL1 := GVL_SIM.xSimIn[0];   B_SEL2 := GVL_SIM.xSimIn[1];
+    B1_MAN := GVL_SIM.xSimIn[2];   B1_AUT := GVL_SIM.xSimIn[3];
+    B2_MAN := GVL_SIM.xSimIn[4];   B2_AUT := GVL_SIM.xSimIn[5];
+    BJ_MAN := GVL_SIM.xSimIn[6];   BJ_AUT := GVL_SIM.xSimIn[7];
+    B1_L   := GVL_SIM.xSimIn[8];   B1_D   := GVL_SIM.xSimIn[9];
+    B2_L   := GVL_SIM.xSimIn[10];  B2_D   := GVL_SIM.xSimIn[11];
+    BJ_L   := GVL_SIM.xSimIn[12];  BJ_D   := GVL_SIM.xSimIn[13];
+    PJ     := GVL_SIM.xSimIn[14];  PB     := GVL_SIM.xSimIn[15];
 ELSE
-    xSelB1 := I00;  xSelB2 := I01;  xB1Man := I02;  xB1Aut := I03;
-    xB2Man := I04;  xB2Aut := I05;  xBJMan := I06;  xBJAut := I07;
-    xB1_L  := I10;  xB1_D  := I11;  xB2_L  := I12;  xB2_D  := I13;
-    xBJ_L  := I14;  xBJ_D  := I15;  xPJ    := I16;  xPB    := I17;
+    B_SEL1 := I00;  B_SEL2 := I01;  B1_MAN := I02;  B1_AUT := I03;
+    B2_MAN := I04;  B2_AUT := I05;  BJ_MAN := I06;  BJ_AUT := I07;
+    B1_L   := I10;  B1_D   := I11;  B2_L   := I12;  B2_D   := I13;
+    BJ_L   := I14;  BJ_D   := I15;  PJ     := I16;  PB     := I17;
 END_IF
 ```
 
@@ -139,7 +210,7 @@ Com `xUsarSimulador = TRUE` o painel do simulador comanda o CLP. Para a bancada 
 
 **5.2 — Como desenhar no editor (vale para todas as redes)**
 
-- **Contato em série**: arraste **Contato** da caixa de ferramentas para cima da linha da rede. Clique em `???` acima dele e digite o nome da variável (ex.: `xB1Man`). O MasterTool sugere os nomes enquanto você digita.
+- **Contato em série**: arraste **Contato** da caixa de ferramentas para cima da linha da rede. Clique em `???` acima dele e digite o nome da variável (ex.: `B1_MAN`). O MasterTool sugere os nomes enquanto você digita.
 - **Contato negado** (NF no desenho): igual, usando **Contato negado**.
 - **Ramo em paralelo**: clique com o botão direito num contato e escolha **Inserir contato paralelo (abaixo)**. Para um ramo com dois contatos em série, insira o paralelo e depois arraste outro contato para dentro desse ramo.
 - **Bobina**: arraste **Bobina** para a ponta direita da rede e digite a variável.
@@ -150,142 +221,138 @@ Os nomes das ferramentas podem variar um pouco entre versões do MasterTool; os 
 
 **5.3 — Redes 1 e 2: sinaleiros de seleção**
 
-A chave de seleção em B01 acende LB1_S (relé RAX1, saída Q03). Em B02 acende LB2_S (RAX2, Q04).
+A chave de seleção em B01 acende LB1_S (relé RAX1). Em B02 acende LB2_S (RAX2).
 
 ```ladder
-{"t":"Rede 1 — Sinaleiro Bomba 01 selecionada","s":[["NO","xSelB1","I00 seleção B01"]],"c":["Q03","RAX1 → LB1_S"]}
+{"t":"Rede 1 — Sinaleiro Bomba 01 selecionada","s":[["NO","B_SEL1","I00 seleção B01"]],"c":["RAX1","LB1_S"]}
 ```
 
 ```ladder
-{"t":"Rede 2 — Sinaleiro Bomba 02 selecionada","s":[["NO","xSelB2","I01 seleção B02"]],"c":["Q04","RAX2 → LB2_S"]}
+{"t":"Rede 2 — Sinaleiro Bomba 02 selecionada","s":[["NO","B_SEL2","I01 seleção B02"]],"c":["RAX2","LB2_S"]}
 ```
 
 **5.4 — Rede 3: Bomba 01 (o coração do programa)**
 
-Esta rede junta manual, automático e o selo numa única memória, `xBomba1`. Leia de cima para baixo os três caminhos que ligam a bomba:
+Esta rede liga a contatora `K_B1` por três caminhos. Leia de cima para baixo:
 
-1. **Manual**: chave em Man **e** botão Liga apertado.
-2. **Automático**: chave em Auto **e** seleção em B01 **e** PB fechado (pressão ≤ 4 kgf/cm²).
-3. **Selo**: a própria `xBomba1` mantém a bomba ligada depois que o botão é solto ou o PB abre.
+1. **Manual**: chave em Man (`B1_MAN`) **e** botão Liga apertado (`B1_L`).
+2. **Automático**: chave em Auto (`B1_AUT`) **e** seleção em B01 (`B_SEL1`) **e** PB fechado (pressão ≤ 4 kgf/cm²).
+3. **Selo**: a própria `K_B1` mantém a bomba ligada depois que o botão é solto ou o PB abre.
 
-Em série com os três caminhos ficam as condições de desligar: botão **Desliga** (NF, por isso contato NA no Ladder) e chave fora do 0 (Man **ou** Auto).
+Em série com os três caminhos ficam as condições de desligar: botão **Desliga** (`B1_D`, NF no campo, por isso contato NA no Ladder) e chave fora do 0 (Man **ou** Auto).
 
 ```ladder
-{"t":"Rede 3 — Bomba 01: manual, automático e selo","s":[["P",[[["NO","xB1Man","I02 Man"],["NO","xB1_L","I10 Liga"]],[["NO","xB1Aut","I03 Auto"],["NO","xSelB1","I00 Sel B01"],["NO","xPB","I17 PB baixa"]],[["NO","xBomba1","selo"]]]],["NO","xB1_D","I11 Desliga (NF)"],["P",[[["NO","xB1Man","I02 Man"]],[["NO","xB1Aut","I03 Auto"]]]]],"c":["xBomba1","memória Bomba 01"]}
+{"t":"Rede 3 — Bomba 01: manual, automático e selo","s":[["P",[[["NO","B1_MAN","I02 Man"],["NO","B1_L","I10 Liga"]],[["NO","B1_AUT","I03 Auto"],["NO","B_SEL1","I00 Sel B01"],["NO","PB","I17 PB baixa"]],[["NO","K_B1","selo"]]]],["NO","B1_D","I11 Desliga (NF)"],["P",[[["NO","B1_MAN","I02 Man"]],[["NO","B1_AUT","I03 Auto"]]]]],"c":["K_B1","contatora B01"]}
 ```
 
 Como desenhar esta rede:
 
-1. Arraste um contato `xB1Man` e, à direita dele, um contato `xB1_L`.
-2. Botão direito em `xB1Man` → **Inserir contato paralelo (abaixo)** → `xB1Aut`. Arraste mais dois contatos para dentro desse ramo: `xSelB1` e `xPB`.
-3. Insira mais um paralelo abaixo com `xBomba1` (o selo).
-4. À direita do bloco paralelo, um contato `xB1_D`.
-5. À direita, um contato `xB1Man` com um paralelo abaixo `xB1Aut`.
-6. Na ponta, a bobina `xBomba1`.
+1. Arraste um contato `B1_MAN` e, à direita dele, um contato `B1_L`.
+2. Botão direito em `B1_MAN` → **Inserir contato paralelo (abaixo)** → `B1_AUT`. Arraste mais dois contatos para dentro desse ramo: `B_SEL1` e `PB`.
+3. Insira mais um paralelo abaixo com `K_B1` (o selo).
+4. À direita do bloco paralelo, um contato `B1_D`.
+5. À direita, um contato `B1_MAN` com um paralelo abaixo `B1_AUT`.
+6. Na ponta, a bobina `K_B1`.
 
 Equivalente em texto estruturado, para conferir o raciocínio:
 
 ```
-xBomba1 := ((xB1Man AND xB1_L) OR (xB1Aut AND xSelB1 AND xPB) OR xBomba1)
-           AND xB1_D AND (xB1Man OR xB1Aut);
+K_B1 := ((B1_MAN AND B1_L) OR (B1_AUT AND B_SEL1 AND PB) OR K_B1)
+        AND B1_D AND (B1_MAN OR B1_AUT);
 ```
 
 **5.5 — Rede 4: Bomba 02**
 
-Igual à Rede 3, trocando 1 por 2 e a seleção por `xSelB2`.
+Igual à Rede 3, trocando 1 por 2 e a seleção por `B_SEL2`.
 
 ```ladder
-{"t":"Rede 4 — Bomba 02: manual, automático e selo","s":[["P",[[["NO","xB2Man","I04 Man"],["NO","xB2_L","I12 Liga"]],[["NO","xB2Aut","I05 Auto"],["NO","xSelB2","I01 Sel B02"],["NO","xPB","I17 PB baixa"]],[["NO","xBomba2","selo"]]]],["NO","xB2_D","I13 Desliga (NF)"],["P",[[["NO","xB2Man","I04 Man"]],[["NO","xB2Aut","I05 Auto"]]]]],"c":["xBomba2","memória Bomba 02"]}
+{"t":"Rede 4 — Bomba 02: manual, automático e selo","s":[["P",[[["NO","B2_MAN","I04 Man"],["NO","B2_L","I12 Liga"]],[["NO","B2_AUT","I05 Auto"],["NO","B_SEL2","I01 Sel B02"],["NO","PB","I17 PB baixa"]],[["NO","K_B2","selo"]]]],["NO","B2_D","I13 Desliga (NF)"],["P",[[["NO","B2_MAN","I04 Man"]],[["NO","B2_AUT","I05 Auto"]]]]],"c":["K_B2","contatora B02"]}
 ```
 
 Dica: no editor, copie a Rede 3 (botão direito → **Copiar**), cole abaixo e troque os nomes.
 
-**5.6 — Rede 5: jockey em manual**
+**5.6 — Redes 5 e 6: jockey (manual e automático)**
 
-Liga e desliga pelas botoeiras, com selo, só com a chave em Man.
+A jockey usa uma **memória interna**, `M_BJ_MAN`, só para o manual. Por quê: se o selo do manual fosse feito na própria `K_BJ`, a jockey que estivesse ligada pelo **automático** continuaria ligada sozinha quando alguém girasse a chave para **Man**, sem ninguém apertar Liga. Com a memória separada, o manual só sela quando o botão Liga é apertado.
+
+**Rede 5 — memória do manual:** liga com o botão Liga, mantém pelo selo, desliga com o Desliga ou com a chave fora de Man.
 
 ```ladder
-{"t":"Rede 5 — Jockey em manual","s":[["P",[[["NO","xBJ_L","I14 Liga"]],[["NO","xJockeyMan","selo"]]]],["NO","xBJ_D","I15 Desliga (NF)"],["NO","xBJMan","I06 Man"]],"c":["xJockeyMan","jockey manual"]}
+{"t":"Rede 5 — Jockey em manual (memória com selo)","s":[["P",[[["NO","BJ_L","I14 Liga"]],[["NO","M_BJ_MAN","selo"]]]],["NO","BJ_D","I15 Desliga (NF)"],["NO","BJ_MAN","I06 Man"]],"c":["M_BJ_MAN","memória manual"]}
 ```
 
-**5.7 — Rede 6: jockey em automático**
-
-A jockey roda enquanto o PJ estiver fechado e **nenhuma** principal estiver ligada. Os contatos **negados** de `xBomba1` e `xBomba2` fazem a jockey desligar sozinha quando a principal parte. O botão Desliga também vale no automático, como parada de emergência local.
+**Rede 6 — contatora da jockey:** liga pela memória do manual **ou** pelo automático (chave em Auto, PJ fechado e nenhuma principal ligada). Os contatos **negados** de `K_B1` e `K_B2` fazem a jockey desligar sozinha quando a principal parte. O Desliga vale nos dois modos.
 
 ```ladder
-{"t":"Rede 6 — Jockey em automático","s":[["NO","xBJAut","I07 Auto"],["NO","xPJ","I16 PJ baixa"],["NC","xBomba1","B01 parada"],["NC","xBomba2","B02 parada"],["NO","xBJ_D","I15 Desliga (NF)"]],"c":["xJockeyAut","jockey automática"]}
+{"t":"Rede 6 — Contatora da jockey: manual ou automático","s":[["P",[[["NO","M_BJ_MAN","manual"]],[["NO","BJ_AUT","I07 Auto"],["NO","PJ","I16 PJ baixa"],["NC","K_B1","B01 parada"],["NC","K_B2","B02 parada"]]]],["NO","BJ_D","I15 Desliga (NF)"]],"c":["K_BJ","contatora jockey"]}
 ```
 
-Não precisa de selo: o PJ só abre quando a pressão chega a 10 kgf/cm². A histerese (liga em 6, desliga em 10) está no pressostato, não no CLP.
-
-**5.8 — Redes 7, 8 e 9: contatoras**
-
-```ladder
-{"t":"Rede 7 — Contatora Bomba 01 (DI1 da SS_01)","s":[["NO","xBomba1","memória B01"]],"c":["Q00","K-B1"]}
+```
+M_BJ_MAN := (BJ_L OR M_BJ_MAN) AND BJ_D AND BJ_MAN;
+K_BJ     := (M_BJ_MAN OR (BJ_AUT AND PJ AND NOT K_B1 AND NOT K_B2)) AND BJ_D;
 ```
 
-```ladder
-{"t":"Rede 8 — Contatora Bomba 02 (DI1 da SS_02)","s":[["NO","xBomba2","memória B02"]],"c":["Q01","K-B2"]}
-```
+No automático não há selo: o PJ só abre quando a pressão chega a 10 kgf/cm². A histerese (liga em 6, desliga em 10) está no pressostato, não no CLP.
+
+**5.7 — Redes 7 a 12: sinaleiros de operação e de desligada**
+
+"Em operação" copia a contatora; "desligada" é o contrário dela (contato negado).
 
 ```ladder
-{"t":"Rede 9 — Contatora da jockey (partida direta)","s":[["P",[[["NO","xJockeyMan","manual"]],[["NO","xJockeyAut","automático"]]]]],"c":["Q02","K-BJ"]}
-```
-
-Por que separar memória e saída? Porque a memória pode ser usada em outras redes (sinaleiros, intertravamento da jockey) e porque, na monitoração, fica claro se o problema está na lógica (memória) ou na saída.
-
-**5.9 — Redes 10 a 15: sinaleiros de operação e de desligada**
-
-"Em operação" copia a bomba; "desligada" é o contrário dela (contato negado).
-
-```ladder
-{"t":"Rede 10 — Bomba 01 em operação","s":[["NO","xBomba1","memória B01"]],"c":["Q05","RAX3 → LB1_L"]}
+{"t":"Rede 7 — Bomba 01 em operação","s":[["NO","K_B1","contatora B01"]],"c":["RAX3","LB1_L"]}
 ```
 
 ```ladder
-{"t":"Rede 13 — Bomba 01 desligada","s":[["NC","xBomba1","memória B01"]],"c":["Q10","RAX6 → LB1_D"]}
+{"t":"Rede 10 — Bomba 01 desligada","s":[["NC","K_B1","contatora B01"]],"c":["RAX6","LB1_D"]}
 ```
 
 As outras quatro seguem o mesmo modelo:
 
 | Rede | Contato | Bobina | Sinaleiro |
 | --- | --- | --- | --- |
-| 11 | `xBomba2` | `Q06` | RAX4 → LB2_L (vermelho) |
-| 12 | `Q02` | `Q07` | RAX5 → LBJ_L (vermelho) |
-| 14 | `xBomba2` negado | `Q11` | RAX7 → LB2_D (verde) |
-| 15 | `Q02` negado | `Q12` | RAX8 → LBJ_D (verde) |
+| 8 | `K_B2` | `RAX4` | LB2_L (vermelho) |
+| 9 | `K_BJ` | `RAX5` | LBJ_L (vermelho) |
+| 11 | `K_B2` negado | `RAX7` | LB2_D (verde) |
+| 12 | `K_BJ` negado | `RAX8` | LBJ_D (verde) |
 
-Para a jockey usamos a própria saída `Q02`, porque ela pode estar ligada por dois caminhos (manual ou automático).
+**5.8 — Conferir a lógica antes de compilar**
 
-**5.10 — Conferir a lógica antes de compilar**
-
-| Situação | `xBomba1` | `Q02` (jockey) | Por quê |
+| Situação | `K_B1` | `K_BJ` | Por quê |
 | --- | --- | --- | --- |
 | Tudo em 0 | 0 | 0 | Sem chave em Man/Auto não há caminho |
 | B1 em Man, aperta Liga | 1 | — | Caminho manual + selo |
-| B1 em Man, aperta Desliga | 0 | — | `xB1_D` vai a 0 e corta a rede |
-| Jockey Auto, PJ fecha | — | 1 | Rede 6 completa |
-| PB fecha, B1 Auto, seleção B01 | 1 | 0 | Rede 3 liga; Rede 6 corta pelo contato negado |
+| B1 em Man, aperta Desliga | 0 | — | `B1_D` vai a 0 e corta a rede |
+| Jockey Auto, PJ fecha | — | 1 | Caminho automático da Rede 6 |
+| PB fecha, B1 Auto, seleção B01 | 1 | 0 | Rede 3 liga; a Rede 6 corta pelo `K_B1` negado |
 | Pressão volta a 10 (PB abre) | 1 | 0 | O selo mantém a principal |
 | Aperta Desliga da B1 | 0 | — | Única forma de parar no automático |
+| Jockey ligada no Auto, chave vai para Man (sem apertar Liga) | — | 0 | `M_BJ_MAN` só sela quando Liga é apertado |
 
-## Parte 6 — Programa SP02_Saidas (o simulador lê as saídas)
+## Parte 6 — Programa SP02_Saidas (bornes e simulador)
+
+As variáveis `K_B1 … RAX8` precisam ir para os bornes de saída do XP325 **e** para o simulador.
 
 1. **Acrescentar objeto → POU** → `SP02_Saidas`, **Programa**, **ST**.
 2. Cole:
 
 ```
-GVL_SIM.xSimOut[0]  := Q00;  // K-B1
-GVL_SIM.xSimOut[1]  := Q01;  // K-B2
-GVL_SIM.xSimOut[2]  := Q02;  // K-BJ
-GVL_SIM.xSimOut[3]  := Q03;  // RAX1 LB1_S
-GVL_SIM.xSimOut[4]  := Q04;  // RAX2 LB2_S
-GVL_SIM.xSimOut[5]  := Q05;  // RAX3 LB1_L
-GVL_SIM.xSimOut[6]  := Q06;  // RAX4 LB2_L
-GVL_SIM.xSimOut[7]  := Q07;  // RAX5 LBJ_L
-GVL_SIM.xSimOut[8]  := Q10;  // RAX6 LB1_D
-GVL_SIM.xSimOut[9]  := Q11;  // RAX7 LB2_D
-GVL_SIM.xSimOut[10] := Q12;  // RAX8 LBJ_D
+// Bornes físicos do XP325
+Q00 := K_B1;   Q01 := K_B2;   Q02 := K_BJ;
+Q03 := RAX1;   Q04 := RAX2;   Q05 := RAX3;   Q06 := RAX4;   Q07 := RAX5;
+Q10 := RAX6;   Q11 := RAX7;   Q12 := RAX8;
+
+// Para o simulador ler (input status)
+GVL_SIM.xSimOut[0]  := K_B1;   // Q00
+GVL_SIM.xSimOut[1]  := K_B2;   // Q01
+GVL_SIM.xSimOut[2]  := K_BJ;   // Q02
+GVL_SIM.xSimOut[3]  := RAX1;   // Q03 LB1_S
+GVL_SIM.xSimOut[4]  := RAX2;   // Q04 LB2_S
+GVL_SIM.xSimOut[5]  := RAX3;   // Q05 LB1_L
+GVL_SIM.xSimOut[6]  := RAX4;   // Q06 LB2_L
+GVL_SIM.xSimOut[7]  := RAX5;   // Q07 LBJ_L
+GVL_SIM.xSimOut[8]  := RAX6;   // Q10 LB1_D
+GVL_SIM.xSimOut[9]  := RAX7;   // Q11 LB2_D
+GVL_SIM.xSimOut[10] := RAX8;   // Q12 LBJ_D
 ```
 
 ## Parte 7 — Chamar os programas, compilar e carregar
@@ -293,6 +360,8 @@ GVL_SIM.xSimOut[10] := Q12;  // RAX8 LBJ_D
 **7.1 — Ordem de execução na MainTask**
 
 A ordem importa: primeiro ler as entradas, depois a lógica, por fim copiar as saídas.
+
+Na **forma direta (3.0)** não há nada a fazer aqui: o `UserPrg` já é chamado pela MainTask. Os passos abaixo valem para a forma com três programas.
 
 1. Na árvore, abra **Configuração de tarefas → MainTask**.
 2. Clique em **Acrescentar chamada** e escolha `SP02_Entradas`. Repita para `SP02_Logica` e `SP02_Saidas`.
@@ -317,9 +386,9 @@ Configure o **MODBUS Symbol Server** na NET 1 com `GVL_SIM.xSimIn` (Coil) e `GVL
 
 ## Parte 8 — Conectar o simulador e monitorar
 
-1. No simulador: IP do XP325, porta 502, Unit ID 1, **Conectar** (Guia do simulador, Passo 5).
+1. No simulador: IP do XP325, porta 502, Unit ID 255 (padrão), **Conectar** (Guia do simulador, Passo 5).
 2. No MasterTool, com o CLP online, abra `SP02_Logica`. Os contatos fechados e as bobinas ligadas ficam **azuis**; ao lado de cada variável aparece o valor.
-3. Gire a seleção para B01 no simulador: na Rede 1, `xSelB1` fica azul e `Q03` liga. No simulador, LB1_S acende.
+3. Gire a seleção para B01 no simulador: na Rede 1, `B_SEL1` fica azul e `RAX1` liga. No simulador, LB1_S acende.
 4. Se nada mudar no CLP, o problema está no Modbus ou em `SP02_Entradas`. Abra `GVL_SIM` online e veja se `xSimIn[0]` muda.
 
 Dica de aula: **forçar valores** (botão direito → Preparar valor, depois **Forçar valores**) ajuda a mostrar uma rede funcionando isolada. Desforce tudo antes de testar a sequência completa.
@@ -345,7 +414,7 @@ Regra do KP de alta: o contato comuta na **faixa** (pressão subindo) e volta em
 4. Gire o eixo **DIF**: 3,9 bar no PJ, 5,9 bar no PB. Uma volta ≈ 0,3 bar.
 5. **Escolha o contato certo**. O KP tem contato reversível (SPDT). Com a rede despressurizada, meça continuidade com o multímetro entre o comum e cada um dos outros dois terminais: use o par que está **fechado** sem pressão.
 6. Ligue esse contato entre o L+ e a entrada: **PJ → I16**, **PB → I17**.
-7. Recoloque a tampa, religue o D4 e confira no MasterTool online: sem pressão, `xPJ` e `xPB` = TRUE.
+7. Recoloque a tampa, religue o D4 e confira no MasterTool online: sem pressão, `PJ` e `PB` = TRUE.
 8. **Confira com manômetro de precisão**. Pressurize devagar e anote em que pressão cada contato abre (deve ser ≈ 10 kgf/cm²). Alivie devagar e anote onde fecha (≈ 6 no PJ, ≈ 4 no PB). As escalas do KP são aproximadas; o fabricante recomenda sempre conferir com manômetro.
 
 **9.3 — No simulador**
@@ -427,39 +496,36 @@ Se preferir ST (ou para conferir o Ladder), o `SP02_Logica` completo fica assim:
 
 ```
 // Sinaleiros de seleção
-Q03 := xSelB1;
-Q04 := xSelB2;
+RAX1 := B_SEL1;
+RAX2 := B_SEL2;
 
-// Bombas principais: manual, automático e selo
-xBomba1 := ((xB1Man AND xB1_L) OR (xB1Aut AND xSelB1 AND xPB) OR xBomba1)
-           AND xB1_D AND (xB1Man OR xB1Aut);
-xBomba2 := ((xB2Man AND xB2_L) OR (xB2Aut AND xSelB2 AND xPB) OR xBomba2)
-           AND xB2_D AND (xB2Man OR xB2Aut);
+// Bombas principais: manual, automático e selo (na própria contatora)
+K_B1 := ((B1_MAN AND B1_L) OR (B1_AUT AND B_SEL1 AND PB) OR K_B1)
+        AND B1_D AND (B1_MAN OR B1_AUT);
+K_B2 := ((B2_MAN AND B2_L) OR (B2_AUT AND B_SEL2 AND PB) OR K_B2)
+        AND B2_D AND (B2_MAN OR B2_AUT);
 
-// Jockey
-xJockeyMan := (xBJ_L OR xJockeyMan) AND xBJ_D AND xBJMan;
-xJockeyAut := xBJAut AND xPJ AND NOT xBomba1 AND NOT xBomba2 AND xBJ_D;
-
-// Contatoras
-Q00 := xBomba1;                      // K-B1 -> DI1 SS_01
-Q01 := xBomba2;                      // K-B2 -> DI1 SS_02
-Q02 := xJockeyMan OR xJockeyAut;     // K-BJ
+// Jockey: memória própria para o manual; automático pelo PJ (desliga se uma principal ligar)
+M_BJ_MAN := (BJ_L OR M_BJ_MAN) AND BJ_D AND BJ_MAN;
+K_BJ     := (M_BJ_MAN OR (BJ_AUT AND PJ AND NOT K_B1 AND NOT K_B2)) AND BJ_D;
 
 // Sinaleiros de operação e de desligada
-Q05 := xBomba1;      Q10 := NOT xBomba1;
-Q06 := xBomba2;      Q11 := NOT xBomba2;
-Q07 := Q02;          Q12 := NOT Q02;
+RAX3 := K_B1;      RAX6 := NOT K_B1;
+RAX4 := K_B2;      RAX7 := NOT K_B2;
+RAX5 := K_BJ;      RAX8 := NOT K_BJ;
 ```
 
 ## Erros comuns na lógica
 
 | Sintoma no simulador | Causa provável | Correção |
 | --- | --- | --- |
-| A bomba só roda enquanto o botão Liga está apertado | Falta o contato de selo | Paralelo com a própria memória (Redes 3, 4 e 5) |
+| A bomba só roda enquanto o botão Liga está apertado | Falta o contato de selo | Paralelo com a própria contatora (`K_B1`, `K_B2`) nas Redes 3 e 4; na jockey, com a memória `M_BJ_MAN` (Rede 5) |
 | A bomba não liga de jeito nenhum | Botão Desliga programado como contato negado | NF no campo = contato **NA** no Ladder (entrada vale 1 em repouso) |
-| A principal desliga sozinha quando a pressão volta | Selo ausente ou o PB em série com tudo | O PB só pode estar no caminho de **ligar**, não em série com o selo |
-| Jockey e principal ligadas juntas no automático | Faltam os contatos negados `xBomba1`/`xBomba2` na Rede 6 | Acrescente os dois contatos negados |
+| A principal desliga sozinha quando a pressão volta | Selo ausente ou o `PB` em série com tudo | O `PB` só pode estar no caminho de **ligar**, não em série com o selo |
+| Jockey e principal ligadas juntas no automático | Faltam os contatos negados `K_B1`/`K_B2` na Rede 6 | Acrescente os dois contatos negados no ramo automático |
+| Jockey continua ligada ao passar de Auto para Man | Selo do manual feito na própria `K_BJ` | Use a memória `M_BJ_MAN` (Redes 5 e 6) |
 | Jockey liga e desliga muito rápido | Diferencial do PJ pequeno | Ajuste o DIF (Parte 9), não o programa |
-| Sinaleiro "desligada" e "operação" acesos juntos | Mesma variável sem negar | "Desligada" usa contato negado (Redes 13–15) |
+| Sinaleiro "desligada" e "operação" acesos juntos | Mesma variável sem negar | "Desligada" usa contato negado (Redes 10–12) |
+| Lógica certa, mas o simulador não vê as saídas | Faltou a Parte 6 (copiar `K_B1 … RAX8` para `Q00 … Q12` e `xSimOut`) | Confira o `SP02_Saidas` e a ordem na MainTask |
 | Nada responde ao simulador | `xUsarSimulador = FALSE` ou Modbus sem mapeamento | Parte 4 e Guia do simulador, Passo 4C |
 | A bomba não para em 10 s | Ajuste da soft, não do CLP | Trimpot de desaceleração (Parte 10) |

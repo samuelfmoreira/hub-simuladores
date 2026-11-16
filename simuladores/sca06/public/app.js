@@ -63,6 +63,7 @@
       Object.assign(S.P, m.params); S.v = m.v; S.sc = m.scanner; S.conns = m.conns; S.deviceIp = m.deviceIp; S.stats = m.stats;
       if (m.logs && m.logs.length) addLogs(m.logs);
       bench && bench.update(m.v);
+      if (m.ihm && window.IHMServoUI) window.IHMServoUI.atualizar(m.ihm);
       tick();
     }
   }
@@ -91,6 +92,7 @@
     S.tab = name;
     if (name === 'hmi' && bench) bench.view('drive');
     if (name === 'net') renderNetInfo();
+    if (name === 'ihm' && window.IHMServoUI && !window.IHMServoUI.aberta()) window.IHMServoUI.abrir($('#ihmHost'));
   }
   $$('.tabs button').forEach(b => b.onclick = () => selectTab(b.dataset.tab));
 

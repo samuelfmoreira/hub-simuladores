@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240" role="img" aria-label="Estação de bombeamento TQ-01 com inversor CFW500">
+  <defs>
+    <linearGradient id="conc" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#B9BDC1"/><stop offset=".45" stop-color="#D6D9DC"/><stop offset="1" stop-color="#A7ACB1"/></linearGradient>
+    <linearGradient id="tq" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#4E565E"/><stop offset=".35" stop-color="#7B848C"/><stop offset=".6" stop-color="#5C646C"/><stop offset="1" stop-color="#3C434A"/></linearGradient>
+    <linearGradient id="tqTopo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9AA2AA"/><stop offset="1" stop-color="#6B737B"/></linearGradient>
+    <linearGradient id="tb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5B9BE6"/><stop offset=".5" stop-color="#2468C2"/><stop offset="1" stop-color="#164A8E"/></linearGradient>
+    <linearGradient id="tbv" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5B9BE6"/><stop offset=".5" stop-color="#2468C2"/><stop offset="1" stop-color="#164A8E"/></linearGradient>
+    <linearGradient id="mot" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4A8BD8"/><stop offset=".45" stop-color="#2463B3"/><stop offset="1" stop-color="#173F78"/></linearGradient>
+    <radialGradient id="vol" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#5B9BE6"/><stop offset=".6" stop-color="#2468C2"/><stop offset="1" stop-color="#143F78"/></radialGradient>
+    <linearGradient id="agua" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8FD3FF"/><stop offset="1" stop-color="#3C9BE0"/></linearGradient>
+    <linearGradient id="cfw" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#D9DCE0"/><stop offset=".5" stop-color="#F3F4F6"/><stop offset="1" stop-color="#C9CDD3"/></linearGradient>
+    <linearGradient id="lcd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#DDF07A"/><stop offset="1" stop-color="#B9D94A"/></linearGradient>
+  </defs>
+
+  <!-- sombras -->
+  <ellipse cx="72" cy="214" rx="68" ry="7" fill="#000" opacity=".16"/>
+  <ellipse cx="182" cy="213" rx="40" ry="6" fill="#000" opacity=".15"/>
+  <ellipse cx="240" cy="219" rx="16" ry="3" fill="#000" opacity=".14"/>
+  <ellipse cx="283" cy="215" rx="25" ry="5" fill="#000" opacity=".15"/>
+
+  <!-- reservatório de concreto -->
+  <rect x="6" y="126" width="62" height="82" rx="2" fill="url(#conc)" stroke="#9BA0A5" stroke-width="1"/>
+  <rect x="6" y="122" width="62" height="7" rx="1.5" fill="#E2E4E6" stroke="#9BA0A5" stroke-width="1"/>
+  <rect x="11" y="129" width="52" height="6" fill="url(#agua)" opacity=".9"/>
+
+  <!-- recalque: da bomba sobe e entra pelo topo do tanque -->
+  <rect x="66" y="48" width="11" height="128" fill="url(#tbv)"/>
+  <rect x="66" y="38" width="122" height="11" rx="2.5" fill="url(#tb)"/>
+  <circle cx="71.5" cy="43.5" r="7.5" fill="#1E5BAA"/>
+  <rect x="177" y="43" width="11" height="22" fill="url(#tbv)"/>
+  <circle cx="182.5" cy="43.5" r="7.5" fill="#1E5BAA"/>
+  <rect x="64" y="96" width="15" height="3" fill="#164A8E"/>
+  <rect x="120" y="36" width="3" height="15" fill="#164A8E"/>
+  <path d="M100 41 L108 43.5 L100 46 Z M140 41 L148 43.5 L140 46 Z" fill="#9CC7F5" opacity=".9"/>
+
+  <!-- bomba B-01 e motor -->
+  <rect x="44" y="203" width="98" height="7" rx="2" fill="#7C8689"/>
+  <circle cx="71.5" cy="188" r="15" fill="url(#vol)"/>
+  <circle cx="71.5" cy="188" r="5.5" fill="#143F78"/>
+  <rect x="86" y="183" width="7" height="10" fill="#7C8689"/>
+  <rect x="92" y="173" width="48" height="30" rx="6" fill="url(#mot)"/>
+  <g stroke="#123766" stroke-width="1.8" opacity=".55">
+    <line x1="100" y1="177" x2="100" y2="199"/><line x1="107" y1="177" x2="107" y2="199"/><line x1="114" y1="177" x2="114" y2="199"/>
+    <line x1="121" y1="177" x2="121" y2="199"/><line x1="128" y1="177" x2="128" y2="199"/><line x1="134" y1="177" x2="134" y2="199"/>
+  </g>
+  <rect x="108" y="166" width="14" height="8" rx="1.5" fill="#1B4C8E"/>
+
+  <!-- tanque TQ-01 -->
+  <g stroke="#3C434A" stroke-width="1.8">
+    <line x1="142" y1="70" x2="142" y2="204"/><line x1="148" y1="70" x2="148" y2="204"/>
+    <line x1="142" y1="86" x2="148" y2="86"/><line x1="142" y1="102" x2="148" y2="102"/><line x1="142" y1="118" x2="148" y2="118"/><line x1="142" y1="134" x2="148" y2="134"/>
+    <line x1="142" y1="150" x2="148" y2="150"/><line x1="142" y1="166" x2="148" y2="166"/><line x1="142" y1="182" x2="148" y2="182"/><line x1="142" y1="198" x2="148" y2="198"/>
+  </g>
+  <path d="M150 70 L150 202 A32 7 0 0 0 214 202 L214 70 Z" fill="url(#tq)"/>
+  <ellipse cx="182" cy="70" rx="32" ry="7" fill="url(#tqTopo)" stroke="#4A5259" stroke-width="1.3"/>
+  <rect x="177" y="62" width="11" height="6" fill="#164A8E"/>
+  <g fill="none" stroke="#343A40" stroke-width="2" opacity=".75">
+    <path d="M150 104 A32 7 0 0 0 214 104"/><path d="M150 140 A32 7 0 0 0 214 140"/><path d="M150 174 A32 7 0 0 0 214 174"/>
+  </g>
+  <rect x="203" y="80" width="7" height="114" rx="2" fill="#E8F2FA" stroke="#343A40" stroke-width="1.2"/>
+  <rect x="204.3" y="138" width="4.4" height="54.5" rx="1" fill="url(#agua)"/>
+  <rect x="155" y="114" width="42" height="18" rx="3" fill="#F4F6F7" stroke="#B9C0C4" stroke-width="1"/>
+  <text x="176" y="127.5" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="11.5" fill="#1E2328">TQ-01</text>
+  <!-- LT-01 no topo -->
+  <rect x="197" y="50" width="3.5" height="16" fill="#7C8689"/>
+  <rect x="191" y="38" width="16" height="13" rx="3" fill="#E7EAEC" stroke="#7C8689" stroke-width="1.1"/>
+  <rect x="194" y="41" width="10" height="5.5" rx="1" fill="#2B3134"/>
+  <rect x="195.3" y="42.3" width="7.4" height="2.9" fill="#7FE29A"/>
+
+  <!-- saída para o consumo com a válvula manual HV-01 -->
+  <rect x="213" y="186" width="24" height="9" fill="url(#tb)"/>
+  <path d="M226 183 L234 190.5 L226 198 Z M242 183 L234 190.5 L242 198 Z" fill="#1A4F94"/>
+  <rect x="232.8" y="172" width="2.6" height="12" fill="#7C8689"/>
+  <ellipse cx="234" cy="171" rx="9" ry="3.2" fill="none" stroke="#1E5BAA" stroke-width="2.4"/>
+  <rect x="241" y="186" width="9" height="9" fill="url(#tb)"/>
+  <rect x="241" y="186" width="9" height="28" rx="1.5" fill="url(#tbv)"/>
+  <rect x="230" y="215" width="30" height="4" rx="1" fill="#3C434A"/>
+
+  <!-- cabo: saída do CFW500 até o motor -->
+  <path d="M283 207 C283 230 160 228 140 194" fill="none" stroke="#161B1E" stroke-width="5" stroke-linecap="round"/>
+  <path d="M283 207 C283 230 160 228 140 194" fill="none" stroke="#3A4146" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- inversor CFW500 -->
+  <rect x="262" y="112" width="42" height="96" rx="4" fill="url(#cfw)" stroke="#8E979A" stroke-width="1.2"/>
+  <rect x="262" y="112" width="42" height="9" rx="4" fill="#C3C8CE"/>
+  <g fill="#3A4146"><rect x="267" y="115" width="3" height="3"/><rect x="272" y="115" width="3" height="3"/><rect x="277" y="115" width="3" height="3"/><rect x="282" y="115" width="3" height="3"/><rect x="287" y="115" width="3" height="3"/><rect x="292" y="115" width="3" height="3"/><rect x="297" y="115" width="3" height="3"/></g>
+  <rect x="266" y="125" width="34" height="46" rx="3" fill="#24357A"/>
+  <rect x="269" y="128" width="28" height="17" rx="1.5" fill="url(#lcd)"/>
+  <text x="294" y="141" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="10" fill="#1E2328">45.0</text>
+  <circle cx="275" cy="156" r="4" fill="#DDE2E6"/><circle cx="291" cy="156" r="4" fill="#DDE2E6"/>
+  <circle cx="275" cy="165" r="3" fill="#1C2A5E" stroke="#DDE2E6" stroke-width=".8"/><circle cx="283" cy="165" r="3" fill="#E04848"/><circle cx="291" cy="165" r="3" fill="#36B45A"/>
+  <text x="283" y="183" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="7" fill="#2B3134">CFW500</text>
+  <rect x="267" y="190" width="32" height="12" rx="1.5" fill="#E2E5E8" stroke="#B9C0C4" stroke-width=".8"/>
+</svg>

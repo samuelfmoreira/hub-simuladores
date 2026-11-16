@@ -11,14 +11,14 @@ const { SSW05 } = require('./ssw05');
 
 // ---- Mapa de I/O (ordem = offset a partir do endereço base) ----------------------
 const COILS = [
-  { tag: 'B_SEL', addr: 'I0.0', xp: 'I00', desc: 'Seleção da bomba 01' },
-  { tag: 'B_SEL', addr: 'I0.1', xp: 'I01', desc: 'Seleção da bomba 02' },
-  { tag: 'B1_MA', addr: 'I0.2', xp: 'I02', desc: 'Bomba 01 em manual' },
-  { tag: 'B1_MA', addr: 'I0.3', xp: 'I03', desc: 'Bomba 01 em automático' },
-  { tag: 'B2_MA', addr: 'I0.4', xp: 'I04', desc: 'Bomba 02 em manual' },
-  { tag: 'B2_MA', addr: 'I0.5', xp: 'I05', desc: 'Bomba 02 em automático' },
-  { tag: 'BJ_MA', addr: 'I0.6', xp: 'I06', desc: 'Jockey em manual' },
-  { tag: 'BJ_MA', addr: 'I0.7', xp: 'I07', desc: 'Jockey em automático' },
+  { tag: 'B_SEL1', addr: 'I0.0', xp: 'I00', desc: 'Seleção da bomba 01' },
+  { tag: 'B_SEL2', addr: 'I0.1', xp: 'I01', desc: 'Seleção da bomba 02' },
+  { tag: 'B1_MAN', addr: 'I0.2', xp: 'I02', desc: 'Bomba 01 em manual' },
+  { tag: 'B1_AUT', addr: 'I0.3', xp: 'I03', desc: 'Bomba 01 em automático' },
+  { tag: 'B2_MAN', addr: 'I0.4', xp: 'I04', desc: 'Bomba 02 em manual' },
+  { tag: 'B2_AUT', addr: 'I0.5', xp: 'I05', desc: 'Bomba 02 em automático' },
+  { tag: 'BJ_MAN', addr: 'I0.6', xp: 'I06', desc: 'Jockey em manual' },
+  { tag: 'BJ_AUT', addr: 'I0.7', xp: 'I07', desc: 'Jockey em automático' },
   { tag: 'B1_L', addr: 'I1.0', xp: 'I10', desc: 'Liga bomba 01 (NA)' },
   { tag: 'B1_D', addr: 'I1.1', xp: 'I11', desc: 'Desliga bomba 01 (NF)' },
   { tag: 'B2_L', addr: 'I1.2', xp: 'I12', desc: 'Liga bomba 02 (NA)' },
@@ -30,9 +30,9 @@ const COILS = [
 ];
 
 const DISCRETE_INPUTS = [
-  { tag: 'K-B1', addr: 'Q0.0', xp: 'Q00', desc: 'Contatora bomba 01 (DI1 da SS_01)' },
-  { tag: 'K-B2', addr: 'Q0.1', xp: 'Q01', desc: 'Contatora bomba 02 (DI1 da SS_02)' },
-  { tag: 'K-BJ', addr: 'Q0.2', xp: 'Q02', desc: 'Contatora bomba jockey' },
+  { tag: 'K_B1', addr: 'Q0.0', xp: 'Q00', desc: 'Contatora bomba 01 (DI1 da SS_01)' },
+  { tag: 'K_B2', addr: 'Q0.1', xp: 'Q01', desc: 'Contatora bomba 02 (DI1 da SS_02)' },
+  { tag: 'K_BJ', addr: 'Q0.2', xp: 'Q02', desc: 'Contatora bomba jockey' },
   { tag: 'RAX1', addr: 'Q0.3', xp: 'Q03', desc: 'LB1_S bomba 01 selecionada' },
   { tag: 'RAX2', addr: 'Q0.4', xp: 'Q04', desc: 'LB2_S bomba 02 selecionada' },
   { tag: 'RAX3', addr: 'Q0.5', xp: 'Q05', desc: 'LB1_L bomba 01 ligada' },

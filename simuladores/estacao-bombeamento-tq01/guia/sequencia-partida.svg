@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 320" font-family="Segoe UI, Roboto, Arial, sans-serif">
+<rect width="1100" height="320" fill="#fbfbf8"/>
+<text x="550" y="26" font-size="14" font-weight="700" text-anchor="middle" fill="#1b2125">Sequência de partida de B-01 — o que o programa escreve e o que recebe de volta</text>
+<text x="310" y="69" font-size="11" font-weight="400" text-anchor="end" fill="#5d666c">Q1 disjuntor (manual, já ligado)</text>
+<line x1="320" y1="74" x2="1060" y2="74" stroke="#d9dcd6" stroke-width="1"/>
+<path d="M320 74 L320.0 74 L320.0 60 L1060 60" fill="none" stroke="#5d666c" stroke-width="2.2"/>
+<text x="310" y="95" font-size="11" font-weight="400" text-anchor="end" fill="#5d666c">S0_Emerg_NF</text>
+<line x1="320" y1="100" x2="1060" y2="100" stroke="#d9dcd6" stroke-width="1"/>
+<path d="M320 100 L320.0 100 L320.0 86 L1060 86" fill="none" stroke="#5d666c" stroke-width="2.2"/>
+<text x="310" y="121" font-size="11" font-weight="400" text-anchor="end" fill="#5d666c">S2_Desliga_NF</text>
+<line x1="320" y1="126" x2="1060" y2="126" stroke="#d9dcd6" stroke-width="1"/>
+<path d="M320 126 L320.0 126 L320.0 112 L1060 112" fill="none" stroke="#5d666c" stroke-width="2.2"/>
+<text x="310" y="147" font-size="11" font-weight="400" text-anchor="end" fill="#1b5e9e">Inv_OK (relé DO1)</text>
+<line x1="320" y1="152" x2="1060" y2="152" stroke="#d9dcd6" stroke-width="1"/>
+<path d="M320 152 L320.0 152 L320.0 138 L1060 138" fill="none" stroke="#1b5e9e" stroke-width="2.2"/>
+<text x="310" y="173" font-size="11" font-weight="400" text-anchor="end" fill="#5d666c">S1_Liga (pulso)</text>
+<line x1="320" y1="178" x2="1060" y2="178" stroke="#d9dcd6" stroke-width="1"/>
+<path d="M320 178 L468.0 178 L468.0 164 L527.2 164 L527.2 178 L1060 178" fill="none" stroke="#5d666c" stroke-width="2.2"/>
+<text x="310" y="199" font-size="11" font-weight="600" text-anchor="end" fill="#2b8a45">Inv_Gira (seu programa, selado)</text>
+<line x1="320" y1="204" x2="1060" y2="204" stroke="#d9dcd6" stroke-width="1"/>
+<path d="M320 204 L468.0 204 L468.0 190 L1060 190" fill="none" stroke="#2b8a45" stroke-width="2.2"/>
+<text x="310" y="225" font-size="11" font-weight="600" text-anchor="end" fill="#2b8a45">Ref_Bruto = IHM_Velocidade escalada</text>
+<line x1="320" y1="230" x2="1060" y2="230" stroke="#d9dcd6" stroke-width="1"/>
+<path d="M320 230 L468.0 230 L468.0 216 L1060 216" fill="none" stroke="#2b8a45" stroke-width="2.2"/>
+<text x="310" y="251" font-size="11" font-weight="400" text-anchor="end" fill="#1b5e9e">Inv_Rodando (relé DO2, F > Fx)</text>
+<line x1="320" y1="256" x2="1060" y2="256" stroke="#d9dcd6" stroke-width="1"/>
+<path d="M320 256 L556.8 256 L556.8 242 L1060 242" fill="none" stroke="#1b5e9e" stroke-width="2.2"/>
+<text x="310" y="277" font-size="11" font-weight="600" text-anchor="end" fill="#2b8a45">H1 em operação</text>
+<line x1="320" y1="282" x2="1060" y2="282" stroke="#d9dcd6" stroke-width="1"/>
+<path d="M320 282 L556.8 282 L556.8 268 L1060 268" fill="none" stroke="#2b8a45" stroke-width="2.2"/>
+<line x1="468.0" y1="50" x2="468.0" y2="290" stroke="#c0392b" stroke-width=".8" stroke-dasharray="3 3"/>
+<text x="471.0" y="46" font-size="9.5" font-weight="600" text-anchor="start" fill="#c0392b">S1</text>
+<line x1="556.8" y1="50" x2="556.8" y2="290" stroke="#c0392b" stroke-width=".8" stroke-dasharray="3 3"/>
+<text x="559.8" y="46" font-size="9.5" font-weight="600" text-anchor="start" fill="#c0392b">rampa passa de 3 Hz</text>
+<text x="320" y="306" font-size="11" font-weight="600" text-anchor="start" fill="#1b5e9e">Partida: S0_Emerg_NF AND S2_Desliga_NF AND Inv_OK AND NOT LSHH AND NOT falha. O 2º NF do S0 também corta a DI1 por hardware.</text>
+</svg>

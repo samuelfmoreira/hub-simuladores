@@ -46,7 +46,7 @@ try { var u = new URL(location.href); if (u.searchParams.has('hubRestaurar')) { 
             <input name="port" type="number" min="1" max="65535" value="502">
           </label>
           <label>Unit ID
-            <input name="unitId" type="number" min="0" max="255" value="1">
+            <input name="unitId" type="number" min="0" max="255" value="255">
           </label>
           <label>1ª coil (I0.0)
             <input name="coilBase" type="number" min="0" value="0">
@@ -81,6 +81,25 @@ try { var u = new URL(location.href); if (u.searchParams.has('hubRestaurar')) { 
         <div class="testplc">
           <span>Sem CLP à mão? <b id="tpState">CLP virtual desligado</b></span>
           <button id="btnTestPlc" class="btn small ghost">Ligar CLP virtual de teste</button>
+        </div>
+      </section>
+
+      <section class="block" aria-labelledby="hPc">
+        <div class="block-head"><h2 id="hPc">Este computador</h2></div>
+        <p class="muted pc-help">Para outros PCs da sala abrirem o simulador, use um destes endereços no navegador deles:</p>
+        <div id="pcLan" class="pc-lan">—</div>
+        <div class="pc-fw">
+          <span id="pcFw" class="badge">verificando…</span>
+          <button id="btnFirewall" class="btn small ghost" hidden>Liberar acesso na rede</button>
+        </div>
+      </section>
+
+      <section class="block" aria-labelledby="hReset">
+        <div class="block-head"><h2 id="hReset">Restaurar padrão</h2></div>
+        <p class="muted reset-help">Volta ao estado de quando o simulador foi instalado: conexão, endereços, processo, soft-starters, pressostatos, quadro elétrico e ligação da jockey.</p>
+        <div class="reset-actions">
+          <button id="btnResetSession" class="btn small ghost">Restaurar esta sessão</button>
+          <button id="btnResetAll" class="btn small stop">Restaurar tudo (como recém-instalado)</button>
         </div>
       </section>
 
@@ -195,6 +214,12 @@ try { var u = new URL(location.href); if (u.searchParams.has('hubRestaurar')) { 
               <option value="table">Tabela: endereço individual por ponto</option>
             </select>
           </label>
+          <label>Offset de endereço
+            <select id="addrOffset">
+              <option value="0">Sem offset (base 0)</option>
+              <option value="1">Offset +1 (base 1)</option>
+            </select>
+          </label>
           <button id="btnAddrApply" class="btn small go">Aplicar endereços</button>
           <span class="sep"></span>
           <button id="btnAddrCopy" class="btn small">Copiar tabela</button>
@@ -205,11 +230,11 @@ try { var u = new URL(location.href); if (u.searchParams.has('hubRestaurar')) { 
         <div class="io-tables">
           <div>
             <h3>Saídas do simulador → coils (o simulador escreve) → entradas do CLP</h3>
-            <div class="tw"><table id="tblCoils" class="io"><thead><tr><th>Endereço</th><th>Notação 0x</th><th>XP325 (SP02)</th><th>Tag</th><th>Variável XP325</th><th>Descrição</th><th>Estado</th></tr></thead><tbody></tbody></table></div>
+            <div class="tw"><table id="tblCoils" class="io"><thead><tr><th>Endereço</th><th>No MasterTool</th><th>Notação 0x</th><th>XP325 (SP02)</th><th>Tag</th><th>Variável (UserPrg)</th><th>Descrição</th><th>Estado</th></tr></thead><tbody></tbody></table></div>
           </div>
           <div>
             <h3>Saídas do CLP → discrete inputs (o simulador lê) → entradas do simulador</h3>
-            <div class="tw"><table id="tblDis" class="io"><thead><tr><th>Endereço</th><th>Notação 1x</th><th>XP325 (SP02)</th><th>Tag</th><th>Variável XP325</th><th>Descrição</th><th>Estado</th></tr></thead><tbody></tbody></table></div>
+            <div class="tw"><table id="tblDis" class="io"><thead><tr><th>Endereço</th><th>No MasterTool</th><th>Notação 1x</th><th>XP325 (SP02)</th><th>Tag</th><th>Variável (UserPrg)</th><th>Descrição</th><th>Estado</th></tr></thead><tbody></tbody></table></div>
           </div>
         </div>
       </section>

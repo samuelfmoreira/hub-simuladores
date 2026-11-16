@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <script>/* [HUB] Restaurar original: o HUB abre esta tela com ?hubRestaurar=1 e ela apaga o que guardou neste navegador */
+try { var u = new URL(location.href); if (u.searchParams.has('hubRestaurar')) { localStorage.clear(); sessionStorage.clear(); u.searchParams.delete('hubRestaurar'); history.replaceState(null, '', u.pathname + u.search + u.hash); } } catch (e) { /* sem armazenamento */ }</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Estação de bombeamento · canal analógico</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/cfw500.css">
+  <script type="importmap">{ "imports": { "three": "./vendor/three/three.module.min.js", "three/addons/": "./vendor/three/addons/" } }</script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><path fill="#2272b8" d="M6 4h20v4H6zM8 8h16v16a8 8 0 0 1-16 0z"/><path fill="#8fd3ff" d="M9 15c3-1 4 1 7 0s4 1 7 0v9a7 7 0 0 1-14 0z"/></svg>
+      <div>
+        <h1>Estação de bombeamento</h1>
+        <p class="brand-line">Nível de tanque por velocidade da bomba · uma entrada (LT-01, 4–20 mA) e uma saída analógica (CFW500, 0–10 V) · Modbus TCP, OPC UA ou OPC DA</p>
+      </div>
+    </div>
+    <nav class="sessions" aria-label="Ações">
+      <button id="btnComm" class="btn ghost comm-toggle" aria-expanded="false" aria-controls="commPanel" title="Mostrar ou ocultar a conexão com o CLP e o diagnóstico"><span class="cdot" id="commDot"></span><span id="commTxt">Conectar ao CLP</span></button>
+      <a href="diagrama.html" target="_blank" rel="noopener" class="btn ghost" title="Diagrama de ligação ao vivo, em nova guia">Diagrama de ligação</a>
+      <a href="histerese.html" target="_blank" rel="noopener" class="btn ghost" title="Compara o liga-desliga de nível com e sem histerese, e acompanha o seu programa ao vivo">Laboratório de histerese</a>
+      <button id="btnSom" class="btn ghost" title="Som da sirene H4 (o navegador só toca depois de um clique na página)">🔈 Clique para ativar o som</button>
+      <a href="guia.html" target="_blank" rel="noopener" class="btn guide" title="Abre o guia em uma nova guia do navegador">Guia passo a passo</a>
+    </nav>
+  </header>
+
+  <div class="layout" id="layout">
+    <!-- ================= COLUNA DE COMUNICAÇÃO ================= -->
+    <aside class="comm" id="commPanel" hidden>
+      <button id="btnCommHide" class="btn small comm-hide" title="Ocultar este painel">Ocultar painel ✕</button>
+      <section class="block" aria-labelledby="hConn">
+        <div class="block-head">
+          <h2 id="hConn">Conexão com o CLP</h2>
+          <span id="connStatus" class="status s-desconectado" role="status">Desconectado</span>
+        </div>
+        <form id="connForm" class="conn-form" autocomplete="off" onsubmit="return false">
+          <div class="f-wide proto" role="radiogroup" aria-label="Protocolo">
+            <label class="check"><input type="radio" name="protocolo" value="modbus" checked> Modbus TCP — CODESYS Control Win ou XP325 (o CLP é o servidor)</label>
+            <label class="check"><input type="radio" name="protocolo" value="opcua"> OPC UA — XP325 real ou CODESYS Control Win</label>
+            <label class="check"><input type="radio" name="protocolo" value="opcda"> OPC DA — MasterTool em modo Simulação (neste PC)</label>
+          </div>
+          <label class="f-ip so-modbus">IP do CLP (servidor Modbus TCP)
+            <input name="mbHost" type="text" value="192.168.100.10" spellcheck="false" placeholder="192.168.100.10">
+          </label>
+          <label class="f-port so-modbus">Porta
+            <input name="mbPort" type="number" min="1" max="65535" value="502">
+          </label>
+          <label class="so-modbus">Unit ID
+            <input name="mbUnit" type="number" min="0" max="255" value="1">
+          </label>
+          <p class="muted so-modbus" style="font-size:12px;margin:2px 0 0;grid-column:1/-1">Mapa de endereços na seção <b>Variáveis e endereços</b>. Control Win no SIM-HUB: 192.168.100.10.</p>
+          <div class="f-wide so-opcda" hidden>
+            <label>Servidor OPC DA
+              <input name="progId" type="text" value="CoDeSys.OPC.DA" spellcheck="false">
+            </label>
+            <label>Prefixo dos itens (até o nome da GVL, com ponto no fim)
+              <input name="prefixoDa" type="text" value="PLC.Application.GVL_SIMULADOR." spellcheck="false">
+            </label>
+            <p class="muted" style="font-size:12px;margin:4px 0 0">MasterTool em simulação e em RUN, Configuração de Símbolos compilada, Configuração do OPC em 127.0.0.1 porta 11739, e o INSTALAR_OPCDA.bat executado uma vez.</p>
+          </div>
+          <label class="f-ip so-opcua">IP do CLP (servidor OPC UA)
+            <input name="host" type="text" value="192.168.100.10" spellcheck="false" placeholder="192.168.100.10">
+          </label>
+          <label class="f-port so-opcua">Porta
+            <input name="port" type="number" min="1" max="65535" value="4840">
+          </label>
+          <label class="f-wide so-opcua">Prefixo do NodeId (só se o simulador não achar a GVL_SIMULADOR)
+            <input name="prefixo" type="text" spellcheck="false" placeholder="ns=4;s=|var|XP325.Application.GVL_SIMULADOR.">
+          </label>
+          <label class="so-opcua">Usuário
+            <input name="user" type="text" spellcheck="false">
+          </label>
+          <label class="so-opcua">Senha
+            <input name="senha" type="password">
+          </label>
+        </form>
+        <div class="conn-actions">
+          <button id="btnConnect" class="btn go">Conectar</button>
+          <button id="btnDisconnect" class="btn stop" disabled>Desconectar</button>
+        </div>
+        <div class="testplc">
+          <span>Sem CLP à mão? <b id="tpState">XP325 de demonstração desligado</b></span>
+          <button id="btnTestPlc" class="btn small ghost">Ligar CLP de demonstração</button>
+        </div>
+      </section>
+
+      <section class="block" aria-labelledby="hQueue">
+        <div class="block-head"><h2 id="hQueue">Fila de escrita por prioridade</h2><span id="qRate" class="muted">0 escr/s</span></div>
+        <div class="queue">
+          <div class="q-row"><span>P0 evento</span><div class="q-bar"><i id="qb0"></i></div><b id="qn0">0</b></div>
+          <div class="q-row"><span>P1 analógicas</span><div class="q-bar"><i id="qb1"></i></div><b id="qn1">0</b></div>
+          <div class="q-row"><span>P2 lentas</span><div class="q-bar"><i id="qb2"></i></div><b id="qn2">0</b></div>
+        </div>
+        <dl class="kv" id="commStats"></dl>
+      </section>
+
+      <section class="block diag" aria-labelledby="hDiag">
+        <div class="block-head">
+          <h2 id="hDiag">Diagnóstico</h2>
+          <button id="btnClearLog" class="btn small ghost">Limpar</button>
+        </div>
+        <textarea id="diagBox" wrap="off" readonly spellcheck="false" aria-label="Mensagens de diagnóstico"></textarea>
+      </section>
+    </aside>
+
+    <!-- ================= PROCESSO ================= -->
+    <main class="plant">
+      <section class="block process" aria-labelledby="hProc">
+        <div class="block-head">
+          <h2 id="hProc">Estação de bombeamento</h2>
+          <span id="clpBadge" class="badge off">sem CLP</span>
+        </div>
+        <div class="process-grid">
+          <div class="viewwrap">
+            <div class="view-bar" role="toolbar" aria-label="Vista do processo">
+              <div class="seg">
+                <button data-view="3d" aria-pressed="true">3D</button>
+                <button data-view="2d" aria-pressed="false">Sinótico</button>
+              </div>
+              <div class="seg cams" id="camBtns">
+                <button data-cam="geral">Visão geral</button>
+                <button data-cam="tanque">Tanque</button>
+                <button data-cam="bomba">Bomba</button>
+                <button data-cam="quadro">Quadro</button>
+                <button id="btnLabels" aria-pressed="true">Rótulos</button>
+                <button id="btnInvFloat" aria-pressed="false" title="Abre o inversor CFW500 em uma janela flutuante ao lado do processo">Inversor ⧉</button>
+                <button id="btnIhmFloat" aria-pressed="false" title="Abre a IHM do operador em uma janela flutuante">IHM ⧉</button>
+              </div>
+            </div>
+            <div id="p3dHost" class="p3d"><p class="p3d-hint">Arraste para girar · rolagem para zoom · no quadro, segure as botoeiras, clique no seletor, no cogumelo e na manopla do disjuntor Q1 · clique no volante da HV-01 para abrir/fechar o consumo</p></div>
+            <div id="sinHost" class="sinotico" hidden></div>
+          </div>
+          <div class="gauge-col">
+            <div id="levelHost"></div>
+            <div class="readout"><b id="rNivel">0,00</b> m <span id="rNivelPct">0 % de TQ-01</span></div>
+            <div id="gaugeHost"></div>
+            <div class="readout"><b id="rPress">0,0</b> Hz <span id="rVazao">SA0 —</span></div>
+          </div>
+        </div>
+        <div class="process-bottom tq">
+          <div>
+            <canvas id="trend" height="150" aria-label="Tendência dos últimos minutos"></canvas>
+            <div class="trend-legend" id="trendLegend"></div>
+          </div>
+          <div class="instrutor">
+            <div class="ins-grp proc-ctrl">
+              <h4>Perturbação</h4>
+              <label>Consumo da rede <output id="oCons">60 %</output>
+                <input id="rngCons" type="range" min="5" max="100" step="1" value="60">
+              </label>
+              <label class="check"><input id="chkConsAuto" type="checkbox"> Perfil automático (dia acelerado)</label>
+            </div>
+            <div class="ins-grp">
+              <h4>Falhas injetáveis</h4>
+              <div class="falhas" id="falhasHost"></div>
+            </div>
+            <div class="ins-grp">
+              <h4>Simulação</h4>
+              <div class="btn-row">
+                <button class="btn ghost small" data-vel="1">1×</button>
+                <button class="btn ghost small" data-vel="5">5×</button>
+                <button class="btn ghost small" data-vel="10">10×</button>
+              </div>
+              <button class="btn small" id="btnReset" style="margin-top:8px">Reiniciar processo</button>
+              <p class="muted" style="font-size:12px;margin:8px 0 0">A velocidade acelera só a física; a comunicação com o CLP continua em tempo real.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="block door" aria-labelledby="hDoor">
+        <div class="block-head"><h2 id="hDoor">Painel de operação</h2><button id="btnIhmFloat2" class="btn small ghost" aria-pressed="false" style="margin-left:auto">Destacar IHM ⧉</button><span class="muted">IHM na porta (IHM_Velocidade %IW2, IHM_Setpoint %IW3, IHM_Nivel %QW2) · botoeiras de 22 mm · S2 e S0 são NF · o cogumelo trava</span></div>
+        <div id="doorHost" class="door-panel tq"></div>
+      </section>
+
+      <section class="block" aria-labelledby="hInv">
+        <div class="block-head"><h2 id="hInv">Inversor WEG CFW500 — B-01</h2><button id="btnInvFloat2" class="btn small ghost" aria-pressed="false" style="margin-left:auto">Destacar em janela ⧉</button><span class="muted">Modelo do simulador CFW500 do HUB · bornes: DI1 gira/para · DI3 reset · AI1 referência 0–10 V · DO1 sem falha · DO2 F &gt; Fx · AO1 corrente</span></div>
+        <div id="cfwHost" class="cfw"></div>
+      </section>
+
+      <section class="block" aria-labelledby="hInst">
+        <div class="block-head"><h2 id="hInst">Canais analógicos</h2><span class="muted">Entrada EA0 (LT-01) e saída SA0 (inversor): engenharia · sinal elétrico · contagem bruta de 15 bits</span></div>
+        <div class="tw"><table id="tblInst" class="inst"><thead><tr><th>Tag</th><th>Função</th><th>Canal</th><th>Modo do canal</th><th>Engenharia</th><th>Sinal</th><th>Bruto</th><th>Estado</th></tr></thead><tbody></tbody></table></div>
+      </section>
+
+      <section class="block" aria-labelledby="hElec">
+        <div class="block-head"><h2 id="hElec">Quadro elétrico</h2><span class="muted">XP325 com os LEDs de cada ED/SD · disjuntor-motor Q1 alimenta o CFW500 (clique para ligar/desligar)</span></div>
+        <div class="quadro">
+          <div class="xp325" id="xpHost"></div>
+          <div>
+            <div class="k1"><button class="dj" id="q1Btn" aria-pressed="true" title="Disjuntor-motor Q1: clique para ligar/desligar a alimentação do CFW500"><i></i><span>Q1</span></button><div><b>Q1</b> — disjuntor-motor de alimentação do CFW500 (manual)<br><span class="muted" id="q1Txt">ligado</span></div></div>
+            <div class="breakers" id="brkHost"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="block" aria-labelledby="hBench">
+        <div class="block-head"><h2 id="hBench">Bancada — XP325 virtual</h2><span class="muted">Modo de cada canal como no MasterTool · fundo de escala do A/D · bruto ou engenharia</span></div>
+        <div id="benchHost" class="chips"></div>
+        <p class="muted" style="margin:8px 0 0">Arquivos para o CODESYS/MasterTool: <a href="mastertool/GVL_SIM.st" download>GVL_SIM.st</a> (com AT) · <a href="mastertool/GVL_SIMULADOR.st" download>GVL_SIMULADOR.st</a> (sem AT, para mapear pela coluna Variable) · <a href="mastertool/PRG_TQ01_GVL_SIMULADOR.st" download>PRG_TQ01_GVL_SIMULADOR.st</a> (programa da estação)</p>
+      </section>
+
+      <section class="block" aria-labelledby="hIo">
+        <div class="block-head"><h2 id="hIo">Variáveis e endereços</h2><button id="btnCopiarMapa" class="btn small ghost" style="margin-left:auto">Copiar tabela</button><span class="muted">Uma variável por sinal, sem vetores — o mesmo nome na GVL_SIMULADOR, no OPC UA/DA e no Modbus</span></div>
+        <h3 class="io-h">Simulador → CLP (o simulador escreve, o CLP lê)</h3>
+        <div class="tw"><table id="tblIn" class="io io2"><thead><tr><th>Variável (GVL_SIMULADOR)</th><th>Tipo</th><th>Modbus</th><th>CODESYS</th><th>Clássico</th><th>Significado</th><th>Valor</th></tr></thead><tbody></tbody></table></div>
+        <h3 class="io-h">CLP → simulador (o CLP escreve, o simulador lê)</h3>
+        <div class="tw"><table id="tblOut" class="io io2"><thead><tr><th>Variável (GVL_SIMULADOR)</th><th>Tipo</th><th>Modbus</th><th>CODESYS</th><th>Clássico</th><th>Significado</th><th>Valor</th></tr></thead><tbody></tbody></table></div>
+        <p class="muted" style="font-size:12px;margin:8px 0 0">Canal analógico como no hardware: LT01_Bruto e Ref_Bruto são contagens de 15 bits, 0–32767 = 0–100 % do canal (4–20 mA ou 0–10 V); abaixo de 4 mA a contagem fica negativa (fio rompido: menor que −410). O escalonamento é feito no programa do CLP. Na IHM, velocidade em % (75 = 75 %) e setpoint/nível em cm (200 = 2,00 m).</p>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" role="alert" hidden></div>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

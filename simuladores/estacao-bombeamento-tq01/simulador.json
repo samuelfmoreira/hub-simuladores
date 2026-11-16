@@ -1,0 +1,51 @@
+{
+  "id": "estacao-bombeamento-tq01",
+  "nome": "Estação de bombeamento",
+  "fabricante": "Didático · Altus XP325",
+  "tipo": "Canal analógico: nível do tanque",
+  "descricao": "Processo didático enxuto para o canal analógico do CLP: o transmissor de nível LT-01 (4–20 mA) entra no canal EA0 e a saída SA0 (0–10 V) dá a referência de velocidade ao inversor CFW500 da bomba que enche o tanque; o instrutor perturba pelo consumo. Brutos em 15 bits. O CLP é o servidor (Modbus TCP ou OPC UA; OPC DA para o MasterTool em simulação); o simulador é o cliente. Inversor = modelo do simulador CFW500 do HUB.",
+  "protocolos": [
+    "Modbus TCP",
+    "OPC UA",
+    "OPC DA"
+  ],
+  "papel": "Cliente Modbus TCP (o CLP é o servidor); também OPC UA e OPC DA (MasterTool em simulação)",
+  "iniciar": {
+    "comando": "node",
+    "args": [
+      "server.js"
+    ]
+  },
+  "web": {
+    "porta": 3050,
+    "caminho": "/"
+  },
+  "rede": {
+    "precisaIp": false,
+    "portas": []
+  },
+  "variaveis": {},
+  "arquivos": {
+    "guia": "GUIA.md",
+    "eds": [
+      "mastertool/GVL_SIMULADOR.st",
+      "mastertool/PRG_TQ01_GVL_SIMULADOR.st",
+      "mastertool/tags-modbus-tq01.csv",
+      "mastertool/GVL_SIM.st"
+    ]
+  },
+  "preservarAoAtualizar": [
+    "config/",
+    "server/data/"
+  ],
+  "aprender": [
+    "modbus-tcp",
+    "redes-ip",
+    "diagnostico"
+  ],
+  "cor": "#1B5E9E",
+  "icone": "icone.svg",
+  "versao": "0.12.1.3",
+  "pacote": "estacao-bombeamento-sim",
+  "ordem": 800
+}

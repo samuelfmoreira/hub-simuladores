@@ -395,7 +395,8 @@ table.io td.num { font-variant-numeric: tabular-nums; }
 table.io input.addr { width: 72px; padding: 3px 5px; border: 1px solid #9aa098; border-radius: 2px; font: inherit; font-variant-numeric: tabular-nums; }
 table.io input.addr:disabled { background: transparent; border-color: transparent; color: var(--ink); }
 table.io code { font-family: var(--mono); font-size: 11.5px; }
-.tab .mine { font-size: 10.5px; padding: 0 5px; border-radius: 2px; background: #1f7a3c; color: #fff; }
+.tab .mine { font-size: 10.5px; padding: 1px 6px; border: 0; border-radius: 2px; background: #1f7a3c; color: #fff; cursor: pointer; }
+.tab .mine:hover { background: #28a14e; }
 
 /* Painel de conexão recolhível */
 .layout.no-comm { grid-template-columns: 1fr; }
@@ -420,3 +421,13 @@ dialog.enun::backdrop { background: rgba(20,24,28,.55); }
 .enun-body { padding: 16px; overflow: auto; max-height: calc(90vh - 56px); }
 .enun-body img { display: block; width: 100%; height: auto; margin: 0 auto 14px; background: #fff; border: 1px solid #e3e5df; }
 .enun-anexos { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: baseline; padding-top: 6px; border-top: 1px solid var(--line); font-size: 14px; }
+
+.reset-help { margin: 0 0 8px; font-size: 12.5px; }
+.reset-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.pc-help { margin: 0 0 6px; font-size: 12.5px; }
+.pc-lan { font-family: var(--mono); font-size: 13px; line-height: 1.7; margin-bottom: 8px; word-break: break-all; }
+.pc-fw { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.badge.ok { background: #1f7a3c; }
+.badge.warn { background: #b7791f; }

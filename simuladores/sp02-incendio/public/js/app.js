@@ -7,6 +7,7 @@ import { createPID, createGauge, createTrend } from './process-view.js';
 const $ = (id) => document.getElementById(id);
 let meta = null;
 let mineId = null; // sessão deste PC
+let myIp = '127.0.0.1'; // IP deste PC na rede (preenchido por system/info)
 let sessionId = null;
 let es = null;
 let state = null;
@@ -43,7 +44,18 @@ async function refreshTabs() {
     if (s.status === 'conectado') dot.classList.add('on');
     else if (s.status === 'reconectando' || s.status === 'erro') dot.classList.add('err');
     el('span', {}, tab).textContent = s.name;
-    if (s.id === mineId) { const m = el('span', { class: 'mine', title: 'Sessão deste computador' }, tab); m.textContent = 'este PC'; }
+    if (s.id === mineId) {
+      const m = el('button', { class: 'mine', title: 'Sessão deste computador · clique para usar o IP deste PC no campo Endereço IP' }, tab);
+      m.textContent = 'este PC';
+      m.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (s.id !== sessionId) selectSession(s.id);
+        const f = $('connForm');
+        if (f.elements.host.disabled) { toast('Desconecte do CLP antes de alterar o IP.'); return; }
+        f.elements.host.value = myIp;
+        api(`sessions/${sessionId}/config`, 'POST', { host: myIp }).then(() => toast(`IP deste PC (${myIp}) copiado para o campo Endereço IP.`)).catch((err) => toast(err.message));
+      });
+    }
     const x = el('button', { class: 'x', 'aria-label': `Excluir sessão ${s.name}`, title: 'Excluir sessão' }, tab);
     x.textContent = '×';
     tab.addEventListener('click', (e) => { if (e.target !== x) selectSession(s.id); });
@@ -174,7 +186,7 @@ function buildDoor() {
       return b;
     });
     const t = el('div', { class: 'tagplate' }, d);
-    t.textContent = title; const sm = el('small', {}, t); sm.textContent = name;
+    t.textContent = title; const sm = el('small', {}, t); sm.textContent = TAG_LABEL[name] || name;
     selectors[name] = { knob, btns, values: positions.map((p) => p[0]) };
     // Girar clicando no próprio knob: metade esquerda gira para a esquerda, metade direita para a direita
     const turn = (dir) => {
@@ -209,6 +221,8 @@ function buildDoor() {
   // Coluna de seleção
   const c0 = el('div', { class: 'door-col' }, host);
   el('h3', {}, c0).textContent = 'Seleção de bombas';
+  // nome mostrado na plaqueta = variável do programa do CLP
+  var TAG_LABEL = { B_SEL: 'B_SEL1 · B_SEL2', B1_MA: 'B1_MAN · B1_AUT', B2_MA: 'B2_MAN · B2_AUT', BJ_MA: 'BJ_MAN · BJ_AUT' };
   lamps[0] = lamp(c0, 'green', 'Bomba 01 selecionada', 'LB1_S');
   lamps[1] = lamp(c0, 'green', 'Bomba 02 selecionada', 'LB2_S');
   selector(c0, 'B_SEL', [['B1', 'B01'], ['0', '0'], ['B2', 'B02']], 'Seleção de bombas');
@@ -286,8 +300,8 @@ function buildElec() {
 }
 
 // ------------------------------------------------------------------ Endereçamento Modbus
-const XPVAR_IN = (i) => `GVL_SIM.xSimIn[${i}]`;
-const XPVAR_OUT = (i) => `GVL_SIM.xSimOut[${i}]`;
+const XPVAR_IN = (i) => `UserPrg.${meta.coils[i].tag}`;
+const XPVAR_OUT = (i) => `UserPrg.${meta.discreteInputs[i].tag}`;
 const note0x = (a) => `0${String(a + 1).padStart(4, '0')}`;
 const note1x = (a) => `1${String(a + 1).padStart(4, '0')}`;
 function buildIo() {
@@ -297,13 +311,14 @@ function buildIo() {
     return list.map((d, i) => {
       const tr = el('tr', {}, tb);
       const inp = el('input', { class: 'addr', type: 'number', min: 0, max: 65535, 'aria-label': `Endereço Modbus de ${d.xp || d.addr}` }, el('td', {}, tr));
+      const mt = el('td', { class: 'num', title: 'Endereço como aparece no MODBUS Symbol Server do MasterTool (1 = primeiro)' }, tr);
       const nt = el('td', { class: 'num' }, tr);
       el('td', {}, tr).textContent = d.xp ? `${d.xp} (${d.addr})` : d.addr;
       el('td', {}, tr).textContent = d.tag;
       el('code', {}, el('td', {}, tr)).textContent = kind === 'in' ? XPVAR_IN(i) : XPVAR_OUT(i);
       el('td', {}, tr).textContent = d.desc;
       const b = el('span', { class: 'bit' }, el('td', {}, tr));
-      return { inp, nt, b };
+      return { inp, mt, nt, b };
     });
   };
   const rc = mk($('tblCoils'), meta.coils, 'in');
@@ -311,15 +326,17 @@ function buildIo() {
   let editing = false;
   [...rc, ...rd].forEach((r) => r.inp.addEventListener('input', () => { editing = true; }));
   $('addrMode').addEventListener('change', () => { editing = true; refreshHelp(); });
+  $('addrOffset').addEventListener('change', () => { editing = true; });
   function refreshHelp() {
     const table = $('addrMode').value === 'table';
-    $('addrHelp').textContent = table
+    const off = Number($('addrOffset').value) ? ' O offset +1 soma 1 a cada endereço (uma coil em 0 vira 1 no protocolo).' : '';
+    $('addrHelp').textContent = (table
       ? 'Digite o endereço Modbus de cada ponto (0 a 65535, sem repetir) e clique em Aplicar. Pontos com endereços seguidos são lidos/escritos numa só mensagem.'
-      : 'Os endereços seguem a 1ª coil e a 1ª entrada da seção Conexão. Para escolher ponto a ponto, mude o modo para Tabela.';
+      : 'Os endereços seguem a 1ª coil e a 1ª entrada da seção Conexão. Para escolher ponto a ponto, mude o modo para Tabela.') + off;
   }
   $('btnAddrApply').addEventListener('click', async () => {
     const mode = $('addrMode').value;
-    const body = { addrMode: mode };
+    const body = { addrMode: mode, addrOffset: Number($('addrOffset').value) };
     if (mode === 'table') {
       const cm = rc.map((r, i) => (r.inp.value === '' ? (state.coilAddrs[i] ?? Math.max(...state.coilAddrs) + 1 + i - state.coilAddrs.length) : Number(r.inp.value)));
       body.coilMap = cm; body.diMap = rd.map((r) => Number(r.inp.value));
@@ -349,11 +366,11 @@ function buildIo() {
   $('btnAddrCsv').addEventListener('click', () => download(`enderecos-modbus-${state.name.replace(/\W+/g, '_')}.csv`, rows().map((r) => r.join(';')).join('\r\n')));
   $('btnAddrMt').addEventListener('click', () => {
     const s = state;
-    const lines = [['Variável', 'Tipo de dado', 'Endereço inicial', 'Tamanho', 'Observação'].join(';')];
-    meta.coils.forEach((d, i) => { if (i < s.coilAddrs.length) lines.push([XPVAR_IN(i), 'Coil', s.coilAddrs[i], 1, `${d.xp} ${d.tag}`].join(';')); });
-    meta.discreteInputs.forEach((d, i) => lines.push([XPVAR_OUT(i), 'Input Status', s.diAddrs[i], 1, `${d.xp} ${d.tag}`].join(';')));
+    const lines = [['Variável', 'Tipo de dado', 'Endereço no MasterTool (1 = primeiro)', 'Endereço no protocolo (0 = primeiro)', 'Tamanho', 'Observação'].join(';')];
+    meta.coils.forEach((d, i) => { if (i < s.coilAddrs.length) lines.push([XPVAR_IN(i), 'Coil', s.coilAddrs[i] + 1, s.coilAddrs[i], 1, `${d.xp} ${d.desc}`].join(';')); });
+    meta.discreteInputs.forEach((d, i) => lines.push([XPVAR_OUT(i), 'Input Status', s.diAddrs[i] + 1, s.diAddrs[i], 1, `${d.xp} ${d.desc}`].join(';')));
     lines.push('');
-    lines.push('Se a sua versão do MasterTool numerar os endereços a partir de 1, some 1 em cada endereço (veja Guia, Passo 4C).');
+    lines.push('Com o simulador em "Sem offset", o endereço 1 do MasterTool corresponde ao endereço 0 do protocolo (convenção 00001/100001).');
     download(`mapeamento-mastertool-${state.name.replace(/\W+/g, '_')}.csv`, lines.join('\r\n'));
   });
   return function update(s) {
@@ -361,6 +378,7 @@ function buildIo() {
     if (!editing || busy) {
       editing = false;
       if (document.activeElement !== $('addrMode')) $('addrMode').value = s.config.addrMode || 'base';
+      if (document.activeElement !== $('addrOffset')) $('addrOffset').value = String(s.config.addrOffset || 0);
       refreshHelp();
     }
     const table = $('addrMode').value === 'table';
@@ -373,13 +391,15 @@ function buildIo() {
       if (off) { r.inp.value = ''; r.nt.textContent = 'não enviada'; r.inp.disabled = true; return; }
       if (!editing && document.activeElement !== r.inp) r.inp.value = s.coilAddrs[i];
       r.inp.disabled = busy || !table;
-      r.nt.textContent = note0x(Number(r.inp.value) || 0);
+      r.nt.textContent = note0x(s.coilAddrs[i] || 0);
+      r.mt.textContent = String((s.coilAddrs[i] || 0) + 1);
       const v = s.coils[i]; r.b.textContent = v ? '1' : '0'; r.b.classList.toggle('on', v);
     });
     rd.forEach((r, i) => {
       if (!editing && document.activeElement !== r.inp) r.inp.value = s.diAddrs[i];
       r.inp.disabled = busy || !table;
-      r.nt.textContent = note1x(Number(r.inp.value) || 0);
+      r.nt.textContent = note1x(s.diAddrs[i] || 0);
+      r.mt.textContent = String((s.diAddrs[i] || 0) + 1);
       const v = s.plc[i]; r.b.textContent = v ? '1' : '0'; r.b.classList.toggle('on', v);
     });
     const f = $('connForm');
@@ -430,7 +450,7 @@ async function setupProcessViews() {
     const probe = document.createElement('canvas');
     if (!(probe.getContext('webgl2') || probe.getContext('webgl'))) throw new Error('sem WebGL');
     const mod = await import('./process3d.js');
-    views.p3d = mod.createProcess3D($('p3dHost'), {
+    views.p3d = window.__p3d = mod.createProcess3D($('p3dHost'), {
       onHydrantToggle: () => send({ type: 'process', name: 'hydrant', value: state && state.sim.process.hydrant > 0 ? 0 : 100 }),
       onAction: (a) => send(a),
     });
@@ -447,6 +467,45 @@ function setComm(show) {
   $('layout').classList.toggle('no-comm', !show);
   $('btnComm').setAttribute('aria-expanded', String(show));
   try { localStorage.setItem('sp02.comm', show ? '1' : '0'); } catch { /* */ }
+}
+function setupPc() {
+  const render = (info) => {
+    $('pcLan').innerHTML = info.lan.length ? info.lan.map((u) => `<div>${u}</div>`).join('') : 'Sem rede detectada';
+    const fw = $('pcFw'), btn = $('btnFirewall');
+    if (info.firewall === null) { fw.textContent = 'Firewall: não precisa liberar'; fw.className = 'badge ok'; btn.hidden = true; }
+    else if (info.firewall) { fw.textContent = 'Acesso pela rede liberado'; fw.className = 'badge ok'; btn.hidden = true; }
+    else { fw.textContent = 'Acesso pela rede bloqueado pelo firewall'; fw.className = 'badge warn'; btn.hidden = false; }
+  };
+  const load = () => api('system/info').then(render).catch(() => {});
+  $('btnFirewall').addEventListener('click', async () => {
+    toast('O Windows vai pedir permissão de administrador. Clique em "Sim".');
+    $('btnFirewall').disabled = true;
+    try { const r = await api('system/firewall', 'POST', {}); toast(r.firewall ? 'Acesso pela rede liberado.' : 'Não foi possível confirmar a liberação.'); }
+    catch (e) { toast(e.message); }
+    $('btnFirewall').disabled = false; load();
+  });
+  load();
+}
+function setupReset() {
+  $('btnResetSession').addEventListener('click', async () => {
+    const nome = state?.name || 'esta sessão';
+    if (!confirm(`Restaurar "${nome}" para o padrão de instalação?\n\nDesconecta do CLP, desliga o CLP virtual desta sessão e volta conexão, endereços, processo, soft-starters, pressostatos, quadro elétrico e ligação da jockey ao original.`)) return;
+    try {
+      await api(`sessions/${sessionId}/reset`, 'POST', {});
+      formLoadedFor = null; views.trend?.clear();
+      testPlc = { running: false, port: null }; renderTestPlc();
+      toast('Sessão restaurada para o padrão de instalação.');
+    } catch (e) { toast(e.message); }
+  });
+  $('btnResetAll').addEventListener('click', async () => {
+    if (!confirm('Restaurar TUDO como recém-instalado?\n\nApaga todas as sessões (de todos os PCs), desliga os CLPs virtuais e deixa só a "Bancada 01" com tudo no padrão. Não dá para desfazer.')) return;
+    try {
+      await api('reset-all', 'POST', {});
+      try { Object.keys(localStorage).filter((k) => k.startsWith('sp02.')).forEach((k) => localStorage.removeItem(k)); } catch { /* */ }
+      location.hash = '';
+      location.reload();
+    } catch (e) { toast(e.message); }
+  });
 }
 function setupEnunciado() {
   const dlg = $('dlgEnunciado');
@@ -518,6 +577,8 @@ function onState(s) {
   document.title = `Simulador Sistema de Incêndio v${meta.version} · Modbus TCP`;
   setupComm();
   setupEnunciado();
+  setupReset();
+  setupPc();
   views.pid = createPID($('pidHost'));
   views.p3d = null;
   setupProcessViews();
@@ -535,6 +596,7 @@ function onState(s) {
   const want = location.hash.slice(1);
   let mine = null;
   try { mine = await api('sessions/mine'); mineId = mine.id; } catch { /* */ }
+  try { const info = await api('system/info'); const ip = (info.lan[0] || '').replace(/^https?:\/\//, '').split(':')[0]; if (ip) myIp = ip; } catch { /* */ }
   selectSession(list.find((s) => s.id === want) ? want : (mine ? mine.id : list[0].id));
   setInterval(refreshTabs, 3000);
 })().catch((e) => toast(`Falha ao iniciar a interface: ${e.message}`));

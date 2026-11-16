@@ -16,19 +16,23 @@ const os = require('os');
 
 // Rodando como .exe (empacotado)? Então os dados vão para %LOCALAPPDATA%, que sempre aceita gravação.
 const PACKAGED = !!process.pkg;
-const PORT = parseInt(process.env.SIM_HTTP_PORT || process.env.PORT || '3000', 10);   // [HUB] porta da tela definida pelo HUB
+const WANTED_PORT = parseInt(process.env.SIM_HTTP_PORT || process.env.PORT || '3001', 10);   // [HUB] porta da tela definida pelo HUB
+let PORT = WANTED_PORT; // porta em que o simulador realmente abriu (pode mudar se a preferida estiver ocupada)
 const HOST = process.env.HOST || '0.0.0.0';
 const PUBLIC = path.join(__dirname, 'public');
-const OPEN_BROWSER = PACKAGED || process.env.OPEN_BROWSER === '1';
-const DATA_DIR = PACKAGED
-  ? path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), '.local', 'share'), 'SimuladorSP02')
-  : path.join(__dirname, 'config');
+const ELECTRON = !!process.versions.electron;
+const OPEN_BROWSER = process.env.OPEN_BROWSER === '0' ? false : (PACKAGED || process.env.OPEN_BROWSER === '1');
+const DATA_DIR = process.env.SIM_DATA_DIR
+  ? process.env.SIM_DATA_DIR
+  : (PACKAGED
+    ? path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), '.local', 'share'), 'SimuladorSP02')
+    : path.join(__dirname, 'config'));
 process.title = 'Simulador Sistema de Incendio (Modbus TCP)';
 const plcTests = new Map(); // sessionId -> CLP virtual próprio da sessão (nunca compartilhado)
 
 /** Na primeira execução do .exe no Windows, cria o atalho na área de trabalho. */
 function firstRunShortcut() {
-  if (!PACKAGED || process.platform !== 'win32') return;
+  if (!(PACKAGED || ELECTRON) || process.platform !== 'win32') return;
   const flag = path.join(DATA_DIR, 'atalho-criado-v2');
   if (fs.existsSync(flag)) return;
   const exe = process.execPath.replace(/'/g, "''");
@@ -45,6 +49,35 @@ function firstRunShortcut() {
       try { fs.writeFileSync(flag, new Date().toISOString()); } catch (_) { /* */ }
       console.log('  Atalho "Simulador Sistema de Incêndio" criado na área de trabalho.');
     }
+  });
+}
+
+// ---------------------------------------------------------------- rede e firewall
+const FW_NAME = 'Simulador Sistema de Incendio';
+function lanUrls() {
+  return Object.values(os.networkInterfaces()).flat().filter((i) => i && i.family === 'IPv4' && !i.internal).map((i) => `http://${i.address}:${PORT}`);
+}
+/** true = regra existe; false = não existe; null = não se aplica (fora do Windows). */
+function firewallOk() {
+  if (process.platform !== 'win32') return Promise.resolve(null);
+  return new Promise((resolve) => {
+    require('child_process').execFile('netsh', ['advfirewall', 'firewall', 'show', 'rule', `name=${FW_NAME}`], { windowsHide: true }, (err) => resolve(!err));
+  });
+}
+/** Cria as regras de entrada (programa + portas do simulador e do CLP virtual), pedindo permissão de administrador (UAC). */
+function allowFirewall() {
+  const fs = require('fs');
+  const exe = process.execPath.replace(/'/g, "''");
+  const script = path.join(os.tmpdir(), 'sim-incendio-firewall.ps1');
+  fs.writeFileSync(script, [
+    `$n = '${FW_NAME}'`,
+    `netsh advfirewall firewall delete rule name="$n" | Out-Null`,
+    `netsh advfirewall firewall add rule name="$n" dir=in action=allow program='${exe}' enable=yes profile=any | Out-Null`,
+    `netsh advfirewall firewall add rule name="$n" dir=in action=allow protocol=TCP localport=3001-3041,502,5020-5099 enable=yes profile=private,domain | Out-Null`,
+  ].join('\r\n'), 'utf8');
+  const cmd = `Start-Process powershell -Verb RunAs -Wait -WindowStyle Hidden -ArgumentList '-NoProfile','-ExecutionPolicy','Bypass','-File','${script.replace(/'/g, "''")}'`;
+  return new Promise((resolve, reject) => {
+    require('child_process').execFile('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', cmd], { windowsHide: true }, (err) => (err ? reject(err) : resolve()));
   });
 }
 
@@ -96,6 +129,24 @@ async function api(req, res, parts) {
   }
   // /api/test-plc — compatibilidade: estado geral dos CLPs virtuais
   if (parts[0] === 'test-plc' && m === 'GET') return json(res, 200, { running: plcTests.size > 0, ports: [...plcTests.values()].map((p) => p.port) });
+  // /api/system — informações deste PC e liberação do firewall (Windows)
+  if (parts[0] === 'system') {
+    if (parts[1] === 'info' && m === 'GET') {
+      return json(res, 200, { version: pkg.version, platform: process.platform, port: PORT, lan: lanUrls(), firewall: await firewallOk() });
+    }
+    if (parts[1] === 'firewall' && m === 'POST') {
+      if (process.platform !== 'win32') return json(res, 200, { ok: true, firewall: null, msg: 'Não é Windows: não precisa liberar.' });
+      try { await allowFirewall(); } catch (e) { return json(res, 409, { error: 'O Windows não liberou: a permissão de administrador foi negada ou cancelada.' }); }
+      return json(res, 200, { ok: true, firewall: await firewallOk() });
+    }
+  }
+  // /api/reset-all — restaura tudo como recém-instalado
+  if (parts[0] === 'reset-all' && m === 'POST') {
+    for (const t of plcTests.values()) await t.close();
+    plcTests.clear();
+    manager.resetAll();
+    return json(res, 200, { ok: true });
+  }
   if (parts[0] !== 'sessions') return json(res, 404, { error: 'Rota inexistente' });
 
   // /api/sessions/mine — sessão própria deste PC (pelo IP de quem acessa)
@@ -164,6 +215,13 @@ async function api(req, res, parts) {
     }
     case 'disconnect': s.disconnect(); return json(res, 200, { ok: true });
     case 'clear-log': s.clearLogs(); return json(res, 200, { ok: true });
+    case 'reset': {
+      if (m !== 'POST') break;
+      const t = plcTests.get(s.id);
+      if (t) { await t.close(); plcTests.delete(s.id); }
+      s.reset();
+      return json(res, 200, { ok: true });
+    }
     case 'action': { const b = await body(req); s.sim.action(b); return json(res, 200, { ok: true }); }
     default: return json(res, 404, { error: 'Rota inexistente' });
   }
@@ -184,24 +242,35 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.on('error', (e) => {
-  if (e.code === 'EADDRINUSE') {
-    console.error(`\n  A porta ${PORT} já está em uso. O simulador provavelmente já está aberto em outra janela.`);
-    console.error(`  Abrindo no navegador: http://localhost:${PORT}\n`);
-    openBrowser();
-    setTimeout(() => process.exit(1), 1500);
+// Tenta a porta preferida; se estiver ocupada, passa para a próxima automaticamente.
+// [HUB] dentro do HUB a porta é escolhida pelo HUB (a janela do HUB abre nela): não troca sozinha
+const PORT_TRIES = process.env.HUB === '1' ? [WANTED_PORT] : [WANTED_PORT, ...Array.from({ length: 40 }, (_, i) => 3002 + i)].filter((p, i, a) => a.indexOf(p) === i);
+function listenWithFallback(idx) {
+  if (idx >= PORT_TRIES.length) {
+    console.error('\n  Não encontrei nenhuma porta livre (tentei de 3000 a 3040).');
+    console.error('  Feche outros programas que usem essas portas e abra o simulador de novo.\n');
+    setTimeout(() => process.exit(1), 8000);
     return;
-  } else {
-    console.error(e);
   }
+  PORT = PORT_TRIES[idx];
+  server.listen(PORT, HOST);
+}
+server.on('error', (e) => {
+  if (e.code === 'EADDRINUSE' || e.code === 'EACCES') {
+    const i = PORT_TRIES.indexOf(PORT);
+    if (i === 0) console.log(`  A porta ${PORT} já estava em uso. Trocando de porta automaticamente…`);
+    listenWithFallback(i + 1);
+    return;
+  }
+  console.error(e);
   process.exit(1);
 });
-
-server.listen(PORT, HOST, () => {
+server.on('listening', () => {
   manager = new SessionManager(path.join(DATA_DIR, 'sessions.json'));
   const ips = Object.values(os.networkInterfaces()).flat().filter((i) => i && i.family === 'IPv4' && !i.internal).map((i) => i.address);
   console.log('');
   console.log(`  Simulador Sistema de Incêndio (Modbus TCP)  v${pkg.version}`);
+  if (PORT !== WANTED_PORT) console.log(`  (a porta ${WANTED_PORT} estava ocupada; abri na porta ${PORT})`);
   console.log(`  Neste PC:        http://localhost:${PORT}`);
   ips.forEach((ip) => console.log(`  Em outros PCs:   http://${ip}:${PORT}`));
   console.log(`  Dados salvos em:  ${DATA_DIR}`);
@@ -212,6 +281,7 @@ server.listen(PORT, HOST, () => {
   openBrowser();
   firstRunShortcut();
 });
+listenWithFallback(0);
 
 function shutdown() {
   if (manager) manager.shutdown();

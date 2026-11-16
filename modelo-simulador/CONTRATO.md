@@ -116,6 +116,7 @@ Todo cartão tem o botão **Restaurar original**, que volta o simulador ao estad
 | 192.168.100.22 | SCA06 |
 | 192.168.100.23 | TBEN-L (EtherNet/IP) |
 | — | Sistema de Incêndio + Soft SSW-05: cliente Modbus TCP, não ocupa IP (conecta no CLP) |
+| — | Estação de bombeamento TQ-01: cliente OPC UA, não ocupa IP (conecta no CLP, porta 4840) |
 
 ## Publicar e atualizar
 

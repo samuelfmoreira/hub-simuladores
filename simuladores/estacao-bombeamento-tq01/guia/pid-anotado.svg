@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 540" font-family="Segoe UI, Roboto, Arial, sans-serif">
+<rect width="1000" height="540" fill="#fbfbf8"/>
+<style>.pp{fill:none;stroke:#2272b8;stroke-width:8;stroke-linejoin:round}.eq{fill:#e9ebe5;stroke:#3c444a;stroke-width:2}</style>
+<rect x="60" y="330" width="160" height="130" class="eq" rx="4"/><rect x="63" y="375" width="154" height="82" fill="#2b84d6" opacity=".75"/><text x="140" y="352" font-size="11" font-weight="700" text-anchor="middle" fill="#1b2125">Reservatório</text><text x="140" y="480" font-size="10" font-weight="400" text-anchor="middle" fill="#5d666c">nível constante · cota 0 m</text>
+<path d="M220 420 H300" class="pp"/>
+<circle cx="330" cy="420" r="30" fill="#e9ebe5" stroke="#1b2125" stroke-width="2"/><path d="M330 420 l0 -22 M330 420 l19 11 M330 420 l-19 11" stroke="#1b2125" stroke-width="4" fill="none" stroke-linecap="round"/>
+<text x="330" y="470" font-size="11" font-weight="700" text-anchor="middle" fill="#1b2125">B-01 · 1,5 kW · 4,3 A</text><text x="330" y="486" font-size="10" font-weight="400" text-anchor="middle" fill="#5d666c">inversor CFW500 · AI1 ← SA0 (0–10 V = 0–60 Hz) · DI1 ← SD04 · DI3 ← SD05</text><text x="330" y="500" font-size="10" font-weight="400" text-anchor="middle" fill="#5d666c">DO2 (F > Fx, rodando) → ED05 · DO1 (sem falha) → ED06</text>
+<path d="M330 390 V130 H560 V160" class="pp"/>
+<path d="M320 320 L340 300 M320 300 L340 300 L340 320" fill="none" stroke="#1b2125" stroke-width="2.5"/><text x="312" y="306" font-size="10" font-weight="400" text-anchor="end" fill="#5d666c">VR-01</text>
+<text x="445" y="118" font-size="11" font-weight="700" text-anchor="middle" fill="#1b5e9e">SA0 → velocidade → vazão de entrada</text>
+<rect x="490" y="160" width="150" height="240" class="eq" rx="6"/><rect x="493" y="280" width="144" height="117" fill="#2b84d6" opacity=".8"/><text x="565" y="182" font-size="11" font-weight="700" text-anchor="middle" fill="#1b2125">TQ-01 · 2 m² · 3,0 m</text><text x="565" y="196" font-size="10" font-weight="400" text-anchor="middle" fill="#5d666c">fundo na cota 6 m</text>
+<path d="M640 200 H672" class="pp"/><circle cx="700" cy="200" r="18" fill="#fff" stroke="#1b2125" stroke-width="2"/><text x="700" y="204" font-size="11" font-weight="700" text-anchor="middle" fill="#1b2125">LT-01</text><text x="724" y="199" font-size="10" font-weight="400" text-anchor="start" fill="#5d666c">0–3,5 m · 4–20 mA · ultrassônico</text><text x="724" y="212" font-size="10" font-weight="700" text-anchor="start" fill="#1b5e9e">EA0 → LT01_Bruto / LT01_Nivel</text>
+<circle cx="660" cy="250" r="7" fill="#fff" stroke="#1b2125" stroke-width="2"/><text x="672" y="254" font-size="10" font-weight="400" text-anchor="start" fill="#1b2125">LSHH-01 2,8 m · ED07</text>
+<circle cx="660" cy="372" r="7" fill="#fff" stroke="#1b2125" stroke-width="2"/><text x="672" y="376" font-size="10" font-weight="400" text-anchor="start" fill="#1b2125">LSLL-01 0,3 m · ED08</text>
+<path d="M565 400 V440 H800 V470" class="pp"/>
+<path d="M688 430 L712 450 L712 430 L688 450 Z" fill="#e9ebe5" stroke="#1b2125" stroke-width="2"/><circle cx="700" cy="415" r="7" fill="none" stroke="#1b2125" stroke-width="2.5"/><text x="700" y="470" font-size="11" font-weight="700" text-anchor="middle" fill="#1b2125">HV-01 consumo</text><text x="700" y="484" font-size="10" font-weight="400" text-anchor="middle" fill="#5d666c">válvula manual (instrutor)</text><text x="700" y="498" font-size="10" font-weight="400" text-anchor="middle" fill="#5d666c">0–12 m³/h, por gravidade</text>
+<rect x="770" y="470" width="60" height="12" fill="#3c444a"/><text x="800" y="500" font-size="10" font-weight="400" text-anchor="middle" fill="#5d666c">consumidor</text>
+<rect x="20" y="40" width="330" height="100" class="eq" rx="4"/><text x="185" y="58" font-size="11" font-weight="700" text-anchor="middle" fill="#1b2125">Quadro de comando · CLP · CFW500</text>
+<text x="30" y="78" font-size="9.5" font-weight="400" text-anchor="start" fill="#1b2125">S1 liga NA → ED00 · S2 desliga NF → ED01 · S3 reset → ED02</text>
+<text x="30" y="93" font-size="9.5" font-weight="400" text-anchor="start" fill="#1b2125">S4 auto/man → ED03 · S0 NF → ED04 (2º NF corta a DI1)</text>
+<text x="30" y="108" font-size="9.5" font-weight="400" text-anchor="start" fill="#1b2125">H1 verde ← SD00 · H2 amarelo ← SD01 · H3 vermelho ← SD02</text>
+<text x="30" y="123" font-size="9.5" font-weight="400" text-anchor="start" fill="#1b2125">H4 sirene ← SD03 · Q1 disjuntor manual alimenta o CFW500</text>
+<text x="60" y="525" font-size="11" font-weight="700" text-anchor="start" fill="#1b5e9e">Uma entrada analógica (LT-01 → EA0) e uma saída analógica (SA0 → inversor). Brutos em 15 bits: 0–32767 = 0–100 % do canal.</text>
+</svg>

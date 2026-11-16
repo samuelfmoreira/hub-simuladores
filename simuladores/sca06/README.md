@@ -238,3 +238,16 @@ dist/                     bancada em arquivo único (modo demonstração)
 Validação feita: pycomm3 (ListIdentity, Get Attributes All, classe 0xA2 conectada e não
 conectada, erros 0x0E/0x16), EEIP.py (Forward Open, I/O implícito, Input Only, Listen Only,
 recusa 0x0119), scanner Node (0x0109, 0x0106, IDLE, timeout, P0849) e cliente Modbus TCP.
+
+## IHM do painel (aba IHM)
+
+Painel touch de 7" com as telas Início, Velocidade, Torque, Absoluta e Pulso. A IHM é **cliente Modbus TCP do CLP**
+(padrão 192.168.100.10:502): 5 coils (habilitar, partir, disparo, STOP, reset), 6 holding registers (modo,
+velocidade, corrente, destino, passo, velocidade de posicionamento), 5 discrete inputs e 5 input registers.
+O CLP (programa `PRG_IHM_Servo`, guia Parte 9) comanda o SCA06 pela Função Posicionador com a conexão
+**Exclusive Owner, IHM (8 entrada / 11 saida)**: P0835…P0841 = 99, 1079, 1171, 219, 1151, 1191, 1181. Assim a
+IHM troca entre velocidade, torque, posição absoluta (menor caminho) e pulso sem reconfigurar o drive.
+
+O **CLP de demonstração** (`src/ihm/clp-demo-ihm.js`) faz o papel do CODESYS: servidor Modbus em 127.0.0.1
+(502 ou a próxima livre), scanner EtherNet/IP até o drive e o mesmo programa do guia (`src/ihm/prg-ihm-servo.js`),
+ciclo de 20 ms. Configuração da IHM em `data/ihm-servo.json`.

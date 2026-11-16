@@ -71,7 +71,7 @@ O `.exe` não instala nada: ele já leva tudo dentro. Basta copiar e abrir.
     1. Marque **Redes privadas**.
     2. Clique em **Permitir acesso**.
     3. Isso só é necessário se outros PCs forem abrir o simulador pelo navegador. Para usar só neste PC, pode clicar em Cancelar.
-6. O navegador abre sozinho em `http://localhost:3000`. Se não abrir, abra o Chrome ou o Edge e digite esse endereço.
+6. O navegador abre sozinho em `http://localhost:3001`. Se não abrir, abra o Chrome ou o Edge e digite esse endereço.
 7. Na área de trabalho aparece o atalho **Simulador Sistema de Incêndio**. Das próximas vezes, abra por ele.
 
 **Para fechar:** feche a janela preta. Tudo o que você configurou (IP, parâmetros das soft-starters, pressostatos, sessões) fica salvo automaticamente em `%LOCALAPPDATA%\SimuladorSP02`.
@@ -171,6 +171,8 @@ Passo a passo:
 3. No modo Tabela, digite o endereço na coluna **Endereço** de cada linha (0 a 65535, sem repetir).
 4. Clique em **Aplicar endereços**. Se houver erro (endereço repetido ou fora da faixa), aparece um aviso e nada muda.
 5. Conecte de novo. O **Diagnóstico** mostra as faixas usadas, por exemplo *coils 0–15; discrete inputs 0–10*.
+
+**Offset de endereço:** o seletor **Offset de endereço** soma um valor a todos os endereços antes de enviá-los. **Sem offset (base 0)**: uma coil em 0 vai como 0 no protocolo. **Offset +1 (base 1)**: a mesma coil vai como 1. Use o +1 quando o seu CLP ou software numera os endereços a partir de 1. Vale para os dois modos (contíguo e tabela) e para coils e discrete inputs.
 
 O simulador agrupa sozinho os pontos de endereços seguidos numa só mensagem (FC15 para escrever, FC02 para ler). Endereços espalhados geram mais mensagens, mas a fila continua protegendo o CLP.
 
@@ -353,33 +355,36 @@ O endereço inicial deve casar com **1ª coil** e **1ª entrada** do simulador. 
 
 **4C.4 — Ligar o programa**
 
-No início do programa principal, escolha a origem das entradas. No fim, copie as saídas para o simulador. Exemplo em texto estruturado (use os nomes de variável do seu programa):
+No início do programa principal, escolha a origem das entradas. No fim, copie as saídas para o simulador. Exemplo em texto estruturado, com os nomes das variáveis do programa (B_SEL1 … PB nas entradas, K_B1 … RAX8 nas saídas):
 
 ```
 // ---- Entradas: simulador ou bornes reais
 IF GVL_SIM.xUsarSimulador THEN
-    xSelB1 := GVL_SIM.xSimIn[0];   xSelB2 := GVL_SIM.xSimIn[1];
-    xB1Man := GVL_SIM.xSimIn[2];   xB1Aut := GVL_SIM.xSimIn[3];
-    xB2Man := GVL_SIM.xSimIn[4];   xB2Aut := GVL_SIM.xSimIn[5];
-    xBJMan := GVL_SIM.xSimIn[6];   xBJAut := GVL_SIM.xSimIn[7];
-    xB1_L  := GVL_SIM.xSimIn[8];   xB1_D  := GVL_SIM.xSimIn[9];
-    xB2_L  := GVL_SIM.xSimIn[10];  xB2_D  := GVL_SIM.xSimIn[11];
-    xBJ_L  := GVL_SIM.xSimIn[12];  xBJ_D  := GVL_SIM.xSimIn[13];
-    xPJ    := GVL_SIM.xSimIn[14];  xPB    := GVL_SIM.xSimIn[15];
+    B_SEL1 := GVL_SIM.xSimIn[0];   B_SEL2 := GVL_SIM.xSimIn[1];
+    B1_MAN := GVL_SIM.xSimIn[2];   B1_AUT := GVL_SIM.xSimIn[3];
+    B2_MAN := GVL_SIM.xSimIn[4];   B2_AUT := GVL_SIM.xSimIn[5];
+    BJ_MAN := GVL_SIM.xSimIn[6];   BJ_AUT := GVL_SIM.xSimIn[7];
+    B1_L   := GVL_SIM.xSimIn[8];   B1_D   := GVL_SIM.xSimIn[9];
+    B2_L   := GVL_SIM.xSimIn[10];  B2_D   := GVL_SIM.xSimIn[11];
+    BJ_L   := GVL_SIM.xSimIn[12];  BJ_D   := GVL_SIM.xSimIn[13];
+    PJ     := GVL_SIM.xSimIn[14];  PB     := GVL_SIM.xSimIn[15];
 ELSE
-    xSelB1 := I00;  xSelB2 := I01;  xB1Man := I02;  xB1Aut := I03;
-    xB2Man := I04;  xB2Aut := I05;  xBJMan := I06;  xBJAut := I07;
-    xB1_L  := I10;  xB1_D  := I11;  xB2_L  := I12;  xB2_D  := I13;
-    xBJ_L  := I14;  xBJ_D  := I15;  xPJ    := I16;  xPB    := I17;
+    B_SEL1 := I00;  B_SEL2 := I01;  B1_MAN := I02;  B1_AUT := I03;
+    B2_MAN := I04;  B2_AUT := I05;  BJ_MAN := I06;  BJ_AUT := I07;
+    B1_L   := I10;  B1_D   := I11;  B2_L   := I12;  B2_D   := I13;
+    BJ_L   := I14;  BJ_D   := I15;  PJ     := I16;  PB     := I17;
 END_IF
 
-// ... lógica da SP02 ligando Q00 a Q12 ...
+// ... lógica da SP02 (calcula K_B1, K_B2, K_BJ e RAX1..RAX8) ...
 
-// ---- Saídas: o simulador lê o mesmo que vai para os bornes
-GVL_SIM.xSimOut[0] := Q00;  GVL_SIM.xSimOut[1] := Q01;  GVL_SIM.xSimOut[2]  := Q02;
-GVL_SIM.xSimOut[3] := Q03;  GVL_SIM.xSimOut[4] := Q04;  GVL_SIM.xSimOut[5]  := Q05;
-GVL_SIM.xSimOut[6] := Q06;  GVL_SIM.xSimOut[7] := Q07;  GVL_SIM.xSimOut[8]  := Q10;
-GVL_SIM.xSimOut[9] := Q11;  GVL_SIM.xSimOut[10] := Q12;
+// ---- Saídas: bornes e simulador recebem o mesmo valor
+Q00 := K_B1;  Q01 := K_B2;  Q02 := K_BJ;
+Q03 := RAX1;  Q04 := RAX2;  Q05 := RAX3;  Q06 := RAX4;  Q07 := RAX5;
+Q10 := RAX6;  Q11 := RAX7;  Q12 := RAX8;
+GVL_SIM.xSimOut[0] := K_B1;  GVL_SIM.xSimOut[1] := K_B2;  GVL_SIM.xSimOut[2]  := K_BJ;
+GVL_SIM.xSimOut[3] := RAX1;  GVL_SIM.xSimOut[4] := RAX2;  GVL_SIM.xSimOut[5]  := RAX3;
+GVL_SIM.xSimOut[6] := RAX4;  GVL_SIM.xSimOut[7] := RAX5;  GVL_SIM.xSimOut[8]  := RAX6;
+GVL_SIM.xSimOut[9] := RAX7;  GVL_SIM.xSimOut[10] := RAX8;
 ```
 
 Os LEDs das saídas do XP325 acendem junto com o simulador. Se a bancada física estiver energizada e ligada às saídas, as cargas reais também acionam.
@@ -389,7 +394,7 @@ Os LEDs das saídas do XP325 acendem junto com o simulador. Se a bancada física
 1. Ligue o cabo de rede entre o PC e o XP325.
 2. Em **Comunicação → Easy Connection** (ou **Configurações de comunicação**), procure o gateway e selecione o IP do XP325 (fica em negrito).
 3. **Login** (Alt+F8), confirme o download e coloque em **Run** (F5).
-4. No simulador (Passo 5): IP do XP325, porta 502, Unit ID 1, 1ª coil e 1ª entrada iguais ao endereço inicial do mapeamento.
+4. No simulador (Passo 5): IP do XP325, porta 502, Unit ID 255, 1ª coil e 1ª entrada iguais ao endereço inicial do mapeamento.
 
 Referências: [Altus — características técnicas do XP3xx](https://www.altus.com.br/wp-content/uploads/2024/10/XP3xx_PT_CT116100.pdf) e [Altus — comunicação Modbus TCP com Nexto Xpress (Symbol Server)](https://suporte.altus.com.br/hc/en-us/articles/8285804575117-Nexto-Xpress-Communication-with-Nexto-Xpress-using-Modbus-TCP-IP-protocol).
 
@@ -792,6 +797,10 @@ Na SSW-05 não há reset de fábrica: o ajuste é a posição física dos trimpo
 
 Um único simulador aberto atende várias bancadas ao mesmo tempo. Cada sessão tem seu próprio CLP, fila, processo, soft-starters, pressostatos e endereçamento, sem interferir nas outras.
 
+**Porta automática:** o simulador usa a porta 3001. Se ela estiver ocupada (outra janela do simulador já aberta, por exemplo), ele abre sozinho na próxima livre (3001, 3002…) — o endereço aparece na janela preta e na seção Este computador. Não trava mais por causa da porta.
+
+**Liberar o acesso pela rede (Windows):** abra o painel **Conectar ao CLP** e veja a seção **Este computador**. Ela mostra o endereço que os outros PCs devem digitar no navegador (por exemplo `http://192.168.0.10:3001`). Se aparecer *Acesso pela rede bloqueado pelo firewall*, clique em **Liberar acesso na rede**: o Windows pede permissão de administrador, você clica em **Sim** e pronto. Não precisa instalar nada.
+
 **Cada PC ganha a sua sessão automaticamente.** Quando outro computador abre o endereço do simulador, o servidor cria (na primeira vez) uma sessão só dele, com o nome **PC 192.168.x.x**, e abre direto nela. Nas próximas vezes, o mesmo PC volta para a mesma sessão, com tudo o que configurou. O PC onde o simulador está rodando usa a primeira sessão. A aba do próprio computador aparece marcada com **este PC**.
 
 As outras abas continuam visíveis: o professor pode clicar na sessão de qualquer aluno para acompanhar. Mexer na aba de outro PC mexe no processo daquele aluno.
@@ -808,7 +817,7 @@ A bolinha da aba mostra o estado: verde = conectada, laranja = tentando reconect
 
 **12.2 — Abrir de outro PC (aluno na própria bancada)**
 
-1. No PC onde o `.exe` está aberto, veja na janela preta a linha **Em outros PCs: http://192.168.x.x:3000**.
+1. No PC onde o `.exe` está aberto, veja na janela preta a linha **Em outros PCs: http://192.168.x.x:3001**.
 2. Na primeira vez, o Windows deve ter mostrado o aviso do firewall. Se você cancelou, veja Solução de problemas.
 3. No PC do aluno, abra o Chrome ou o Edge e digite esse endereço.
 4. A sessão dele abre sozinha (aba **este PC**). Configure o IP do CLP da bancada e conecte.
@@ -884,10 +893,15 @@ Comece pela caixa **Diagnóstico**: a última mensagem quase sempre diz o que ac
 | Simulador manda, CLP não vê (ou o contrário) | Só uma das áreas mapeada | Confira na tabela de Endereçamento Modbus qual lado muda; refaça o mapeamento dessa área |
 | `Verificação FC01: CLP diferente do simulador` | O programa do CLP escreve nas mesmas variáveis das coils | Não escreva no programa as variáveis ligadas às coils |
 | A soft não parte com K-B1 fechada | D2/DB1/DG desligados ou erro ativo (LED piscando) | Veja os LEDs e o painel lateral da soft; Passo 7 |
-| Outro PC não abre o simulador | Firewall bloqueou a porta 3000 | Painel de Controle → Firewall do Windows → Permitir um aplicativo → marque o SimuladorSistemaIncendio em Privada. Ou peça à TI |
-| "A porta 3000 já está em uso" | O simulador já está aberto | O navegador abre no que já está rodando; feche a janela preta duplicada |
+| Outro PC não abre o simulador | Firewall bloqueou a porta 3001 | Painel de Controle → Firewall do Windows → Permitir um aplicativo → marque o SimuladorSistemaIncendio em Privada. Ou peça à TI |
+| "A porta 3001 já está em uso" | O simulador já está aberto | O navegador abre no que já está rodando; feche a janela preta duplicada |
 | A porta 502 do CLP virtual já está em uso | CODESYS Control Win ou outro simulador na 502 | Use a porta 5020 no CLP virtual |
 | Antivírus apagou ou bloqueou o `.exe` | Falso positivo comum em executáveis feitos com Node.js | Libere o arquivo no antivírus ou peça à TI |
 | A tela parou de atualizar | A janela preta foi fechada | Abra o simulador de novo; tudo o que foi salvo volta |
 
 **Onde ficam os dados salvos:** `%LOCALAPPDATA%\SimuladorSP02\sessions.json`. Para recomeçar do zero, feche o simulador e apague essa pasta (cole o caminho na barra de endereço do Explorer).
+
+**Voltar ao padrão de instalação:** no painel **Conectar ao CLP**, seção **Restaurar padrão**:
+
+- **Restaurar esta sessão**: desconecta, desliga o CLP virtual da sessão e volta conexão, endereços, processo, soft-starters, pressostatos, quadro elétrico e ligação da jockey ao original. As outras sessões não mudam.
+- **Restaurar tudo (como recém-instalado)**: apaga todas as sessões, de todos os PCs, e deixa só a **Bancada 01** no padrão. Não dá para desfazer.

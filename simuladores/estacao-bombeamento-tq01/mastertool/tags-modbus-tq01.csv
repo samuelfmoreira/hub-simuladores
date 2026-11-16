@@ -1,0 +1,23 @@
+﻿Variável;Tipo;Modbus;CODESYS;Clássico;Significado;Sentido
+S1_Liga;BOOL;coil 0;%IX8.0;00001;Botoeira S1 liga (NA): 1 enquanto pressionada;simulador → CLP
+S2_Desliga_NF;BOOL;coil 1;%IX8.1;00002;Botoeira S2 desliga (NF): 1 em repouso, 0 pressionada;simulador → CLP
+S3_Reset;BOOL;coil 2;%IX8.2;00003;Botoeira S3 reset (NA);simulador → CLP
+S4_Auto;BOOL;coil 3;%IX8.3;00004;Seletor S4: 1 = automático, 0 = manual;simulador → CLP
+S0_Emerg_NF;BOOL;coil 4;%IX8.4;00005;Emergência S0 (NF): 1 destravado, 0 acionado;simulador → CLP
+Inv_Rodando;BOOL;coil 5;%IX8.5;00006;Relé DO2 do CFW500 (F > Fx): inversor acima de 3 Hz;simulador → CLP
+Inv_OK;BOOL;coil 6;%IX8.6;00007;Relé DO1 do CFW500 (sem falha): 0 = falha ou sem alimentação;simulador → CLP
+LSHH;BOOL;coil 7;%IX8.7;00008;Chave de nível muito alto LSHH-01 (2,8 m);simulador → CLP
+LSLL;BOOL;coil 8;%IX9.0;00009;Chave de nível muito baixo LSLL-01 (0,3 m);simulador → CLP
+LT01_Bruto;INT;holding register 0;%IW0;40001;Nível LT-01, contagem do A/D: 0–32767 = 4–20 mA = 0–3,5 m (negativo abaixo de 4 mA);simulador → CLP
+HB_Sim;UINT;holding register 1;%IW1;40002;Heartbeat do simulador: +1 por segundo;simulador → CLP
+IHM_Velocidade;INT;holding register 2;%IW2;40003;IHM: velocidade da bomba pedida pelo operador, em % (0–100);simulador → CLP
+IHM_Setpoint;INT;holding register 3;%IW3;40004;IHM: setpoint de nível para o automático, em cm (0–300; 200 = 2,00 m);simulador → CLP
+H1;BOOL;discrete input 0;%QX6.0;10001;Sinaleiro verde — em operação;CLP → simulador
+H2;BOOL;discrete input 1;%QX6.1;10002;Sinaleiro amarelo — alarme;CLP → simulador
+H3;BOOL;discrete input 2;%QX6.2;10003;Sinaleiro vermelho — falha;CLP → simulador
+H4;BOOL;discrete input 3;%QX6.3;10004;Sirene;CLP → simulador
+Inv_Gira;BOOL;discrete input 4;%QX6.4;10005;DI1 do CFW500: gira/para (em série com o 2º NF do S0);CLP → simulador
+Inv_Reset;BOOL;discrete input 5;%QX6.5;10006;DI3 do CFW500: reset de falha (borda de subida);CLP → simulador
+Ref_Bruto;INT;input register 0;%QW0;30001;Referência de velocidade, contagem do D/A: 0–32767 = 0–10 V = 0–60 Hz;CLP → simulador
+HB_CLP;UINT;input register 1;%QW1;30002;Heartbeat do CLP: +1 a cada 0,5 s;CLP → simulador
+IHM_Nivel;INT;input register 2;%QW2;30003;Nível que o CLP manda a IHM mostrar, em cm (152 = 1,52 m);CLP → simulador

@@ -17,7 +17,7 @@ const net = require('net');
 function createPlc() {
   const I = new Array(16).fill(false);  // coils
   const Q = new Array(11).fill(false);  // discrete inputs
-  const mem = { b1: false, b2: false, bj: false };
+  const mem = { b1: false, b2: false, bj: false, bjMan: false };
   let scanTimer = null;
 
   function scan() {
@@ -29,10 +29,9 @@ function createPlc() {
     if (!B2D || (!B2M && !B2A)) mem.b2 = false;
     // Jockey
     const mainOn = mem.b1 || mem.b2;
-    if (BJM) { if (BJL) mem.bj = true; if (!BJD) mem.bj = false; }
-    else if (BJA) { mem.bj = PJ && !mainOn; }
-    else mem.bj = false;
-    if (!BJD) mem.bj = false;
+    // Jockey: memória própria para o manual (M_BJ_MAN); o automático não sela
+    mem.bjMan = (BJL || mem.bjMan) && BJD && BJM;
+    mem.bj = (mem.bjMan || (BJA && PJ && !mainOn)) && BJD;
 
     Q[0] = mem.b1; Q[1] = mem.b2; Q[2] = mem.bj;
     Q[3] = SEL1; Q[4] = SEL2;
@@ -107,11 +106,11 @@ function start(port = 502, log = console.log) {
   });
   srv.once('error', reject);
   // [HUB] dentro do HUB, o CLP de teste escuta só no próprio PC (127.0.0.1): é onde este simulador se conecta,
-  // e assim ele não disputa a porta 502 com os outros equipamentos da rede virtual (CFW500, SCA06...).
+  // e assim ele não disputa a porta 502 com os equipamentos da rede virtual SIM-HUB
   const host = process.env.HUB === '1' ? '127.0.0.1' : undefined;
   srv.listen(port, host, () => {
     plc.scanTimer = setInterval(plc.scan, 10);
-    log(`[CLP teste] servidor Modbus TCP escutando na porta ${port}${host ? ' (só neste PC, ' + host + ')' : ''}`);
+    log(`[CLP teste] servidor Modbus TCP escutando na porta ${port}`);
     resolve({
       port,
       close: () => new Promise((r) => {

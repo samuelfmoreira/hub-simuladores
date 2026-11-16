@@ -1,5 +1,7 @@
 # Simulador Sistema de Incêndio (Modbus TCP)
 
+**Para usar:** dê dois cliques em `SimuladorSistemaIncendio.exe`. Não precisa instalar nada (o .exe já traz tudo). O navegador abre sozinho no simulador. Para outros PCs da sala acessarem, use o botão **Liberar acesso na rede** (painel Conectar ao CLP → Este computador).
+
 Simulador da casa de bombas de incêndio da Situação-Problema 02: bomba principal, bomba reserva e bomba jockey, com painel de operação, quadro elétrico, duas micro soft-starters WEG SSW-05 Plus e dois pressostatos tipo KP, com a casa de bombas em 3D.
 
 O simulador é o **cliente** Modbus TCP e o CLP é o **servidor**.
@@ -19,7 +21,7 @@ Há duas formas. Use a do `.exe`; se o antivírus bloquear, use a dos `.bat`.
 
 1. Dê dois cliques em **`SimuladorSistemaIncendio.exe`**. O Node.js já vai dentro dele.
 2. Se aparecer **"O Windows protegeu o computador"**: **Mais informações** → **Executar assim mesmo**.
-3. Uma janela preta abre e o navegador abre sozinho em `http://localhost:3000`.
+3. Uma janela preta abre e o navegador abre sozinho em `http://localhost:3001`.
 4. Na primeira vez, o atalho **Simulador Sistema de Incêndio** é criado na área de trabalho.
 
 Se o antivírus apagar ou bloquear o `.exe` (falso positivo comum em executáveis feitos com Node.js), use a Forma B ou peça à TI para liberar o arquivo.
@@ -27,7 +29,7 @@ Se o antivírus apagar ou bloquear o `.exe` (falso positivo comum em executávei
 ### Forma B — INSTALAR.bat e INICIAR_SIMULADOR.bat
 
 1. Extraia a pasta inteira (não rode de dentro do `.zip`).
-2. Dê dois cliques em **`INSTALAR.bat`** (só na primeira vez). Ele instala o Node.js oficial (pelo winget ou pelo site nodejs.org), cria o atalho **Simulador Sistema de Incêndio** e pergunta se libera a porta 3000 no firewall.
+2. Dê dois cliques em **`INSTALAR.bat`** (só na primeira vez). Ele instala o Node.js oficial (pelo winget ou pelo site nodejs.org), cria o atalho **Simulador Sistema de Incêndio** e pergunta se libera a porta 3001 no firewall.
 3. Quando o Windows pedir permissão para instalar o Node.js, clique em **Sim**.
 4. Para usar, dê dois cliques em **`INICIAR_SIMULADOR.bat`** (ou no atalho). O navegador abre sozinho.
 
@@ -109,7 +111,7 @@ A **alavanca de teste** inverte o contato enquanto estiver pressionada, como a f
 
 Cada **sessão** (abas no topo) tem sua própria conexão, fila, processo e soft-starters. Use **+ Nova sessão** para cada CLP. Duplo clique na aba renomeia.
 
-Outros PCs da rede podem abrir `http://IP-DESTE-PC:3000` (os endereços aparecem na janela preta). Cada um escolhe sua aba; o endereço da página guarda a sessão (ex.: `…:3000/#s2`).
+Outros PCs da rede podem abrir `http://IP-DESTE-PC:3001` (os endereços aparecem na janela preta). Cada um escolhe sua aba; o endereço da página guarda a sessão (ex.: `…/#s2`).
 
 ## 8. Testar sem CLP
 
@@ -118,7 +120,7 @@ Na seção de conexão, clique em **Ligar CLP virtual de teste**. Ele cria um se
 ## 9. Para o desenvolvedor: pastas e como gerar um novo .exe
 
 ```
-server.js                 servidor local (http://localhost:3000)
+server.js                 servidor local (http://localhost:3001)
 src/                      lógica: cliente Modbus, fila, processo, SSW-05
 public/                   interface (HTML, CSS, JS)
 tools/clp-teste.js        CLP virtual de teste
@@ -146,7 +148,7 @@ Para alterar os guias que abrem dentro do simulador: edite `docs/guia.md` ou `do
 | *Exceção 2 (endereço ilegal)* | O CLP não tem aquele endereço: ajuste a 1ª coil / 1ª entrada. |
 | *Exceção 1 (função ilegal)* | O CLP não aceita FC15: troque *Escrita das coils* para FC05. |
 | Soft não parte | Veja se P229 = 1 (bornes), P263 = 1 e se D2/D3, DB1/DB2 e DG estão ligados. |
-| Porta 3000 em uso | O simulador já está aberto em outra janela; o navegador abre nele. |
+| Porta 3001 em uso | O simulador já está aberto em outra janela; o navegador abre nele. |
 | Antivírus bloqueou o `.exe` | Executáveis gerados a partir do Node às vezes dão falso positivo. Libere o arquivo no antivírus ou peça à TI. |
 
 As faixas da SSW-05 Plus seguem o catálogo WEG. Se a sua revisão divergir, os limites ficam em `src/ssw05.js` (listas `POTS` e `DIPS`). A vista 3D usa a biblioteca three.js (licença MIT) incluída em `public/vendor/three`.

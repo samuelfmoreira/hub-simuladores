@@ -146,7 +146,7 @@ As **4 primeiras palavras** de cada sentido são **fixas** (não têm parâmetro
 | P0820…P0823 | Palavra de leitura #5 a #8 | 0 | 0 | **52, 53, 6, 48** | o que o drive manda nas entradas 5 a 8 |
 | P0824…P0831 | Palavra de leitura #9 a #16 | 0 | 0 | 0 | entradas 9 a 16 (até 16 palavras) |
 | P0835…P0838 | Palavra de escrita #5 a #8 | 0 | 0 | **99, 1079, 1171, 219** | onde o CLP escreve as saídas 5 a 8 |
-| P0839…P0846 | Palavra de escrita #9 a #16 | 0 | 0 | 0 | saídas 9 a 16 |
+| P0839…P0846 | Palavra de escrita #9 a #16 | 0 | 0 | 0 | saídas 9 a 16 (na IHM, Parte 9: P0839…P0841 = 1151, 1191, 1181) |
 
 Cada palavra extra soma **2 bytes** na conexão do CLP: 4 palavras = 8 bytes; 8 palavras = 16 bytes.
 
@@ -795,6 +795,301 @@ Exemplo do próprio manual da WEG: um ciclo com um movimento de **velocidade** (
 ### 8.9 Voltar para velocidade ou torque
 
 Com o drive desabilitado: **P0099 = 0**, **P0202 = 6**, P0820…P0823 e P0835…P0838 = 0 e **P0849 = 1**. No CODESYS, volte para a conexão **Exclusive Owner, 4 palavras**. O assistente, na opção **Velocidade e torque**, faz isso sozinho.
+
+## Parte 9: IHM do servo, todos os modos pela rede
+
+### 9.1 Como funciona
+
+A aba **IHM** do simulador é o painel do operador (uma IHM touch de 7"). Como numa máquina de verdade, **a IHM não fala com o servo**: ela lê e escreve tags no **CLP** pelo Modbus TCP, e o programa do CLP comanda o SCA06 pela EtherNet/IP.
+
+```
+IHM do painel ──Modbus TCP──► CLP (CODESYS) ──EtherNet/IP──► SCA06
+ botões e números               PRG_IHM_Servo                   Função Posicionador
+```
+
+![Tela Início da IHM](guia/ihm-inicio.png)
+
+Pela IHM, o operador escolhe o **modo de controle** e comanda o servo:
+
+| Modo na IHM | O operador faz | O CLP manda ao drive (movimento 1) |
+| --- | --- | --- |
+| 1 · Velocidade | velocidade em rpm + **PARTIR/PARAR** | tipo **2** (velocidade), P01191 = rpm |
+| 2 · Torque | corrente em A + **APLICAR/PARAR** | tipo **1** (Iq), P01191 = décimos de A |
+| 3 · Posição absoluta | destino em graus + **IR PARA O DESTINO** | tipo **5** (absoluto), destino em voltas + fração |
+| 4 · Pulso (relativa) | passo em graus + **PULSO** | tipo **3** (relativo), passo em fração de volta |
+
+**Por que tudo pela Função Posicionador:** o movimento 1 do SCA06 pode ser de velocidade, torque, absoluto ou relativo. Se o CLP escrever pela rede o **tipo** (P01151), a **velocidade/corrente** (P01191) e as **voltas** do destino (P01181), a IHM troca de modo com um toque, **sem reconfigurar o drive** (com P0202 = 6 e P0202 = 3 separados, trocar de modo exigiria parar, mudar P0202 e a conexão).
+
+Regras de segurança do programa:
+- **Trocar de modo para o motor**, e ele só volta a girar com um novo **PARTIR** (o operador solta e aperta de novo).
+- **STOP** para em qualquer modo e trava até o PARTIR ser solto.
+- **PARAR** em velocidade e torque manda velocidade 0: o eixo fica **segurado** na posição.
+- Na **posição absoluta**, o CLP leva o disco ao ângulo pelo **menor caminho** (o disco pode ter dado várias voltas antes).
+- Pedidos de posição com o disco girando são ignorados; segurar o botão PULSO conta **um** passo.
+
+### 9.2 Configurar o drive para a IHM
+
+O jeito mais rápido: botão **Comunicação com o CLP** → **IHM (todos os modos)** → grave as 8 etapas. É a mesma configuração da posição (Parte 8.2), com **três palavras de saída a mais**:
+
+| Parâmetro | Valor | O que faz |
+| --- | --- | --- |
+| P0000 / P0099 / P0202 | 5 / 0 / **3** | senha, começa desabilitado, Função Posicionador |
+| P01101 / P01102 / P01080 / P01077 | 1 / 0 / 1 / 0 | ciclo 1 = movimento 1, disparo pelo P01079 na borda |
+| P01201 / P01211 | 1000 / 1000 | rampas de aceleração e desaceleração (rpm/s) |
+| P0820…P0823 | 52, 53, 6, 48 | entradas 5 a 8: fração, voltas, estado, erro de lag |
+| P0835…P0838 | 99, 1079, 1171, 219 | saídas 5 a 8: habilitação, disparo, fração do destino, reset |
+| **P0839** | **1151** | saída 9: o **tipo** do movimento 1 |
+| **P0840** | **1191** | saída 10: a **velocidade** (rpm) ou a **corrente** (décimos de A) |
+| **P0841** | **1181** | saída 11: as **voltas** do destino absoluto |
+| P0662 / P0849 | 3 / 1 | segurança na queda de rede; aplicar |
+
+**Confira:** o chip **P0202** mostra **3**. O P01151 e o P01191 gravados não importam: quem os escreve a cada movimento é o CLP.
+
+### 9.3 No CODESYS: a conexão de 8/11 palavras
+
+1. O EDS ganhou a conexão da IHM: **reinstale** o `0355002B00060200_SCA06_SIM.eds` (Tools → Device Repository → Install; aceite substituir).
+2. Dois cliques no SCA06 → **Connections**: apague a conexão atual e adicione **Exclusive Owner, IHM (8 entrada / 11 saida)**. Os tamanhos ficam **O→T 22 bytes** e **T→O 16 bytes**.
+3. Acrescente na **GVL_SCA** (além das variáveis da Parte 8.3):
+
+```
+    POS_TIPO        : INT;   // OUT9  P01151 tipo do movimento (2 velocidade, 1 torque, 5 absoluto, 3 relativo)
+    POS_VEL         : INT;   // OUT10 P01191 velocidade (rpm) ou corrente (décimos de A)
+    POS_VOLTAS_ALVO : INT;   // OUT11 P01181 voltas do destino absoluto
+```
+
+4. **I/O Mapping**: OUT9 → `GVL_SCA.POS_TIPO`, OUT10 → `GVL_SCA.POS_VEL`, OUT11 → `GVL_SCA.POS_VOLTAS_ALVO`, além dos canais da Parte 8.3 (IN2 → `VEL`, IN3 → `IQ`, IN5…IN8 e OUT5…OUT8).
+
+### 9.4 No CODESYS: o servidor Modbus da IHM
+
+1. Botão direito em **Ethernet** → **Add Device** → **Modbus** → **ModbusTCP Server Device** (ModbusTCP Slave Device em versões antigas).
+2. Aba **General**: porta **502**, Unit ID **1**, **Holding Registers = 10**, **Input Registers = 10** e ative as **áreas de bit** (Coils e Discrete Inputs). Sem as áreas de bit, os botões da IHM recebem exceção.
+3. Aba **I/O Mapping**:
+   - **Holding Registers**: na coluna Variable, digite `aHR` e Enter (o CODESYS cria `ARRAY[0..9] OF WORD`);
+   - **Input Registers**: o mesmo com `aIR`;
+   - **Coils**: Bit0 = `CMD_HABILITA`, Bit1 = `CMD_PARTIR`, Bit2 = `CMD_DISPARO`, Bit3 = `CMD_STOP`, Bit4 = `CMD_RESET`;
+   - **Discrete Inputs**: Bit0 = `ST_HABILITADO`, Bit1 = `ST_MOVENDO`, Bit2 = `ST_EM_POSICAO`, Bit3 = `ST_FALHA`, Bit4 = `ST_PRONTO`;
+   - **Always update variables = Enabled 1**.
+
+Variáveis criadas digitando o nome no I/O Mapping **não** são declaradas de novo no programa (daria "declarada duas vezes").
+
+### 9.5 Mapa de tags da IHM
+
+| Área (quem escreve) | Endereço | No CLP | Significado |
+| --- | --- | --- | --- |
+| Coil (IHM) | 0 | CMD_HABILITA | habilitar geral (alterna) |
+| Coil (IHM) | 1 | CMD_PARTIR | partir/parar em velocidade e torque (alterna) |
+| Coil (IHM) | 2 | CMD_DISPARO | ir para o destino / pulso (pulso de 300 ms) |
+| Coil (IHM) | 3 | CMD_STOP | STOP (pulso) |
+| Coil (IHM) | 4 | CMD_RESET | reset de falha (pulso) |
+| Holding Register (IHM) | 0 | aHR[0] | modo: 1 velocidade · 2 torque · 3 absoluta · 4 relativa |
+| Holding Register (IHM) | 1 | aHR[1] | velocidade em rpm (INT com sinal: negativo = anti-horário) |
+| Holding Register (IHM) | 2 | aHR[2] | corrente em décimos de A (3 = 0,3 A) |
+| Holding Register (IHM) | 3 | aHR[3] | destino em décimos de grau (900 = 90,0°) |
+| Holding Register (IHM) | 4 | aHR[4] | passo em décimos de grau (450 = 45,0°) |
+| Holding Register (IHM) | 5 | aHR[5] | velocidade de posicionamento em rpm (0 = usa 100) |
+| Discrete Input (CLP) | 0…4 | ST_… | habilitado · movendo · em posição · falha · pronto |
+| Input Register (CLP) | 0 | aIR[0] | velocidade atual em rpm |
+| Input Register (CLP) | 1 | aIR[1] | corrente em décimos de A |
+| Input Register (CLP) | 2 | aIR[2] | posição em décimos de grau (0 a 3599) |
+| Input Register (CLP) | 3 | aIR[3] | passos concluídos |
+| Input Register (CLP) | 4 | aIR[4] | modo ativo no CLP |
+
+Os números vão como **inteiros com escala** (um registrador cada): a IHM mostra 900 como 90,0° com o fator 0,1 (Parte 1.4 do guia do CFW500 explica o porquê).
+
+### 9.6 O programa PRG_IHM_Servo
+
+Uma função auxiliar, porque o texto estruturado não tem "arredondar para baixo" para números negativos (a posição pode ser negativa depois de girar no anti-horário): **Add Object → POU → `F_Voltas`, tipo Function**.
+
+```
+FUNCTION F_Voltas : DINT       // quantas voltas inteiras cabem em rGraus, arredondando PARA BAIXO
+VAR_INPUT
+    rGraus : REAL;
+END_VAR
+F_Voltas := TRUNC(rGraus / 360.0);                                  // TRUNC corta em direção ao zero
+IF rGraus < 0.0 AND DINT_TO_REAL(F_Voltas) * 360.0 <> rGraus THEN
+    F_Voltas := F_Voltas - 1;                                        // -0,3 volta é a volta -1, não a 0
+END_IF
+```
+
+Depois, **Add Object → POU → `PRG_IHM_Servo`, Program, ST**. Na **MainTask** deixe **só** o `PRG_IHM_Servo` (tire Velocidade_SCA, Torque_SCA e Posicao_SCA: eles escrevem nas mesmas palavras).
+
+```
+PROGRAM PRG_IHM_Servo
+VAR CONSTANT
+    LIVRE      : INT := 0;    // estados do envio de um movimento ao drive
+    PREPARANDO : INT := 1;
+    DISPARANDO : INT := 2;
+END_VAR
+VAR
+    iModo, iVelRef, iCorrRef, iDestino, iPasso, iVelPos : INT;   // o que a IHM escreveu
+    iModoAtivo    : INT := 1;        // modo em que o CLP está
+    eEnvio        : INT := 0;        // LIVRE
+    tonPreparo    : TON;             // 60 ms entre gravar os valores e subir o disparo
+    tpDisparo     : TP;              // disparo (P01079) em 1 por 200 ms
+    xPedido       : BOOL;            // há um movimento esperando para ir ao drive
+    iPedTipo, iPedVel, iPedFrac, iPedVoltas : INT;
+    iUltTipo      : INT := -1;       // último movimento enviado
+    iUltVel       : INT := -32768;
+    xTravaStop    : BOOL := TRUE;    // motor parado até um novo PARTIR
+    rtDisparo, rtStop : R_TRIG;
+    xAguardaPasso, xViuMovimento : BOOL;
+    iPassos       : UINT;
+    rVel, rPos, rPos360, rAlvo : REAL;
+    dAlvoVoltas   : DINT;
+    xMovendo, xEmPosicao, xHab, xFalha, xAndar : BOOL;
+    iTipo, iVel, iFrac : INT;
+END_VAR
+
+// ---------- 1) LER a IHM e o drive
+iModo    := WORD_TO_INT(aHR[0]);
+iVelRef  := WORD_TO_INT(aHR[1]);
+iCorrRef := WORD_TO_INT(aHR[2]);
+iDestino := WORD_TO_INT(aHR[3]);
+iPasso   := WORD_TO_INT(aHR[4]);
+iVelPos  := WORD_TO_INT(aHR[5]);
+IF iVelPos <= 0 THEN iVelPos := 100; END_IF                         // registrador ainda zerado
+rVel       := INT_TO_REAL(GVL_SCA.VEL) * 18750.0 / 32767.0;
+xMovendo   := ABS(rVel) > 3.0;
+xEmPosicao := NOT xMovendo AND GVL_SCA.POS_LAG >= 0 AND GVL_SCA.POS_LAG < 10;
+xHab       := GVL_SCA.POS_ESTADO = 1;
+xFalha     := GVL_SCA.POS_ESTADO = 2;
+rPos       := (INT_TO_REAL(GVL_SCA.POS_VOLTAS) + INT_TO_REAL(GVL_SCA.POS_FRACAO) / 16384.0) * 360.0;
+rPos360    := rPos - DINT_TO_REAL(F_Voltas(rPos)) * 360.0;            // 0 a 359,9°
+
+// ---------- 2) HABILITAÇÃO e RESET passam direto
+IF CMD_HABILITA THEN GVL_SCA.POS_HAB := 2; ELSE GVL_SCA.POS_HAB := 0; END_IF
+GVL_SCA.POS_RESET := BOOL_TO_INT(CMD_RESET);
+
+// ---------- 3) BORDAS dos botões
+rtDisparo(CLK := CMD_DISPARO);
+rtStop(CLK := CMD_STOP);
+IF NOT CMD_PARTIR THEN xTravaStop := FALSE; END_IF                  // soltar o PARTIR libera a trava
+
+// ---------- 4) TROCA DE MODO: para o motor e exige novo PARTIR
+IF iModo >= 1 AND iModo <= 4 AND iModo <> iModoAtivo AND eEnvio = LIVRE THEN
+    iModoAtivo := iModo;
+    xTravaStop := TRUE;
+    xPedido := TRUE; iPedTipo := 2; iPedVel := 0; iPedFrac := 0; iPedVoltas := 0;   // velocidade 0
+END_IF
+
+// ---------- 5) PEDIDOS de movimento
+IF NOT xHab THEN
+    xPedido := FALSE; iUltVel := -32768; xAguardaPasso := FALSE;    // reenvia quando voltar a habilitar
+ELSIF rtStop.Q THEN
+    xTravaStop := TRUE; xAguardaPasso := FALSE;
+    xPedido := TRUE; iPedTipo := 2; iPedVel := 0; iPedFrac := 0; iPedVoltas := 0;
+ELSIF iModoAtivo = 1 OR iModoAtivo = 2 THEN
+    xAndar := CMD_PARTIR AND NOT xTravaStop;
+    IF xAndar AND iModoAtivo = 2 THEN iTipo := 1; ELSE iTipo := 2; END_IF   // parado = velocidade 0
+    IF NOT xAndar THEN iVel := 0; ELSIF iModoAtivo = 1 THEN iVel := iVelRef; ELSE iVel := iCorrRef; END_IF
+    IF iTipo <> iUltTipo OR iVel <> iUltVel THEN                       // mudou: manda de novo
+        xPedido := TRUE; iPedTipo := iTipo; iPedVel := iVel; iPedFrac := 0; iPedVoltas := 0;
+    END_IF
+ELSIF rtDisparo.Q AND eEnvio = LIVRE AND NOT xMovendo THEN
+    IF iModoAtivo = 3 THEN
+        // destino absoluto pelo menor caminho: o mesmo ângulo na volta atual, na anterior ou na seguinte
+        rAlvo := DINT_TO_REAL(F_Voltas(rPos)) * 360.0 + INT_TO_REAL(iDestino) / 10.0;
+        IF rAlvo - rPos > 180.0 THEN rAlvo := rAlvo - 360.0;
+        ELSIF rAlvo - rPos < -180.0 THEN rAlvo := rAlvo + 360.0; END_IF
+        dAlvoVoltas := F_Voltas(rAlvo);
+        iFrac := REAL_TO_INT((rAlvo - DINT_TO_REAL(dAlvoVoltas) * 360.0) * 16384.0 / 360.0);
+        IF iFrac >= 16384 THEN iFrac := iFrac - 16384; dAlvoVoltas := dAlvoVoltas + 1; END_IF
+        xPedido := TRUE; iPedTipo := 5; iPedVel := iVelPos; iPedFrac := iFrac; iPedVoltas := DINT_TO_INT(dAlvoVoltas);
+    ELSIF iPasso > 0 THEN
+        xPedido := TRUE; iPedTipo := 3; iPedVel := iVelPos; iPedVoltas := 0;
+        iPedFrac := REAL_TO_INT(INT_TO_REAL(iPasso) * 16384.0 / 3600.0);
+        xAguardaPasso := TRUE; xViuMovimento := FALSE;
+    END_IF
+END_IF
+
+// ---------- 6) ENVIO ao drive: valores primeiro, disparo 60 ms depois, por 200 ms
+CASE eEnvio OF
+    LIVRE:
+        IF xPedido THEN
+            GVL_SCA.POS_TIPO := iPedTipo;
+            GVL_SCA.POS_VEL := iPedVel;
+            GVL_SCA.POS_DESTINO := iPedFrac;
+            GVL_SCA.POS_VOLTAS_ALVO := iPedVoltas;
+            iUltTipo := iPedTipo; iUltVel := iPedVel; xPedido := FALSE;
+            eEnvio := PREPARANDO;
+        END_IF
+    PREPARANDO:
+        IF tonPreparo.Q THEN eEnvio := DISPARANDO; END_IF
+    DISPARANDO:
+        IF NOT tpDisparo.Q AND tpDisparo.ET >= T#200MS THEN eEnvio := LIVRE; END_IF
+END_CASE
+tonPreparo(IN := eEnvio = PREPARANDO, PT := T#60MS);
+tpDisparo(IN := eEnvio = DISPARANDO, PT := T#200MS);
+GVL_SCA.POS_DISPARO := BOOL_TO_INT(tpDisparo.Q);
+
+// ---------- 7) CONTAR PASSOS: saiu do lugar e chegou
+IF xAguardaPasso AND eEnvio = LIVRE THEN
+    IF xMovendo OR GVL_SCA.POS_LAG >= 10 THEN xViuMovimento := TRUE; END_IF
+    IF xViuMovimento AND xEmPosicao THEN iPassos := iPassos + 1; xAguardaPasso := FALSE; END_IF
+END_IF
+
+// ---------- 8) ESCREVER para a IHM
+ST_HABILITADO := xHab;
+ST_MOVENDO    := xMovendo;
+ST_EM_POSICAO := xEmPosicao;
+ST_FALHA      := xFalha;
+ST_PRONTO     := xHab AND eEnvio = LIVRE AND NOT xMovendo AND NOT xPedido;
+aIR[0] := INT_TO_WORD(REAL_TO_INT(rVel));
+aIR[1] := INT_TO_WORD(GVL_SCA.IQ);
+aIR[2] := INT_TO_WORD(MIN(3599, REAL_TO_INT(rPos360 * 10.0)));
+aIR[3] := UINT_TO_WORD(iPassos);
+aIR[4] := INT_TO_WORD(iModoAtivo);
+```
+
+| Bloco | O que faz | Por que é assim |
+| --- | --- | --- |
+| **1) Ler** | converte as palavras da IHM (WORD → INT com sinal) e do drive (rpm, graus, estado) | a IHM e o drive falam em números de 16 bits; a lógica pensa em rpm e graus |
+| **2) Habilitação e reset** | repassam direto para o P0099 (2/0) e o P0219 | não dependem do modo |
+| **3) Bordas** | R_TRIG no IR/PULSO e no STOP | segurar o botão dá um comando só |
+| **4) Troca de modo** | aceita o modo novo só com o envio livre, manda velocidade 0 e arma a trava | o motor nunca sai girando sozinho ao trocar de modo |
+| **5) Pedidos** | velocidade e torque: compara a referência desejada com a última enviada e pede de novo se mudou; posição: pede na borda do botão | o drive só lê o tipo e a velocidade no disparo: por isso cada mudança vira um movimento novo |
+| **6) Envio** | grava tipo, velocidade, destino e voltas; 60 ms depois sobe o P01079 por 200 ms | os valores chegam antes do disparo (o RPI é de 20 ms) e o pulso é 10× o RPI |
+| **7) Passos** | conta quando o disco saiu do lugar e chegou | não conta passo interrompido nem antes de andar |
+| **8) Escrever** | lâmpadas e mostradores da IHM | posição de 0 a 359,9°, em décimos |
+
+### 9.7 A IHM no simulador
+
+1. Aba **IHM** → **IP do CLP = 192.168.100.10**, porta **502**, Unit ID **1** → **Salvar** → **Conectar**. O indicador **CLP** fica verde no alto da IHM.
+2. Sem o CODESYS: **Ligar CLP de demonstração**. Ele roda este mesmo programa, abre o servidor Modbus em 127.0.0.1 e conecta no drive com a conexão de 8/11 palavras (feche antes a conexão da aba Mestre ou do CODESYS: o drive aceita uma só).
+3. Navegue pelas telas na barra de baixo: **Início · Velocidade · Torque · Absoluta · Pulso**. Em cada tela de modo, a faixa de cima diz se aquele modo está ativo no CLP; tocar nela ativa o modo.
+
+![Tela Pulso da IHM](guia/ihm-pulso.png)
+
+### 9.8 Testar
+
+Valores conferidos no simulador, com o CLP de demonstração (o mesmo programa):
+
+| Na IHM | O que deve acontecer |
+| --- | --- |
+| **HABILITAR GERAL** | lâmpadas Habilitado e Pronto acesas |
+| Velocidade: 300 rpm → **PARTIR** | ~300 rpm; o botão vira PARAR |
+| trocar para 500 rpm (ou −200 rpm) com o motor girando | muda na hora (−200 gira no anti-horário) |
+| **STOP** com o PARTIR ligado | para e fica parado; solte e aperte PARTIR para voltar |
+| Torque: 0,3 A → **APLICAR**, com o peso montado | o disco para perto de 45° a 50°, segurado pela corrente |
+| Absoluta: 90° → **IR**, depois 270° → **IR** | **90,0°** e **270,0°**, lâmpada Em posição |
+| Pulso: 45° → **PULSO** quatro vezes | meia volta; **Passos = 4** |
+| segurar **PULSO** por 3 s | **um** passo só |
+| trocar de modo com o motor girando | o motor para; modo ativo muda no alto da IHM |
+| **HABILITAR GERAL** de novo (desliga) | o servo desabilita |
+
+### 9.9 Problemas comuns
+
+| Sintoma | Causa provável | Solução |
+| --- | --- | --- |
+| IHM mostra "sem comunicação com o CLP" | CLP fora de RUN, IP/porta errados, ou o servidor Modbus não foi adicionado | Parte 9.4; IP 192.168.100.10, porta 502 |
+| Botões da IHM dão exceção | áreas de bit desativadas no ModbusTCP Server Device | ative Coils e Discrete Inputs (9.4) |
+| Conexão com o drive recusada (0x0109) | drive sem P0839…P0841, ou conexão errada no CODESYS | assistente → IHM (todos os modos); conexão 8/11 |
+| Posicionamento anda devagar demais | velocidade de posicionamento 0 ou muito baixa | campo Velocidade na tela (padrão 100 rpm) |
+| A absoluta dá voltas a mais | falta o OUT11 (voltas) no mapeamento | I/O Mapping OUT11 → POS_VOLTAS_ALVO |
+| PARTIR não faz o motor girar | trava ativa depois de trocar de modo ou de STOP | solte e aperte PARTIR de novo |
+| Motor gira, mas a IHM mostra 0 | canais de entrada sem variável | IN2 → VEL, IN3 → IQ, IN5…IN8 |
+| Comportamento estranho, valores "brigando" | outro programa na MainTask escrevendo nas mesmas palavras | deixe só o PRG_IHM_Servo na MainTask |
+| "Já existe outra conexão de I/O" no CLP de demonstração | a aba Mestre ou o CODESYS está conectado | feche a outra conexão |
 
 ## Extra: As missões da bancada
 

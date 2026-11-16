@@ -11,7 +11,7 @@ const C = {
 
 export function createProcess3D(host, { onHydrantToggle, onAction } = {}) {
   // ---------------------------------------------------------------- Renderizadores
-  const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+  const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: !!window.__capture });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -472,9 +472,12 @@ export function createProcess3D(host, { onHydrantToggle, onAction } = {}) {
     painel: [[-4.8, 1.4, -1.25], [-4.8, 1.28, -4.4]],
   };
   let tween = null;
-  function goView(name) {
+  function goTo(pos, target, dur = 0.9) {
+    tween = { t: 0, dur, p0: camera.position.clone(), t0: controls.target.clone(), p1: new THREE.Vector3(...pos), t1: new THREE.Vector3(...target) };
+  }
+  function goView(name, dur) {
     const v = VIEWS[name]; if (!v) return;
-    tween = { t: 0, p0: camera.position.clone(), t0: controls.target.clone(), p1: new THREE.Vector3(...v[0]), t1: new THREE.Vector3(...v[1]) };
+    goTo(v[0], v[1], dur);
   }
 
   // ---------------------------------------------------------------- Laço
@@ -498,7 +501,7 @@ export function createProcess3D(host, { onHydrantToggle, onAction } = {}) {
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
     if (!visible || document.hidden) return;
     if (tween) {
-      tween.t = Math.min(1, tween.t + dt / 0.9);
+      tween.t = Math.min(1, tween.t + dt / (tween.dur || 0.9));
       const k = tween.t < 0.5 ? 2 * tween.t * tween.t : 1 - Math.pow(-2 * tween.t + 2, 2) / 2;
       camera.position.lerpVectors(tween.p0, tween.p1, k); controls.target.lerpVectors(tween.t0, tween.t1, k);
       if (tween.t >= 1) tween = null;
@@ -532,6 +535,7 @@ export function createProcess3D(host, { onHydrantToggle, onAction } = {}) {
 
   return {
     goView,
+    goTo,
     setLabels(on) { labels.domElement.style.display = on ? '' : 'none'; },
     update(sim) {
       S = sim;

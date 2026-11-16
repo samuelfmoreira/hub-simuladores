@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <script>/* [HUB] Restaurar original: o HUB abre esta tela com ?hubRestaurar=1 e ela apaga o que guardou neste navegador */
+try { var u = new URL(location.href); if (u.searchParams.has('hubRestaurar')) { localStorage.clear(); sessionStorage.clear(); u.searchParams.delete('hubRestaurar'); history.replaceState(null, '', u.pathname + u.search + u.hash); } } catch (e) { /* sem armazenamento */ }</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Laboratório de histerese · Estação de bombeamento</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .lab { padding: 16px 20px 40px; max-width: 1400px; margin: 0 auto; display: grid; gap: 16px; }
+    .lab .card { background: var(--panel-3, #e4e6e0); border: 1px solid var(--line); border-radius: 4px; padding: 14px 16px; }
+    .lab h2 { margin: 0 0 6px; font-size: 18px; } .lab h3 { margin: 0 0 8px; font-size: 15px; }
+    .lab p.intro { margin: 0; color: var(--muted); font-size: 13.5px; max-width: 110ch; }
+    .ctrls { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px 18px; align-items: end; }
+    .ctrls label { display: grid; gap: 4px; font-size: 12.5px; }
+    .ctrls label output { font-weight: 700; font-variant-numeric: tabular-nums; }
+    .ctrls .check { display: flex; gap: 6px; align-items: center; }
+    .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 1000px) { .duo { grid-template-columns: 1fr; } }
+    .chart { width: 100%; height: 300px; background: #fbfbf8; border: 1px solid var(--line); border-radius: 3px; display: block; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+    .stat { background: #fff; border: 1px solid var(--line); border-radius: 3px; padding: 8px 10px; }
+    .stat b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; } .stat span { font-size: 11.5px; color: var(--muted); }
+    .stat.ruim b { color: #c0392b; } .stat.medio b { color: #c98a00; } .stat.bom b { color: #2b8a45; }
+    .tag-sem { color: #c0392b; } .tag-com { color: #2b8a45; }
+    .leg { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-top: 6px; }
+    .leg i { display: inline-block; width: 18px; height: 3px; vertical-align: middle; margin-right: 5px; }
+    .conclusao { font-size: 14px; margin: 0; }
+    .ciclos { font-size: 13px; margin: 10px 0 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .ciclos .ev { padding: 2px 8px; border-radius: 3px; font-variant-numeric: tabular-nums; } .ciclos .ligada { background: #dff5e4; color: #1e6b35; } .ciclos .desligada { background: #eceee9; color: #3c444a; }
+    .zoom { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: 12.5px; }
+    .zoom button { padding: 3px 10px; border: 1px solid #9aa3ab; border-radius: 3px; background: #fff; cursor: pointer; font-size: 12.5px; }
+    .zoom button[aria-pressed="true"] { background: #1b5e9e; border-color: #1b5e9e; color: #fff; font-weight: 600; }
+    .vivo-grid { display: grid; grid-template-columns: 1fr 260px; gap: 16px; }
+    @media (max-width: 1000px) { .vivo-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><path fill="#2272b8" d="M6 4h20v4H6zM8 8h16v16a8 8 0 0 1-16 0z"/><path fill="#8fd3ff" d="M9 15c3-1 4 1 7 0s4 1 7 0v9a7 7 0 0 1-14 0z"/></svg>
+      <div><h1>Laboratório de histerese <span class="brand-sub">controle liga-desliga de nível</span></h1><p class="brand-line">O mesmo tanque, a mesma bomba e o mesmo setpoint — com e sem banda morta, lado a lado</p></div>
+    </div>
+    <nav class="sessions"><a href="index.html" class="btn ghost">Voltar ao simulador</a></nav>
+  </header>
+  <main class="lab">
+    <section class="card">
+      <h2>1 · Comparação simulada</h2>
+      <p class="intro">O simulador roda o processo duas vezes, acelerado, com um CLP liga-desliga. <b class="tag-sem">Sem histerese</b> o programa liga a bomba quando o nível medido está abaixo do setpoint e desliga quando está acima. <b class="tag-com">Com histerese</b> ele liga abaixo de <i>SP − H</i>, desliga acima de <i>SP + H</i> e, entre os dois, mantém o que estava fazendo. O transmissor tem ruído de alguns milímetros, como um real — é isso que faz o "sem histerese" ligar e desligar várias vezes por segundo perto do setpoint. Para comparar com o seu programa, reproduza aqui o que ele faz: o mesmo setpoint e banda, o TON de confirmação, o nível em cm inteiro se você usa o <code>IHM_Nivel</code>, e o consumo e a velocidade da estação.</p>
+      <div class="ctrls" style="margin-top:12px">
+        <label>Setpoint <output id="oSp">2,00 m</output><input id="sp" type="range" min="0.8" max="2.6" step="0.05" value="2.0"></label>
+        <label>Histerese H (meia banda) <output id="oH">± 10 cm</output><input id="h" type="range" min="1" max="40" step="1" value="10"></label>
+        <label>Consumo da rede (HV-01) <output id="oCons">60 %</output><input id="cons" type="range" min="10" max="100" step="5" value="60"></label>
+        <label>Velocidade da bomba ligada <output id="oVel">100 %</output><input id="vel" type="range" min="60" max="100" step="5" value="100"></label>
+        <label>Filtro na medição <output id="oFiltro">sem filtro</output><input id="filtro" type="range" min="0" max="10" step="1" value="0"></label>
+        <label>Tempo mínimo ligado/desligado <output id="oTmin">0 s</output><input id="tmin" type="range" min="0" max="60" step="5" value="0"></label>
+        <label>Duração simulada <output id="oMin">15 min</output><input id="min" type="range" min="5" max="60" step="5" value="30"></label>
+        <label>Confirmação (TON) em cada comparação <output id="oConf">0 s</output><input id="conf" type="range" min="0" max="10" step="1" value="0"></label>
+        <label class="check"><input id="ruido" type="checkbox" checked> Ruído no transmissor (real)</label>
+        <label class="check"><input id="emCm" type="checkbox" checked> Nível em cm inteiro (como o IHM_Nivel)</label>
+        <div><button id="btnEstacao" class="btn small ghost" title="Copia o consumo da HV-01 e a velocidade da IHM que estão valendo agora na estação">Usar consumo e velocidade da estação</button></div>
+      </div>
+      <div style="margin-top:12px"><button id="btnRodar" class="btn go">Simular com e sem histerese</button> <span id="msg" class="muted" style="font-size:12.5px"></span></div>
+    </section>
+    <section class="duo">
+      <div class="card"><h3 class="tag-sem">Sem histerese — liga abaixo do SP, desliga acima</h3><canvas id="cSem" class="chart"></canvas><div class="stats" id="sSem"></div></div>
+      <div class="card"><h3 class="tag-com" id="tCom">Com histerese ± 10 cm</h3><canvas id="cCom" class="chart"></canvas><div class="stats" id="sCom"></div></div>
+    </section>
+    <div class="zoom" id="zoomSim"><span>Escala de tempo dos gráficos:</span><button aria-pressed="true" data-s="0">tudo</button><button aria-pressed="false" data-s="600">10 min</button><button aria-pressed="false" data-s="300">5 min</button><button aria-pressed="false" data-s="120">2 min</button><button aria-pressed="false" data-s="60">1 min</button><button aria-pressed="false" data-s="30">30 s</button><span class="muted">(mostra o final da simulação)</span></div>
+    <div class="leg"><span><i style="background:#1b5e9e"></i>nível real</span><span><i style="background:#9aa3ab"></i>nível medido pelo CLP</span><span><i style="background:#2b8a45"></i>setpoint</span><span><i style="background:#e08a00"></i>limites da banda (SP ± H)</span><span><i style="background:#46e36d;height:8px"></i>bomba ligada (faixa embaixo)</span></div>
+    <section class="card"><p class="conclusao" id="conclusao">Ajuste os controles e clique em <b>Simular</b>.</p></section>
+
+    <section class="card">
+      <h2>2 · Ao vivo com o seu CLP</h2>
+      <p class="intro">Programe o liga-desliga no CODESYS, ponha o seletor em <b>automático</b> e acompanhe aqui. A contagem é feita em cima do <code>Inv_Gira</code> que o seu programa escreve; o setpoint vem da IHM (<code>IHM_Setpoint</code>). Informe a banda que você programou para desenhar os limites. Rode uma vez sem histerese, zere, e rode de novo com.</p>
+      <div class="ctrls" style="margin-top:10px">
+        <label>Banda que você programou (H) <output id="oHv">± 0 cm</output><input id="hv" type="range" min="0" max="40" step="1" value="0"></label>
+        <div><button id="btnZerar" class="btn small ghost">Zerar contagem</button></div>
+      </div>
+      <div class="zoom" id="zoomVivo" style="margin-top:8px"><span>Escala de tempo:</span><button aria-pressed="false" data-s="1800">30 min</button><button aria-pressed="true" data-s="600">10 min</button><button aria-pressed="false" data-s="300">5 min</button><button aria-pressed="false" data-s="120">2 min</button><button aria-pressed="false" data-s="60">1 min</button><button aria-pressed="false" data-s="30">30 s</button></div>
+      <div class="vivo-grid" style="margin-top:10px">
+        <canvas id="cVivo" class="chart"></canvas>
+        <div class="stats" id="sVivo" style="grid-template-columns:1fr 1fr;margin-top:0"></div>
+      </div>
+      <p class="ciclos" id="ciclosVivo"></p>
+    </section>
+  </main>
+  <script type="module" src="js/histerese.js"></script>
+</body>
+</html>

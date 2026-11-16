@@ -21,6 +21,8 @@ const { EnipAdapter } = require('./src/enip/adapter');
 const { VirtualScanner } = require('./src/enip/scanner');
 const { ModbusServer } = require('./src/modbus/server');
 const webserver = require('./src/web/drive-webserver');
+const { IHMServo } = require('./src/ihm/ihm-servo');
+const { ClpDemoIHM } = require('./src/ihm/clp-demo-ihm');
 
 const ROOT = __dirname;
 const cfg = JSON.parse(fs.readFileSync(path.join(ROOT, 'config.json'), 'utf8'));
@@ -59,6 +61,30 @@ adapter.on('error', (e) => { console.error(`\n[ENIP] ERRO: ${e.message}`); if (e
 adapter.start();
 
 const scanner = new VirtualScanner();
+
+// ------------------------------------------------------------------ IHM do painel (cliente Modbus TCP do CLP)
+const ihm = new IHMServo();
+ihm.on('log', (msg) => pushLog({ t: Date.now(), dir: 'ihm', proto: 'IHM', summary: msg }));
+const hostDrive = () => (cfg.enip.bindAddress !== '0.0.0.0' ? cfg.enip.bindAddress : '127.0.0.1');
+const clpDemo = new ClpDemoIHM({ hostAdapter: hostDrive, portaAdapter: cfg.enip.tcpPort });
+clpDemo.on('log', (msg) => pushLog({ t: Date.now(), dir: 'ihm', proto: 'CLP demo', summary: msg }));
+async function ihmOp(m) {
+  switch (m.op) {
+    case 'info': return { ok: true, info: ihm.info() };
+    case 'cfg': ihm.configurar(m.cfg || {}); return { ok: true, info: ihm.info() };
+    case 'padrao': ihm.padrao(); return { ok: true, info: ihm.info() };
+    case 'ligar': ihm.iniciar(); return { ok: true };
+    case 'desligar': ihm.parar(); return { ok: true };
+    case 'cmd': return ihm.comando(m.tag, m.valor);          // m.id é o número da requisição
+    case 'demo': {
+      if (!m.ligar) { await clpDemo.desligar(); return { ok: true }; }
+      const r = await clpDemo.ligar();
+      if (r.ok) { ihm.configurar({ ...ihm.cfg, ip: '127.0.0.1', porta: r.porta, unitId: 1 }); ihm.iniciar(); }
+      return Object.assign(r, { info: ihm.info() });
+    }
+    default: return { erro: 'operação desconhecida' };
+  }
+}
 scanner.on('log', (e) => pushLog(e));
 
 let modbus = null;
@@ -114,6 +140,7 @@ wss.on('connection', (ws) => {
       else if (m.t === 'bench') drive.benchSet(m.key, !!m.value);
       else if (m.t === 'hmi') drive.hmiKey(m.key);
       else if (m.t === 'scanner') reply({ result: await scannerOp(m) });
+      else if (m.t === 'ihm') reply({ result: await ihmOp(m) });
     } catch (e) { reply({ error: e.message }); }
   });
   ws.on('close', () => clients.delete(ws));
@@ -141,10 +168,11 @@ setInterval(() => {
   const conns = adapter.connectionsView();
   const sc = scanner.view();
   const stats = adapter.stats;
+  const ihmEstado = Object.assign(ihm.estado(), { demo: clpDemo.estado() });
   for (const ws of clients) {
     if (ws.readyState !== 1) continue;
     const logs = logBuf.slice(ws.logIdx); ws.logIdx = logBuf.length;
-    ws.send(JSON.stringify({ t: 'view', v, params, conns, scanner: sc, stats, logs, deviceIp: adapter.deviceIp() }));
+    ws.send(JSON.stringify({ t: 'view', v, params, conns, scanner: sc, stats, logs, deviceIp: adapter.deviceIp(), ihm: ihmEstado }));
   }
 }, 33);
 
@@ -157,4 +185,4 @@ server.listen(cfg.httpPort, () => {
   console.log(`  EtherNet/IP .......... TCP ${cfg.enip.tcpPort} | UDP ${cfg.enip.udpPort} (I/O) | IP do adapter: ${adapter.deviceIp()}`);
   console.log(`  Assemblies ........... Entrada (T→O) = 100 | Saída (O→T) = 150 | Config = qualquer (tamanho 0)\n`);
 });
-process.on('SIGINT', () => { scanner.disconnect(); process.exit(0); });
+process.on('SIGINT', () => { scanner.disconnect(); ihm.parar(true); clpDemo.desligar(true); process.exit(0); });

@@ -234,3 +234,70 @@ body.arrastando canvas, body.arrastando iframe { pointer-events: none; }
 .pos-painel .num { width: 80px; }
 .pos-painel .pos-hex { margin-top: 6px; font-size: 12px; opacity: .85; }
 .pos-painel .pos-leitura { margin-top: 4px; }
+
+/* ---------- IHM do painel do servo (aba IHM) ---------- */
+.ihms-device { max-width: 640px; margin: 4px auto 10px; }
+.ihms-moldura { background: linear-gradient(#3a4148, #23292e); border-radius: 14px; padding: 14px; box-shadow: 0 6px 18px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.12); }
+.ihms-tela { position: relative; background: #eef1f4; border-radius: 4px; overflow: hidden; min-height: 380px; display: flex; flex-direction: column; border: 2px solid #11161a; }
+.ihms-marca { text-align: right; font-size: 11px; color: var(--ink-3); margin-top: 4px; letter-spacing: .04em; }
+.ihms-topo { display: flex; align-items: center; gap: 10px; background: var(--navy); color: #fff; padding: 6px 10px; }
+.ihms-topo b { letter-spacing: .06em; }
+.ihms-modo-atual { margin-left: auto; font-size: 13px; opacity: .9; }
+.ihms-com { display: flex; align-items: center; gap: 5px; font-size: 12px; background: rgba(255,255,255,.12); padding: 2px 8px; border-radius: 10px; }
+.ihms-com i { width: 9px; height: 9px; border-radius: 50%; background: #c8352a; }
+.ihms-com.on i { background: #3fe06a; box-shadow: 0 0 6px #3fe06a; }
+.ihms-corpo { flex: 1; padding: 10px; }
+.ihms-nav { display: flex; background: #d9dee3; border-top: 1px solid #b9c0c6; }
+.ihms-nav button { flex: 1; border: 0; border-right: 1px solid #b9c0c6; border-radius: 0; background: transparent; padding: 9px 4px; font-weight: 600; color: var(--ink-2); }
+.ihms-nav button.on { background: #fff; color: var(--navy); box-shadow: inset 0 3px 0 var(--navy); }
+.ihms-grade2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.ihms-bloco { background: #fff; border: 1px solid #c9cfd4; border-radius: 6px; padding: 8px; min-width: 0; }
+.ihms-bloco h4 { margin: 0 0 6px; font-size: 13px; color: var(--ink-2); text-transform: uppercase; letter-spacing: .05em; }
+.ihms-centro { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.ihms-lamps { display: flex; flex-wrap: wrap; gap: 6px 10px; margin: 4px 0; }
+.ihms-lamp { display: flex; align-items: center; gap: 5px; font-size: 13px; }
+.ihms-lamp i { width: 14px; height: 14px; border-radius: 50%; background: #b9c0c6; border: 1px solid #8d959b; }
+.ihms-lamp.on[data-cor="ok"] i { background: #36c25c; box-shadow: 0 0 6px #36c25c; }
+.ihms-lamp.on[data-cor="azul"] i { background: #3b82d6; box-shadow: 0 0 6px #3b82d6; }
+.ihms-lamp.on[data-cor="err"] i { background: #e04040; box-shadow: 0 0 7px #e04040; }
+.ihms-botoes { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.ihms-bt { border: 1px solid #8d959b; border-radius: 6px; background: linear-gradient(#fff, #e3e7ea); padding: 9px 12px; font-weight: 700; letter-spacing: .03em; box-shadow: 0 2px 0 #a7aeb4; }
+.ihms-bt:active { transform: translateY(1px); box-shadow: 0 1px 0 #a7aeb4; }
+.ihms-bt.on { background: linear-gradient(#3fd06a, #22a24a); color: #fff; border-color: #1c8a3e; box-shadow: 0 2px 0 #176f32; }
+.ihms-bt-stop { background: linear-gradient(#ef5a50, #c8352a); color: #fff; border-color: #a12a21; box-shadow: 0 2px 0 #8a2018; }
+.ihms-bt-grande { width: 100%; padding: 14px; font-size: 17px; margin-top: 8px; }
+.ihms-modos { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; }
+.ihms-bt-modo { display: flex; flex-direction: column; align-items: flex-start; text-align: left; border: 1px solid #b9c0c6; border-radius: 6px; background: #f6f8f9; padding: 7px 9px; }
+.ihms-bt-modo small { color: var(--ink-3); font-size: 11.5px; }
+.ihms-bt-modo.on { border-color: var(--navy); background: #e3ebf7; box-shadow: inset 4px 0 0 var(--navy); }
+.ihms-linha { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 6px; margin-top: 8px; }
+.ihms-linha .ihms-mostr { flex: 1; }
+.ihms-mostr { display: flex; flex-direction: column; background: #10161b; color: #7fe29a; border-radius: 5px; padding: 5px 8px; margin: 3px 0; min-width: 0; align-self: stretch; }
+.ihms-mostr span { color: #9fb0bb; font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; }
+.ihms-mostr b { font-family: var(--mono); font-size: 22px; line-height: 1.15; }
+.ihms-mostr small { color: #9fb0bb; font-size: 12px; }
+.ihms-ent { display: flex; flex-direction: column; gap: 2px; margin: 4px 0 6px; font-size: 13px; color: var(--ink-2); }
+.ihms-ent-l { display: flex; gap: 4px; }
+.ihms-ent input { flex: 1; min-width: 0; font-family: var(--mono); font-size: 20px; padding: 4px 8px; border: 1px solid #8d959b; border-radius: 4px; background: #fffef5; text-align: right; }
+.ihms-mm { width: 34px; flex: none; font-size: 18px; font-weight: 700; padding: 0; }
+.ihms-dica { font-size: 12px; color: var(--ink-3); margin: 2px 0; }
+.ihms-modo-banner { margin: -2px 0 8px; padding: 5px 8px; border-radius: 4px; font-size: 13px; cursor: pointer; background: #fff3d6; border: 1px solid #e0b34a; color: #7a5200; }
+.ihms-modo-banner.ativo { background: #e2f5e7; border-color: #7cc790; color: #1d6b34; cursor: default; }
+.ihms-disco { width: 100%; max-width: 150px; height: auto; }
+.ihms-disco-aro { fill: #fff; stroke: #5d666d; stroke-width: 3; }
+.ihms-disco-tick { stroke: #5d666d; stroke-width: 2; }
+.ihms-disco-n { font-size: 9px; fill: #4a5157; text-anchor: middle; font-family: var(--mono); }
+.ihms-disco-pont { stroke: #c8352a; stroke-width: 4; stroke-linecap: round; transition: transform .1s linear; }
+.ihms-disco-alvo { stroke: #3b82d6; stroke-width: 3; stroke-dasharray: 4 3; }
+.ihms-disco-eixo { fill: #2b3238; }
+.ihms-semcom { position: absolute; inset: 36px 0 38px; background: rgba(238,241,244,.92); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; padding: 20px; }
+.ihms-semcom b { color: var(--err); font-size: 17px; }
+.ihms-aviso { position: absolute; left: 10px; right: 10px; bottom: 44px; background: #c8352a; color: #fff; padding: 6px 10px; border-radius: 4px; font-size: 13px; }
+.ihms-cfg { max-width: 640px; margin: 0 auto; }
+.ihms-cfg-l { gap: 8px; flex-wrap: wrap; align-items: center; margin: 6px 0; }
+.ihms-cfg button.on { background: var(--ok); color: #fff; border-color: var(--ok); }
+.ihms-mapa summary { cursor: pointer; font-weight: 600; margin: 6px 0; }
+.ihms-mapa table { font-size: 12.5px; }
+
+.ihms-botoes .ihms-bt { flex: 1 1 auto; }
+.ihms-device .ihms-moldura { padding: 10px; }

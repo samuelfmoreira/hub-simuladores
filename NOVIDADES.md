@@ -2,6 +2,28 @@
 
 As notas de cada versão aparecem no HUB quando a atualização é oferecida. Escreva a seção da versão nova antes do push.
 
+## 1.15.0
+- Sistema de Incêndio + Soft SSW-05 atualizado para a versão 2.0.3, com a soft-starter SSW-05 Plus atualizada. Ajustes do HUB mantidos: a tela abre na porta escolhida pelo HUB, o CLP virtual de teste escuta só neste PC e "Restaurar original" limpa todas as telas.
+- Estação de bombeamento: o cartão e as telas passam a se chamar só "Estação de bombeamento" (TQ-01 continua como a tag do tanque no processo).
+
+## 1.14.1
+- Estação de bombeamento TQ-01: o Modbus TCP é o caminho principal. A tela abre com o Modbus marcado e o IP do CODESYS (192.168.100.10) preenchido; quem tinha a versão antiga, que guardava uma conexão OPC UA, passa a abrir no Modbus. O cartão traz em "Arquivos para o CLP" a GVL, o programa e a tabela de tags Modbus, e a aula de Modbus TCP em "Aprender".
+
+## 1.14.0
+- Estação de bombeamento TQ-01 atualizada para a versão 0.12.1: processo enxuto para a aula de canal analógico, com uma entrada analógica (transmissor de nível LT-01, 4–20 mA, no EA0) e uma saída analógica (referência de velocidade do inversor CFW500 da bomba, 0–10 V, no SA0), em contagens de 15 bits. O CFW500 é o mesmo modelo do simulador do HUB e já vem parametrizado. Válvula manual HV-01 para o instrutor perturbar o consumo, laboratório de histerese e guia novo.
+- Três jeitos de conectar o CLP: Modbus TCP, OPC UA ou OPC DA (MasterTool em simulação, depois do INSTALAR_OPCDA.bat). Os dois CLPs de demonstração (Modbus e OPC UA) rodam só neste PC e usam a próxima porta livre se a padrão estiver ocupada pelo CODESYS.
+- Desenho novo do cartão: reservatório, bomba, tanque TQ-01 com o LT-01, válvula HV-01 e o CFW500.
+
+## 1.13.0
+- Servomotor SCA06: nova aba IHM, um painel touch de 7" com as telas Início, Velocidade, Torque, Posição absoluta e Pulso. Como numa máquina real, a IHM conversa com o CLP por Modbus TCP e o CLP comanda o servo pela EtherNet/IP. Habilitar geral, STOP, reset, escolha do modo, referências, PARTIR/PARAR, IR PARA O DESTINO e PULSO, com lâmpadas, mostradores e um mostrador circular da posição.
+- Os quatro modos funcionam sem reconfigurar o drive: o CLP escreve o tipo, a velocidade/corrente e as voltas do movimento da Função Posicionador. Nova conexão no EDS: Exclusive Owner, IHM (8 entrada / 11 saida). Nova opção no assistente de comunicação: IHM (todos os modos).
+- CLP de demonstração na aba IHM, para usar a IHM sem o CODESYS: ele roda o mesmo programa do guia.
+- Guia do SCA06: Parte 9 nova, com a configuração do drive, a conexão de 8/11 palavras, o servidor Modbus no CODESYS, o mapa de tags e o programa PRG_IHM_Servo em texto estruturado, bloco a bloco, com testes e problemas comuns.
+
+## 1.12.0
+- Novo dispositivo: Estação de bombeamento TQ-01. Processo 3D com entradas e saídas analógicas para programar o Altus XP325: tanque com transmissor de nível 4–20 mA, válvula de controle FV-01, bomba centrífuga com inversor CFW500 comandado por 0–10 V, pressão, vazão e PT100, quadro de comando operável. É cliente OPC UA (o CLP é o servidor, porta 4840) e traz um XP325 de demonstração; se a 4840 estiver ocupada (por exemplo, pelo CODESYS), a demonstração usa a próxima porta livre. Guia completo no botão Guia.
+- A verificação do contrato dos simuladores passa a ler também o arquivo principal do package.json (simuladores organizados em subpastas).
+
 ## 1.11.0
 - Novo em todos os simuladores: botão "Restaurar original", no painel do cartão. Volta o simulador ao estado de quando foi instalado: apaga parâmetros, configurações, sessões, progresso das missões e preferências da tela, e devolve IP, porta, modo e endereço da VM ao padrão. Se estiver rodando, ele é parado e iniciado de novo. A versão do simulador não muda.
 

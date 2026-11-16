@@ -1,10 +1,10 @@
 $ EDS do SIMULADOR SCA06 + ECO5 (nao e o EDS oficial WEG) - gerado por tools/gera-eds.js
 [File]
-        DescText = "Simulador didatico SCA06 ECO5 EtherNet/IP (conexoes de 4 ou 8 palavras)";
-        CreateDate = 11-04-2026;
-        CreateTime = 00:14:47;
-        ModDate = 11-04-2026;
-        ModTime = 00:14:47;
+        DescText = "Simulador didatico SCA06 ECO5 EtherNet/IP (conexoes de 4, 8 ou 8/11 palavras)";
+        CreateDate = 11-13-2026;
+        CreateTime = 17:11:41;
+        ModDate = 11-13-2026;
+        ModTime = 17:11:41;
         Revision = 1.0;
 
 [Device]
@@ -135,6 +135,27 @@ $ EDS do SIMULADOR SCA06 + ECO5 (nao e o EDS oficial WEG) - gerado por tools/ger
                 ,,,,
                 0;
         Param17 =
+                0,,,0x0000,0xC3,2,
+                "OUT9 P0839 (tipo do movimento P01151)","","Parametro apontado em P0839",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param18 =
+                0,,,0x0000,0xC3,2,
+                "OUT10 P0840 (velocidade/Iq do movimento P01191)","","Parametro apontado em P0840",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param19 =
+                0,,,0x0000,0xC3,2,
+                "OUT11 P0841 (voltas do destino P01181)","","Parametro apontado em P0841",
+                ,,0,
+                ,,,,
+                ,,,,
+                0;
+        Param20 =
                 0,,,0x0000,0xC8,4,
                 "RPI","","Requested Packet Interval (us)",
                 1000,3200000,20000,
@@ -145,7 +166,7 @@ $ EDS do SIMULADOR SCA06 + ECO5 (nao e o EDS oficial WEG) - gerado por tools/ger
 [Assembly]
         Object_Name = "Assembly Object";
         Object_Class_Code = 0x04;
-        Number_Of_Static_Instances = 4;
+        Number_Of_Static_Instances = 5;
         Assem100 =
                 "Entrada 4 palavras (T->O)",
                 "",
@@ -194,6 +215,23 @@ $ EDS do SIMULADOR SCA06 + ECO5 (nao e o EDS oficial WEG) - gerado por tools/ger
                 16,Param14,
                 16,Param15,
                 16,Param16;
+        Assem152 =
+                "Saida 11 palavras (O->T)",
+                "",
+                22,
+                0x0001,
+                ,,
+                16,Param9,
+                16,Param10,
+                16,Param11,
+                16,Param12,
+                16,Param13,
+                16,Param14,
+                16,Param15,
+                16,Param16,
+                16,Param17,
+                16,Param18,
+                16,Param19;
 
 [Connection Manager]
         Revision = 1;
@@ -205,8 +243,8 @@ $ EDS do SIMULADOR SCA06 + ECO5 (nao e o EDS oficial WEG) - gerado por tools/ger
         Connection1 =
                 0x84010002,
                 0x44640405,
-                Param17,8,Assem150,
-                Param17,8,Assem100,
+                Param20,8,Assem150,
+                Param20,8,Assem100,
                 ,,
                 0,,
                 "Exclusive Owner, 4 palavras (velocidade e torque)",
@@ -215,8 +253,8 @@ $ EDS do SIMULADOR SCA06 + ECO5 (nao e o EDS oficial WEG) - gerado por tools/ger
         Connection2 =
                 0x84010002,
                 0x44640405,
-                Param17,16,Assem151,
-                Param17,16,Assem101,
+                Param20,16,Assem151,
+                Param20,16,Assem101,
                 ,,
                 0,,
                 "Exclusive Owner, 8 palavras (posicao)",
@@ -225,8 +263,8 @@ $ EDS do SIMULADOR SCA06 + ECO5 (nao e o EDS oficial WEG) - gerado por tools/ger
         Connection3 =
                 0x02010002,
                 0x44640305,
-                Param17,0,,
-                Param17,8,Assem100,
+                Param20,0,,
+                Param20,8,Assem100,
                 ,,
                 0,,
                 "Input Only, 4 palavras",
@@ -235,16 +273,26 @@ $ EDS do SIMULADOR SCA06 + ECO5 (nao e o EDS oficial WEG) - gerado por tools/ger
         Connection4 =
                 0x01010002,
                 0x44240305,
-                Param17,0,,
-                Param17,8,Assem100,
+                Param20,0,,
+                Param20,8,Assem100,
                 ,,
                 0,,
                 "Listen Only, 4 palavras",
                 "",
                 "20 04 24 01 2C C7 2C 64";
+        Connection5 =
+                0x84010002,
+                0x44640405,
+                Param20,22,Assem152,
+                Param20,16,Assem101,
+                ,,
+                0,,
+                "Exclusive Owner, IHM (8 entrada / 11 saida)",
+                "",
+                "20 04 24 01 2C 96 2C 64";
 
 [Capacity]
         MaxIOConnections = 3;
         MaxMsgConnections = 6;
         TSpec1 = TxRx, 16, 1000;
-        TSpec2 = TxRx, 16, 1000;
+        TSpec2 = TxRx, 22, 1000;
