@@ -2,6 +2,9 @@
 
 As notas de cada versão aparecem no HUB quando a atualização é oferecida. Escreva a seção da versão nova antes do push.
 
+## 1.15.1
+- Estação de bombeamento: o cartão passa a mostrar "Didático · WEG CFW500".
+
 ## 1.15.0
 - Sistema de Incêndio + Soft SSW-05 atualizado para a versão 2.0.3, com a soft-starter SSW-05 Plus atualizada. Ajustes do HUB mantidos: a tela abre na porta escolhida pelo HUB, o CLP virtual de teste escuta só neste PC e "Restaurar original" limpa todas as telas.
 - Estação de bombeamento: o cartão e as telas passam a se chamar só "Estação de bombeamento" (TQ-01 continua como a tag do tanque no processo).
