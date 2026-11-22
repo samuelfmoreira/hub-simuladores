@@ -419,14 +419,15 @@ $('#btnPresetTutorial').addEventListener('click', async () => {
 async function restaurarFabrica() {
   const sim = await confirmar({ titulo: 'Restaurar o padrão de fábrica?', perigo: true, ok: 'Restaurar',
     texto: 'Equivale a programar <b>P0204 = 5</b> na HMI (padrão WEG 60 Hz). Todos os parâmetros voltam ao valor de fábrica. O motor precisa estar parado.',
-    itens: ['Comando volta para a HMI e as entradas digitais (LOC)', 'Rampas, limites, motor e I/O voltam ao padrão', 'IP volta para DHCP (vale na próxima energização ou com P0849 = 1)', 'Histórico de falhas é mantido'] });
+    itens: ['Comando volta para a HMI e as entradas digitais (LOC)', 'Rampas, limites, motor e I/O voltam ao padrão', 'IP volta para DHCP (vale na próxima energização ou com P0849 = 1): refaça a comunicação pelo assistente', 'Imagem térmica do motor (Ixt, P0037) zerada: o alarme A0046 (Carga Alta no Motor) some', 'Histórico de falhas é mantido'] });
   if (!sim) return;
   const r = await pedir('fabrica', 60);
   if (r.erro) dialogo({ tipo: 'erro', titulo: 'Padrão de fábrica não carregado', texto: esc(r.erro) });
-  else { dialogo({ titulo: 'Padrão de fábrica restaurado', texto: 'P0204 = 5 executado: o inversor está como saiu da fábrica (60 Hz).' }); renderParametros(true); }
+  else { dialogo({ titulo: 'Padrão de fábrica restaurado', texto: 'P0204 = 5 executado e motor frio (Ixt zerado): o inversor está como saiu da fábrica (60 Hz), sem A0046.' }); renderParametros(true); }
 }
 $('#btnFabrica').addEventListener('click', restaurarFabrica);
 $('#btnFabrica2').addEventListener('click', restaurarFabrica);
+$('#btnFabricaTopo').addEventListener('click', restaurarFabrica);   // [HUB] botão no topo da tela
 
 function renderCLP(e) {
   const s = e.scanner;

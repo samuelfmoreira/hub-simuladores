@@ -217,10 +217,11 @@ io.on('connection', (sock) => {
   });
   sock.on('fabrica', (hz, cb) => {
     // P0204 = 5 (60 Hz) ou 6 (50 Hz): carrega o padrão de fábrica, igual à HMI do inversor
+    // [HUB] além do P0204, zera a imagem térmica do motor (Ixt): sem isso o inversor voltava com A0046
     const op = +hz === 50 ? 6 : 5;
-    const r = drive.escrever(204, op, 'ui');
-    if (!r) { drive.salvarEEPROM(); evento('param', `Padrão de fábrica ${op === 5 ? '60' : '50'} Hz carregado (P0204 = ${op})`); }
-    if (typeof cb === 'function') cb(r ? { erro: r.msg } : { ok: true, op });
+    const r = drive.padraoFabrica(op);
+    if (r.ok) evento('param', `Padrão de fábrica ${op === 5 ? '60' : '50'} Hz carregado (P0204 = ${op}) e motor frio (Ixt zerado)`);
+    if (typeof cb === 'function') cb(r.ok ? { ok: true, op } : { erro: r.erro });
   });
   sock.on('scanner', async (o, cb) => {
     const fim = (r) => { if (typeof cb === 'function') cb(r); };

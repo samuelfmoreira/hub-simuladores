@@ -2,6 +2,9 @@
 
 As notas de cada versão aparecem no HUB quando a atualização é oferecida. Escreva a seção da versão nova antes do push.
 
+## 1.15.3
+- CFW500: botão "Padrão de fábrica" no topo da tela (antes ficava escondido nas abas). Além do P0204 = 5 (padrão WEG 60 Hz), ele agora zera a imagem térmica do motor (Ixt, P0037) e limpa os alarmes: o inversor deixa de ligar com A0046 (Carga Alta no Motor) depois de uma aula com sobrecarga. Só funciona com o motor parado, como o P0204 real. O botão "Restaurar padrão de fábrica" das abas faz o mesmo.
+
 ## 1.15.2
 - Guia do CFW500: nova seção "Consulta rápida", no começo do guia, com todos os bits da Control Word (P0684) e da Status Word (P0680), valores prontos (parado = 22, gira horário = 23, gira anti-horário = 19, reset = 150), o que o inversor responde em cada situação (medido no simulador), a escala de 13 bits da velocidade e a ordem das palavras na conexão EtherNet/IP.
 

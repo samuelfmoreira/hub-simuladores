@@ -709,6 +709,7 @@ Os cálculos são feitos em REAL de propósito: em INT, 900 × 8192 estoura o li
 | Corrente errada | corrente no IR1 (em cima do REAL) | corrente no **IR2** |
 | Tudo certo, mas nada muda | programa fora da MainTask | Add Call na MainTask (Parte 2) |
 | Motor não gira com LIGAR | inversor em LOC ou CW.1 = 0 | display em REM; linha 2 do Ladder |
+| Inversor já liga com **A0046** (Carga Alta no Motor) | a imagem térmica do motor (Ixt, P0037) ficou gravada alta depois de uma sobrecarga, como no inversor real | botão **Padrão de fábrica**, no topo da tela (motor parado): volta os parâmetros ao padrão WEG 60 Hz e zera o Ixt. Depois, refaça a comunicação pelo assistente |
 | A0149 no inversor | CLP em STOP ou conexão perdida | Start no CODESYS |
 | Depois de P0810 = 0, o inversor não responde no 192.168.100.20 | IP dos parâmetros diferente (P0813/P0814) ou falta o P0849 = 1 | confira P0811…P0814 = 192.168.100.20 e faça P0849 = 1 (seção 1.2) |
 | Interface SIM-HUB não aparece no CODESYS | rede virtual não criada | aba **Rede virtual** do HUB → criar a rede |

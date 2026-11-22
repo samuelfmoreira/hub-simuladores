@@ -27,6 +27,7 @@ try { var u = new URL(location.href); if (u.searchParams.has('hubRestaurar')) { 
     <span class="chip" id="chipIp" title="IP onde o adapter responde">IP —</span>
   </div>
   <button class="btn-assistente" data-assistente title="Configura o inversor para conversar com o CLP pela EtherNet/IP, etapa por etapa">Comunicação com o CLP</button>
+  <button class="btn-fabrica" id="btnFabricaTopo" title="Volta todos os parâmetros ao padrão WEG de 60 Hz (P0204 = 5) e esfria o motor (zera o Ixt e o alarme A0046). Só com o motor parado.">Padrão de fábrica</button>
   <button class="btn-energia" id="btnEnergia" aria-pressed="true" title="Ligar/desligar a alimentação do inversor">Desenergizar</button>
 </header>
 

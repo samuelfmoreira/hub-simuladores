@@ -207,6 +207,24 @@ class CFW500 extends EventEmitter {
     return null;
   }
 
+  /**
+   * [HUB] Botão "Padrão de fábrica" da tela: o mesmo que P0204 = 5 (padrão WEG 60 Hz) e, além disso,
+   * zera a imagem térmica do motor e dos IGBTs (Ixt, P0037) e limpa falhas e alarmes — como um motor frio.
+   * O Ixt fica gravado na memória ao desligar (como no inversor real); sem zerá-lo, o inversor voltaria
+   * a ligar com A0046 (Carga Alta no Motor) depois de uma aula com sobrecarga. Só com o motor parado.
+   */
+  padraoFabrica(op = 5) {
+    if (this.pwm) return { erro: 'Pare o motor antes de carregar o padrão de fábrica (igual ao P0204 do inversor real).' };
+    const r = this.escrever(204, op === 6 ? 6 : 5, 'ui');          // mesmas regras do P0204 da HMI
+    if (r) return { erro: r.msg };
+    this.ixt = 0; this.ixtSalvo = 0; this.ixtIgbt = 0; this.v.set(37, 0);
+    this.alarmes.clear();
+    if (this.falha) this.resetFalha('padrão de fábrica');
+    this.salvarEEPROM();
+    this.emit('log', 'Padrão de fábrica (botão da tela): parâmetros WEG 60 Hz e imagem térmica do motor zerada (motor frio)');
+    return { ok: true, falha: this.falha || 0 };
+  }
+
   executarP0204(op) {
     if (op === 5 || op === 6) {
       const preserva = { 296: this.v.get(296), 297: this.v.get(297), 308: this.v.get(308) };
