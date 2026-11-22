@@ -12,6 +12,99 @@ A IHM nunca fala direto com o inversor. Tudo passa pelo CLP, que traduz Modbus e
 
 No print, a rede aparece como *CFW500-Rede*, o nome antigo. No HUB, a placa de rede virtual se chama **SIM-HUB**, com os mesmos endereços.
 
+## Consulta rápida: palavras de controle e de estado
+
+Para ter à mão durante a aula. Os valores das tabelas foram medidos no simulador, com o inversor configurado para obedecer à rede (seção 1.3).
+
+### Control Word, P0684: o CLP manda
+
+Cada bit é uma "chave" de comando. O CLP escreve a palavra inteira de uma vez.
+
+| Bit | Valor | Comando | 1 = | 0 = | Precisa de |
+| --- | --- | --- | --- | --- | --- |
+| 0 | 1 | Gira/Para | gira (acelera pela rampa) | para (desacelera pela rampa) | P0227 = 4 |
+| 1 | 2 | Habilita geral | habilitado | desabilita: o motor para **por inércia** | sempre 1 |
+| 2 | 4 | Sentido de giro | **horário** | anti-horário | P0226 = 9 |
+| 3 | 8 | JOG | JOG ativo | — | P0228 = 5 |
+| 4 | 16 | Local/Remoto | remoto | local | P0220 = 9 ou 10 (com P0220 = 1 o inversor já fica sempre em remoto) |
+| 5 | 32 | 2ª rampa | usa a 2ª rampa | 1ª rampa | P0105 = 5 |
+| 6 | 64 | Parada rápida | para pela rampa rápida | — | — |
+| 7 | 128 | Reset de falha | a **subida 0 → 1** reseta | — | — |
+| 8 a 15 | — | reservados | deixe em 0 | | |
+
+**Valores prontos** (some os "Valor" dos bits ligados):
+
+| Situação | Bits ligados | Decimal | Hexa |
+| --- | --- | --- | --- |
+| Desabilitado | nenhum | 0 | 16#0000 |
+| **Parado, habilitado, remoto, horário** | 1, 2, 4 | **22** | 16#0016 |
+| **Girando horário** | 0, 1, 2, 4 | **23** | 16#0017 |
+| **Girando anti-horário** | 0, 1, 4 | **19** | 16#0013 |
+| Parado, anti-horário | 1, 4 | 18 | 16#0012 |
+| Reset de falha (por um instante, depois volta a 22) | 1, 2, 4, 7 | 150 | 16#0096 |
+
+### Status Word, P0680: o inversor responde
+
+| Bit | Valor | Quando fica em 1 |
+| --- | --- | --- |
+| 0 | 1 | reservado |
+| 1 | 2 | o inversor recebeu o comando de **girar** |
+| 2 e 3 | 4, 8 | reservados |
+| 4 | 16 | parada rápida em andamento |
+| 5 | 32 | usando a 2ª rampa |
+| 6 | 64 | em modo de configuração |
+| 7 | 128 | **alarme** ativo (ex.: A0149, erro de comunicação) |
+| 8 | 256 | **motor em operação** (girando) |
+| 9 | 512 | **habilitado** e sem falha |
+| 10 | 1024 | sentido **horário** |
+| 11 | 2048 | JOG ativo |
+| 12 | 4096 | em **remoto** |
+| 13 | 8192 | subtensão no barramento |
+| 14 | 16384 | reservado |
+| 15 | 32768 | **em falha** |
+
+**O que se lê em cada situação** (medido no simulador):
+
+| Situação | Status Word | Hexa | Bits |
+| --- | --- | --- | --- |
+| Desabilitado (CW = 0) | 4096 | 16#1000 | 12 |
+| Parado, pronto, horário (CW = 22) | **5632** | 16#1600 | 9, 10, 12 |
+| Girando horário (CW = 23) | **5890** | 16#1702 | 1, 8, 9, 10, 12 |
+| Girando anti-horário (CW = 19) | **4866** | 16#1302 | 1, 8, 9, 12 |
+| Em falha | **37890** | 16#9402 | 1, 10, 12, **15** |
+
+Cuidado: com o bit 15 ligado, a Status Word passa de 32767. Lida como **INT**, a falha aparece como número **negativo** (37890 vira −27646). Por isso a GVL usa **WORD**, e no Ladder se olha o bit (`GVL_CFW.SW.15`), e não o número.
+
+### Velocidade: P0685 (o CLP manda) e P0681 (o inversor responde)
+
+As duas usam a **escala de 13 bits**: **8192 = frequência nominal do motor (P0403 = 60 Hz) = 1800 rpm** para o motor de 4 polos do simulador.
+
+| rpm | Valor na palavra |
+| --- | --- |
+| 0 | 0 |
+| 450 | 2048 |
+| **900** | **4096** |
+| 1350 | 6144 |
+| **1800** | **8192** |
+
+- **rpm → palavra:** valor = rpm × 8192 ÷ 1800
+- **palavra → rpm:** rpm = valor × 1800 ÷ 8192
+- No P0681, o sentido anti-horário volta **negativo** (−4096 = −900 rpm). Por isso se converte com `WORD_TO_INT` antes da conta.
+
+### Outras grandezas
+
+| Grandeza | Parâmetro | Escala | Exemplo |
+| --- | --- | --- | --- |
+| Corrente do motor | P0003 | décimos de ampère (fator 0,1) | 26 = 2,6 A |
+| Estado da rede EtherNet/IP | P0801 | 2 Wait Comm · 4 Data Active · 5 Error | 4 = trocando dados |
+
+### Ordem das palavras na conexão EtherNet/IP
+
+| Sentido | Palavra 1 | Palavra 2 | Palavra 3 (extra) |
+| --- | --- | --- | --- |
+| Inversor → CLP (entrada) | P0680 Status Word | P0681 velocidade | o que estiver no P0820 (ex.: 3 = corrente P0003) |
+| CLP → inversor (saída) | P0684 Control Word | P0685 referência | o que estiver no P0835 |
+
 ## Mapa de dados
 
 Cada sinal da IHM, onde ele mora no Modbus, a variável no CLP e o parâmetro do inversor. Cada área Modbus conta a partir de 0, separadamente.

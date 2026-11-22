@@ -2,6 +2,9 @@
 
 As notas de cada versão aparecem no HUB quando a atualização é oferecida. Escreva a seção da versão nova antes do push.
 
+## 1.15.2
+- Guia do CFW500: nova seção "Consulta rápida", no começo do guia, com todos os bits da Control Word (P0684) e da Status Word (P0680), valores prontos (parado = 22, gira horário = 23, gira anti-horário = 19, reset = 150), o que o inversor responde em cada situação (medido no simulador), a escala de 13 bits da velocidade e a ordem das palavras na conexão EtherNet/IP.
+
 ## 1.15.1
 - Estação de bombeamento: o cartão passa a mostrar "Didático · WEG CFW500".
 
