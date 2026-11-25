@@ -1,0 +1,41 @@
+{
+  "id": "bancada-cfw500",
+  "nome": "Bancada didática CFW500",
+  "fabricante": "Didático · WEG CFW500",
+  "tipo": "Bancada 3D: fios e multímetro",
+  "versao": "1.0.2.1",
+  "descricao": "Bancada didática em 3D para ligar e parametrizar o inversor WEG CFW500 (plug-in CFW500-IOS) como na prática: o aluno arrasta os componentes, passa os fios borne a borne, mede com o multímetro e opera pela HMI. Treina partida por entrada digital (2 e 3 fios), sentido de giro, potenciômetro e 4-20 mA na AI1, multispeed, saídas a relé e a transistor, rampas, falhas e a regulação do link DC. Sessões independentes: cada aluno (cada aba ou cada PC) tem a sua bancada. Não usa CLP nem rede.",
+  "protocolos": [],
+  "papel": "Bancada de ligação (sem CLP e sem rede)",
+  "iniciar": {
+    "comando": "node",
+    "args": [
+      "server.js"
+    ]
+  },
+  "web": {
+    "porta": 3350,
+    "caminho": "/"
+  },
+  "rede": {
+    "precisaIp": false,
+    "portas": [],
+    "descricaoIp": "sem rede, sem CLP"
+  },
+  "variaveis": {},
+  "arquivos": {
+    "guia": "GUIA.md",
+    "eds": []
+  },
+  "preservarAoAtualizar": [
+    "data/"
+  ],
+  "aprender": [
+    "laboratorio",
+    "diagnostico"
+  ],
+  "cor": "#2C6CB0",
+  "icone": "icone.svg",
+  "ordem": 100,
+  "pacote": "bancada-cfw500"
+}

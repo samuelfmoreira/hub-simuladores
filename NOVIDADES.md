@@ -2,6 +2,10 @@
 
 As notas de cada versão aparecem no HUB quando a atualização é oferecida. Escreva a seção da versão nova antes do push.
 
+## 1.16.0
+- Novo: **Bancada didática CFW500** (1.0.2.1). Bancada 3D para ligar e parametrizar o inversor WEG CFW500 como na prática: arrastar componentes, passar os fios borne a borne, medir com o multímetro e operar pela HMI. Partida por entrada digital (2 e 3 fios), sentido de giro, potenciômetro e 4–20 mA na AI1, multispeed, saídas a relé e a transistor, rampas, falhas e link DC. Não usa CLP nem rede; cada aluno tem a sua sessão.
+- Novo: **Sensor ultrassônico de nível LT-01** (1.1.1.1), com dados do VEGASON 61. Tanque com transmissor ultrassônico em 3D (tempo de voo, zona morta, eco falso, temperatura, espuma, perda de eco); o CLP recebe o nível como entrada analógica de 15 bits por Modbus TCP e faz a escala e os alarmes. CLP de demonstração interno em 127.0.0.1. Ajuste do HUB: o IP padrão do CLP passa a ser 192.168.100.10 (o CODESYS na rede virtual).
+
 ## 1.15.3
 - CFW500: botão "Padrão de fábrica" no topo da tela (antes ficava escondido nas abas). Além do P0204 = 5 (padrão WEG 60 Hz), ele agora zera a imagem térmica do motor (Ixt, P0037) e limpa os alarmes: o inversor deixa de ligar com A0046 (Carga Alta no Motor) depois de uma aula com sobrecarga. Só funciona com o motor parado, como o P0204 real. O botão "Restaurar padrão de fábrica" das abas faz o mesmo.
 

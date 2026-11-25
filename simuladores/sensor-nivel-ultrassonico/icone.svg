@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240" role="img" aria-label="Sensor ultrassônico de nível LT-01">
+  <defs>
+    <linearGradient id="aco" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#B9C2C9"/><stop offset=".45" stop-color="#EEF1F3"/><stop offset="1" stop-color="#AEB8C0"/></linearGradient>
+    <linearGradient id="agua" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5FA8EA"/><stop offset="1" stop-color="#2468B4"/></linearGradient>
+    <linearGradient id="painel" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#D9DCD6"/><stop offset=".5" stop-color="#F1F2EE"/><stop offset="1" stop-color="#C6CAC3"/></linearGradient>
+    <linearGradient id="feixe" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E0650A" stop-opacity=".55"/><stop offset="1" stop-color="#E0650A" stop-opacity=".12"/></linearGradient>
+    <clipPath id="dentro"><rect x="50" y="62" width="136" height="146" rx="6"/></clipPath>
+  </defs>
+  <!-- sombras no piso -->
+  <ellipse cx="118" cy="216" rx="84" ry="8" fill="#000" opacity=".16"/>
+  <ellipse cx="262" cy="218" rx="32" ry="6" fill="#000" opacity=".15"/>
+  <!-- eletroduto do sensor ao painel -->
+  <path d="M132 40 H206 V212 H246" fill="none" stroke="#6F7C86" stroke-width="4" stroke-linejoin="round"/>
+  <!-- tanque em corte -->
+  <rect x="44" y="206" width="148" height="9" rx="2" fill="#8D969B"/>
+  <rect x="50" y="62" width="136" height="146" rx="6" fill="#F4F7F9" stroke="#8E99A1" stroke-width="2"/>
+  <g clip-path="url(#dentro)">
+    <rect x="50" y="138" width="136" height="72" fill="url(#agua)"/>
+    <path d="M50 138 q17 -5 34 0 t34 0 t34 0 t34 0" fill="none" stroke="#BFE0FA" stroke-width="2"/>
+    <polygon points="118,66 100,138 136,138" fill="url(#feixe)"/>
+    <path d="M108 92 q10 6 20 0 M105 108 q13 7 26 0 M102 124 q16 8 32 0" fill="none" stroke="#E0650A" stroke-width="2" stroke-linecap="round"/>
+  </g>
+  <rect x="46" y="56" width="144" height="8" rx="3" fill="url(#aco)" stroke="#8E99A1" stroke-width="1.2"/>
+  <!-- transmissor no teto: carcaça, sextavado, rosca e transdutor -->
+  <rect x="113" y="62" width="10" height="12" fill="#24282D"/>
+  <rect x="108" y="46" width="20" height="12" rx="2" fill="#24282D"/>
+  <rect x="104" y="24" width="28" height="24" rx="4" fill="#DFE3E6" stroke="#8E979A" stroke-width="1.2"/>
+  <rect x="103" y="18" width="30" height="9" rx="3" fill="#17324D"/>
+  <rect x="130" y="34" width="8" height="8" rx="1.5" fill="#1B2026"/>
+  <text x="118" y="41" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="8" fill="#17324D">LT-01</text>
+  <!-- coluna de comando com IHM e sinaleiros -->
+  <rect x="238" y="72" width="48" height="140" rx="4" fill="url(#painel)" stroke="#8E979A" stroke-width="1.2"/>
+  <rect x="238" y="206" width="48" height="8" rx="2" fill="#7C8689"/>
+  <rect x="246" y="86" width="32" height="24" rx="2" fill="#0F1D29"/>
+  <rect x="249" y="96" width="6" height="11" fill="#2B7BCC"/>
+  <text x="268" y="101" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="8" fill="#FFFFFF">40%</text>
+  <circle cx="248" cy="124" r="3.4" fill="#A82219"/><circle cx="258" cy="124" r="3.4" fill="#FFC21A"/><circle cx="268" cy="124" r="3.4" fill="#B07A00"/><circle cx="278" cy="124" r="3.4" fill="#A82219"/>
+  <text x="262" y="196" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="8" fill="#2B3134">TQ-01</text>
+</svg>

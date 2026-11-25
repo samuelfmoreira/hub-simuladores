@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<script>/* [HUB] Restaurar original: o HUB abre esta tela com ?hubRestaurar=1 e ela apaga o que guardou neste navegador */
+try { var u = new URL(location.href); if (u.searchParams.has('hubRestaurar')) { localStorage.clear(); sessionStorage.clear(); u.searchParams.delete('hubRestaurar'); history.replaceState(null, '', u.pathname + u.search + u.hash); } } catch (e) { /* sem armazenamento */ }</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bancada CFW500</title>
+<!--ICO--><link rel="icon" href="favicon.svg"><!--/ICO-->
+<!--CSS--><link rel="stylesheet" href="css/estilo.css"><!--/CSS-->
+</head>
+<body>
+<header class="topo">
+  <div class="marca"><b>Bancada CFW500</b><span>WEG CFW500 + plug-in IOS · bancada didática de ligação</span></div>
+  <div class="chips">
+    <div class="chip" id="chRede">Rede desligada</div>
+    <div class="chip" id="chEstado">Inversor apagado</div>
+    <div class="chip num" id="chHz">0,0 Hz</div>
+    <div class="chip num" id="chA">0,0 A</div>
+    <div class="chip num" id="chRpm">0 rpm</div>
+  </div>
+  <button class="chip" id="chSessao" title="Sessões independentes: cada aba tem a sua bancada">Sessão</button>
+  <button class="botao" id="btnAjuda">Como usar</button>
+</header>
+<main class="corpo">
+  <section class="lado">
+    <nav class="abas" id="abas">
+      <button data-aba="missoes" class="ativa">Missões</button><button data-aba="inversor">Inversor</button><button data-aba="parametros">Parâmetros</button><button data-aba="medicoes">Medições</button><button data-aba="bancada">Bancada</button>
+    </nav>
+    <div class="painel" id="aba-missoes"><p class="dica">Exercícios em ordem de dificuldade. O simulador confere sozinho: faça a ligação, ajuste os parâmetros e opere.</p><ol id="listaMissoes" class="missoes"></ol></div>
+    <div class="painel" id="aba-inversor" hidden>
+      <div class="inv" aria-label="Frente do inversor CFW500">
+        <div class="inv-grade" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="inv-hmi">
+          <canvas id="hmiLcd" width="648" height="400"></canvas>
+          <div class="teclado" id="teclado">
+            <button class="tc tc-back" data-t="esc" title="Volta um nível sem gravar">BACK<br>ESC</button>
+            <div class="tc-setas"><button class="tc tc-up" data-t="up" aria-label="Incrementa">▲</button><button class="tc tc-down" data-t="down" aria-label="Decrementa">▼</button></div>
+            <button class="tc tc-enter" data-t="enter" title="Entra no nível seguinte e grava">MENU<br>ENTER</button>
+            <button class="tc tc-red tc-giro" data-t="giro" aria-label="Sentido de giro" title="Sentido de giro">↻</button>
+            <button class="tc tc-red tc-locrem" data-t="locrem" title="Local / Remoto">LOC<br>REM</button>
+            <button class="tc tc-red tc-jog" data-t="jog" title="JOG (enquanto apertada)">JOG</button>
+            <button class="tc tc-stop" data-t="o" aria-label="Para (O)" title="Para / reset de falha"></button>
+            <button class="tc tc-start" data-t="i" aria-label="Gira (I)" title="Gira">I</button>
+          </div>
+        </div>
+        <div class="inv-marca" aria-hidden="true"><span class="fab">WEG</span><span class="mod">CFW500<small>VECTOR INVERTER</small></span></div>
+      </div>
+      <div class="aviso" id="hmiMsg" hidden></div>
+      <div class="bloco" id="invSituacao"></div>
+      <table class="leit" id="invLeituras"></table>
+    </div>
+    <div class="painel" id="aba-parametros" hidden>
+      <div class="linha"><input type="search" id="pBusca" placeholder="Buscar: 133, rampa, DI1…" aria-label="Buscar parâmetro">
+        <select id="pGrupo" aria-label="Grupo de parâmetros"><option value="SIM">Com efeito na bancada</option><option value="PARAM">Todos (PARAM)</option><option>MODIF</option><option>READ</option><option>BASIC</option><option>MOTOR</option><option>I/O</option><option>NET</option><option>HMI</option><option>SPLC</option><option>STARTUP</option></select></div>
+      <p class="dica">Clique no valor para alterar. Valem as mesmas recusas do inversor: desenergizado, <i>cfg</i> com o motor girando, senha. <i class="gd">guardado</i> = o parâmetro existe e grava, mas não tem efeito nesta bancada.</p>
+      <table class="tparam"><tbody id="pCorpo"></tbody></table>
+    </div>
+    <div class="painel" id="aba-medicoes" hidden>
+      <h3>Multímetro</h3>
+      <canvas id="mmLcd" width="400" height="180"></canvas>
+      <div class="seg" id="mmModos"></div>
+      <div class="bloco" id="mmPontas"></div>
+      <h3>O que o inversor enxerga</h3><table class="leit" id="tabIO"></table>
+      <h3>Motor</h3><table class="leit" id="tabMotor"></table>
+    </div>
+    <div class="painel" id="aba-bancada" hidden>
+      <h3>Fios</h3>
+      <div class="linha"><label class="cl">Cor do próximo fio <select id="bCor"><option value="auto">automática (pela função do borne)</option><option>preto</option><option>vermelho</option><option>azul</option><option>verde</option><option>amarelo</option><option>branco</option><option>laranja</option></select></label></div>
+      <div class="linha"><select id="bMontagem" aria-label="Montagem pronta"></select><button class="botao" id="bMontar">Montar</button></div>
+      <div class="linha"><button class="botao perigo" id="bLimpar">Remover todos os fios</button></div>
+      <h3>Componentes</h3>
+      <div class="linha"><select id="bTipo" aria-label="Componente"></select><button class="botao" id="bAdd">Adicionar</button></div>
+      <p class="dica">Arraste o componente pela placa. Clique com o botão direito (ou toque rápido) nele para ver a explicação e remover.</p>
+      <h3>Motor e carga</h3>
+      <label class="rg">Freio de carga <output id="bCargaV">30 %</output><input type="range" id="bCarga" min="0" max="150" step="5" value="30"></label>
+      <label class="ck"><input type="checkbox" id="bVolante"> Volante de inércia acoplado</label>
+      <label class="ck"><input type="checkbox" id="bTravado"> Eixo travado</label>
+      <h3>Plug-in CFW500-IOS</h3>
+      <label class="ck"><input type="checkbox" id="bS1"> Chave S1.1: AI1 em corrente (mA). Desmarcada = tensão (0–10 V)</label>
+      <h3>Recomeçar</h3>
+      <div class="linha"><button class="botao" id="bRepor">Repor componentes e fios</button><button class="botao perigo" id="bZerar">Apagar tudo</button></div>
+      <h3>Acontecimentos</h3><ul class="eventos" id="bEventos"></ul>
+    </div>
+  </section>
+  <section class="cena">
+    <div id="cena3d"></div>
+    <div class="vistas" id="vistas"><button data-vista="geral">Bancada</button><button data-vista="inversor">Inversor</button><button data-vista="bornes">Bornes</button><button data-vista="comando">Comando</button><button data-vista="motor">Motor</button><button data-vista="multimetro">Multímetro</button></div>
+    <div class="modo" id="modo" hidden></div>
+    <div class="alerta" id="alerta" hidden></div>
+    <button class="botao perigo remover" id="btnRemover" hidden>Remover fio</button>
+    <div class="rotulo" id="rotMotor"></div>
+    <div class="dicaT" id="dicaT" hidden></div>
+    <div class="toast" id="toast" hidden></div>
+  </section>
+</main>
+<div class="janela" id="janela" hidden><div class="jcx"><button class="fechar" id="jFechar" aria-label="Fechar">×</button><div id="jCorpo"></div></div></div>
+<!--JS-->
+<script type="module">
+  import * as THREE from './vendor/three/three.module.min.js';
+  window.THREE = THREE;
+  for (const s of ['core/params.js', 'core/hmi.js', 'core/cfw500.js', 'core/bancada.js', 'core/missoes.js', 'js/lcd.js', 'js/cena.js', 'js/app.js']) {
+    await new Promise((ok, erro) => { const e = document.createElement('script'); e.src = s; e.onload = ok; e.onerror = erro; document.body.appendChild(e); });
+  }
+</script>
+<!--/JS-->
+</body>
+</html>

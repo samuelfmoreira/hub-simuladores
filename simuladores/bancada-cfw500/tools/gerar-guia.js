@@ -1,0 +1,274 @@
+'use strict';
+/* Monta o GUIA.md a partir do núcleo (lista de parâmetros, bornes, montagens e missões): nada é escrito de memória.
+ * Uso: node tools/gerar-guia.js   (as figuras de guia/ vêm de tools/gerar-prints.py) */
+const fs = require('fs'), path = require('path');
+const core = path.join(__dirname, '..', 'public', 'core');
+['params', 'hmi', 'cfw500', 'bancada', 'missoes'].forEach((f) => require(path.join(core, f + '.js')));
+const SIM = globalThis.SIM, { MAPA, FALHAS, ALARMES, CONFIG, fmt, nomeP } = SIM.params, T = SIM.TIPOS, P = SIM.PLACA;
+const b = new SIM.Bancada();
+const borne = (ref) => { const i = b.infoTerm(ref); return `${i.comp.id} ${i.term.nome}`; };
+const par = (n, pq) => `| ${nomeP(n)} | ${MAPA[n].nome} | ${fmt(n, MAPA[n].def, true)}${MAPA[n].opc && MAPA[n].opc[MAPA[n].def] !== undefined ? ' (' + MAPA[n].opc[MAPA[n].def] + ')' : ''} | ${pq} |`;
+const valor = (n, v) => `${fmt(n, v, true)}${MAPA[n].opc && MAPA[n].opc[v] !== undefined ? ' (' + MAPA[n].opc[v] + ')' : ''}`;
+const OBS = {
+  energizar: 'O display acende, passa cerca de 1,5 s inicializando e mostra a monitoração. P0004 (link DC) fica perto de **311 V**. Com o multímetro em V~: **220 V** entre R e S e **127 V** entre fase e neutro. Se ligar só uma fase e o neutro (127 V), o inversor acende mas fica em **SUB** (subtensão, link DC em 179 V).',
+  motor: 'A placa do motor aparece clicando nele com o botão direito. P0401 tem uma casa decimal: 2,98 A vira 3,0 A. Estes dados alimentam a proteção de sobrecarga (P0156 a P0158 continuam os de fábrica) e o controle VVW.',
+  hmi: 'Com 30 % de carga no freio: em 30 Hz o motor gira a cerca de **875 rpm** com **110 V** na saída; em 60 Hz, **1776 rpm**, **220 V** e **2,0 A**. Na inversão a seta de sentido pisca enquanto o motor desacelera e muda de lado.',
+  rampas: 'O tempo de rampa vale de zero até a velocidade máxima (P0134). Com P0134 = 60 Hz e P0100 = 3 s, sair de 5 Hz e chegar em 60 Hz leva 2,75 s.',
+  di: 'Meça com o multímetro em V⎓ entre a DI1 (borne 1) e o GND: **24 V** com a chave aberta e **0 V** com ela fechada. É assim que uma entrada NPN enxerga o comando. A aba Medições mostra a mesma coisa para as quatro DIs.',
+  sentido: 'A função de fábrica da DI2 é o sentido de giro: aberta = horário, fechada = anti-horário. O inversor desacelera pela rampa, passa por zero e acelera no outro sentido.',
+  pot: 'Valores medidos na bancada (P0133 = 3 Hz, P0134 = 66 Hz): no mínimo **3,0 Hz**; no meio **4,92 V**, P0018 = **49,2 %** e **34,0 Hz**; no máximo **9,96 V**, **99,6 %** e **65,7 Hz**. O meio não dá 5,00 V porque a AI1 (100 kΩ) carrega o cursor do potenciômetro. Com a zona morta inativa (P0230 = 0) a referência vai de P0133 a P0134.',
+  multimetro: 'Compare o que o multímetro lê com P0018: 5,00 V = 50,0 %. Aproveite para medir a AO1 (borne 2): de fábrica ela repete a velocidade real, **10 V em 66 Hz** (5,15 V em 34 Hz).',
+  tres_fios: 'O contato do Stop é NF de propósito: se o fio partir, o motor para. Segurar o S1 não muda nada depois da partida: o Start só age na borda de subida.',
+  multispeed: 'DI4 é o bit menos significativo, DI3 o do meio e DI1 ou DI2 o mais significativo (aqui não usado, então só as quatro primeiras referências aparecem). Se programar P0222 = 8 sem nenhuma DI em Multispeed, o inversor entra em **CONF 17**.',
+  sinal: 'O relé DO1 é contato seco: precisa receber o +24 V no comum (11) para alimentar o sinaleiro pelo NA (13). O DO2 é um transistor NPN que fecha para o GND: o sinaleiro fica entre o +24 V e o borne 10.',
+  falha_ext: 'Com a DI4 em "Sem Falha Ext." a entrada precisa ficar ativa o tempo todo. Abriu (emergência apertada ou fio solto): **F0091**, os pulsos são cortados e o motor para por inércia. O relé DO1 de fábrica (Sem Falha) desliga junto.',
+  corrente: 'Em corrente a AI1 passa a ter 500 Ω: 12 mA aparecem como 6,0 V no borne. Com P0233 = 1 a escala é 4 mA = 0 % e 20 mA = 100 %. Abaixo de 2 mA o inversor mostra o alarme **A0163** (laço aberto).',
+  link_dc: 'Medido na bancada: com o volante e P0101 = 1 s o motor leva cerca de **5,5 s** para parar e o link DC chega a **396 V**, sem falha. Se subir P0151 para 600 V (regulação fora de ação), a mesma parada dá **F0022**.',
+};
+const L = [];
+const w = (s = '') => L.push(s);
+w('# Bancada didática CFW500');
+w();
+w('Bancada didática em 3D para **ligar, parametrizar e operar o inversor WEG CFW500** como na prática: você arrasta os componentes, passa os fios de borne a borne, mede com o multímetro e opera pela HMI do inversor. Não tem CLP nem rede.');
+w();
+w('![A bancada com o motor girando pelo potenciômetro](guia/tela-geral.png)');
+w();
+w('## 1. Para quem é');
+w();
+w('Para quem vai aprender ou ensinar a instalação do inversor: força, comando por entradas digitais, entrada analógica, multispeed, saídas digitais e diagnóstico. O simulador não pede nome nem cadastro: abre e está pronto para treinar. Cada aluno trabalha na sua própria bancada (sessões independentes, seção 3).');
+w();
+w('| Equipamento simulado | Dado |');
+w('|---|---|');
+w('| Inversor | WEG CFW500A04P3B2: 200-240 V, 4,3 A, mecânica A, alimentação monofásica ou trifásica |');
+w('| Plug-in | CFW500-IOS: 4 DIs, 1 AI, 1 AO, 1 relé, 1 transistor, RS-485 |');
+w('| Firmware de referência | V3.9X (Manual de Programação 10006739493/09) |');
+w(`| Motor | WEG ${P.modelo}, ${String(P.kw).replace('.', ',')} kW (${P.cv} cv), ${P.polos} polos, ligado em triângulo ${P.v} V, ${String(P.i).replace('.', ',')} A, ${P.rpm} rpm, cos φ ${P.cos.toFixed(2).replace('.', ',')}, rendimento ${String(P.rend).replace('.', ',')} % |`);
+w('| Rede da bancada | Trifásica 220 V entre fases, 127 V fase-neutro, 60 Hz |');
+w();
+w('## 2. A tela');
+w();
+w('| Como fazer | Ação |');
+w('|---|---|');
+w('| Passar um fio | Clique num borne e depois no outro, ou arraste de um borne ao outro. Esc cancela. |');
+w('| Tirar um fio | Clique no fio e no botão **Remover fio** (ou tecla Delete). Duplo clique ou botão direito no fio também tira. |');
+w('| Arrumar um fio | O cabo é maleável: pende entre os plugues, deita na mesa e contorna o inversor e o motor. Arraste qualquer ponto do fio para puxar; ao soltar, o ponto fica preso numa presilha. Arraste a presilha para mudar; duplo clique ou botão direito nela solta o cabo. |');
+w('| Mover um componente | Arraste pela placa; os cabos ligados acompanham. O motor e o multímetro andam sobre a mesa. |');
+w('| Acionar | Clique na chave geral, na alavanca do disjuntor, nas chaves seletoras e no cogumelo. Segure os botões pulsadores e as teclas do inversor. Arraste o botão do potenciômetro (ou use a roda do mouse sobre ele). |');
+w('| Multímetro | Clique no seletor para trocar a função. Arraste cada ponta até o borne, ou toque na ponta e depois no borne. |');
+w('| Câmera | Arraste o fundo para girar; botão direito ou dois dedos para deslocar; roda do mouse ou pinça para aproximar. Os botões embaixo levam a cada parte. |');
+w('| Explicação de um componente | Botão direito nele (em tela de toque, um toque rápido). |');
+w();
+w('![Fio puxado e preso por uma presilha](guia/fio-maleavel.png)');
+w();
+w('As cinco abas da lateral:');
+w();
+w('| Aba | Para que serve |');
+w('|---|---|');
+w('| Missões | A trilha de exercícios. O simulador confere sozinho e marca ✓. "Montar os fios para mim" faz a ligação da missão; "Ver parâmetros" mostra a resposta. |');
+w('| Inversor | A HMI em tamanho grande, o estado (P0006), a explicação da falha, do alarme ou do CONF e as leituras principais. |');
+w('| Parâmetros | A lista completa com busca e filtro por grupo. Clique no valor para alterar. |');
+w('| Medições | O multímetro em tamanho grande e o que o inversor enxerga em cada entrada e saída. |');
+w('| Bancada | Cor do fio, montagens prontas, componentes extras, freio de carga, volante de inércia, chave S1.1 do plug-in e o registro de acontecimentos. |');
+w();
+w('![Aba Inversor](guia/aba-inversor.png) ![Aba Medições](guia/aba-medicoes.png)');
+w();
+w('## 3. Sessões independentes');
+w();
+w('Cada aba do navegador é uma **sessão**: uma bancada completa e separada, com os seus componentes, fios, parâmetros do inversor e missões. Vários alunos usam ao mesmo tempo sem um mexer na bancada do outro.');
+w();
+w('| Situação | O que acontece |');
+w('|---|---|');
+w('| Cada aluno no seu PC, abrindo a bancada do PC do instrutor pela rede | Cada navegador tem a sua sessão. O servidor só entrega a tela: não há limite de alunos nem bancada compartilhada |');
+w('| Dois alunos no mesmo PC | Uma aba para cada um: a segunda aba recebe outra sessão, em branco |');
+w('| Recarregar a página (F5) | A aba continua na mesma sessão, com tudo o que estava montado. A chave geral volta desligada |');
+w('| Fechar e abrir de novo | A aba nova continua a última bancada que não estiver aberta em outra aba |');
+w('| Aba duplicada, ou pedir uma sessão que já está aberta | A aba recebe uma sessão nova e avisa: uma bancada nunca fica dividida entre duas abas |');
+w();
+w('O código da sessão (quatro letras e números, por exemplo `C3BD`) aparece no topo da tela. Clicando nele abre a lista das sessões guardadas neste navegador, com os botões **Abrir aqui**, **Apagar** e **Nova sessão em branco nesta aba**. Para abrir direto numa sessão, use o endereço com `?sessao=C3BD`.');
+w();
+w('![Janela de sessões](guia/sessoes.png)');
+w();
+w('As sessões ficam guardadas no navegador de cada um (não no servidor). O simulador mantém as 12 mais recentes e apaga as que ficaram mais de 60 dias sem uso. O botão **Restaurar original** do HUB apaga as sessões do navegador em que for usado.');
+w();
+w('## 4. Os componentes da bancada');
+w();
+w('![Módulos de comando](guia/comando.png)');
+w();
+w('| Tag | Componente | Bornes |');
+w('|---|---|---|');
+for (const c of b.comps) w(`| ${c.id} | ${T[c.tipo].nome}${c.cor ? ' ' + c.cor : ''} | ${T[c.tipo].term.map((t) => t.nome).join(', ') || 'pontas VΩ e COM'} |`);
+w();
+w('Botões e chaves têm sempre um contato **NA** (azul) e um **NF** (vermelho). Pela aba Bancada dá para acrescentar mais botões, chaves, sinaleiros, potenciômetro, disjuntor e gerador de sinal.');
+w();
+w('![Motor com freio de carga](guia/motor.png)');
+w();
+w('## 5. Os bornes do CFW500');
+w();
+w('![Inversor energizado](guia/inversor.png)');
+w();
+w('Força: **R/L1, S/L2, T/L3** recebem a rede (este modelo aceita duas ou três fases de 220 V) e **U, V, W** vão ao motor. Os dois **PE** são o terra.');
+w();
+w('Controle (plug-in CFW500-IOS), com a mesma numeração do produto:');
+w();
+w('| Borne | Nome | Função |');
+w('|---|---|---|');
+for (const n of [1, 3, 5, 7, 9, 11, 13, 15, 2, 4, 6, 8, 10, 12, 14, 16]) w(`| ${n} | ${SIM.CTRL[n][0]} | ${SIM.CTRL[n][1]} |`);
+w();
+w('![Bornes de controle](guia/bornes.png)');
+w();
+w('Três pontos que derrubam o iniciante:');
+w();
+w('1. **As DIs de fábrica são NPN** (P0271 = 0): ficam ativas quando ligadas ao **GND** (borne 4 ou 16), não ao +24 V. Aberta, a DI fica em 24 V; fechada ao GND, vai a 0 V.');
+w('2. **De fábrica o inversor liga em LOCAL**: quem manda são as teclas da HMI. As DIs e a AI1 só valem em REMOTO (tecla LOC/REM).');
+w('3. **Rede em U, V, W destrói o inversor.** Na bancada isso desarma a proteção e a tela diz o motivo.');
+w();
+w('## 6. A HMI do inversor');
+w();
+w('| Tecla | Função |');
+w('|---|---|');
+w('| I | Gira (quando o Gira/Para está nas teclas: LOCAL de fábrica) |');
+w('| O | Para. Com falha no display, faz o reset |');
+w('| ↻ | Inverte o sentido de giro |');
+w('| LOC/REM | Troca entre LOCAL e REMOTO |');
+w('| JOG | Com o motor parado, gira em P0122 enquanto apertada |');
+w('| ▲ ▼ | Na monitoração ajustam a referência (P0121). Nos menus escolhem grupo, parâmetro e valor. Segurando, aceleram |');
+w('| ENTER/MENU | Entra no próximo nível e grava o valor |');
+w('| BACK/ESC | Volta um nível sem gravar |');
+w();
+w('Para alterar um parâmetro (exemplo: P0100 para 3,0 s):');
+w();
+w('1. **ENTER/MENU**: acende o grupo PARAM (▲▼ trocam de grupo: READ, MODIF, BASIC, MOTOR, I/O, NET, HMI, SPLC, STARTUP).');
+w('2. **ENTER/MENU**: o display principal mostra o número do parâmetro e o secundário, o conteúdo. Use ▲▼ até **P0100**.');
+w('3. **ENTER/MENU**: o conteúdo vai para o display principal e pisca. Use ▼ até **3.0**.');
+w('4. **ENTER/MENU** grava. **BACK/ESC** duas vezes volta à monitoração.');
+w();
+w('Parâmetros marcados **cfg** só mudam com o motor parado. Com senha ativa (P0200 = 1) é preciso colocar a senha em P0000 (fábrica: 5).');
+w();
+w('## 7. Parâmetros mais usados na bancada');
+w();
+w('![Aba Parâmetros](guia/aba-parametros.png)');
+w();
+w('| Parâmetro | Nome | Fábrica | Para que serve |');
+w('|---|---|---|---|');
+[[100, 'Tempo de 0 até a velocidade máxima'], [101, 'Tempo da velocidade máxima até 0'], [121, 'Referência ajustada pelas setas'], [133, 'Menor frequência com o motor girando'], [134, 'Maior frequência'], [135, 'Limite de corrente: segura a rampa'],
+  [136, 'Tensão extra em baixa frequência (curva V/f)'], [202, '0 = V/f, 5 = VVW'], [204, '5 = volta tudo ao padrão de fábrica'], [220, 'Quem escolhe LOCAL ou REMOTO'], [221, 'De onde vem a referência em LOCAL'], [222, 'De onde vem a referência em REMOTO'],
+  [223, 'Sentido de giro em LOCAL'], [226, 'Sentido de giro em REMOTO'], [224, 'Gira/Para em LOCAL'], [227, 'Gira/Para em REMOTO'], [229, 'Como para: rampa, inércia ou parada rápida'], [230, 'Zona morta da entrada analógica'],
+  [233, 'Tipo de sinal da AI1'], [251, 'O que a AO1 mostra'], [263, 'Função da DI1'], [264, 'Função da DI2'], [265, 'Função da DI3'], [266, 'Função da DI4'], [271, 'DIs em NPN ou PNP'], [275, 'Função do relé DO1'], [276, 'Função do transistor DO2'],
+  [288, 'Nível de frequência para F > Fx'], [401, 'Corrente de placa do motor'], [402, 'Rotação de placa'], [404, 'Potência de placa']].forEach(([n, pq]) => w(par(n, pq)));
+w();
+w('Os valores "conforme o modelo do inversor" do manual foram fixados para o modelo de 4,3 A: P0135 = 6,5 A, P0156 = 4,7 A, P0157 = 4,3 A, P0158 = 3,4 A, P0290 = 4,3 A, P0401 = 4,3 A, P0404 = 1 HP. P0136 = 3,0 % e P0409 = 3,50 Ω seguem o simulador CFW500 do HUB.');
+w();
+w('## 8. Trilha de exercícios');
+w();
+SIM.MISSOES.forEach((m, i) => {
+  w(`### ${i + 1}. ${m.titulo}`);
+  w();
+  w(m.texto);
+  w();
+  w(`![Ligação: ${SIM.MONTAGENS[m.montagem].nome}](guia/montagem-${m.montagem}.png)`);
+  w();
+  w('Passo a passo:');
+  w();
+  m.passos.forEach((p, k) => w(`${k + 1}. ${p}`));
+  w();
+  if (m.params) { w('| Parâmetro | Nome | Ajuste |'); w('|---|---|---|'); m.params.forEach(([n, v]) => w(`| ${nomeP(n)} | ${MAPA[n].nome} | ${valor(n, v)} |`)); w(); }
+  w(`**O que observar:** ${OBS[m.id]}`);
+  w();
+});
+w('### Fios de cada montagem pronta');
+w();
+w('A aba Bancada e o botão "Montar os fios para mim" usam estas ligações:');
+w();
+for (const k in SIM.MONTAGENS) {
+  const base = SIM.MONTAGENS.forca.fios.length, f = SIM.MONTAGENS[k].fios;
+  w(`- **${SIM.MONTAGENS[k].nome}:** ` + (k === 'forca' ? f : f.slice(base)).map(([a, c]) => `${borne(a)} → ${borne(c)}`).join('; ') + (k === 'forca' ? '.' : ' (mais os fios da força).'));
+}
+w();
+w('## 9. Números para conferir');
+w();
+w('Medidos no próprio simulador, com os parâmetros de fábrica e 30 % no freio de carga, salvo indicação.');
+w();
+w('| Situação | Resultado |');
+w('|---|---|');
+[['Rede ligada, inversor parado', 'P0004 = 311 V; +24 V = 24,0 V; +10 V = 10,0 V'], ['Tecla I em LOCAL', 'Parte e fica em 3,0 Hz (P0133)'], ['30 Hz', '875 rpm, 110 V, 1,9 A'], ['60 Hz', '1776 rpm, 220 V, 2,0 A'],
+  ['60 Hz com 100 % no freio', '1725 rpm, 3,0 A, torque 99 %, 0,90 kW (a placa do motor)'], ['Partida com 100 % no freio e P0136 = 3 %', 'O motor não parte: a corrente vai ao limite de 6,5 A (P0135). Com P0136 = 10 % ele parte e chega a 1725 rpm'],
+  ['Potenciômetro no meio', '4,92 V, P0018 = 49,2 %, 34,0 Hz'], ['Gerador em 12 mA, S1.1 em mA, P0233 = 1', 'P0018 = 50,0 %'], ['Resistência entre U1 e V1 do motor', '6,8 Ω'], ['Potenciômetro solto, bornes 1 e 3', '5,00 kΩ (ligado ao inversor lê 4,94 kΩ: a AI1 fica em paralelo)'],
+  ['Motor com duas fases trocadas', 'Gira ao contrário'], ['Motor com uma fase solta', 'Não parte e a corrente sobe ao limite'], ['Motor direto na rede (sem inversor)', 'Partida direta: 1776 rpm'], ['P0156 a P0158 = 2,0 A com carga nominal', 'F0072 (sobrecarga do motor) depois de alguns segundos'],
+  ['Volante de inércia, P0101 = 1 s, parada a partir de 60 Hz', 'A regulação do link DC estica a rampa para cerca de 5,5 s; Ud chega a 396 V'], ['O mesmo com P0151 = 600 V', 'F0022 (sobretensão no link DC)'], ['Volante de inércia e P0100 = 0,5 s', 'A limitação de corrente segura a rampa: 1,1 s até 60 Hz, pico de 6,4 A']].forEach((l) => w(`| ${l[0]} | ${l[1]} |`));
+w();
+w('![Multímetro medindo a AI1](guia/multimetro.png)');
+w();
+w('## 10. Falhas, alarmes e CONF que a bancada provoca');
+w();
+w('| Código | Nome | Como aparece na bancada |');
+w('|---|---|---|');
+for (const k in FALHAS) w(`| F${String(k).padStart(4, '0')} | ${FALHAS[k][0]} | ${FALHAS[k][1]} |`);
+for (const k in ALARMES) w(`| A${String(k).padStart(4, '0')} | ${ALARMES[k][0]} | ${ALARMES[k][1]} |`);
+w();
+w('Reset de falha: tecla **O**, uma DI programada para Reset (20), desligar e ligar, ou auto-reset (P0340). F0076 vem desabilitada de fábrica (bit 4 de P0343), como no produto.');
+w();
+w('**CONF** aparece quando a programação é incoerente; o motor não parte e P0047 diz o motivo:');
+w();
+w('| P0047 | Motivo |');
+w('|---|---|');
+for (const k in CONFIG) w(`| ${k} | ${CONFIG[k]} |`);
+w();
+w('## 11. Erros de ligação que a bancada acusa');
+w();
+w('![Proteção desarmada por erro de ligação](guia/erro-ligacao.png)');
+w();
+w('| Erro | O que acontece |');
+w('|---|---|');
+w('| Curto entre fases, ou fase com neutro ou terra | A proteção geral desarma e a tela diz entre quais bornes |');
+w('| 220 V em borne de comando, potenciômetro, sinaleiro ou gerador | Desarma e aponta o borne |');
+w('| Rede ligada em U, V ou W | Desarma, avisa e o inversor registra F0070 |');
+w('| Curto entre duas saídas (U com V, por exemplo) | F0070 ao dar a partida |');
+w('| Saída ligada ao PE | F0074 ao dar a partida |');
+w('| Curto no +24 V ou no +10 V | A fonte limita a corrente, a tensão cai e aparece um aviso |');
+w('| Multímetro em Ω ou continuidade com tensão no circuito | O visor mostra Err e a aba Medições explica |');
+w();
+w('Depois de corrigir, gire a chave geral de novo para rearmar.');
+w();
+w('## 12. O que é simulado e o que não é');
+w();
+w(`A lista tem os **${SIM.params.LISTA.length} parâmetros** da referência rápida do manual V3.9X, todos navegáveis e graváveis pela HMI. **${SIM.params.LISTA.filter((p) => !p.guardado).length}** têm efeito na bancada; os demais aparecem com a etiqueta "guardado".`);
+w();
+w('| Simulado | Só guarda o valor |');
+w('|---|---|');
+w('| Comando e referência por HMI, DIs, AI1, multispeed e E.P.; LOCAL/REMOTO; JOG; 2ª rampa; parada por rampa, inércia e parada rápida | Redes (serial, CAN, Profibus, Ethernet, BACnet, Bluetooth) |');
+w('| Rampas, rampa S, limites, frequência evitada, modo dormir | SoftPLC e aplicativo residente (PID interno e externo, bomba seca...) |');
+w('| Curva V/f com boost e compensações; VVW com autoajuste (P0408) | PID (P0203, P0520...) e Fire Mode |');
+w('| Limitação de corrente, regulação do link DC, frenagem CC, Flying Start | Ganhos do controle vetorial, encoder, VVW PM e HSRM |');
+w('| DO1, DO2, AO1 com as funções de fábrica e as de comparação (Fx, Ix, Tx) | AI2, AI3, entrada e saída em frequência, DI5 a DI8, DO3 a DO5 (não existem no plug-in IOS) |');
+w('| F0021, F0022, F0033, F0048, F0070, F0072, F0074, F0076, F0079, F0091; A0046, A0047, A0090, A0163; histórico de falhas; auto-reset | Relógio, HMI remota, função Copy |');
+w();
+w('Pontos em que o comportamento é dedução, e não leitura direta do manual:');
+w();
+w('- **DI 37 e 38** (Liga / Ac. E.P. e De. E.P. / Desl.): 37 liga no pulso e acelera enquanto apertada; 38, com contato NF, desacelera enquanto aberta e desliga ao chegar na mínima.');
+w('- **Zona morta da AI (P0230):** inativa, a referência vai de P0133 a P0134; ativa, vale AI × P0134 e nunca abaixo de P0133.');
+w('- **Saída analógica em corrente (P0253 = 1, 2, 4, 5):** aparece como a tensão equivalente sobre 500 Ω.');
+w('- **Modelo do motor:** conjugado, corrente e escorregamento seguem a placa; não é um modelo de fabricante.');
+w('- **Tempos internos:** inicialização de 1,4 s, autoajuste de 4 s.');
+w();
+w('## 13. Usar fora do HUB');
+w();
+w('1. Copie a pasta do simulador para o PC.');
+w('2. Clique duas vezes em **INSTALAR.bat** (instala o Node.js se faltar e cria o atalho).');
+w('3. Clique duas vezes em **INICIAR_SIMULADOR.bat**: o navegador abre em `http://localhost:3350`. Os alunos da mesma rede abrem `http://IP-DO-PC:3350` (o instalador oferece liberar a porta no firewall) e cada um recebe a sua sessão.');
+w('4. **TESTAR.bat** roda as verificações automáticas; a última linha deve dizer "0 falha(s)".');
+w();
+w('A simulação inteira roda no navegador. O comando `node tools/build-demo.js` gera `dist/bancada-cfw500.html`, um arquivo único que abre com dois cliques; ele precisa de internet só para baixar o three.js.');
+w();
+w('## 14. Problemas comuns');
+w();
+w('| Sintoma | Causa provável | Solução |');
+w('|---|---|---|');
+[['O display não acende', 'Q1 aberto, chave geral desligada ou falta fio entre a rede e R/S/T', 'Confira os seis fios da força e meça 220 V entre R e S'], ['Display com SUB', 'Só 127 V na entrada (uma fase e o neutro)', 'Ligue duas ou três fases'],
+  ['A chave fecha e o motor não gira', 'Inversor em LOCAL', 'Tecla LOC/REM até aparecer REM'], ['Em REM o motor gira só a 3 Hz', 'P0222 = 1 (AI1) sem potenciômetro ligado', 'Ligue o potenciômetro ou use P0222 = 0'],
+  ['A DI não ativa', 'Chave ligada ao +24 V com as DIs em NPN', 'Ligue ao GND (borne 4 ou 16) ou mude P0271'], ['Display com CONF', 'Programação incoerente das DIs ou da referência', 'Veja P0047 na aba Inversor'],
+  ['Parâmetro não aceita o valor', 'É cfg e o motor está girando, ou a senha está ativa', 'Pare o motor; ponha a senha em P0000'], ['Motor gira ao contrário', 'Duas fases trocadas entre U V W e U1 V1 W1', 'Destroque dois fios'],
+  ['O sinaleiro não acende no relé', 'Faltou levar o +24 V ao comum do relé (borne 11)', 'Ligue 9 em 11 e use o 13 (NA)'], ['A bancada desarma ao ligar', 'Curto ou 220 V onde não pode', 'Leia a mensagem vermelha, corrija e gire a chave geral'],
+  ['O multímetro mostra Err', 'Medindo Ω com o circuito energizado', 'Desligue a chave geral'], ['Quero começar do zero', '', 'Aba Bancada: "Repor componentes e fios" ou "Apagar tudo" (só desta sessão); no inversor, P0204 = 5'], ['A bancada abriu em branco', 'A sua sessão está aberta em outra aba, ou esta é uma aba nova com todas em uso', 'Clique em "Sessão", no topo, e escolha a sua em "Abrir aqui"'], ['Apareceu a montagem de outra pessoa', 'Aba nova continuou a última bancada livre deste navegador', 'Clique em "Sessão" e em "Nova sessão em branco nesta aba"']].forEach((l) => w(`| ${l[0]} | ${l[1]} | ${l[2]} |`));
+w();
+fs.writeFileSync(path.join(__dirname, '..', 'GUIA.md'), L.join('\n'));
+console.log('GUIA.md:', L.length, 'linhas');

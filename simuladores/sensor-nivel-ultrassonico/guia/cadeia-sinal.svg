@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 250" font-family="Arial, Helvetica, sans-serif">
+<rect width="1180" height="250" fill="#f8f9f7"/>
+<text x="590.0" y="28" text-anchor="middle" font-size="18" font-weight="700" fill="#13212e">Como o nível vira um número no CLP (exemplo com 1,000 m)</text>
+<rect x="8.0" y="52" width="128" height="150" rx="8" fill="#fff" stroke="#2b7bcc" stroke-width="2"/>
+<rect x="8.0" y="52" width="128" height="34" rx="8" fill="#2b7bcc"/><rect x="8.0" y="72" width="128" height="14" fill="#2b7bcc"/>
+<text x="72.0" y="75" text-anchor="middle" font-size="13.5" font-weight="700" fill="#fff">Tanque TQ-01</text>
+<text x="72.0" y="114" text-anchor="middle" font-size="11" fill="#55677a">nível real</text>
+<text x="72.0" y="160" text-anchor="middle" font-size="23" font-weight="700" fill="#13212e">1,000 m</text>
+<path d="M139.0 127.0 h11 m-6 -6 l6 6 l-6 6" fill="none" stroke="#55677a" stroke-width="2.2"/>
+<rect x="156.0" y="52" width="128" height="150" rx="8" fill="#fff" stroke="#e0650a" stroke-width="2"/>
+<rect x="156.0" y="52" width="128" height="34" rx="8" fill="#e0650a"/><rect x="156.0" y="72" width="128" height="14" fill="#e0650a"/>
+<text x="220.0" y="75" text-anchor="middle" font-size="13.5" font-weight="700" fill="#fff">Sensor mede</text>
+<text x="220.0" y="114" text-anchor="middle" font-size="11" fill="#55677a">distância D</text>
+<text x="220.0" y="160" text-anchor="middle" font-size="23" font-weight="700" fill="#13212e">2,000 m</text>
+<path d="M287.0 127.0 h11 m-6 -6 l6 6 l-6 6" fill="none" stroke="#55677a" stroke-width="2.2"/>
+<rect x="304.0" y="52" width="128" height="150" rx="8" fill="#fff" stroke="#e0650a" stroke-width="2"/>
+<rect x="304.0" y="52" width="128" height="34" rx="8" fill="#e0650a"/><rect x="304.0" y="72" width="128" height="14" fill="#e0650a"/>
+<text x="368.0" y="75" text-anchor="middle" font-size="13.5" font-weight="700" fill="#fff">Calibração</text>
+<text x="368.0" y="114" text-anchor="middle" font-size="11" fill="#55677a">mín. 3,000 · máx. 0,500</text>
+<text x="368.0" y="160" text-anchor="middle" font-size="23" font-weight="700" fill="#13212e">40,0 %</text>
+<path d="M435.0 127.0 h11 m-6 -6 l6 6 l-6 6" fill="none" stroke="#55677a" stroke-width="2.2"/>
+<rect x="452.0" y="52" width="128" height="150" rx="8" fill="#fff" stroke="#0a8794" stroke-width="2"/>
+<rect x="452.0" y="52" width="128" height="34" rx="8" fill="#0a8794"/><rect x="452.0" y="72" width="128" height="14" fill="#0a8794"/>
+<text x="516.0" y="75" text-anchor="middle" font-size="13.5" font-weight="700" fill="#fff">Saída 2 fios</text>
+<text x="516.0" y="114" text-anchor="middle" font-size="11" fill="#55677a">corrente</text>
+<text x="516.0" y="160" text-anchor="middle" font-size="23" font-weight="700" fill="#13212e">10,40 mA</text>
+<path d="M583.0 127.0 h11 m-6 -6 l6 6 l-6 6" fill="none" stroke="#55677a" stroke-width="2.2"/>
+<rect x="600.0" y="52" width="128" height="150" rx="8" fill="#fff" stroke="#0a8794" stroke-width="2"/>
+<rect x="600.0" y="52" width="128" height="34" rx="8" fill="#0a8794"/><rect x="600.0" y="72" width="128" height="14" fill="#0a8794"/>
+<text x="664.0" y="75" text-anchor="middle" font-size="13.5" font-weight="700" fill="#fff">Cartão A/D</text>
+<text x="664.0" y="114" text-anchor="middle" font-size="11" fill="#55677a">15 bits</text>
+<text x="664.0" y="160" text-anchor="middle" font-size="23" font-weight="700" fill="#13212e">13107</text>
+<path d="M731.0 127.0 h11 m-6 -6 l6 6 l-6 6" fill="none" stroke="#55677a" stroke-width="2.2"/>
+<rect x="748.0" y="52" width="128" height="150" rx="8" fill="#fff" stroke="#13212e" stroke-width="2"/>
+<rect x="748.0" y="52" width="128" height="34" rx="8" fill="#13212e"/><rect x="748.0" y="72" width="128" height="14" fill="#13212e"/>
+<text x="812.0" y="75" text-anchor="middle" font-size="13.5" font-weight="700" fill="#fff">CLP</text>
+<text x="812.0" y="114" text-anchor="middle" font-size="11" fill="#55677a">LT01_Bruto · %IW0</text>
+<text x="812.0" y="160" text-anchor="middle" font-size="23" font-weight="700" fill="#13212e">13107</text>
+<path d="M879.0 127.0 h11 m-6 -6 l6 6 l-6 6" fill="none" stroke="#55677a" stroke-width="2.2"/>
+<rect x="896.0" y="52" width="128" height="150" rx="8" fill="#fff" stroke="#13212e" stroke-width="2"/>
+<rect x="896.0" y="52" width="128" height="34" rx="8" fill="#13212e"/><rect x="896.0" y="72" width="128" height="14" fill="#13212e"/>
+<text x="960.0" y="75" text-anchor="middle" font-size="13.5" font-weight="700" fill="#fff">Seu programa</text>
+<text x="960.0" y="114" text-anchor="middle" font-size="11" fill="#55677a">bruto ÷ 32767 × 100</text>
+<text x="960.0" y="160" text-anchor="middle" font-size="23" font-weight="700" fill="#13212e">40,0 %</text>
+<path d="M1027.0 127.0 h11 m-6 -6 l6 6 l-6 6" fill="none" stroke="#55677a" stroke-width="2.2"/>
+<rect x="1044.0" y="52" width="128" height="150" rx="8" fill="#fff" stroke="#13212e" stroke-width="2"/>
+<rect x="1044.0" y="52" width="128" height="34" rx="8" fill="#13212e"/><rect x="1044.0" y="72" width="128" height="14" fill="#13212e"/>
+<text x="1108.0" y="75" text-anchor="middle" font-size="13.5" font-weight="700" fill="#fff">Painel</text>
+<text x="1108.0" y="114" text-anchor="middle" font-size="11" fill="#55677a">Nivel_Pct · %QW0</text>
+<text x="1108.0" y="160" text-anchor="middle" font-size="23" font-weight="700" fill="#13212e">4000</text>
+<text x="368.0" y="230" text-anchor="middle" font-size="12.5" fill="#55677a">o simulador faz esta parte (transmissor e cartão analógico)</text>
+<text x="960.0" y="230" text-anchor="middle" font-size="12.5" fill="#55677a">o aluno faz esta parte no CLP</text>
+<path d="M8.0 214 H728.0" stroke="#0a8794" stroke-width="3"/><path d="M748.0 214 H1172.0" stroke="#13212e" stroke-width="3"/>
+</svg>

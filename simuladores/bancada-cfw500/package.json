@@ -1,0 +1,13 @@
+{
+  "name": "bancada-cfw500",
+  "version": "1.0.2.1",
+  "description": "Bancada CFW500 - bancada didática 3D de ligação do inversor WEG CFW500 (simulador do HUB de simuladores)",
+  "main": "server.js",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "test": "node tools/teste.js",
+    "demo": "node tools/build-demo.js"
+  },
+  "dependencies": {}
+}

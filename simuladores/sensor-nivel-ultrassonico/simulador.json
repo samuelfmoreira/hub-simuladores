@@ -1,0 +1,46 @@
+{
+  "id": "sensor-nivel-ultrassonico",
+  "nome": "Sensor ultrassônico de nível LT-01",
+  "fabricante": "Didático · dados do VEGASON 61",
+  "tipo": "Transmissor de nível 4–20 mA",
+  "versao": "1.1.1.1",
+  "descricao": "Tanque com transmissor ultrassônico de nível: tempo de voo, zona morta, eco falso, temperatura, espuma e perda de eco, em 3D. O CLP recebe o nível como entrada analógica (contagem de 15 bits), faz a escala e os alarmes. O painel com sinaleiros comandados pelo CLP é opcional. Cada aluno entra na sua sessão, com o seu CLP.",
+  "protocolos": [
+    "Modbus TCP"
+  ],
+  "papel": "Cliente Modbus TCP (o CLP é o servidor)",
+  "iniciar": {
+    "comando": "node",
+    "args": [
+      "server.js"
+    ]
+  },
+  "web": {
+    "porta": 3320,
+    "caminho": "/"
+  },
+  "rede": {
+    "precisaIp": false,
+    "portas": []
+  },
+  "variaveis": {},
+  "arquivos": {
+    "guia": "GUIA.md",
+    "eds": [
+      "docs/GVL_SIM.st",
+      "docs/PRG_Modbus_IO.st",
+      "docs/PRG_Nivel.st"
+    ]
+  },
+  "preservarAoAtualizar": [
+    "data/"
+  ],
+  "aprender": [
+    "modbus-tcp",
+    "diagnostico"
+  ],
+  "cor": "#0A8794",
+  "icone": "icone.svg",
+  "ordem": 790,
+  "pacote": "sim-sensor-nivel-ultrassonico"
+}

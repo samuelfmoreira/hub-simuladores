@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<script>/* [HUB] Restaurar original: o HUB abre esta tela com ?hubRestaurar=1 e ela apaga o que guardou neste navegador */
+try { var u = new URL(location.href); if (u.searchParams.has('hubRestaurar')) { localStorage.clear(); sessionStorage.clear(); u.searchParams.delete('hubRestaurar'); history.replaceState(null, '', u.pathname + u.search + u.hash); } } catch (e) { /* sem armazenamento */ }</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sensor ultrassônico de nível LT-01</title>
+<link rel="icon" href="favicon.svg">
+<link rel="stylesheet" href="css/estilo.css">
+<script type="importmap">{ "imports": { "three": "./vendor/three/three.module.min.js", "three/addons/": "./vendor/three/addons/" } }</script>
+</head>
+<body>
+<header class="topo">
+  <div class="marca"><b>Sensor ultrassônico de nível LT-01</b><span>TQ-01 · dados do VEGASON 61 · cliente Modbus TCP<i id="versaoTela"></i></span></div>
+  <button class="chip botao-chip" id="chipSessao" title="Trocar de sessão">Sessão</button>
+  <div class="chip" id="chipSinal">— mA</div>
+  <div class="chip" id="chipEco">—</div>
+  <div class="chip" id="chipRede">Sem CLP</div>
+  <button class="btn" id="btnLado" aria-pressed="false" title="Mostra ou esconde as abas da direita, para a cena ocupar a tela toda">Ocultar painel</button>
+  <button class="btn destaque" id="btnAssistente">Comunicação com o CLP</button>
+</header>
+<div class="faixa-versao" id="faixaVersao" role="alert" hidden></div>
+
+<div class="app">
+  <main class="stage">
+    <section class="view" id="view" aria-label="Cena 3D do tanque com o sensor ultrassônico">
+      <canvas id="gl"></canvas>
+      <div class="labels" id="labels"></div>
+      <div class="tof">
+        <span class="k">Tempo de voo (ida e volta)</span>
+        <span class="v" id="tofLive">0,00 ms</span>
+        <span class="ph tx" id="tofPhase">pulso descendo</span>
+        <div class="row"><small>câmera lenta ≈ 215×</small><button class="btn small" id="btnPause" aria-pressed="false">Pausar pulso</button></div>
+      </div>
+      <div class="inset" id="inset"><span>Detalhe do sensor LT-01</span></div>
+      <div class="keys">
+        <span><i style="background:var(--tx)"></i>pulso emitido</span>
+        <span><i style="background:var(--rx)"></i>eco do líquido</span>
+        <span><i style="background:var(--bad)"></i>zona morta / eco falso</span>
+      </div>
+      <div class="cams" role="group" aria-label="Câmera">
+        <span>Câmera</span>
+        <button class="btn" data-cam="geral" aria-pressed="true">Geral</button>
+        <button class="btn" data-cam="sensor" aria-pressed="false">Sensor</button>
+        <button class="btn" data-cam="feixe" aria-pressed="false">Feixe</button>
+        <button class="btn" data-cam="topo" aria-pressed="false">Topo</button>
+        <button class="btn" data-cam="painel" aria-pressed="false">Painel</button>
+      </div>
+      <div class="nogl">Este navegador não conseguiu abrir a cena 3D (WebGL desligado). A curva de eco, a conta ao vivo e a comunicação com o CLP continuam funcionando.</div>
+    </section>
+
+    <section class="bottom">
+      <article class="card">
+        <div class="head">
+          <h2>Curva de eco</h2>
+          <div class="legend">
+            <span><i></i>eco recebido</span>
+            <span><i class="th"></i>limiar de detecção</span>
+            <span><i class="dz"></i>zona morta</span>
+            <span><i class="sel"></i>eco escolhido</span>
+          </div>
+        </div>
+        <canvas id="echo" role="img" aria-label="Curva de eco: amplitude em função da distância"></canvas>
+      </article>
+
+      <article class="card">
+        <div class="head">
+          <h2>O que o transmissor calcula</h2>
+          <span class="pill ok" id="status">Eco válido</span>
+        </div>
+        <div class="calc">
+          <div class="r"><span class="k">Vel. do som</span><span class="f" id="fC"></span><span class="v" id="vC"></span></div>
+          <div class="r"><span class="k">Tempo de voo</span><span class="f">t, medido pelo sensor</span><span class="v" id="vT"></span></div>
+          <div class="r"><span class="k">Distância</span><span class="f" id="fD"></span><span class="v" id="vD"></span></div>
+          <div class="r big"><span class="k">Nível</span><span class="f" id="fL"></span><span class="v" id="vL"></span></div>
+          <div class="r big"><span class="k">Corrente</span><span class="f" id="fI"></span><span class="v" id="vI"></span></div>
+          <div class="r big"><span class="k">LT01_Bruto</span><span class="f">(I − 4) ÷ 16 × 32767 → %IW0</span><span class="v" id="vR"></span></div>
+        </div>
+        <div class="loop" aria-hidden="true">
+          <div class="track"><div class="fill" id="loopFill"></div><div class="pin" id="loopPin"></div></div>
+          <div class="ticks"><span style="left:2.2%">4 mA</span><span style="left:45.6%">12</span><span style="left:89.1%">20 mA</span></div>
+        </div>
+        <div class="truth"><span>Nível real no tanque: <b id="vReal"></b></span><span class="err ok" id="vErr"></span></div>
+      </article>
+    </section>
+  </main>
+
+  <aside class="side">
+    <nav class="abas" role="tablist">
+      <button data-aba="aula" class="ativa" role="tab">Aula</button>
+      <button data-aba="bancada" role="tab">Bancada</button>
+      <button data-aba="clp" role="tab">CLP</button>
+      <button data-aba="missoes" role="tab">Missões <b id="contMissoes"></b></button>
+    </nav>
+
+    <!-- ===================== AULA ===================== -->
+    <section class="painel card lesson" id="aba-aula">
+      <div class="head"><h2>Aula guiada</h2><span class="sub" id="lsCount"></span></div>
+      <div class="steps" id="steps" role="group" aria-label="Passos da aula"></div>
+      <h3 id="lsTitle"></h3>
+      <div id="lsBody"></div>
+      <div class="nav">
+        <button class="btn primary" id="lsRun"></button>
+        <span><button class="btn small" id="lsPrev">Anterior</button> <button class="btn small" id="lsNext">Próximo</button></span>
+      </div>
+    </section>
+
+    <!-- ===================== BANCADA ===================== -->
+    <section class="painel card" id="aba-bancada" hidden>
+      <div class="head"><h2>Bancada</h2><button class="btn small" id="btnReset">Restaurar tudo</button></div>
+      <details class="sec" id="sec-processo" open>
+        <summary class="grp">Processo</summary>
+      <div class="ctl">
+        <label for="inLevel">Nível real no tanque</label><output id="outLevel"></output>
+        <input type="range" id="inLevel" min="0" max="2.95" step="0.01" value="1">
+      </div>
+      <div class="seg" role="group" aria-label="Movimentar o nível">
+        <button class="btn small" id="btnDrain" aria-pressed="false">Esvaziar</button>
+        <button class="btn small" id="btnStop" aria-pressed="true">Parado</button>
+        <button class="btn small" id="btnFill" aria-pressed="false">Encher</button>
+      </div>
+      <div class="ctl">
+        <label for="inTemp">Temperatura do ar no tanque</label><output id="outTemp"></output>
+        <input type="range" id="inTemp" min="-20" max="80" step="1" value="20">
+      </div>
+      <div class="ctl">
+        <label for="inFoam">Espuma na superfície</label><output id="outFoam"></output>
+        <input type="range" id="inFoam" min="0" max="100" step="1" value="0">
+      </div>
+      <label class="sw"><input type="checkbox" id="inObs"><span>Obstáculo dentro do feixe<small>Um tubo a 1,20 m do sensor, como uma serpentina ou travessa</small></span></label>
+      <label class="sw"><input type="checkbox" id="inCabo"><span>Romper o cabo do laço 4–20 mA<small>Dois fios: sem o laço o transmissor apaga e o CLP lê 0 mA</small></span></label>
+      </details>
+      <details class="sec" id="sec-param" open>
+        <summary class="grp">Parâmetros do transmissor</summary>
+      <div class="par2">
+        <label for="inCalMin">Calibração mín. (0 % → 4 mA)</label><span><input type="number" id="inCalMin" min="0.25" max="5" step="0.001" value="3"> m</span>
+        <label for="inCalMax">Calibração máx. (100 % → 20 mA)</label><span><input type="number" id="inCalMax" min="0.25" max="5" step="0.001" value="0.5"> m</span>
+      </div>
+      <p class="mini">As duas calibrações são distâncias medidas a partir da borda inferior do transdutor.</p>
+      <label class="sw"><input type="checkbox" id="inMap"><span>Supressão de sinal falso<small>Grava os ecos fixos do tanque e passa a ignorá-los</small></span></label>
+      <div class="ctl">
+        <label for="inDamp">Atenuação (damping)</label><output id="outDamp"></output>
+        <input type="range" id="inDamp" min="0" max="10" step="1" value="0">
+      </div>
+      <div class="ctl">
+        <label for="inFail">Modo de falha da corrente</label>
+        <select id="inFail"></select>
+      </div>
+      <label class="sw"><input type="checkbox" id="inComp" checked><span>Correção de temperatura<small>No aparelho real ela é fixa (sensor de temperatura no transdutor). Desligue aqui só para ver o erro que ela evita.</small></span></label>
+      </details>
+      <details class="sec" id="sec-ficha">
+        <summary class="grp">Ficha técnica usada (VEGASON 61)</summary>
+      <dl class="spec">
+        <dt>Faixa de medição</dt><dd>até 5 m em líquidos, 2 m em sólidos</dd>
+        <dt>Zona morta</dt><dd>0,25 m</dd>
+        <dt>Frequência</dt><dd>70 kHz (λ ≈ 4,9 mm no ar)</dd>
+        <dt>Ângulo do feixe</dt><dd>11° a −3 dB</dd>
+        <dt>Desvio</dt><dd>±4 mm ou &lt; 0,2 %</dd>
+        <dt>Intervalo de medição</dt><dd>&gt; 2 s</dd>
+        <dt>Saída</dt><dd>4…20 mA/HART, 2 fios, 14…36 V CC</dd>
+        <dt>Processo</dt><dd>−40…+80 °C, −0,2…+2 bar</dd>
+        <dt>Transdutor</dt><dd>PVDF, Ø 39 mm, rosca G1½</dd>
+      </dl>
+      <p class="note">Simulador didático independente, sem vínculo com o fabricante. Os números da ficha e as dimensões do sensor em 3D vêm da folha de especificação e do manual de operação do VEGASON 61 (documentos 34584 e 28775); o acabamento do sensor é genérico. A seleção de eco, as amplitudes da curva e o tempo até a falha são um modelo simplificado para a aula.</p>
+      </details>
+    </section>
+
+    <!-- ===================== CLP ===================== -->
+    <section class="painel card" id="aba-clp" hidden>
+      <div class="head"><h2>Conexão com o CLP</h2><span class="pill warn" id="pillRede">Sem CLP</span></div>
+      <p class="mini">O simulador é o <b>cliente</b> Modbus TCP e o CLP é o <b>servidor</b>. Digite o IP do <b>seu</b> CLP: cada sessão conversa com um CLP diferente.</p>
+      <div class="conn">
+        <label for="inHost">IP do CLP</label><input type="text" id="inHost" value="192.168.100.10" inputmode="decimal" autocomplete="off">
+        <label for="inPort">Porta</label><input type="number" id="inPort" value="502" min="1" max="65535">
+        <label for="inUnit">Unit ID</label><input type="number" id="inUnit" value="1" min="0" max="255">
+      </div>
+      <div class="linha">
+        <button class="btn primary" id="btnConectar">Conectar</button>
+        <button class="btn" id="btnDesconectar">Desconectar</button>
+        <button class="btn" id="btnDemo" title="Um CLP interno, só neste simulador, rodando o programa de referência">Ligar CLP de demonstração</button>
+      </div>
+      <div class="tarja cinza" id="tarjaRede" role="status" aria-live="polite"><span><b id="tarjaT">Sem CLP</b><small id="tarjaD">Digite o IP do seu CLP e clique em Conectar.</small></span></div>
+      <label class="sw"><input type="checkbox" id="inRetorno"><span>Sinaleiros no painel (retorno do CLP)<small>Ligado: o painel 3D ganha os cinco sinaleiros e a IHM mostra o nível calculado pelo seu CLP. Desligado: o simulador só envia o LT01_Bruto, a IHM mostra o valor enviado e você trata os alarmes lá no CLP.</small></span></label>
+      <details class="sec" id="sec-tags" open>
+        <summary class="grp">Variáveis trocadas</summary>
+      <div class="tw"><table class="tags" id="tabTags"></table></div>
+      <div class="linha"><button class="btn small" id="btnCopiarTags">Copiar tabela</button><span class="mini" id="msgCopia"></span></div>
+      </details>
+      <details class="sec" id="sec-fila">
+        <summary class="grp">Fila e varredura</summary>
+      <dl class="spec nums" id="filaStats"></dl>
+      <p class="mini">Uma requisição de cada vez, com 10 ms entre frames. Escrita só quando o valor muda mais que 8 contagens; a cada 1 s o valor é reenviado. Leitura só com o retorno do CLP ligado.</p>
+      </details>
+      <details class="sec" id="sec-msgs">
+        <summary class="grp">Mensagens</summary>
+      <ul class="msgs" id="msgs"></ul>
+      </details>
+    </section>
+
+    <!-- ===================== MISSÕES ===================== -->
+    <section class="painel card" id="aba-missoes" hidden>
+      <div class="head"><h2>Missões</h2><button class="btn small" id="btnZerarMissoes">Zerar</button></div>
+      <p class="mini" id="notaMissoes">Programe no seu CLP e cumpra cada item. Com o CLP de demonstração elas acendem para você ver como é, mas não ficam gravadas.</p>
+      <ol class="missoes" id="listaMissoes"></ol>
+    </section>
+  </aside>
+</div>
+
+<!-- sessão -->
+<div class="veu" id="dlgSessao" hidden>
+  <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dlgSessaoT">
+    <h2 id="dlgSessaoT">Sua sessão</h2>
+    <p>Cada aluno trabalha na sua sessão: um tanque, um transmissor e uma conexão com o seu próprio CLP. O que você fizer aqui não muda a tela dos colegas.</p>
+    <form id="formSessao" class="linha">
+      <input type="text" id="inNome" maxlength="28" placeholder="Seu nome ou bancada" autocomplete="off">
+      <button class="btn primary" type="submit">Criar e entrar</button>
+    </form>
+    <p class="aviso" id="msgSessao" hidden></p>
+    <div id="blocoSessoes" hidden>
+      <div class="grp">Ou continue numa sessão que já existe</div>
+      <ul class="lista-sessoes" id="listaSessoes"></ul>
+    </div>
+    <p class="mini" id="enderecos"></p>
+    <div class="linha fim"><button class="btn small" id="btnFecharSessao" hidden>Voltar</button></div>
+  </div>
+</div>
+
+<!-- assistente -->
+<div class="veu" id="dlgAssist" hidden>
+  <div class="dlg largo" role="dialog" aria-modal="true" aria-labelledby="asT">
+    <div class="head"><h2 id="asT">Comunicação com o CLP</h2><button class="btn small" id="asFechar">Fechar</button></div>
+    <div class="trilha" id="asTrilha"></div>
+    <div class="as-corpo" id="asCorpo"></div>
+    <div class="nav"><button class="btn small" id="asVoltar">Voltar</button><button class="btn primary" id="asAvancar">Avançar</button></div>
+  </div>
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
