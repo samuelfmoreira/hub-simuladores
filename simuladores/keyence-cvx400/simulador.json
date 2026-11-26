@@ -1,8 +1,8 @@
 {
   "id": "keyence-cvx400",
-  "nome": "Visão Keyence CV-X400",
+  "nome": "Sistema de visão Keyence CV-X400",
   "fabricante": "Keyence",
-  "tipo": "Sistema de visão",
+  "tipo": "Controlador e câmeras",
   "descricao": "Câmera CV-X lendo etiqueta com 6 QR codes ou medindo disco com furos. Várias câmeras independentes, cada uma no seu IP.",
   "protocolos": [
     "EtherNet/IP"
@@ -55,6 +55,6 @@
   ],
   "cor": "#D08A1E",
   "icone": "visao",
-  "versao": "1.0.1",
+  "versao": "1.0.2",
   "pacote": "simulador-visao-keyence"
 }

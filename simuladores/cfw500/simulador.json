@@ -1,6 +1,6 @@
 {
   "id": "cfw500",
-  "nome": "Inversor WEG CFW500",
+  "nome": "CFW500 em rede EtherNet/IP",
   "fabricante": "WEG",
   "tipo": "Inversor de frequência",
   "descricao": "CFW500 com módulo CFW500-CETH-IP acionando uma esteira 3D com carga, sensores e proteções. HMI, parâmetros, falhas e CLP virtual.",
@@ -74,6 +74,6 @@
   ],
   "cor": "#2C6CB0",
   "icone": "icone.png",
-  "versao": "1.0.15",
+  "versao": "1.0.16",
   "pacote": "cfw500-ethernetip-sim"
 }

@@ -1,4 +1,4 @@
-# CFW500: IHM Modbus + CODESYS + EtherNet/IP
+# CFW500 em rede EtherNet/IP: IHM Modbus + CODESYS
 
 Tutorial completo · Samuel Felipe Moreira
 

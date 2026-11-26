@@ -5,7 +5,7 @@
 <script>/* [HUB] Restaurar original: o HUB abre esta tela com ?hubRestaurar=1 e ela apaga o que guardou neste navegador */
 try { var u = new URL(location.href); if (u.searchParams.has('hubRestaurar')) { localStorage.clear(); sessionStorage.clear(); u.searchParams.delete('hubRestaurar'); history.replaceState(null, '', u.pathname + u.search + u.hash); } } catch (e) { /* sem armazenamento */ }</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Simulador CFW500 EtherNet/IP</title>
+<title>CFW500 em rede EtherNet/IP</title>
 <link rel="icon" href="data:,">
 <link rel="stylesheet" href="css/app.css">
 <script type="importmap">
@@ -18,8 +18,8 @@ try { var u = new URL(location.href); if (u.searchParams.has('hubRestaurar')) { 
 <body>
 <header class="topo">
   <div class="marca">
-    <span class="modelo">CFW500</span>
-    <span class="sub">Simulador do inversor WEG · Adapter EtherNet/IP · Esteira 3D</span>
+    <span class="modelo">CFW500 em rede EtherNet/IP</span>
+    <span class="sub">Inversor WEG · IHM Modbus · Esteira 3D</span>
   </div>
   <div class="topo-status" id="topoStatus">
     <span class="chip" id="chipP0801" title="P0801 – Estado da comunicação Ethernet">P0801 —</span>

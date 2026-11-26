@@ -5,14 +5,14 @@
   <script>/* [HUB] Restaurar original: o HUB abre esta tela com ?hubRestaurar=1 e ela apaga o que guardou neste navegador */
 try { var u = new URL(location.href); if (u.searchParams.has('hubRestaurar')) { localStorage.clear(); sessionStorage.clear(); u.searchParams.delete('hubRestaurar'); history.replaceState(null, '', u.pathname + u.search + u.hash); } } catch (e) { /* sem armazenamento */ }</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Simulador CV-X400</title>
+  <title>Sistema de visão Keyence CV-X400</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
   <!-- ================= BARRA DO SIMULADOR (fora da tela do equipamento) ================= -->
   <div class="sim-barra">
-    <span class="sim-titulo">Simulador CV-X400</span>
+    <span class="sim-titulo">Sistema de visão Keyence CV-X400</span>
     <div class="sim-sessoes" id="listaSessoes" role="tablist" aria-label="Câmeras simuladas"></div>
     <button type="button" class="sim-btn sim-btn-mais" id="btnNovaCamera" title="Adicionar câmera">+ Câmera</button>
     <div class="sim-eip" id="statusEip" data-estado="aguardando" role="status" aria-live="polite">

@@ -1,4 +1,4 @@
-# Simulador do Sistema de Visão Keyence CV-X400 (adapter EtherNet/IP)
+# Sistema de visão Keyence CV-X400 (adapter EtherNet/IP)
 
 Simula a câmera lendo a etiqueta (1 QR maior + 5 QR menores) e entrega os dados
 ao CLP XP325 por EtherNet/IP, como o CV-X real. O CLP enxerga o PC como se fosse
