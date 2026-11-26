@@ -2,6 +2,30 @@
 
 As notas de cada versão aparecem no HUB quando a atualização é oferecida. Escreva a seção da versão nova antes do push.
 
+## 1.17.4
+- Bancada didática WEG CFW500 atualizada para a 1.3.1 (1.3.1.1 no HUB). A tela passa a usar a porta 3051 (antes 3350), sem conflito com nenhum outro simulador; o mapa de portas do CONTRATO.md foi atualizado. Ajuste do HUB mantido: o topo e a aba do navegador mostram "Bancada didática WEG CFW500".
+
+## 1.17.3
+- Bancada didática WEG CFW500 atualizada para a 1.2.0 (1.2.0.1 no HUB): osciloscópio na aba Medições, contatora na bancada, missões novas e guia com imagens novas. O painel lateral agora se oculta pelo botão « da própria bancada (e volta pelo » Painel); o botão "Ocultar painel" que o HUB tinha posto no topo saiu, para não haver dois botões fazendo o mesmo. Ajuste do HUB mantido: o topo e a aba do navegador mostram "Bancada didática WEG CFW500".
+
+## 1.17.2
+- Sistema de Incêndio (2.0.3.4): o nome passa a ser só "Sistema de Incêndio", sem "Simulador", no topo da tela, na aba do navegador, nos guias, no diagrama elétrico, nas janelas e no atalho da área de trabalho.
+
+## 1.17.1
+- Modbus TCP sempre na porta 502. Os CLPs de teste e demonstração internos voltam para a 502, cada um num endereço só deste PC, para não disputarem a 502 entre si nem com o CODESYS (192.168.100.10): estação de bombeamento 127.0.0.50, IHM do SCA06 127.0.0.60, Sistema de Incêndio 127.0.0.70, .71… (um por sessão) e sensor VEGA 127.0.0.80, .81… (um por sessão). A tela de cada um mostra e preenche o endereço certo. Se o Windows recusar o endereço, o CLP de teste volta para 127.0.0.1 numa porta alternativa e avisa.
+
+## 1.17.0
+- Estação de bombeamento abre na primeira tentativa: a biblioteca OPC UA (milhares de arquivos) só é carregada quando o OPC UA é usado. Antes, ela era lida sempre ao iniciar, e no Windows, na primeira vez, o antivírus conferia cada arquivo e a tela demorava a responder.
+- HUB: espera até 90 s a tela do simulador responder (antes 25 s) e avisa depois de 8 s que a primeira vez pode demorar; a tela abre sozinha quando fica pronta, sem precisar de uma segunda tentativa.
+- Portas sem conflito (mapa completo no CONTRATO.md): SCA06 passa para a 3060 e o Sistema de Incêndio para a 3070 (os dois dividiam a 3000 com o Processo 3D); o TBEN-L usa a 8081 também fora do HUB (antes 8080, a do CFW500). Os servidores internos de teste não ocupam mais as portas do CODESYS: o CLP da IHM do SCA06 vai para 5502–5510, o CLP virtual do Sistema de Incêndio para 5030–5099 no HUB, o XP325 de demonstração da estação para 4841–4850, e o CLP de demonstração do sensor VEGA para 1520–1579 (a 1502 é da estação).
+- Ao adicionar um simulador cuja porta de tela já é de outro, o HUB avisa.
+
+## 1.16.2
+- Bancada didática WEG CFW500 (1.0.2.3): botão "Ocultar painel" no topo da tela. As abas somem e a bancada 3D ocupa a tela toda (também em tela estreita, como tablet); "Mostrar painel" traz as abas de volta, e a tela lembra a escolha. O título do topo passa a mostrar o nome novo.
+
+## 1.16.1
+- Nomes dos cartões: "Bancada didática WEG CFW500" e "Sensor ultrassônico VEGA" (sem o LT-01, que continua como a tag do transmissor no processo). O fabricante do sensor passa a ser "Didático · VEGASON 61", numa linha só.
+
 ## 1.16.0
 - Novo: **Bancada didática CFW500** (1.0.2.1). Bancada 3D para ligar e parametrizar o inversor WEG CFW500 como na prática: arrastar componentes, passar os fios borne a borne, medir com o multímetro e operar pela HMI. Partida por entrada digital (2 e 3 fios), sentido de giro, potenciômetro e 4–20 mA na AI1, multispeed, saídas a relé e a transistor, rampas, falhas e link DC. Não usa CLP nem rede; cada aluno tem a sua sessão.
 - Novo: **Sensor ultrassônico de nível LT-01** (1.1.1.1), com dados do VEGASON 61. Tanque com transmissor ultrassônico em 3D (tempo de voo, zona morta, eco falso, temperatura, espuma, perda de eco); o CLP recebe o nível como entrada analógica de 15 bits por Modbus TCP e faz a escala e os alarmes. CLP de demonstração interno em 127.0.0.1. Ajuste do HUB: o IP padrão do CLP passa a ser 192.168.100.10 (o CODESYS na rede virtual).

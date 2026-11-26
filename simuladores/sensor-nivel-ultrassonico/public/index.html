@@ -5,14 +5,14 @@
 <script>/* [HUB] Restaurar original: o HUB abre esta tela com ?hubRestaurar=1 e ela apaga o que guardou neste navegador */
 try { var u = new URL(location.href); if (u.searchParams.has('hubRestaurar')) { localStorage.clear(); sessionStorage.clear(); u.searchParams.delete('hubRestaurar'); history.replaceState(null, '', u.pathname + u.search + u.hash); } } catch (e) { /* sem armazenamento */ }</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sensor ultrassônico de nível LT-01</title>
+<title>Sensor ultrassônico VEGA</title>
 <link rel="icon" href="favicon.svg">
 <link rel="stylesheet" href="css/estilo.css">
 <script type="importmap">{ "imports": { "three": "./vendor/three/three.module.min.js", "three/addons/": "./vendor/three/addons/" } }</script>
 </head>
 <body>
 <header class="topo">
-  <div class="marca"><b>Sensor ultrassônico de nível LT-01</b><span>TQ-01 · dados do VEGASON 61 · cliente Modbus TCP<i id="versaoTela"></i></span></div>
+  <div class="marca"><b>Sensor ultrassônico VEGA</b><span>TQ-01 · dados do VEGASON 61 · cliente Modbus TCP<i id="versaoTela"></i></span></div>
   <button class="chip botao-chip" id="chipSessao" title="Trocar de sessão">Sessão</button>
   <div class="chip" id="chipSinal">— mA</div>
   <div class="chip" id="chipEco">—</div>

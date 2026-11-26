@@ -1,4 +1,4 @@
-# Simulador Sistema de Incêndio + Soft SSW-05: guia passo a passo
+# Sistema de Incêndio + Soft SSW-05: guia passo a passo
 
 O simulador (exercício **SP02**) representa a **casa de bombas de um sistema de prevenção e combate a incêndio**: o sistema mantém a rede de hidrantes sempre pressurizada e parte as bombas sozinho quando um hidrante é aberto. No simulador estão a **bomba jockey** (repõe pequenas perdas), a **bomba principal** e a **reserva**, duas **soft-starters WEG SSW-05 Plus**, os **pressostatos KP** (PJ e PB), o painel de operação, o quadro elétrico e a casa de bombas em 3D. O **CLP** roda o programa do sistema e conversa com o simulador por **Modbus TCP**.
 
@@ -21,11 +21,11 @@ Esta parte explica o que muda quando o simulador roda dentro do HUB. Depois dela
 | **CODESYS Control Win** com o nó Ethernet na placa **SIM-HUB** (como nos outros simuladores do HUB) | **192.168.100.10** | 502 |
 | CODESYS Control Win com o nó Ethernet em outra placa do PC | o IP dessa placa | 502 |
 | **Altus XP325** da bancada (ou S7-1200) | o IP do CLP na rede física (ex.: 192.168.0.1) | 502 |
-| **CLP virtual de teste** do próprio simulador (Passo 6) | **127.0.0.1** | 502 |
+| **CLP virtual de teste** do próprio simulador (Passo 6) | **127.0.0.1** | **127.0.0.70** (uma por sessão: .71, .72…) | 502 |
 
 No CODESYS, o servidor Modbus escuta na placa escolhida no nó **Ethernet** (Passo 4A.1). Por isso, com a SIM-HUB, o IP certo é 192.168.100.10, e não 127.0.0.1. O mesmo projeto pode conversar ao mesmo tempo com este simulador (Modbus TCP) e com o CFW500 ou o SCA06 (EtherNet/IP).
 
-**CLP virtual de teste dentro do HUB:** cada sessão tem o seu, e ele escuta **só neste PC** (127.0.0.1), para não disputar a porta 502 com os outros equipamentos da rede virtual. Se a 502 estiver ocupada (CODESYS, outro programa ou o CLP virtual de outra sessão), o simulador escolhe sozinho a próxima porta livre e preenche IP e porta na conexão.
+**CLP virtual de teste dentro do HUB:** cada sessão tem o seu, e ele escuta **só neste PC**, sempre na porta **502** do Modbus, num endereço próprio: **127.0.0.70** para a primeira sessão, **127.0.0.71** para a segunda, e assim por diante. Assim ele não disputa a 502 com o CODESYS (192.168.100.10) nem com os outros simuladores, e preenche sozinho o IP e a porta na conexão.
 
 ---
 
@@ -72,7 +72,7 @@ O `.exe` não instala nada: ele já leva tudo dentro. Basta copiar e abrir.
     2. Clique em **Permitir acesso**.
     3. Isso só é necessário se outros PCs forem abrir o simulador pelo navegador. Para usar só neste PC, pode clicar em Cancelar.
 6. O navegador abre sozinho em `http://localhost:3001`. Se não abrir, abra o Chrome ou o Edge e digite esse endereço.
-7. Na área de trabalho aparece o atalho **Simulador Sistema de Incêndio**. Das próximas vezes, abra por ele.
+7. Na área de trabalho aparece o atalho **Sistema de Incêndio**. Das próximas vezes, abra por ele.
 
 **Para fechar:** feche a janela preta. Tudo o que você configurou (IP, parâmetros das soft-starters, pressostatos, sessões) fica salvo automaticamente em `%LOCALAPPDATA%\SimuladorSP02`.
 
@@ -451,7 +451,7 @@ Marque **Mostrar frames TX/RX** embaixo do Diagnóstico. Cada mensagem aparece e
 O simulador traz um CLP de teste embutido, com uma lógica de referência simplificada da SP02. Use para conhecer o simulador, demonstrar em aula ou descobrir se um problema está no simulador ou no CLP.
 
 1. Se estiver conectado, clique em **Desconectar**.
-2. No campo **Porta**, deixe `502`. Se a porta estiver ocupada (CODESYS Control Win, outro simulador ou o CLP virtual de outra sessão), o simulador escolhe sozinho a próxima livre: 5020, 5021…
+2. No campo **Porta**, deixe `502`. Se a porta estiver ocupada (CODESYS Control Win, outro simulador ou o CLP virtual de outra sessão), o simulador escolhe sozinho a próxima livre: 5020, 5021… (no HUB, ele fica na 502, num endereço próprio, como 127.0.0.70)
 3. Clique em **Ligar CLP virtual de teste**, logo abaixo dos botões de conexão.
 4. Aparece a mensagem *CLP virtual desta sessão ligado em 127.0.0.1:502* (ou a porta escolhida) e o IP e a porta são preenchidos sozinhos.
 5. Clique em **Conectar**. O selo fica verde.

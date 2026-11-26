@@ -132,7 +132,57 @@ function prep(id) { const m = missao(id), b = nova(m.montagem); liga(b); (m.para
   ok(b.inv.falhaCod === 91, '  emergência apertada: F0091'); b.acao('S0', { ap: false }); b.avanca(0.1); tecla(b, 'o'); ok(roda(b, m, mem, 0.2), 'missão falha externa');
   ({ m, b, mem } = prep('corrente')); b.acao('A1', { s1: true }); b.acao('G1', { modo: 'mA', valor: 12 }); roda(b, m, mem, 0.5); ok(perto(b.inv.P[18], 50, 0.5), '  12 mA = 50 %', b.inv.P[18]);
   b.fios = b.fios.filter((f) => f.a !== 'G1.P'); b.sujo = true; ok(roda(b, m, mem, 0.5), 'missão 4-20 mA (A0163 com o laço aberto)', 'alarme ' + b.inv.alarme);
+  ({ m, b, mem } = prep('osciloscopio')); b.acao('P2', { a1: 'A1.U', b1: 'M1.V1' }); tecla(b, 'i'); b.inv.P[121] = 30; roda(b, m, mem, 7); ok(!!mem.a && !mem.b, '  osciloscópio entre U e V: vê o PWM'); b.acao('P2', { filtro: true }); ok(roda(b, m, mem, 0.3), 'missão osciloscópio');
   ({ m, b, mem } = prep('link_dc')); b.motor.volante = true; P(b, 121, 60); P(b, 100, 3); tecla(b, 'i'); roda(b, m, mem, 8); tecla(b, 'o'); ok(roda(b, m, mem, 12), 'missão link DC');
+}
+// ------------------------------------------------------------------ osciloscópio
+{
+  const b = nova('forca'); liga(b); ok(!!b.porTipo('osc'), 'a bancada tem o osciloscópio');
+  let c = b.canal('X1.L1', 'X1.L2', 0.05, 300, false); ok(c.tipo === 'rede' && c.freq === 60 && perto(c.rms, 220, 0.5) && perto(c.vpp, 622, 3), 'rede entre L1 e L2: senoide de 60 Hz, 220 V eficazes, 622 V pico a pico', `${c.rms.toFixed(1)} V ${c.vpp.toFixed(0)} Vpp`);
+  c = b.canal('X1.L1', 'X1.N', 0.05, 300, false); ok(perto(c.rms, 127, 0.5), 'fase-neutro: 127 V eficazes', c.rms.toFixed(1));
+  c = b.canal('A1.c9', 'A1.c4', 0.05, 300, false); ok(c.tipo === 'cc' && perto(c.media, 24, 0.2) && c.vpp < 0.01, '+24 V: linha reta em 24 V', c.media.toFixed(2));
+  c = b.canal('A1.U', 'A1.V', 0.05, 300, false); ok(c.tipo === 'cc' && c.vpp === 0, 'inversor parado: saída em zero');
+  tecla(b, 'i'); b.inv.P[121] = 30; b.avanca(7);
+  c = b.canal('A1.U', 'A1.V', 0.1, 300, false); const ud = b.inv.ud;
+  ok(c.tipo === 'pwm' && perto(c.freq, 30, 0.1) && perto(c.vpp, 2 * ud, 1), 'saída U-V a 30 Hz: pulsos PWM entre +Ud e -Ud', `${c.vpp.toFixed(0)} Vpp, Ud ${ud.toFixed(0)} V`);
+  const niveis = new Set(); for (let k = 0; k < 4000; k++) niveis.add(Math.round(b.potencial('A1.U', k * 1.37e-5, false) - b.potencial('A1.V', k * 1.37e-5, false)));
+  ok(niveis.size === 3 && niveis.has(0), 'o PWM entre fases só tem três níveis: +Ud, 0 e -Ud', [...niveis].join(' / '));
+  const f = b.canal('A1.U', 'A1.V', 0.1, 300, true);
+  ok(f.tipo === 'fundamental' && perto(f.rms, b.inv.P[7], 1.5) && perto(f.vpp, b.inv.P[7] * 2 * Math.SQRT2, 5), 'com o filtro: senoide com o mesmo valor de P0007', `${f.rms.toFixed(1)} V x P0007 ${b.inv.P[7]} V`);
+  ok(c.rms > f.rms * 1.25, 'o eficaz do PWM é bem maior que o da fundamental (o que um multímetro comum erra)', `${c.rms.toFixed(0)} V x ${f.rms.toFixed(0)} V`);
+  const m1 = b.canal('M1.U1', 'M1.V1', 0.1, 300, true); ok(perto(m1.rms, f.rms, 0.5), 'nos bornes do motor chega a mesma onda', m1.rms.toFixed(1));
+  const t = 1 / 30 / 4, u = b.potencial('A1.U', t, true), v = b.potencial('A1.V', t, true), w = b.potencial('A1.W', t, true); ok(Math.abs(u + v + w) < 0.5 && u > v && u > w, 'três fases defasadas de 120° (soma zero)', `${u.toFixed(0)} ${v.toFixed(0)} ${w.toFixed(0)}`);
+  const s2 = JSON.parse(JSON.stringify(b.salvar())); s2.comps = s2.comps.filter((x) => x.tipo !== 'osc'); ok(!!new SIM.Bancada({ salvo: s2 }).porTipo('osc'), 'bancada gravada antes do osciloscópio ganha o instrumento ao abrir');
+}
+// ------------------------------------------------------------------ contatora, fonte, sinaleiro 220 V, componentes extras
+{
+  const b = nova(); const r = b.montagem('contatora'); ok(r.novos === 2 && !!b.comp('KM1') && !!b.comp('U1'), 'montagem com contatora recoloca KM1 e U1 no painel', JSON.stringify(r));
+  ok(!b.ocupado('cont', b.comp('KM1').x, b.comp('KM1').y, 'KM1') && !b.ocupado('fonte', b.comp('U1').x, b.comp('U1').y, 'U1'), 'KM1 e U1 em lugares livres', `${b.comp('KM1').x},${b.comp('KM1').y} / ${b.comp('U1').x},${b.comp('U1').y}`);
+  liga(b); ok(b.comp('U1').st.on && perto(b.vcc('U1.P') - b.vcc('U1.M'), 24, 0.2), 'fonte U1 ligada em fase-neutro: 24 V na saída');
+  ok(!b.comp('KM1').st.fechado && b.comp('H2').st.aceso && !b.comp('H1').st.aceso, 'em repouso: KM1 aberta, sinaleiro vermelho pelo NF aceso');
+  b.acao('S1', { ap: true }); b.avanca(0.1); b.acao('S1', { ap: false }); b.avanca(3);
+  ok(b.comp('KM1').st.fechado && b.motor.rpm > 1700 && b.comp('H1').st.aceso && !b.comp('H2').st.aceso, 'pulso em S1: KM1 fecha, fica selada e o motor parte direto da rede', b.motor.rpm.toFixed(0));
+  b.acao('S2', { ap: true }); b.avanca(0.1); b.acao('S2', { ap: false }); b.avanca(0.2); ok(!b.comp('KM1').st.fechado, 'pulso em S2: KM1 abre');
+  b.avanca(6); ok(Math.abs(b.motor.rpm) < 50, 'o motor para por inércia');
+  const c = nova('forca'); const k1 = c.add('cont'), k2 = c.add('cont'); ok(!!k1 && !!k2 && k1.id === 'KM1' && k2.id === 'KM2', 'acrescentar duas contatoras', `${k1 && k1.id} ${k2 && k2.id}`);
+  [['A1.c9', k1.id + '.A1'], [k1.id + '.A2', 'A1.c16']].forEach(([x, y]) => c.addFio(x, y)); liga(c);
+  ok(c.comp(k1.id).st.fechado, 'uma bobina no +24 V do inversor (~105 mA): fecha');
+  [['A1.c9', k2.id + '.A1'], [k2.id + '.A2', 'A1.c16']].forEach(([x, y]) => c.addFio(x, y)); c.avanca(0.2);
+  ok(c.comp(k1.id).st.fechado && !c.comp(k2.id).st.fechado && c.avisos.length > 0, 'duas bobinas passam dos 150 mA do inversor: a tensão cai, a segunda não fecha (a primeira se mantém, como na prática)', `${(c.vcc('A1.c9') - c.vcc('A1.c4')).toFixed(1)} V · ${c.avisos[0]}`);
+  const d = nova('forca'); d.add('lamp', undefined, undefined, 'verde'); const h = d.comps[d.comps.length - 1]; d.addFio('X1.L1', h.id + '.X1'); d.addFio('X1.N', h.id + '.X2'); liga(d); ok(!h.st.aceso && h.st.brilho > 0.3 && h.st.brilho < 0.6, 'sinaleiro 220 Vca em 127 V (fase-neutro): acende fraco', h.st.brilho.toFixed(2));
+  d.removerFio(d.fios[d.fios.length - 1].id); d.addFio('X1.L2', h.id + '.X2'); d.avanca(0.05); ok(h.st.aceso, 'sinaleiro 220 Vca entre duas fases: aceso');
+  let n = 0; const e = nova(); while (e.add('sinal', undefined, undefined, 'azul')) n++; ok(n > 15 && e.motivo === 'cheio', 'dá para encher o painel de sinaleiros até não caber mais', n + ' sinaleiros');
+  ok(e.remover('S3') && !e.comp('S3') && !e.remover('A1'), 'remover componente (o inversor não sai)');
+  const n1 = n; e.tamanhoPainel('grande'); let n2 = 0; while (e.add('sinal', undefined, undefined, 'azul')) n2++; ok(n2 > 12, 'painel Grande: cabem mais componentes', `+${n2} sinaleiros`);
+  e.tamanhoPainel('extra'); let n3 = 0; while (e.add('sinal', undefined, undefined, 'azul')) n3++; ok(n3 > 25, 'painel Extra: cabem ainda mais', `+${n3} sinaleiros`); void n1;
+  const pe = nova(); pe.tamanhoPainel('grande'); const sx = pe.add('chave'); sx.x = 1.2; const mv = pe.tamanhoPainel('normal'); ok(mv >= 1 && Math.abs(sx.x) <= 0.9, 'voltar para o painel Normal traz para dentro o que ficou fora', `${mv} movido(s), x = ${sx.x}`);
+  const pg = JSON.parse(JSON.stringify(pe.salvar())); pg.painel = 'extra'; ok(new SIM.Bancada({ salvo: pg }).painel === 'extra', 'o tamanho do painel é gravado na sessão');
+  const f = nova('forca'); ok(f.corFio(f.fios[0].id, 'laranja') && f.fios[0].cor === 'laranja', 'trocar a cor de um fio');
+  const g = nova('forca'); liga(g); g.inv.set(222, 8); g.inv.set(100, 2.5); const np = g.inv.parametrizar(SIM.PLACA_P.concat(SIM.MISSOES.find((m) => m.id === 'multispeed').params));
+  ok(np === 16 && g.inv.P[222] === 8 && g.inv.P[265] === 13 && g.inv.P[100] === 10 && g.inv.P[401] === 3, 'parametrizar automático: fábrica + placa + parâmetros da atividade', np);
+  g.avanca(0.1); ok(g.inv.P[47] === 0, 'a atividade parametrizada não fica em CONF', g.inv.P[47]);
+  for (const m of SIM.MISSOES) { const x = nova('forca'); liga(x); x.inv.parametrizar(SIM.PLACA_P.concat(m.params || [])); x.avanca(0.05); if (x.inv.P[47] !== 0) ok(false, `  ${m.id} parametrizada sem CONF`, x.inv.P[47]); }
+  ok(true, 'nenhuma atividade parametrizada automaticamente cai em CONF');
 }
 // ------------------------------------------------------------------ gravar e recarregar
 {

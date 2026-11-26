@@ -34,7 +34,7 @@ peso de desbalanceamento, botoeiras e um CLP virtual para treinar os comandos.
 | Identity | Vendor ID **853 (WEG)**, Device Type 43, Product Code 6, revisão 2.10 — *ajustável em `config.json`* |
 | Conexões | 1 Exclusive Owner + Input Only (198) + Listen Only (199) · até 6 explícitas classe 3 |
 | Modbus TCP | até **2 conexões** [ETH 8.5], porta 502 (ou 5020) |
-| Servidor WEB | `http://<ip>:3000/webserver/` [ETH cap. 10] |
+| Servidor WEB | `http://<ip>:3060/webserver/` [ETH cap. 10] |
 
 ## 2. Instalar e rodar
 
@@ -44,7 +44,7 @@ Requisito: **Node.js 18 ou superior**.
 1. **`instalar.bat`** — rode uma vez (ele pede permissão de administrador). Instala o Node.js LTS
    (pelo winget ou, sem winget, baixando o instalador oficial de nodejs.org com conferência do SHA-256
    via `tools/instalar-node.ps1`), faz o `npm install`, libera no Firewall do Windows TCP 44818,
-   UDP 44818/2222, TCP 502/5020 e TCP 3000, e cria o atalho **Simulador SCA06** na Área de Trabalho.
+   UDP 44818/2222, TCP 502/5020 e TCP 3060, e cria o atalho **Simulador SCA06** na Área de Trabalho.
 2. **`iniciar.bat`** (ou o atalho) — sobe o simulador, mostra os IPs do PC para configurar o CLP e
    abre a página no navegador. Para encerrar, feche a janela ou tecle Ctrl+C.
 
@@ -55,11 +55,11 @@ npm install
 npm start
 ```
 
-Abra **http://localhost:3000**. Na primeira execução o drive vem com os padrões de fábrica e a
+Abra **http://localhost:3060**. Na primeira execução o drive vem com os padrões de fábrica e a
 ligação da bancada (DI1 = STOP, DI2/DI3 = fins de curso). Os parâmetros alterados ficam salvos em
 `data/eeprom.json` (apague o arquivo para voltar ao padrão, ou use P0204 = 5).
 
-**Firewall do Windows:** o `instalar.bat` já libera as portas; sem ele, libere TCP 44818, UDP 44818, UDP 2222, TCP 502/5020 e TCP 3000.
+**Firewall do Windows:** o `instalar.bat` já libera as portas; sem ele, libere TCP 44818, UDP 44818, UDP 2222, TCP 502/5020 e TCP 3060.
 **Conflitos de porta:** feche o RSLinx (ou outro simulador) se ele já ocupa a 44818/2222.
 **Porta 502:** no Linux/macOS exige administrador; sem isso o simulador usa 5020 automaticamente.
 

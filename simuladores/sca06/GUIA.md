@@ -1055,7 +1055,7 @@ aIR[4] := INT_TO_WORD(iModoAtivo);
 ### 9.7 A IHM no simulador
 
 1. Aba **IHM** → **IP do CLP = 192.168.100.10**, porta **502**, Unit ID **1** → **Salvar** → **Conectar**. O indicador **CLP** fica verde no alto da IHM.
-2. Sem o CODESYS: **Ligar CLP de demonstração**. Ele roda este mesmo programa, abre o servidor Modbus em 127.0.0.1 e conecta no drive com a conexão de 8/11 palavras (feche antes a conexão da aba Mestre ou do CODESYS: o drive aceita uma só).
+2. Sem o CODESYS: **Ligar CLP de demonstração**. Ele roda este mesmo programa, abre o servidor Modbus em **127.0.0.60, porta 502** (um endereço só deste PC, para não disputar a 502 do CODESYS) e conecta no drive com a conexão de 8/11 palavras (feche antes a conexão da aba Mestre ou do CODESYS: o drive aceita uma só).
 3. Navegue pelas telas na barra de baixo: **Início · Velocidade · Torque · Absoluta · Pulso**. Em cada tela de modo, a faixa de cima diz se aquele modo está ativo no CLP; tocar nela ativa o modo.
 
 ![Tela Pulso da IHM](guia/ihm-pulso.png)

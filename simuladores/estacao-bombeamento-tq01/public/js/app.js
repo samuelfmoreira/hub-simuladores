@@ -272,7 +272,7 @@ function updateComm(c) {
   const badge = $('clpBadge');
   badge.textContent = on ? (c.clpParado ? 'CLP sem heartbeat' : `CLP ${c.protocolo === 'opcda' ? 'OPC DA' : c.protocolo === 'modbus' ? 'Modbus TCP' : 'OPC UA'} · ${c.stats ? c.stats.lat : 0} ms`) : c.desejado ? 'CLP desconectado' : 'sem CLP';
   badge.className = `badge ${on && !c.clpParado ? '' : 'off'}`;
-  $('tpState').textContent = c.endpoint && /127\.0\.0\.1:(48(4\d|50)|15(0[2-9]|10))\b/.test(c.endpoint) && on ? 'CLP de demonstração ligado' : 'CLP de demonstração desligado';
+  $('tpState').textContent = c.endpoint && /127\.0\.0\.50:502\b|127\.0\.0\.1:(48(4\d|50)|15(0[2-9]|10))\b/.test(c.endpoint) && on ? 'CLP de demonstração ligado' : 'CLP de demonstração desligado';
   if (!formFilled && c.desejado) {
     formFilled = true;
     const f = $('connForm');

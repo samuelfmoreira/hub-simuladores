@@ -6,7 +6,7 @@ const core = path.join(__dirname, '..', 'public', 'core');
 ['params', 'hmi', 'cfw500', 'bancada', 'missoes'].forEach((f) => require(path.join(core, f + '.js')));
 const SIM = globalThis.SIM, { MAPA, FALHAS, ALARMES, CONFIG, fmt, nomeP } = SIM.params, T = SIM.TIPOS, P = SIM.PLACA;
 const b = new SIM.Bancada();
-const borne = (ref) => { const i = b.infoTerm(ref); return `${i.comp.id} ${i.term.nome}`; };
+const borne = (ref) => { const [id, t] = ref.split('.'), c = b.comp(id), tipo = c ? c.tipo : SIM.EXTRAS[id][1], d = T[tipo].term.find((x) => x.id === t); return `${id} ${d.nome}`; };
 const par = (n, pq) => `| ${nomeP(n)} | ${MAPA[n].nome} | ${fmt(n, MAPA[n].def, true)}${MAPA[n].opc && MAPA[n].opc[MAPA[n].def] !== undefined ? ' (' + MAPA[n].opc[MAPA[n].def] + ')' : ''} | ${pq} |`;
 const valor = (n, v) => `${fmt(n, v, true)}${MAPA[n].opc && MAPA[n].opc[v] !== undefined ? ' (' + MAPA[n].opc[v] + ')' : ''}`;
 const OBS = {
@@ -23,11 +23,12 @@ const OBS = {
   sinal: 'O relé DO1 é contato seco: precisa receber o +24 V no comum (11) para alimentar o sinaleiro pelo NA (13). O DO2 é um transistor NPN que fecha para o GND: o sinaleiro fica entre o +24 V e o borne 10.',
   falha_ext: 'Com a DI4 em "Sem Falha Ext." a entrada precisa ficar ativa o tempo todo. Abriu (emergência apertada ou fio solto): **F0091**, os pulsos são cortados e o motor para por inércia. O relé DO1 de fábrica (Sem Falha) desliga junto.',
   corrente: 'Em corrente a AI1 passa a ter 500 Ω: 12 mA aparecem como 6,0 V no borne. Com P0233 = 1 a escala é 4 mA = 0 % e 20 mA = 100 %. Abaixo de 2 mA o inversor mostra o alarme **A0163** (laço aberto).',
+  osciloscopio: 'Medido na bancada a 30 Hz: sem filtro, pulsos entre +Ud e −Ud (**618 V pico a pico**, com Ud = 309 V) e **170 V eficazes**; com o filtro, senoide de 30 Hz com **110 V eficazes** e 311 V pico a pico, o mesmo valor de P0007. A diferença entre 170 V e 110 V é o conteúdo do PWM: é por isso que um multímetro comum lê a saída do inversor errado. Entre fases o PWM só tem três níveis: +Ud, 0 e −Ud.',
   link_dc: 'Medido na bancada: com o volante e P0101 = 1 s o motor leva cerca de **5,5 s** para parar e o link DC chega a **396 V**, sem falha. Se subir P0151 para 600 V (regulação fora de ação), a mesma parada dá **F0022**.',
 };
 const L = [];
 const w = (s = '') => L.push(s);
-w('# Bancada didática CFW500');
+w('# Bancada didática WEG CFW500');
 w();
 w('Bancada didática em 3D para **ligar, parametrizar e operar o inversor WEG CFW500** como na prática: você arrasta os componentes, passa os fios de borne a borne, mede com o multímetro e opera pela HMI do inversor. Não tem CLP nem rede.');
 w();
@@ -52,11 +53,15 @@ w('|---|---|');
 w('| Passar um fio | Clique num borne e depois no outro, ou arraste de um borne ao outro. Esc cancela. |');
 w('| Tirar um fio | Clique no fio e no botão **Remover fio** (ou tecla Delete). Duplo clique ou botão direito no fio também tira. |');
 w('| Arrumar um fio | O cabo é maleável: pende entre os plugues, deita na mesa e contorna o inversor e o motor. Arraste qualquer ponto do fio para puxar; ao soltar, o ponto fica preso numa presilha. Arraste a presilha para mudar; duplo clique ou botão direito nela solta o cabo. |');
+w('| Trocar a cor de um fio | Clique no fio: aparece uma barra com as cores; clique na cor. A cor dos próximos fios fica nas bolinhas do canto de cima da bancada ("auto" escolhe pela função do borne). |');
+w('| Acrescentar ou tirar componentes | Botão **+ Componente**, no canto de cima da bancada. Para tirar: clique no componente e em **Remover** (ou tecla Delete). |');
 w('| Mover um componente | Arraste pela placa; os cabos ligados acompanham. O motor e o multímetro andam sobre a mesa. |');
 w('| Acionar | Clique na chave geral, na alavanca do disjuntor, nas chaves seletoras e no cogumelo. Segure os botões pulsadores e as teclas do inversor. Arraste o botão do potenciômetro (ou use a roda do mouse sobre ele). |');
 w('| Multímetro | Clique no seletor para trocar a função. Arraste cada ponta até o borne, ou toque na ponta e depois no borne. |');
+w('| Osciloscópio | Arraste as ponteiras até os bornes: amarelas = CH1, azuis = CH2; a de corpo colorido é o + e a preta com anel é o −. Os botões e as teclas do osciloscópio em 3D funcionam (os mesmos ajustes estão na aba Medições). Clicar na tela do osciloscópio abre essa aba. |');
 w('| Câmera | Arraste o fundo para girar; botão direito ou dois dedos para deslocar; roda do mouse ou pinça para aproximar. Os botões embaixo levam a cada parte. |');
 w('| Explicação de um componente | Botão direito nele (em tela de toque, um toque rápido). |');
+w('| Ver a bancada em tela cheia | Botão **«** no canto da barra de abas oculta o painel lateral; o botão **» Painel**, no canto da bancada, traz de volta. Clicar no display do inversor em 3D também reabre o painel na aba Inversor. |');
 w();
 w('![Fio puxado e preso por uma presilha](guia/fio-maleavel.png)');
 w();
@@ -64,11 +69,11 @@ w('As cinco abas da lateral:');
 w();
 w('| Aba | Para que serve |');
 w('|---|---|');
-w('| Missões | A trilha de exercícios. O simulador confere sozinho e marca ✓. "Montar os fios para mim" faz a ligação da missão; "Ver parâmetros" mostra a resposta. |');
+w('| Missões | A trilha de exercícios. O simulador confere sozinho e marca ✓. Cada atividade mostra a lista dos seus parâmetros (valor atual → ajuste) e tem dois botões: **Montar automático** (faz a ligação) e **Parametrizar automático** (carrega o padrão de fábrica, a placa do motor e os parâmetros da atividade). |');
 w('| Inversor | A HMI em tamanho grande, o estado (P0006), a explicação da falha, do alarme ou do CONF e as leituras principais. |');
 w('| Parâmetros | A lista completa com busca e filtro por grupo. Clique no valor para alterar. |');
-w('| Medições | O multímetro em tamanho grande e o que o inversor enxerga em cada entrada e saída. |');
-w('| Bancada | Cor do fio, montagens prontas, componentes extras, freio de carga, volante de inércia, chave S1.1 do plug-in e o registro de acontecimentos. |');
+w('| Medições | O multímetro e o osciloscópio em tamanho grande e o que o inversor enxerga em cada entrada e saída. |');
+w('| Bancada | Cor do fio, montagens prontas, componentes, freio de carga, volante de inércia, chave S1.1 do plug-in e o registro de acontecimentos. |');
 w();
 w('![Aba Inversor](guia/aba-inversor.png) ![Aba Medições](guia/aba-medicoes.png)');
 w();
@@ -98,7 +103,20 @@ w('| Tag | Componente | Bornes |');
 w('|---|---|---|');
 for (const c of b.comps) w(`| ${c.id} | ${T[c.tipo].nome}${c.cor ? ' ' + c.cor : ''} | ${T[c.tipo].term.map((t) => t.nome).join(', ') || 'pontas VΩ e COM'} |`);
 w();
-w('Botões e chaves têm sempre um contato **NA** (azul) e um **NF** (vermelho). Pela aba Bancada dá para acrescentar mais botões, chaves, sinaleiros, potenciômetro, disjuntor e gerador de sinal.');
+w('Botões e chaves têm sempre um contato **NA** (azul) e um **NF** (vermelho).');
+w();
+w('### Acrescentar e tirar componentes');
+w();
+w('O botão **+ Componente**, no canto de cima da bancada, abre a lista do que dá para acrescentar, separada por função (comando, acionamento e alimentação, sinalização, sinais para a AI1). Cada item tem a miniatura do componente (feita a partir do mesmo modelo 3D da bancada), para que serve, como ligar e quantos já estão na bancada. O componente novo vai para o primeiro lugar livre do painel (de cima para baixo) e fica selecionado; arraste pela placa para mudar de lugar. Não há limite de quantidade: cabe o que couber no painel, e quando não houver mais espaço a tela avisa. Para ter mais espaço, aumente o painel: **Normal** (1,9 × 1,0 m), **Grande** (2,7 × 1,0 m) ou **Extra** (3,5 × 1,3 m), nos botões do topo da lista do + Componente ou na aba Bancada. A mesa acompanha a largura; ao voltar para um painel menor, o que ficaria de fora é trazido para dentro. O tamanho fica gravado na sessão. Para tirar, clique no componente e em **Remover** na barra que aparece (ou tecla Delete): os fios ligados nele saem junto. Rede, inversor, motor e os instrumentos fazem parte da bancada e não saem.');
+w();
+w('| Componente | Bornes | Observação |');
+w('|---|---|---|');
+const vistos = new Set();
+for (const [t] of SIM.PALETA) { if (vistos.has(t)) continue; vistos.add(t); const cores = SIM.PALETA.filter((x) => x[0] === t && x[1]).map((x) => x[1]); w(`| ${T[t].nome}${cores.length ? ' (' + cores.join(', ') + ')' : ''} | ${T[t].term.map((x) => x.nome).join(', ')} | ${({ cont: 'Fecha com mais de 18 V na bobina e só abre abaixo de 9,6 V. Cerca de 105 mA por bobina', fonte: 'Liga com mais de 85 Vca entre L e N; até 2,5 A na saída', lamp: 'Acende com 220 V (entre duas fases); em 127 V acende fraco', sinal: 'Cerca de 10 mA; acende acima de 15 V', bot: 'Acionado só enquanto segura', chave: 'Duas posições fixas', emerg: 'Com trava: clique de novo para soltar', pot: 'Linear', disj: 'Manobra manual', gerador: '0-10 V ou 0-24 mA' })[t] || ''} |`); }
+w();
+w('![Partida direta com contatora e selo](guia/contatora-perto.png)');
+w();
+w('A **contatora** é um módulo compacto (160 × 200 mm, bornes a cada 24 mm) com bobina de 24 Vcc (A1-A2), três contatos principais (1-2, 3-4, 5-6) e os auxiliares 13-14 (NA) e 21-22 (NF). A janela da frente fica verde aberta e vermelha fechada. O +24 V do inversor fornece no máximo 150 mA: uma bobina fecha, mas na segunda a tensão cai para cerca de 17 V e ela não fecha (a primeira se mantém, porque uma contatora já fechada só abre abaixo de 9,6 V). Para várias contatoras e sinaleiros, use a **fonte de 24 Vcc**. A montagem pronta "Partida direta com contatora e selo" mostra o circuito clássico: S2 (NF) desliga, S1 (NA) liga, o auxiliar 13-14 sela a bobina, H1 acende com a contatora fechada e H2, pelo NF 21-22, com ela aberta.');
 w();
 w('![Motor com freio de carga](guia/motor.png)');
 w();
@@ -160,6 +178,8 @@ w('Os valores "conforme o modelo do inversor" do manual foram fixados para o mod
 w();
 w('## 8. Trilha de exercícios');
 w();
+w('Em cada atividade, **Montar automático** faz a ligação e **Parametrizar automático** carrega o padrão de fábrica, os dados de placa do motor (P0399 a P0407) e os parâmetros da tabela. A parametrização automática não passa o inversor para REMOTO: isso continua sendo na tecla LOC/REM.');
+w();
 SIM.MISSOES.forEach((m, i) => {
   w(`### ${i + 1}. ${m.titulo}`);
   w();
@@ -177,11 +197,11 @@ SIM.MISSOES.forEach((m, i) => {
 });
 w('### Fios de cada montagem pronta');
 w();
-w('A aba Bancada e o botão "Montar os fios para mim" usam estas ligações:');
+w('A aba Bancada e o botão **Montar automático** usam estas ligações (se a montagem usar um componente que não está na bancada, ele é recolocado):');
 w();
 for (const k in SIM.MONTAGENS) {
-  const base = SIM.MONTAGENS.forca.fios.length, f = SIM.MONTAGENS[k].fios;
-  w(`- **${SIM.MONTAGENS[k].nome}:** ` + (k === 'forca' ? f : f.slice(base)).map(([a, c]) => `${borne(a)} → ${borne(c)}`).join('; ') + (k === 'forca' ? '.' : ' (mais os fios da força).'));
+  const base = SIM.MONTAGENS.forca.fios.length, f = SIM.MONTAGENS[k].fios, comForca = k !== 'forca' && SIM.MONTAGENS.forca.fios.every((x, n) => f[n] && f[n][0] === x[0] && f[n][1] === x[1]);
+  w(`- **${SIM.MONTAGENS[k].nome}:** ` + (comForca ? f.slice(base) : f).map(([a, c]) => `${borne(a)} → ${borne(c)}`).join('; ') + (comForca ? ' (mais os fios da força).' : '.'));
 }
 w();
 w('## 9. Números para conferir');
@@ -193,10 +213,40 @@ w('|---|---|');
 [['Rede ligada, inversor parado', 'P0004 = 311 V; +24 V = 24,0 V; +10 V = 10,0 V'], ['Tecla I em LOCAL', 'Parte e fica em 3,0 Hz (P0133)'], ['30 Hz', '875 rpm, 110 V, 1,9 A'], ['60 Hz', '1776 rpm, 220 V, 2,0 A'],
   ['60 Hz com 100 % no freio', '1725 rpm, 3,0 A, torque 99 %, 0,90 kW (a placa do motor)'], ['Partida com 100 % no freio e P0136 = 3 %', 'O motor não parte: a corrente vai ao limite de 6,5 A (P0135). Com P0136 = 10 % ele parte e chega a 1725 rpm'],
   ['Potenciômetro no meio', '4,92 V, P0018 = 49,2 %, 34,0 Hz'], ['Gerador em 12 mA, S1.1 em mA, P0233 = 1', 'P0018 = 50,0 %'], ['Resistência entre U1 e V1 do motor', '6,8 Ω'], ['Potenciômetro solto, bornes 1 e 3', '5,00 kΩ (ligado ao inversor lê 4,94 kΩ: a AI1 fica em paralelo)'],
-  ['Motor com duas fases trocadas', 'Gira ao contrário'], ['Motor com uma fase solta', 'Não parte e a corrente sobe ao limite'], ['Motor direto na rede (sem inversor)', 'Partida direta: 1776 rpm'], ['P0156 a P0158 = 2,0 A com carga nominal', 'F0072 (sobrecarga do motor) depois de alguns segundos'],
+  ['Osciloscópio entre U e V a 30 Hz', 'PWM com 618 V pico a pico e 170 V eficazes; com o filtro, 110 V eficazes (P0007) e 311 V pico a pico'], ['Partida direta com contatora e selo', 'Pulso em S1: KM1 fecha, sela e o motor chega a 1776 rpm direto da rede; pulso em S2: abre'], ['Duas bobinas de contatora no +24 V do inversor', 'A tensão cai para 17,2 V: a primeira se mantém fechada e a segunda não fecha'], ['Sinaleiro 220 Vca entre fase e neutro', 'Acende fraco (127 V)'], ['Motor com duas fases trocadas', 'Gira ao contrário'], ['Motor com uma fase solta', 'Não parte e a corrente sobe ao limite'], ['Motor direto na rede (sem inversor)', 'Partida direta: 1776 rpm'], ['P0156 a P0158 = 2,0 A com carga nominal', 'F0072 (sobrecarga do motor) depois de alguns segundos'],
   ['Volante de inércia, P0101 = 1 s, parada a partir de 60 Hz', 'A regulação do link DC estica a rampa para cerca de 5,5 s; Ud chega a 396 V'], ['O mesmo com P0151 = 600 V', 'F0022 (sobretensão no link DC)'], ['Volante de inércia e P0100 = 0,5 s', 'A limitação de corrente segura a rampa: 1,1 s até 60 Hz, pico de 6,4 A']].forEach((l) => w(`| ${l[0]} | ${l[1]} |`));
 w();
 w('![Multímetro medindo a AI1](guia/multimetro.png)');
+w();
+w('### Osciloscópio');
+w();
+w('Osciloscópio digital de 2 canais com **ponteiras diferenciais**: cada canal tem uma ponteira + e uma −, e nenhuma é aterrada. É assim que se mede a saída de um inversor na prática; com ponteira comum, o terra do osciloscópio fecharia curto.');
+w();
+w('![Osciloscópio na bancada medindo a saída do inversor](guia/osciloscopio.png)');
+w();
+w('| Onde pôr o canal | O que aparece |');
+w('|---|---|');
+w('| Entre duas saídas do inversor (U e V), sem filtro | Pulsos do PWM entre +Ud e −Ud, com a largura variando em forma de senoide. Em 10 ms/div aparece o envelope; em 200 µs/div, os pulsos de 5 kHz (P0297) |');
+w('| O mesmo, com o filtro ligado | A senoide fundamental, na frequência de saída e com o valor eficaz de P0007 |');
+w('| Entre U1 e V1 do motor | A mesma onda da saída do inversor |');
+w('| Entre uma saída e o PE | Pulsos entre +Ud/2 e −Ud/2 (tensão de fase com o modo comum) |');
+w('| Entre duas fases da rede | Senoide de 60 Hz, 220 V eficazes, 622 V pico a pico |');
+w('| No +24 V, no +10 V, na AI1 ou na AO1 | Linha reta no valor contínuo (a AO1 sobe e desce com a velocidade) |');
+w();
+w('Os controles funcionam no próprio osciloscópio em 3D e também na aba Medições. Nos botões giratórios: clique = um passo para mais, botão direito = um passo para menos, ou gire com a roda do mouse ou arrastando.');
+w();
+w('| Controle | Função |');
+w('|---|---|');
+w('| Tempo − / + | Tempo por divisão, de 100 µs a 100 ms |');
+w('| CH1 e CH2 − / + | Volts por divisão de cada canal, de 0,5 V a 200 V |');
+w('| Auto | Ajusta sozinho para 2 a 3 ciclos na tela e a onda ocupando boa parte da altura |');
+w('| POSIÇÃO | Desloca a onda na horizontal, de meia em meia divisão (a seta laranja no topo marca o início do ciclo) |');
+w('| RUN/STOP (Parar / Rodar) | Congela a tela; a tecla fica vermelha parada |');
+w('| FILTRO | Tira o PWM e deixa só a fundamental; a tecla acende ligada |');
+w();
+w('A tela mostra, para cada canal, a frequência, o valor eficaz e o pico a pico. Com os dois canais ligados, o CH1 fica na metade de cima e o CH2 na de baixo. O disparo é fixo no início do ciclo, então a imagem fica parada.');
+w();
+w('![Dois canais: saída filtrada a 30 Hz e rede a 60 Hz](guia/aba-osciloscopio.png)');
 w();
 w('## 10. Falhas, alarmes e CONF que a bancada provoca');
 w();
@@ -254,7 +304,7 @@ w('## 13. Usar fora do HUB');
 w();
 w('1. Copie a pasta do simulador para o PC.');
 w('2. Clique duas vezes em **INSTALAR.bat** (instala o Node.js se faltar e cria o atalho).');
-w('3. Clique duas vezes em **INICIAR_SIMULADOR.bat**: o navegador abre em `http://localhost:3350`. Os alunos da mesma rede abrem `http://IP-DO-PC:3350` (o instalador oferece liberar a porta no firewall) e cada um recebe a sua sessão.');
+w('3. Clique duas vezes em **INICIAR_SIMULADOR.bat**: o navegador abre em `http://localhost:3051`. Os alunos da mesma rede abrem `http://IP-DO-PC:3051` (o instalador oferece liberar a porta no firewall) e cada um recebe a sua sessão.');
 w('4. **TESTAR.bat** roda as verificações automáticas; a última linha deve dizer "0 falha(s)".');
 w();
 w('A simulação inteira roda no navegador. O comando `node tools/build-demo.js` gera `dist/bancada-cfw500.html`, um arquivo único que abre com dois cliques; ele precisa de internet só para baixar o three.js.');

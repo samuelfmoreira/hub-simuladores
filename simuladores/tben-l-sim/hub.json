@@ -8,6 +8,6 @@
   "requerRoot": true,
   "iniciar": "sudo npm start",
   "iniciarSemProfinet": "npm run start:demo",
-  "url": "http://localhost:8080",
+  "url": "http://localhost:8081",
   "gsdml": "gsdml/"
 }

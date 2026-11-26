@@ -123,3 +123,28 @@ Todo cartão tem o botão **Restaurar original**, que volta o simulador ao estad
 1. Compacte a pasta do simulador num .zip (sem `node_modules` e sem `data/`).
 2. No HUB: *Adicionar e atualizar*, solte o .zip.
 3. Mesmo `id` (ou mesmo `name` no `package.json`): vira atualização, com backup. Caso contrário, entra como simulador novo.
+
+## Mapa de portas (nenhuma se repete)
+
+Cada simulador tem a **sua** porta de tela, a mesma dentro e fora do HUB. **O Modbus TCP usa sempre a porta 502**, a
+padrão do protocolo. Para vários servidores Modbus conviverem na 502, cada um fica num **endereço próprio**: os
+equipamentos no IP deles da rede virtual (192.168.100.x), o CODESYS em 192.168.100.10, e os CLPs de teste e
+demonstração internos num endereço de loopback só deles (127.0.0.x, que o Windows trata como "este PC"). Se o Windows
+recusar o endereço de loopback, o CLP de teste volta para 127.0.0.1 numa porta alternativa e avisa no log.
+
+| Simulador | Tela | CLP de teste interno (Modbus 502) |
+|---|---|---|
+| HUB | 4000 (telas alternativas: 3100–3299) | — |
+| Processo com visão 3D | 3000 | — |
+| Keyence CV-X400 | 3001 | — |
+| Estação de bombeamento | 3050 | 127.0.0.50 (OPC UA de demonstração: 127.0.0.1:4841–4850; a 4840 é do CODESYS) |
+| Servomotor SCA06 | 3060 | IHM: 127.0.0.60 |
+| Sistema de Incêndio | 3070 (fora do HUB, alternativas 3071–3099) | 127.0.0.70, .71… (um por sessão) |
+| Sensor ultrassônico VEGA | 3320 | 127.0.0.80, .81… (um por sessão) |
+| Bancada didática WEG CFW500 | 3051 | — |
+| Inversor CFW500 | 8080 | — |
+| Remoto TBEN-L | 8081 | — |
+
+Simulador novo: porta de tela livre nesta tabela (de preferência entre 3400 e 3999) e, se tiver CLP de teste Modbus,
+um bloco de loopback livre (ex.: 127.0.0.90) sempre na porta 502. Ao adicionar um simulador cuja porta de tela já é de
+outro, o HUB avisa.

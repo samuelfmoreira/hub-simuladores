@@ -90,6 +90,13 @@
       LISTA.forEach((p) => { if (!p.ro) this.P[p.n] = p.def; }); if (hz50) Object.assign(this.P, DEF50);
       this.acesso = false; this.locHMI = true; this.giroHMI = 1; this.runHMI = false;
     }
+    /** Parametrização automática: padrão de fábrica e depois a lista [[n, valor], ...]. Grava mesmo com o inversor desligado. */
+    parametrizar(lista) {
+      this._fabrica(false); let n = 0;
+      for (const [k, v] of lista) { const p = MAPA[k]; if (!p || p.ro) continue; this.P[k] = lim(+Number(v).toFixed(p.dec), p.min, p.max); n++; }
+      this.P[121] = lim(this.P[121], this.P[133], this.P[134]); this.runHMI = false; this.run3 = false; this.runEP = false;
+      this.aoGravar(); this.aoEvento(`Parametrização automática: padrão de fábrica e ${n} parâmetro(s).`); return n;
+    }
     get rodando() { return this.pwm; }
 
     /** Altera um parâmetro pela HMI ou pela aba Parâmetros, com as mesmas recusas do inversor real. */

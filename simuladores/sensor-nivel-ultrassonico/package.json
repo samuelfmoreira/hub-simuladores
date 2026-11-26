@@ -1,7 +1,7 @@
 {
   "name": "sim-sensor-nivel-ultrassonico",
-  "version": "1.1.1.1",
-  "description": "Sensor ultrassônico de nível LT-01 - simulador do HUB de simuladores",
+  "version": "1.1.1.4",
+  "description": "Sensor ultrassônico VEGA - simulador do HUB de simuladores",
   "main": "server.js",
   "private": true,
   "scripts": {

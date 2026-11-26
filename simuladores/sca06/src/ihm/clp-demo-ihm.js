@@ -2,7 +2,7 @@
 /**
  * CLP de demonstração da IHM do servo: faz o papel do CODESYS para quem quer usar a IHM sem programar.
  *
- *   IHM ──Modbus TCP──► [servidor Modbus em 127.0.0.1] ── PRG_IHM_Servo ── [scanner EtherNet/IP] ──► SCA06
+ *   IHM ──Modbus TCP──► [servidor Modbus em 127.0.0.60:502] ── PRG_IHM_Servo ── [scanner EtherNet/IP] ──► SCA06
  *
  * - Mapa Modbus = o mapa padrão da IHM (coils 0-4, holding 0-5, discrete inputs 0-4, input registers 0-4).
  * - Conexão com o drive: Exclusive Owner, 8 palavras de entrada / 11 de saída (o drive precisa estar configurado
@@ -21,7 +21,7 @@ class ClpDemoIHM extends EventEmitter {
     super();
     this.hostAdapter = hostAdapter; this.portaAdapter = portaAdapter;
     this.mb = null; this.sc = null; this.prg = null; this.tmr = null;
-    this.ligado = false; this.porta = null; this.erro = '';
+    this.ligado = false; this.porta = null; this.host = null; this.erro = '';
   }
 
   log(m) { this.emit('log', `CLP de demonstração: ${m}`); }
@@ -30,10 +30,20 @@ class ClpDemoIHM extends EventEmitter {
     await this.desligar();
     this.erro = '';
     try {
-      // servidor Modbus da IHM: sempre só neste PC; 502 se livre, senão a próxima livre
+      // servidor Modbus da IHM: só neste PC, sempre na porta 502 do Modbus, num endereço de loopback próprio
+      // (127.0.0.60): não disputa a 502 do CODESYS (192.168.100.10) nem a dos CLPs de teste dos outros simuladores.
+      // Se o Windows recusar o endereço, volta para 127.0.0.1 numa porta alternativa (5502–5510) e avisa.
       this.mb = new ServidorModbusMemoria({ tamanho: 32 });
       this.mb.hr[0] = 1; this.mb.hr[4] = 450; this.mb.hr[5] = 100;     // valores iniciais: modo velocidade, passo 45,0°, 100 rpm
-      this.porta = await this.mb.iniciar('127.0.0.1', [502, 5502, 5503, 5504, 5505, 5506, 5507, 5508, 5509, 5510]);
+      try {
+        this.host = '127.0.0.60'; this.porta = await this.mb.iniciar(this.host, [502]);
+      } catch (e) {
+        this.log(`127.0.0.60:502 indisponível (${e.code || e.message}); usando 127.0.0.1 numa porta alternativa`);
+        try { if (this.mb.parar) await this.mb.parar(); } catch (_) { /* não abriu */ }
+        this.mb = new ServidorModbusMemoria({ tamanho: 32 });
+        this.mb.hr[0] = 1; this.mb.hr[4] = 450; this.mb.hr[5] = 100;
+        this.host = '127.0.0.1'; this.porta = await this.mb.iniciar(this.host, [5502, 5503, 5504, 5505, 5506, 5507, 5508, 5509, 5510]);
+      }
       // scanner EtherNet/IP até o drive
       // o drive pode estar reiniciando a interface (P0849 = 1 acabou de ser gravado): tenta por até ~10 s
       for (let tentativa = 1; ; tentativa++) {
@@ -54,8 +64,8 @@ class ClpDemoIHM extends EventEmitter {
       this.prg = new PrgIhmServo();
       this.tmr = setInterval(() => this.ciclo(), 20);
       this.ligado = true;
-      this.log(`ligado. IHM → 127.0.0.1:${this.porta} (Modbus TCP); drive → ${this.hostAdapter()} (EtherNet/IP, 8/11 palavras)`);
-      return { ok: true, porta: this.porta };
+      this.log(`ligado. IHM → ${this.host}:${this.porta} (Modbus TCP); drive → ${this.hostAdapter()} (EtherNet/IP, 8/11 palavras)`);
+      return { ok: true, porta: this.porta, host: this.host };
     } catch (e) {
       const msg = /0x0109|tamanho|size/i.test(e.message)
         ? 'o drive recusou a conexão de 8/11 palavras: configure o drive para a IHM (assistente → IHM, todos os modos) e aplique com P0849 = 1'
@@ -92,7 +102,7 @@ class ClpDemoIHM extends EventEmitter {
     m.ir[0] = r.VEL_ATUAL & 0xFFFF; m.ir[1] = r.CORRENTE & 0xFFFF; m.ir[2] = r.POSICAO & 0xFFFF; m.ir[3] = r.PASSOS & 0xFFFF; m.ir[4] = r.MODO_ATUAL & 0xFFFF;
   }
 
-  estado() { return { ligado: this.ligado, porta: this.porta, erro: this.erro, modoAtivo: this.prg ? this.prg.modoAtivo : null }; }
+  estado() { return { ligado: this.ligado, porta: this.porta, host: this.host, erro: this.erro, modoAtivo: this.prg ? this.prg.modoAtivo : null }; }
 }
 
 module.exports = { ClpDemoIHM };

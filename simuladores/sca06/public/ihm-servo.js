@@ -164,7 +164,7 @@
     if (!bd.disabled) {
       bd.textContent = demo.ligado ? 'Desligar CLP de demonstração' : 'Ligar CLP de demonstração';
       bd.classList.toggle('on', !!demo.ligado);
-      $('#ihmsDemoTxt', host).innerHTML = demo.ligado ? `CLP de demonstração ligado: a IHM conversa com ele em <b>127.0.0.1:${demo.porta}</b>, e ele comanda o SCA06 pela EtherNet/IP (8/11 palavras).`
+      $('#ihmsDemoTxt', host).innerHTML = demo.ligado ? `CLP de demonstração ligado: a IHM conversa com ele em <b>${demo.host || '127.0.0.1'}:${demo.porta}</b>, e ele comanda o SCA06 pela EtherNet/IP (8/11 palavras).`
         : demo.erro ? `<span style="color:var(--err)">${demo.erro}</span>` : 'Faz o papel do CODESYS com o programa do guia (Parte 9). O drive precisa estar configurado para a IHM: assistente <b>Comunicação com o CLP → IHM (todos os modos)</b>.';
     }
   }

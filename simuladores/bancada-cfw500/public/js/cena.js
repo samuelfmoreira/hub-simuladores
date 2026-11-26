@@ -4,7 +4,6 @@
   'use strict';
   const SIM = g.SIM = g.SIM || {};
   const MESA_Y = 0.80, CORES = { preto: 0x1b1b1d, vermelho: 0xc62828, azul: 0x1e56b0, verde: 0x2e8b3d, amarelo: 0xe0b400, cinza: 0x8a9096, branco: 0xe9e9e9, laranja: 0xe06a10 };
-  const LIM = { painel: [-0.9, 0.9, 0.05, 0.99], mesa: [-0.98, 0.98, 0.10, 0.70] };
 
   SIM.criaCena = function (el, banc, cb) {
     const T = THREE, V3 = T.Vector3, TIPOS = SIM.TIPOS;
@@ -37,31 +36,43 @@
     // ---------------------------------------------------------------- sala, mesa e painel
     const chao = som(new T.Mesh(new T.PlaneGeometry(30, 30), mat(0xb7bcbf, { roughness: 0.9 })), false); chao.rotation.x = -Math.PI / 2; scene.add(chao);
     const parede = som(new T.Mesh(new T.PlaneGeometry(30, 6), mat(0xdfe3e0, { roughness: 1 })), false); parede.position.set(0, 3, -0.9); scene.add(parede);
-    const mesa = new T.Group(); scene.add(mesa);
-    poe(mesa, caixa(2.1, 0.04, 0.86, mat(0xd8d0bf, { roughness: 0.75 })), 0, MESA_Y - 0.02, 0.36);
-    poe(mesa, caixa(2.1, 0.012, 0.012, mat(0x3a4046)), 0, MESA_Y - 0.006, 0.79);
-    for (const x of [-0.99, 0.99]) for (const z of [-0.02, 0.74]) poe(mesa, caixa(0.05, MESA_Y - 0.04, 0.05, mat(0x3a4046, { metalness: 0.4 })), x, (MESA_Y - 0.04) / 2, z);
-    poe(mesa, caixa(1.98, 0.05, 0.03, mat(0x3a4046, { metalness: 0.4 })), 0, 0.2, -0.02); poe(mesa, caixa(1.98, 0.05, 0.03, mat(0x3a4046, { metalness: 0.4 })), 0, 0.2, 0.74);
+    // mesa e painel perfurado: refeitos quando o tamanho do painel muda (Normal, Grande, Extra)
     const furos = tela(256, 256); furos.x.fillStyle = '#44525f'; furos.x.fillRect(0, 0, 256, 256); furos.x.fillStyle = '#2e3944';
     for (let i = 0; i < 8; i++) for (let j = 0; j < 8; j++) { furos.x.beginPath(); furos.x.roundRect(i * 32 + 9, j * 32 + 13, 14, 6, 3); furos.x.fill(); }
-    furos.t.wrapS = furos.t.wrapT = T.RepeatWrapping; furos.t.repeat.set(18, 10); furos.t.needsUpdate = true;
-    const quadro = som(new T.Mesh(new T.BoxGeometry(1.86, 1.02, 0.02), [preto, preto, preto, preto, new T.MeshStandardMaterial({ map: furos.t, roughness: 0.8 }), preto])); quadro.position.set(0, MESA_Y + 0.53, -0.012); scene.add(quadro);
-    const perfil = mat(0xc9ced3, { metalness: 0.7, roughness: 0.4 });
-    for (const x of [-0.95, 0.95]) poe(scene, caixa(0.045, 1.1, 0.045, perfil), x, MESA_Y + 0.53, -0.012);
-    for (const y of [0.0, 1.06]) poe(scene, caixa(1.945, 0.045, 0.045, perfil), 0, MESA_Y + y, -0.012);
+    furos.t.wrapS = furos.t.wrapT = T.RepeatWrapping; furos.t.needsUpdate = true;
+    const perfil = mat(0xc9ced3, { metalness: 0.7, roughness: 0.4 }), ferro = mat(0x3a4046, { metalness: 0.4 });
     const faixa = placaTex(600, 60, (x) => { x.fillStyle = '#1f5fb4'; x.fillRect(-300, -30, 600, 60); txt(x, 'BANCADA DIDÁTICA · INVERSOR DE FREQUÊNCIA CFW500', 19, 0, 1, '#ffffff'); });
-    poe(scene, plano(0.9, 0.09, faixa), 0, MESA_Y + 1.14, 0.012).castShadow = false; poe(scene, caixa(0.94, 0.11, 0.02, perfil), 0, MESA_Y + 1.14, 0);
+    let gEst = null, PW = 1.86, PH = 1.02;
+    const LIMS = () => banc.limites;
+    function montaEstrutura() {
+      const P = SIM.PAINEIS[banc.painel] || SIM.PAINEIS.normal; PW = P.w; PH = P.h;
+      if (gEst) { scene.remove(gEst); gEst.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); }
+      gEst = new T.Group(); scene.add(gEst);
+      const MW = PW + 0.24, pernas = PW / 2 + 0.13;
+      poe(gEst, caixa(MW, 0.04, 0.86, mat(0xd8d0bf, { roughness: 0.75 })), 0, MESA_Y - 0.02, 0.36);
+      poe(gEst, caixa(MW, 0.012, 0.012, ferro), 0, MESA_Y - 0.006, 0.79);
+      for (const x of [-pernas, pernas]) for (const z of [-0.02, 0.74]) poe(gEst, caixa(0.05, MESA_Y - 0.04, 0.05, ferro), x, (MESA_Y - 0.04) / 2, z);
+      if (PW > 2.5) for (const z of [-0.02, 0.74]) poe(gEst, caixa(0.05, MESA_Y - 0.04, 0.05, ferro), 0, (MESA_Y - 0.04) / 2, z);           // perna do meio na mesa comprida
+      poe(gEst, caixa(2 * pernas, 0.05, 0.03, ferro), 0, 0.2, -0.02); poe(gEst, caixa(2 * pernas, 0.05, 0.03, ferro), 0, 0.2, 0.74);
+      const tf = furos.t.clone(); tf.repeat.set(18 * PW / 1.86, 10 * PH / 1.02); tf.needsUpdate = true;
+      poe(gEst, som(new T.Mesh(new T.BoxGeometry(PW, PH, 0.02), [preto, preto, preto, preto, new T.MeshStandardMaterial({ map: tf, roughness: 0.8 }), preto])), 0, MESA_Y + 0.01 + PH / 2, -0.012);
+      for (const x of [-(PW / 2 + 0.02), PW / 2 + 0.02]) poe(gEst, caixa(0.045, PH + 0.08, 0.045, perfil), x, MESA_Y + 0.01 + PH / 2, -0.012);
+      for (const y of [0.0, PH + 0.04]) poe(gEst, caixa(PW + 0.085, 0.045, 0.045, perfil), 0, MESA_Y + y, -0.012);
+      poe(gEst, plano(0.9, 0.09, faixa), 0, MESA_Y + PH + 0.12, 0.012).castShadow = false; poe(gEst, caixa(0.94, 0.11, 0.02, perfil), 0, MESA_Y + PH + 0.12, 0);
+      Object.assign(sol.shadow.camera, { left: -(PW / 2 + 0.6), right: PW / 2 + 0.6, top: PH + 1.4 }); sol.shadow.camera.updateProjectionMatrix();
+    }
+    montaEstrutura();
 
     // ---------------------------------------------------------------- componentes
     const gComp = new T.Group(), gFios = new T.Group(), gPontas = new T.Group(); scene.add(gComp, gFios, gPontas);
     let vistas = {}, termos = {}, alvos = [], fiosV = {};
-    const CURTO = { rede: 'Alimentação 3~ 220 V', disj: 'Disjuntor 3P', cfw: 'Inversor CFW500 + plug-in CFW500-IOS', bot: 'Pulsador', chave: 'Seletora', emerg: 'Emergência', pot: 'Pot. 5 kΩ', sinal: '24 Vcc', gerador: 'Gerador V / mA' };
+    const CURTO = { rede: 'Alimentação 3~ 220 V', disj: 'Disjuntor 3P', cfw: 'Inversor CFW500 + plug-in CFW500-IOS', bot: 'Pulsador', chave: 'Seletora', emerg: 'Emergência', pot: 'Pot. 5 kΩ', sinal: '24 Vcc', gerador: 'Gerador V / mA', lamp: '220 Vca', cont: 'Contatora 24 Vcc', fonte: 'Fonte 24 Vcc' };
     const corT = (c) => mat(CORES[c] || CORES.preto, { roughness: 0.45 });
-    function borne(gr, ref, t, x, y, z, normal) {
+    function borne(gr, ref, t, x, y, z, normal, rHit) {
       const eixo = normal.y ? cil : cz;
       const anel = eixo(0.0088, 0.011, corT(t.cor)); const furo = eixo(0.0043, 0.0115, mat(0x0c0c0d)); const metal = eixo(0.0052, 0.0105, mat(0xd8c27a, { metalness: 0.9, roughness: 0.3 }));
       for (const m of [anel, metal, furo]) { poe(gr, m, x, y, z); if (normal.y) m.position.y += 0.0055; else m.position.z += 0.0055; }
-      const hit = new T.Mesh(new T.SphereGeometry(0.0155, 10, 8), invis); poe(gr, hit, x + normal.x * 0.008, y + normal.y * 0.008, z + normal.z * 0.008);
+      const hit = new T.Mesh(new T.SphereGeometry(rHit || 0.0155, 10, 8), invis); poe(gr, hit, x + normal.x * 0.008, y + normal.y * 0.008, z + normal.z * 0.008);
       hit.userData = { kind: 'term', ref, normal }; alvos.push(hit); termos[ref] = hit;
     }
     function baseModulo(c, des) {
@@ -76,7 +87,7 @@
       const lado = mat(0xc9ccc8), m = som(new T.Mesh(new T.BoxGeometry(w, h, 0.012), [lado, lado, lado, lado, new T.MeshStandardMaterial({ map: tex, roughness: 0.62 }), lado]));
       m.position.z = 0.006; m.userData = { kind: 'corpo', id: c.id }; alvos.push(m);
       const gr = new T.Group(); gr.add(m);
-      for (const t of d.term) borne(gr, c.id + '.' + t.id, t, t.x / 1000, t.y / 1000, 0.012, new V3(0, 0, 1));
+      for (const t of d.term) borne(gr, c.id + '.' + t.id, t, t.x / 1000, t.y / 1000, 0.012, new V3(0, 0, 1), d.hit);
       return gr;
     }
     const ctl = (m, id, tipo, extra) => { m.userData = Object.assign({ kind: 'ctl', id, tipo }, extra); alvos.push(m); return m; };
@@ -152,7 +163,7 @@
         const tk = {}, KY = 0.0045 + 0.0185;                         // y do topo do teclado; posições em mm a partir do canto superior esquerdo, como no produto
         const pk = (mx, my) => [(mx - 30) / 1000, KY - my / 1000];
         const rot2 = (w, h, cor, des) => new T.MeshStandardMaterial({ map: placaTex(w, h, (x) => { x.fillStyle = cor; x.fillRect(-w / 2, -h / 2, w, h); des(x); }, 12), roughness: 0.45 });
-        const tecla = (nome, m, mx, my, z) => { const [px, py] = pk(mx, my); poe(corpo, m, px, py, ZF + z); m.userData.z0 = ZF + z; tk[nome] = ctl(m, c.id, 'tecla', { tecla: nome }); };
+        const tecla = (nome, m, mx, my, z) => { const [px, py] = pk(mx, my); poe(corpo, m, px, py, ZF + z); tk[nome] = ctl(m, c.id, 'tecla', { tecla: nome, z0: ZF + z }); };
         const retang = (nome, mx, l1, l2) => { const l = mat(0xb3bac5), m = new T.Mesh(new T.BoxGeometry(0.0162, 0.010, 0.0022), [l, l, l, l, rot2(16.2, 10, '#b9c0ca', (x) => { txt(x, l1, 3.3, 0, -1.7, '#eef0f3', 800); txt(x, l2, 3.3, 0, 2.1, '#eef0f3', 800); }), l]); tecla(nome, m, mx, 7.2, 0.002); };
         retang('esc', 10.5, 'BACK', 'ESC'); retang('enter', 49.5, 'MENU', 'ENTER');
         const disco = (r, cor, des) => { const l = mat(parseInt(cor.slice(1), 16), { roughness: 0.4 }), cima = rot2(r * 2000, r * 2000, cor, des), m = new T.Mesh(new T.CylinderGeometry(r, r, 0.0024, 36), [l, cima, l]); cima.map.center.set(0.5, 0.5); cima.map.rotation = GIRO_TAMPA; m.rotation.x = Math.PI / 2; return m; };
@@ -161,7 +172,7 @@
         { const [px, py] = pk(30, 11.3); poe(corpo, cz(0.0102, 0.0012, mat(0xe4e7ec), 40), px, py, ZF + 0.0015);
           const d = disco(0.0086, '#c5cad3', (x) => { x.fillStyle = '#e4e7ec'; x.fillRect(-7.4, -0.9, 14.8, 1.8); x.fillStyle = '#f4f5f7'; x.beginPath(); x.moveTo(0, -6.2); x.lineTo(3.2, -2.6); x.lineTo(-3.2, -2.6); x.closePath(); x.fill(); x.beginPath(); x.moveTo(0, 6.2); x.lineTo(3.2, 2.6); x.lineTo(-3.2, 2.6); x.closePath(); x.fill(); });
           poe(corpo, d, px, py, ZF + 0.0026);
-          for (const [nome, dy] of [['up', 0.0045], ['down', -0.0045]]) { const h = new T.Mesh(new T.BoxGeometry(0.017, 0.0085, 0.002), invis); poe(corpo, h, px, py + dy, ZF + 0.004); h.userData.z0 = ZF + 0.004; tk[nome] = ctl(h, c.id, 'tecla', { tecla: nome }); } }
+          for (const [nome, dy] of [['up', 0.0045], ['down', -0.0045]]) { const h = new T.Mesh(new T.BoxGeometry(0.017, 0.0085, 0.002), invis); poe(corpo, h, px, py + dy, ZF + 0.004); tk[nome] = ctl(h, c.id, 'tecla', { tecla: nome, z0: ZF + 0.004 }); } }
         const redonda = (nome, mx, my, r, cor, des) => { aroT(mx, my, r); tecla(nome, disco(r, cor, des), mx, my, 0.0026); };
         redonda('giro', 7.5, 20.0, 0.0045, C.mar, (x) => { x.strokeStyle = '#fff'; x.lineWidth = 0.9; x.beginPath(); x.arc(0, 0, 2.3, -0.9, 3.9); x.stroke(); x.fillStyle = '#fff'; x.beginPath(); x.moveTo(0.4, -3.3); x.lineTo(3.1, -1.9); x.lineTo(0.9, -0.3); x.closePath(); x.fill(); });
         redonda('locrem', 18.9, 27.8, 0.0045, C.mar, (x) => { txt(x, 'LOC', 2.6, 0, -1.3, '#fff', 800); txt(x, 'REM', 2.6, 0, 1.7, '#fff', 800); });
@@ -195,12 +206,13 @@
         const kn = new T.Group(); poe(gr, kn, 0, 0.035, 0.012); ctl(poe(kn, cz(0.019, 0.018, preto, 32, 0.016), 0, 0, 0.009), c.id, 'pot'); poe(kn, caixa(0.003, 0.016, 0.019, mat(0xf2f2f2)), 0, 0.009, 0.0092); poe(kn, cz(0.021, 0.004, mat(0x33373c)), 0, 0, 0.002);
         return { gr, upd: (s) => { kn.rotation.z = (150 - s.pos * 300) * Math.PI / 180; } };
       },
-      sinal(c) {
-        const cor = c.cor || 'verde', gr = baseModulo(c, (x) => { txt(x, 'LED', 6.5, 0, -8, '#3a4753'); });
+      sinal(c, rotulo) {
+        const cor = c.cor || 'verde', gr = baseModulo(c, (x) => { txt(x, rotulo || 'LED', 6.5, 0, -8, '#3a4753'); });
         aro(gr, 0.03); const m = new T.MeshStandardMaterial({ color: CORES[cor], emissive: CORES[cor], emissiveIntensity: 0, roughness: 0.25, transparent: true, opacity: 0.92 });
         poe(gr, cz(0.0118, 0.012, m), 0, 0.03, 0.022); const dom2 = som(new T.Mesh(new T.SphereGeometry(0.0118, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), m)); dom2.rotation.x = Math.PI / 2; poe(gr, dom2, 0, 0.03, 0.028);
-        const luz = new T.PointLight(CORES[cor], 0, 0.5); poe(gr, luz, 0, 0.03, 0.06);
-        return { gr, upd: (s) => { const b = s.brilho || 0; m.emissiveIntensity = b * 2.6; m.color.setHex(CORES[cor]).multiplyScalar(0.45 + 0.55 * b); luz.intensity = b * 0.35; } };
+        // halo no lugar de luz pontual: cada PointLight pesa em todos os materiais da cena e o painel pode ter dezenas de sinaleiros
+        const halo = poe(gr, new T.Mesh(new T.CircleGeometry(0.03, 24), new T.MeshBasicMaterial({ color: CORES[cor], transparent: true, opacity: 0, depthWrite: false })), 0, 0.03, 0.0125);
+        return { gr, upd: (s) => { const b = s.brilho || 0; m.emissiveIntensity = b * 2.6; m.color.setHex(CORES[cor]).multiplyScalar(0.45 + 0.55 * b); halo.material.opacity = b * 0.35; } };
       },
       gerador(c) {
         const gr = baseModulo(c, (x) => { txt(x, 'AJUSTE', 6, -30, 0, '#3a4753'); txt(x, 'V / mA', 6, 34, 0, '#3a4753'); });
@@ -217,7 +229,21 @@
         const corpo = poe(gr, eixoX(cil(0.072, 0.2, azul, 40)), -0.06, cy, 0); corpo.userData = { kind: 'corpo', id: c.id }; alvos.push(corpo);
         for (let i = 0; i < 22; i++) { const a = i / 22 * Math.PI * 2; if (Math.abs(Math.cos(a)) > 0.93 && Math.cos(a) > 0) continue; const f = poe(gr, caixa(0.18, 0.011, 0.0035, azul), -0.06, cy + Math.cos(a) * 0.075, Math.sin(a) * 0.075); f.rotation.x = a; }
         poe(gr, eixoX(cil(0.076, 0.022, azul, 40)), 0.048, cy, 0); poe(gr, eixoX(cil(0.076, 0.016, azul, 40)), -0.165, cy, 0);
-        poe(gr, eixoX(cil(0.078, 0.07, azul, 40)), -0.205, cy, 0); poe(gr, eixoX(cil(0.066, 0.004, mat(0x16191c), 40)), -0.2415, cy, 0);
+        // tampa defletora (traseira): chapa azul com a grade de ventilação; pelas frestas aparece a ventoinha cinza, não um buraco preto
+        poe(gr, eixoX(cil(0.078, 0.064, azul, 40)), -0.202, cy, 0);
+        const aba = poe(gr, eixoX(cil(0.072, 0.012, azul, 40, 0.078)), -0.240, cy, 0); void aba;                                  // borda arredondada da tampa
+        for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2, nerv = poe(gr, caixa(0.06, 0.006, 0.004, azul), -0.205, cy + Math.cos(a) * 0.079, Math.sin(a) * 0.079); nerv.rotation.x = a; }   // nervuras de fixação
+        const grade = placaTex(144, 144, (x) => {
+          x.fillStyle = '#2a63b6'; x.beginPath(); x.arc(0, 0, 72, 0, 7); x.fill();
+          x.fillStyle = '#9aa3ac';                                                                                                   // frestas com a ventoinha atrás
+          for (const [r0, r1, n] of [[20, 33, 10], [37, 50, 14], [54, 64, 18]]) for (let i = 0; i < n; i++) {
+            const a0 = (i + 0.12) / n * Math.PI * 2, a1 = (i + 0.88) / n * Math.PI * 2; x.beginPath(); x.arc(0, 0, r1, a0, a1); x.arc(0, 0, r0, a1, a0, true); x.closePath(); x.fill();
+          }
+          x.fillStyle = '#6f7882'; for (let i = 0; i < 9; i++) { x.save(); x.rotate(i / 9 * Math.PI * 2); x.globalAlpha = 0.55; x.fillRect(-2, 18, 4, 46); x.restore(); } x.globalAlpha = 1;   // pás da ventoinha vistas pela grade
+          x.fillStyle = '#2a63b6'; for (const r of [35, 52]) { x.beginPath(); x.arc(0, 0, r, 0, 7); x.arc(0, 0, r - 2, 0, 7, true); x.fill(); }
+          x.fillStyle = '#245aa8'; x.beginPath(); x.arc(0, 0, 17, 0, 7); x.fill(); x.fillStyle = '#1f4f95'; x.beginPath(); x.arc(0, 0, 9, 0, 7); x.fill();
+        }, 4);
+        const tampaT = poe(gr, new T.Mesh(new T.CircleGeometry(0.072, 48), new T.MeshStandardMaterial({ map: grade, roughness: 0.5, metalness: 0.15 })), -0.2465, cy, 0); tampaT.rotation.y = -Math.PI / 2;
         for (const x of [-0.14, 0.02]) poe(gr, caixa(0.03, 0.045, 0.19, azul), x, 0.036, 0);
         // caixa de ligação com os bornes no topo
         const cl = poe(gr, caixa(0.13, 0.05, 0.085, azul), -0.06, cy + 0.092, 0);
@@ -252,8 +278,64 @@
         const kn = new T.Group(); poe(inc, kn, 0, 0.083, 0.018); ctl(poe(kn, cz(0.019, 0.01, mat(0x3a3e44), 28), 0, 0, 0.005), c.id, 'mmknob'); ctl(poe(kn, caixa(0.008, 0.036, 0.008, mat(0x1d1f22)), 0, 0, 0.012), c.id, 'mmknob'); poe(kn, caixa(0.003, 0.012, 0.0085, mat(0xffffff)), 0, 0.012, 0.0122);
         const jv = poe(inc, cz(0.0055, 0.004, mat(0xc62828)), 0.022, 0.026, 0.019), jc = poe(inc, cz(0.0055, 0.004, mat(0x111111)), -0.022, 0.026, 0.019);
         let ult = '';
-        return { gr, jv, jc, upd: (s) => { const L = banc.leitura, k = JSON.stringify(L); if (k !== ult) { ult = k; SIM.desenhaMulti(lcd.x, 200, 90, L); lcd.t.needsUpdate = true; } kn.rotation.z = -(s.modo - 2) * 42 * Math.PI / 180; } };
+        return { gr, j_pv: jv, j_pc: jc, upd: (s) => { const L = banc.leitura, k = JSON.stringify(L); if (k !== ult) { ult = k; SIM.desenhaMulti(lcd.x, 200, 90, L); lcd.t.needsUpdate = true; } kn.rotation.z = -(s.modo - 2) * 42 * Math.PI / 180; } };
       },
+    };
+    FAB.lamp = (c) => FAB.sinal(c, '220 Vca');
+    FAB.cont = function (c) {                                        // contatora tripolar (tipo WEG CWC07), bobina 24 Vcc, módulo compacto
+      const gr = baseModulo(c, (x) => {
+        x.strokeStyle = '#59646e'; x.lineWidth = 0.9; x.setLineDash([2.5, 2]);
+        for (const px of [-36, -12, 12, 36, 60]) { x.beginPath(); x.moveTo(px, -53); x.lineTo(px, -46); x.moveTo(px, 46); x.lineTo(px, 55); x.stroke(); }
+        x.setLineDash([]); x.strokeStyle = '#1c2530'; x.lineWidth = 1.1; x.beginPath(); x.moveTo(-60, -53); x.lineTo(-60, -13); x.moveTo(-60, 13); x.lineTo(-60, 55); x.stroke(); x.strokeRect(-67, -13, 14, 26);
+        txt(x, 'BOB.', 4.4, -60, -3, '#1c2530'); txt(x, '24V⎓', 4.4, -60, 5, '#c62828');
+      });
+      const tex = placaTex(60, 90, (x) => {
+        x.fillStyle = '#ecedea'; x.fillRect(-30, -45, 60, 90); x.fillStyle = '#d5d8d3'; x.fillRect(-30, -45, 60, 12); x.fillRect(-30, 33, 60, 12);
+        txt(x, 'WEG', 6, -12, -22, '#1d4f9a', 800); txt(x, 'CWC07', 6, 11, -22, '#3a4753'); txt(x, '7 A AC-3', 4, 0, -14, '#59646e', 400); txt(x, '24 Vcc', 4.6, 0, 24, '#c62828');
+        txt(x, 'NA', 4, 18, 30, '#1e56b0'); txt(x, 'NF', 4, -18, 30, '#c62828'); x.fillStyle = '#2b3138'; x.fillRect(-8, -7, 16, 22);
+      }, 5);
+      const cinza = mat(0xd6d8d4, { roughness: 0.5 });
+      poe(gr, som(new T.Mesh(new T.BoxGeometry(0.06, 0.09, 0.06), [cinza, cinza, cinza, cinza, new T.MeshStandardMaterial({ map: tex, roughness: 0.5 }), cinza])), 0, -0.001, 0.012 + 0.03);
+      const flag = poe(gr, caixa(0.013, 0.008, 0.003, new T.MeshStandardMaterial({ color: 0x2e9e4a, roughness: 0.4 })), 0, 0.004, 0.012 + 0.061);
+      return { gr, upd: (s) => { flag.position.y = s.fechado ? -0.006 : 0.004; flag.material.color.setHex(s.fechado ? 0xd62a2c : 0x2e9e4a); } };
+    };
+    FAB.fonte = function (c) {                                       // fonte chaveada para trilho DIN
+      const gr = baseModulo(c, (x) => { txt(x, 'ENTRADA 100-240 Vca', 5.2, 0, -48, '#3a4753'); txt(x, 'SAÍDA 24 Vcc', 5.2, 0, 52, '#c62828'); });
+      const tex = placaTex(60, 80, (x) => { x.fillStyle = '#4a5057'; x.fillRect(-30, -40, 60, 80); for (let i = 0; i < 9; i++) { x.fillStyle = '#353a40'; x.fillRect(-24, -34 + i * 4, 48, 2); } txt(x, 'FONTE', 7, 0, 6, '#f2f2f2'); txt(x, '24 Vcc · 2,5 A', 5, 0, 15, '#f2f2f2', 400); txt(x, 'DC OK', 4, 14, 30, '#cfd6dc', 400); }, 5);
+      const cz2 = mat(0x4a5057, { roughness: 0.5 }); poe(gr, som(new T.Mesh(new T.BoxGeometry(0.06, 0.08, 0.045), [cz2, cz2, cz2, cz2, new T.MeshStandardMaterial({ map: tex, roughness: 0.5 }), cz2])), 0, 0, 0.012 + 0.0225);
+      const led = poe(gr, cz(0.0024, 0.002, new T.MeshStandardMaterial({ color: 0x1d4a26, emissive: 0x30ff60, emissiveIntensity: 0 })), 0.006, -0.03, 0.0585);
+      return { gr, upd: (s) => { led.material.emissiveIntensity = s.on ? 3 : 0; } };
+    };
+    FAB.osc = function (c) {
+      const gr = new T.Group(), cinza = mat(0xd9dcd7, { roughness: 0.55 });
+      const frente = placaTex(300, 160, (x) => {
+        x.fillStyle = '#e4e6e1'; x.fillRect(-150, -80, 300, 160); x.fillStyle = '#23272c'; x.beginPath(); x.roundRect(-144, -72, 172, 128, 5); x.fill();
+        txt(x, 'OSCILOSCÓPIO DIGITAL · 2 CANAIS · PONTEIRAS DIFERENCIAIS 700 V', 5.2, -58, 65, '#3a4753');
+        const escala = (cx, cy, r) => { x.strokeStyle = '#59646e'; x.lineWidth = 0.6; for (let i = 0; i <= 8; i++) { const a = (-135 + i * 33.75) * Math.PI / 180; x.beginPath(); x.moveTo(cx + Math.sin(a) * (r + 2), cy - Math.cos(a) * (r + 2)); x.lineTo(cx + Math.sin(a) * (r + 4), cy - Math.cos(a) * (r + 4)); x.stroke(); } };
+        txt(x, 'TEMPO/DIV', 5, 60, -66, '#3a4753'); escala(60, -48, 9); txt(x, 'POSIÇÃO', 5, 112, -66, '#3a4753'); escala(112, -48, 7);
+        txt(x, 'CH1  V/DIV', 5, 60, -22, '#8a6d00'); escala(60, -4, 9); txt(x, 'CH2  V/DIV', 5, 112, -22, '#0b6f9c'); escala(112, -4, 9);
+        x.fillStyle = '#cfd2cd'; for (const bx of [40, 72, 104]) { x.beginPath(); x.roundRect(bx - 14.5, 14.5, 29, 12, 2.5); x.fill(); }
+        txt(x, 'CH1', 6, 47, 36, '#8a6d00'); txt(x, '+', 6, 40, 62, '#3a4753'); txt(x, '−', 6, 65, 62, '#3a4753'); txt(x, 'CH2', 6, 107, 36, '#0b6f9c'); txt(x, '+', 6, 100, 62, '#3a4753'); txt(x, '−', 6, 125, 62, '#3a4753');
+      }, 4);
+      const corpo = som(new T.Mesh(new T.BoxGeometry(0.30, 0.16, 0.13), [cinza, cinza, cinza, cinza, new T.MeshStandardMaterial({ map: frente, roughness: 0.55 }), cinza])); poe(gr, corpo, 0, 0.09, 0); corpo.userData = { kind: 'corpo', id: c.id }; alvos.push(corpo);
+      for (const px of [-0.12, 0.12]) for (const pz of [-0.045, 0.045]) poe(gr, caixa(0.03, 0.012, 0.02, preto), px, 0.005, pz);
+      poe(gr, caixa(0.2, 0.012, 0.02, mat(0x3a3e44)), 0, 0.176, 0);
+      const tl = tela(450, 300), mt = poe(gr, new T.Mesh(new T.PlaneGeometry(0.156, 0.104), new T.MeshBasicMaterial({ map: tl.t, toneMapped: false })), -0.058, 0.098, 0.0656); ctl(mt, c.id, 'osctela');
+      const v = { gr }; [['a1', 0.040, 0xe0b400], ['b1', 0.065, 0x2a2a2c], ['a2', 0.100, 0x1aa3d9], ['b2', 0.125, 0x2a2a2c]].forEach(([k, px, cor]) => { poe(gr, cz(0.0075, 0.006, aco, 18), px, 0.041, 0.068); v['j_' + k] = poe(gr, cz(0.0052, 0.008, mat(cor), 14), px, 0.041, 0.07); });
+      // controles de verdade: botões giratórios (clique = +1, botão direito = −1, roda do mouse ou arrastar) e teclas AUTO, FILTRO, RUN/STOP
+      const knob = (tipo, cx, cy, r, cor) => { const g2 = new T.Group(); poe(gr, g2, cx / 1000, 0.09 - cy / 1000, 0.065); g2.add(poe(g2, cz(r + 0.0015, 0.003, mat(0x9aa1a8), 28), 0, 0, 0.0015));
+        const k = ctl(poe(g2, cz(r, 0.011, mat(cor, { roughness: 0.45 }), 28, r * 0.9), 0, 0, 0.0065), c.id, tipo); poe(g2, caixa(0.0016, r * 0.75, 0.0012, mat(0xf2f2f2)), 0, r * 0.5, 0.0122); ctl(g2.children[0], c.id, tipo); return g2; };
+      const kTb = knob('osc-tb', 60, -48, 0.009, 0x3a3e44), kPos = knob('osc-pos', 112, -48, 0.007, 0x3a3e44), kV1 = knob('osc-v1', 60, -4, 0.009, 0xe0b400), kV2 = knob('osc-v2', 112, -4, 0.009, 0x1aa3d9);
+      const tecla = (tipo, bx, rot, cor) => { const tx = placaTex(26, 9, (x) => { x.fillStyle = cor; x.fillRect(-13, -4.5, 26, 9); txt(x, rot, 4.2, 0, 0.4, '#fff'); }, 10), m = new T.MeshStandardMaterial({ map: tx, roughness: 0.45, emissive: 0xffffff, emissiveIntensity: 0, emissiveMap: tx });
+        const l = mat(parseInt(cor.slice(1), 16)), b = new T.Mesh(new T.BoxGeometry(0.026, 0.009, 0.004), [l, l, l, l, m, l]); poe(gr, b, bx / 1000, 0.09 - 0.0205, 0.0672); ctl(b, c.id, tipo, { z0: 0.0672 }); b.userData.m = m; return b; };
+      const tAuto = tecla('osc-auto', 40, 'AUTO', '#3d7a4a'), tFil = tecla('osc-filtro', 72, 'FILTRO', '#4a5560'), tRun = tecla('osc-run', 104, 'RUN/STOP', '#2e8b3d');
+      const ang = (i, n) => (135 - i / (n - 1) * 270) * Math.PI / 180;
+      let n = 0; v.upd = (s) => {
+        kTb.rotation.z = ang(s.tb, SIM.OSC_TB.length); kV1.rotation.z = ang(s.v1, SIM.OSC_V.length); kV2.rotation.z = ang(s.v2, SIM.OSC_V.length); kPos.rotation.z = -(s.pos || 0) / 5 * 2.36;
+        tFil.userData.m.emissiveIntensity = s.filtro ? 0.55 : 0; tRun.userData.m.color.setHex(s.parado ? 0xff8080 : 0xffffff); tRun.material[0].color.setHex(s.parado ? 0xb33 : 0x2e8b3d);
+        if (n++ % 6) return; SIM.desenhaOsc(tl.x, 450, 300, SIM.dadosOsc(banc, 150)); tl.t.needsUpdate = true;
+      };
+      return v;
     };
     const perfNow = () => (g.performance ? performance.now() : Date.now());
 
@@ -264,7 +346,7 @@
     }
     function reconstruir() {
       gComp.clear(); gFios.clear(); vistas = {}; termos = {}; alvos = alvos.filter((a) => a.userData.kind === 'ponta'); fiosV = {};
-      for (const c of banc.comps) { const v = FAB[c.tipo](c); vistas[c.id] = v; gComp.add(v.gr); posiciona(c); }
+      for (const c of banc.comps) addVista(c);
       for (const f of banc.fios) fazFio(f);
       sel = null; pend = null; marcaSel();
     }
@@ -282,16 +364,18 @@
         const y = MESA_Y + c.y;
         if (c.tipo === 'cfw') caixas.push({ x0: c.x - 0.041, x1: c.x + 0.041, y0: y + 0.045 - 0.086, y1: y + 0.045 + 0.086, z0: -1, z1: 0.166, modo: 'frente' });
         else if (c.tipo === 'disj') caixas.push({ x0: c.x - 0.03, x1: c.x + 0.03, y0: y - 0.046, y1: y + 0.046, z0: -1, z1: 0.095, modo: 'frente' });
+        else if (c.tipo === 'cont') caixas.push({ x0: c.x - 0.032, x1: c.x + 0.032, y0: y - 0.047, y1: y + 0.047, z0: -1, z1: 0.072, modo: 'frente' });
+        else if (c.tipo === 'fonte') caixas.push({ x0: c.x - 0.032, x1: c.x + 0.032, y0: y - 0.042, y1: y + 0.042, z0: -1, z1: 0.057, modo: 'frente' });
         else if (c.tipo === 'motor') caixas.push({ x0: c.x - 0.245, x1: c.x + 0.235, y0: MESA_Y, y1: MESA_Y + 0.205, z0: c.y - 0.092, z1: c.y + 0.092, modo: 'volta' });
       }
     }
     function colide(p) {
-      if (p.z < 0.016 + RC && p.y > MESA_Y && p.y < MESA_Y + 1.07 && Math.abs(p.x) < 0.96) p.z = 0.016 + RC;                   // placas dos módulos no painel
+      if (p.z < 0.016 + RC && p.y > MESA_Y && p.y < MESA_Y + PH + 0.05 && Math.abs(p.x) < PW / 2 + 0.03) p.z = 0.016 + RC;                   // placas dos módulos no painel
       for (const b of caixas) if (p.x > b.x0 && p.x < b.x1 && p.y > b.y0 && p.y < b.y1 && p.z > b.z0 && p.z < b.z1 + RC) {
         if (b.modo === 'frente') p.z = b.z1 + RC;
         else { const dc = b.y1 + RC - p.y, df = b.z1 + RC - p.z, dt = p.z - (b.z0 - RC); if (dc <= df && dc <= dt) p.y = b.y1 + RC; else if (df <= dt) p.z = b.z1 + RC; else p.z = b.z0 - RC; }
       }
-      if (p.y < MESA_Y + RC && p.z > -0.06 && p.z < 0.79 && Math.abs(p.x) < 1.05) { p.y = MESA_Y + RC; return true; }           // tampo da mesa
+      if (p.y < MESA_Y + RC && p.z > -0.06 && p.z < 0.79 && Math.abs(p.x) < PW / 2 + 0.12) { p.y = MESA_Y + RC; return true; }           // tampo da mesa
       return false;
     }
     const pino = (m) => cil(0.0056, 0.03, m, 12);
@@ -364,24 +448,29 @@
       }
       for (const k in pontas) { const c = pontas[k].corda; if (c && c.acordada > 0) { const e = passoCorda(c); if (e) desenhaCorda(c, e); c.acordada--; } }
     }
+    // pontas de prova: as duas do multímetro e as quatro do osciloscópio (cada canal é uma ponteira diferencial: + e −)
+    const PD = { pv: { tipo: 'multi', cor: 0xc62828, anel: 0xc62828, lado: 1, nome: 'Ponta vermelha', rep: [0.115, -0.05], nj: new V3(0, -0.35, 0.94).normalize() },
+      pc: { tipo: 'multi', cor: 0x18181a, anel: 0x18181a, lado: -1, nome: 'Ponta preta', rep: [0.085, -0.05], nj: new V3(0, -0.35, 0.94).normalize() },
+      a1: { tipo: 'osc', cor: 0xe0b400, anel: 0xe0b400, lado: 1, nome: 'Ponteira CH1 +', rep: [0.02, 0.085], nj: new V3(0, 0, 1) }, b1: { tipo: 'osc', cor: 0x18181a, anel: 0xe0b400, lado: -1, nome: 'Ponteira CH1 −', rep: [0.05, 0.085], nj: new V3(0, 0, 1) },
+      a2: { tipo: 'osc', cor: 0x1aa3d9, anel: 0x1aa3d9, lado: 1, nome: 'Ponteira CH2 +', rep: [0.09, 0.085], nj: new V3(0, 0, 1) }, b2: { tipo: 'osc', cor: 0x18181a, anel: 0x1aa3d9, lado: -1, nome: 'Ponteira CH2 −', rep: [0.12, 0.085], nj: new V3(0, 0, 1) } };
     const pontas = {};
-    for (const [k, cor] of [['pv', 0xc62828], ['pc', 0x18181a]]) {
-      const gr = new T.Group(), m = mat(cor, { roughness: 0.45 });
-      poe(gr, cz(0.0011, 0.022, aco, 8), 0, 0, 0.011); poe(gr, cz(0.0042, 0.03, m, 12, 0.002), 0, 0, 0.037); poe(gr, cz(0.0062, 0.085, m, 14), 0, 0, 0.094); poe(gr, cz(0.0085, 0.004, m, 14), 0, 0, 0.054);
+    for (const k in PD) {
+      const gr = new T.Group(), m = mat(PD[k].cor, { roughness: 0.45 });
+      poe(gr, cz(0.0011, 0.022, aco, 8), 0, 0, 0.011); poe(gr, cz(0.0042, 0.03, m, 12, 0.002), 0, 0, 0.037); poe(gr, cz(0.0062, 0.085, m, 14), 0, 0, 0.094); poe(gr, cz(0.0085, 0.004, mat(PD[k].anel, { roughness: 0.45 }), 14), 0, 0, 0.054); poe(gr, cz(0.0066, 0.006, mat(PD[k].anel, { roughness: 0.45 }), 14), 0, 0, 0.125);
       const hit = new T.Mesh(new T.CylinderGeometry(0.014, 0.014, 0.13, 8), invis); hit.rotation.x = Math.PI / 2; hit.position.z = 0.075; hit.userData = { kind: 'ponta', k }; gr.add(hit); alvos.push(hit);
-      gPontas.add(gr); pontas[k] = { gr, livre: null, m, corda: null, ext: null };
+      gPontas.add(gr); pontas[k] = { gr, livre: null, m: mat(PD[k].anel === PD[k].cor ? PD[k].cor : 0x2a2a2c, { roughness: 0.5 }), corda: null, ext: null };
     }
     function atualizaPontas() {
-      const mm = banc.porTipo('multi'), v = mm && vistas[mm.id]; gPontas.visible = !!v; if (!v) return;
-      for (const k of ['pv', 'pc']) {
-        const p = pontas[k], ref = mm.st[k], t = ref && posT(ref), lado = k === 'pv' ? 1 : -1;
+      for (const k in PD) {
+        const d = PD[k], p = pontas[k], mm = banc.porTipo(d.tipo), v = mm && vistas[mm.id]; p.gr.visible = !!v; if (p.corda) p.corda.mesh.visible = !!v; if (!v) continue;
+        const ref = mm.st[k], t = ref && posT(ref);
         if (p.livre) { p.gr.position.copy(p.livre.p); p.gr.quaternion.setFromUnitVectors(new V3(0, 0, 1), p.livre.n); }
-        else if (t) { const n = t.n.clone().add(new V3(lado * 0.32, t.n.y ? 0 : 0.18, t.n.y ? 0.3 : 0)).normalize(); p.gr.position.copy(t.p).addScaledVector(t.n, 0.006); p.gr.quaternion.setFromUnitVectors(new V3(0, 0, 1), n); }
-        else { p.gr.position.set(mm.x + 0.085 + (k === 'pv' ? 0.03 : 0), MESA_Y + 0.008, mm.y - 0.05); p.gr.quaternion.setFromUnitVectors(new V3(0, 0, 1), new V3(0, 0, 1)); }
+        else if (t) { const n = t.n.clone().add(new V3(d.lado * 0.32, t.n.y ? 0 : 0.18, t.n.y ? 0.3 : 0)).normalize(); p.gr.position.copy(t.p).addScaledVector(t.n, 0.006); p.gr.quaternion.setFromUnitVectors(new V3(0, 0, 1), n); }
+        else { p.gr.position.set(mm.x + d.rep[0], MESA_Y + 0.008, mm.y + d.rep[1]); p.gr.quaternion.setFromUnitVectors(new V3(0, 0, 1), new V3(0, 0, 1)); }
         p.gr.updateMatrixWorld(true);
-        const j = new V3(); v[k === 'pv' ? 'jv' : 'jc'].getWorldPosition(j); const fim = new V3(0, 0, 0.137).applyMatrix4(p.gr.matrixWorld), dir = new V3(0, 0, 1).transformDirection(p.gr.matrixWorld);
+        const j = new V3(); v['j_' + k].getWorldPosition(j); const fim = new V3(0, 0, 0.137).applyMatrix4(p.gr.matrixWorld), dir = new V3(0, 0, 1).transformDirection(p.gr.matrixWorld);
         const chave = j.toArray().concat(fim.toArray(), dir.toArray()).map((x) => x.toFixed(3)).join();
-        p.ext = { a: j, na: new V3(0, -0.35, 0.94).normalize(), b: fim, nb: dir };
+        p.ext = { a: j, na: d.nj, b: fim, nb: dir };
         if (!p.corda) { p.corda = criaCorda(0.0022, p.m, () => p.ext); gPontas.add(p.corda.mesh); assenta(p.corda, 150); }
         if (chave !== p.chave) { p.chave = chave; p.corda.acordada = 150; }
       }
@@ -389,9 +478,9 @@
 
     // ---------------------------------------------------------------- câmera (órbita própria: arrastar o fundo gira, botão direito/dois dedos desloca, roda aproxima)
     const camS = { alvo: new V3(-0.05, 1.27, 0.12), r: 2.5, az: 0, el: 0.17 }, camD = { alvo: camS.alvo.clone(), r: camS.r, az: camS.az, el: camS.el };
-    const VISTAS = { geral: () => [new V3(-0.05, 1.27, 0.12), 2.5, 0, 0.17], inversor: () => { const c = banc.porTipo('cfw'); return [new V3(c.x, MESA_Y + c.y + 0.05, 0.1), 0.75, 0, 0.05]; },
+    const VISTAS = { geral: () => [new V3(PW > 2 ? 0 : -0.05, 1.27 + (PH - 1.02) / 2, 0.12), 2.5 * Math.max(1, (PW + 0.3) / 2.16, (PH + 0.5) / 1.52), 0, 0.17], inversor: () => { const c = banc.porTipo('cfw'); return [new V3(c.x, MESA_Y + c.y + 0.05, 0.1), 0.75, 0, 0.05]; },
       bornes: () => { const c = banc.porTipo('cfw'); return [new V3(c.x, MESA_Y + c.y - 0.18, 0.02), 0.5, 0, 0.12]; }, comando: () => [new V3(0.12, MESA_Y + 0.57, 0.02), 1.25, 0, 0.06],
-      motor: () => { const c = banc.porTipo('motor'); return [new V3(c.x, MESA_Y + 0.12, c.y), 0.95, 0.35, 0.42]; }, multimetro: () => { const c = banc.porTipo('multi'); return [new V3(c.x, MESA_Y + 0.1, c.y), 0.55, 0, 0.75]; } };
+      motor: () => { const c = banc.porTipo('motor'); return [new V3(c.x, MESA_Y + 0.12, c.y), 0.95, 0.35, 0.42]; }, motorTras: () => { const c = banc.porTipo('motor'); return [new V3(c.x - 0.2, MESA_Y + 0.12, c.y), 0.7, -1.2, 0.3]; }, osciloscopio: () => { const c = banc.porTipo('osc'); return [new V3(c.x + 0.02, MESA_Y + 0.1, c.y + 0.05), 0.62, 0, 0.42]; }, multimetro: () => { const c = banc.porTipo('multi'); return [new V3(c.x, MESA_Y + 0.1, c.y), 0.55, 0, 0.75]; } };
     function vista(n) { const v = VISTAS[n] && VISTAS[n](); if (!v) return; camD.alvo.copy(v[0]); camD.r = v[1]; camD.az = v[2]; camD.el = v[3]; }
     function aplicaCam(k) {
       camS.alvo.lerp(camD.alvo, k); camS.r += (camD.r - camS.r) * k; camS.az += (camD.az - camS.az) * k; camS.el += (camD.el - camS.el) * k;
@@ -422,17 +511,49 @@
       return hits[0].object.userData.kind === 'fio' ? hits[0] : cand;
     }
     const noPlano = (normal, pt) => { const out = new V3(); return ray.ray.intersectPlane(new T.Plane().setFromNormalAndCoplanarPoint(normal, pt), out) ? out : null; };
+    // fio selecionado: halo amarelo translúcido em volta, mantendo a cor do fio à vista
+    const haloMat = new T.MeshBasicMaterial({ color: 0xffd400, transparent: true, opacity: 0.38, depthWrite: false });
+    const caixaSel = new T.BoxHelper(undefined, 0xffd400); caixaSel.visible = false; caixaSel.material.depthTest = false; caixaSel.renderOrder = 10; scene.add(caixaSel);
     function marcaSel() {
-      for (const id in fiosV) { const f = banc.fios.find((x) => x.id === +id); if (f) fiosV[id].tubo.material = sel && sel.fio === +id ? selMat : mat(CORES[f.cor] || CORES.azul, { roughness: 0.5 }); }
+      for (const id in fiosV) { const f = banc.fios.find((x) => x.id === +id), v = fiosV[id]; if (!f) continue; const m = mat(CORES[f.cor] || CORES.azul, { roughness: 0.5 }); v.tubo.material = m; v.pa.material = m; v.pb.material = m; v.pick.material = sel && sel.fio === +id ? haloMat : invis; }
       cb.selecao && cb.selecao(sel);
     }
-    const selMat = new T.MeshStandardMaterial({ color: 0xffd400, emissive: 0xffa000, emissiveIntensity: 0.9 });
+    function corDoFio(id, cor) { if (banc.corFio(id, cor)) marcaSel(); }
+    function addVista(c) { const v = FAB[c.tipo](c); vistas[c.id] = v; gComp.add(v.gr); posiciona(c); }
+    function tiraVista(id) { const v = vistas[id]; if (!v) return; const dele = new Set(); v.gr.traverse((o) => dele.add(o)); alvos = alvos.filter((a) => !dele.has(a)); for (const k in termos) if (k.startsWith(id + '.')) delete termos[k]; gComp.remove(v.gr); delete vistas[id]; }
+    function adicionar(tipo, cor) { const c = banc.add(tipo, undefined, undefined, cor); if (!c) return null; addVista(c); sel = { comp: c.id }; marcaSel(); return c; }
+    function removerComp(id) { const c = banc.comp(id); if (!c || TIPOS[c.tipo].unico) return false; banc.remover(id); tiraVista(id); if (sel && sel.comp === id) sel = null; sincFios(); return true; }
+    function seleciona(s2) { sel = s2; marcaSel(); }
+    function tamanhoPainel(nome) { const n = banc.tamanhoPainel(nome); if (n < 0) return n; montaEstrutura(); for (const c of banc.comps) posiciona(c); for (const id in fiosV) acorda(id, 200); vista('geral'); return n; }
+    // miniatura de um componente para a paleta: o MESMO modelo 3D da bancada, fotografado num canto do canvas e copiado
+    const miniCache = {};
+    function miniatura(tipo, cor) {
+      const k = tipo + ':' + (cor || ''); if (miniCache[k]) return miniCache[k];
+      try {
+        const c = { id: '__mini', tipo, x: 0, y: 0, cor: cor || '', st: Object.assign(SIM.ST0[tipo](), { brilho: 1, aceso: true, pos: 0.35 }) };
+        const v = FAB[tipo](c), ms = new T.Scene(); ms.add(new T.HemisphereLight(0xffffff, 0x9aa0a6, 2.3)); const dl = new T.DirectionalLight(0xffffff, 2.2); dl.position.set(1.2, 2, 3); ms.add(dl, v.gr);
+        if (v.upd) v.upd(c.st); v.gr.updateMatrixWorld(true);
+        // enquadra o próprio dispositivo (botão, contatora...), não a placa inteira com os bornes
+        const FOCO = { bot: [0, 0.036, 0.016, 0.034], chave: [0, 0.036, 0.016, 0.034], emerg: [0, 0.038, 0.02, 0.04], sinal: [0, 0.03, 0.02, 0.03], lamp: [0, 0.03, 0.02, 0.03], pot: [0, 0.034, 0.016, 0.036],
+          cont: [0, 0, 0.04, 0.062], fonte: [0, 0, 0.03, 0.058], disj: [0, 0, 0.05, 0.06], gerador: [0, 0.03, 0.016, 0.058] }[tipo];
+        let cen, raio; if (FOCO) { cen = new V3(FOCO[0], FOCO[1], FOCO[2]); raio = FOCO[3]; } else { const box = new T.Box3().setFromObject(v.gr); cen = box.getCenter(new V3()); raio = box.getSize(new V3()).length() / 2; }
+        const mc = new T.PerspectiveCamera(26, 1, 0.001, 10); mc.position.copy(cen).addScaledVector(new V3(0.42, 0.3, 1).normalize(), raio / Math.sin(13 * Math.PI / 180)); mc.lookAt(cen);
+        const S = 128, dpr = renderer.getPixelRatio(), W = Math.round(S * dpr), H = renderer.domElement.height, cv = document.createElement('canvas'); cv.width = W; cv.height = W;
+        const cc = new T.Color(), ca = renderer.getClearAlpha(); renderer.getClearColor(cc);
+        renderer.setScissorTest(true); renderer.setScissor(0, 0, S, S); renderer.setViewport(0, 0, S, S); renderer.setClearColor(0x2c3640, 1); renderer.render(ms, mc);
+        cv.getContext('2d').drawImage(renderer.domElement, 0, H - W, W, W, 0, 0, W, W);
+        renderer.setScissorTest(false); const sz = renderer.getSize(new T.Vector2()); renderer.setViewport(0, 0, sz.x, sz.y); renderer.setClearColor(cc, ca);
+        const dele = new Set(); v.gr.traverse((o) => { dele.add(o); if (o.geometry) o.geometry.dispose(); }); alvos = alvos.filter((a) => !dele.has(a)); for (const t in termos) if (t.startsWith('__mini.')) delete termos[t];
+        renderer.render(scene, cam);
+        return (miniCache[k] = cv.toDataURL('image/png'));
+      } catch (e) { return null; }
+    }
     const corAuto = (a, b) => { const ia = banc.infoTerm(a), ib = banc.infoTerm(b), ca = ia.term.cor, cbb = ib.term.cor; if (ca === 'verde' || cbb === 'verde') return 'verde'; for (const c of ['vermelho', 'amarelo']) if (ca === c || cbb === c) return c; return ca === 'preto' && cbb === 'preto' ? 'preto' : 'azul'; };
     function ligar(a, b) {
       const f = banc.addFio(a, b, corFio === 'auto' ? corAuto(a, b) : corFio);
       if (f) { fazFio(f); cb.toast && cb.toast(`Fio ${f.a.replace('.', ':')} → ${f.b.replace('.', ':')}`); } else if (a !== b) cb.toast && cb.toast('Esses dois bornes já estão ligados por um fio.');
     }
-    function removerSel() { if (!sel || !sel.fio) return; banc.removerFio(sel.fio); sel = null; sincFios(); }
+    function removerSel() { if (!sel) return; if (sel.comp) { const id = sel.comp; if (!removerComp(id)) cb.toast && cb.toast(`${id} faz parte da bancada e não pode ser removido.`); else cb.toast && cb.toast(`${id} removido da bancada`); return; } if (!sel.fio) return; banc.removerFio(sel.fio); sel = null; sincFios(); }
     function cancela() { pend = null; armada = null; marcaIni.visible = false; elastico.visible = false; dom.style.cursor = ''; cb.modo && cb.modo(''); }
 
     const pts = new Map(); let gesto = null, pinch = 0;
@@ -448,7 +569,20 @@
         else if (u.tipo === 'mmknob') banc.acao(c.id, { modo: (c.st.modo + (ev && (ev.button === 2 || ev.shiftKey) ? 4 : 1)) % 5 });
         else if (u.tipo === 'germodo') banc.acao(c.id, { modo: c.st.modo === 'V' ? 'mA' : 'V', valor: c.st.modo === 'V' ? 4 : 0 });
         else if (u.tipo === 'lcd') cb.abreHMI && cb.abreHMI();
+        else if (u.tipo === 'osctela') cb.abreOsc && cb.abreOsc();
+        else if (u.tipo === 'osc-auto') { banc.acao(c.id, Object.assign({ parado: false }, SIM.autoOsc(banc))); cb.toast && cb.toast('Osciloscópio: ajuste automático'); }
+        else if (u.tipo === 'osc-filtro') { banc.acao(c.id, { filtro: !c.st.filtro }); cb.toast && cb.toast(c.st.filtro ? 'Filtro ligado: só a fundamental' : 'Filtro desligado: PWM completo'); }
+        else if (u.tipo === 'osc-run') { banc.acao(c.id, { parado: !c.st.parado }); cb.toast && cb.toast(c.st.parado ? 'Osciloscópio parado (STOP)' : 'Osciloscópio rodando (RUN)'); }
+        else if (OSC_KNOB[u.tipo]) passoOsc(u, ev && (ev.button === 2 || ev.shiftKey) ? -1 : 1);
       }
+    }
+    const OSC_KNOB = { 'osc-tb': 'tb', 'osc-v1': 'v1', 'osc-v2': 'v2', 'osc-pos': 'pos' };
+    function passoOsc(u, d) {
+      const c = banc.comp(u.id), k = OSC_KNOB[u.tipo]; if (!c || !k) return;
+      if (k === 'pos') banc.acao(c.id, { pos: Math.max(-5, Math.min(5, (c.st.pos || 0) + d * 0.5)) });
+      else banc.acao(c.id, { [k]: Math.max(0, Math.min((k === 'tb' ? SIM.OSC_TB : SIM.OSC_V).length - 1, c.st[k] + d)) });
+      const s2 = c.st, tx = k === 'tb' ? (SIM.OSC_TB[s2.tb] < 0.001 ? SIM.OSC_TB[s2.tb] * 1e6 + ' µs' : SIM.OSC_TB[s2.tb] * 1000 + ' ms') + '/div' : k === 'pos' ? `posição ${String(s2.pos).replace('.', ',')} div` : `${k === 'v1' ? 'CH1' : 'CH2'} ${SIM.OSC_V[s2[k]]} V/div`;
+      cb.toast && cb.toast('Osciloscópio: ' + tx);
     }
     function giraBotao(u, delta) {
       const c = banc.comp(u.id); if (!c) return;
@@ -460,11 +594,11 @@
       dom.setPointerCapture(ev.pointerId); pts.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
       if (pts.size === 2) { if (gesto && gesto.fim) gesto.fim(true); gesto = { tipo: 'pinch' }; const [a, b] = [...pts.values()]; pinch = Math.hypot(a.x - b.x, a.y - b.y); return; }
       const h = pega(ev), u = h && h.object.userData; gesto = { tipo: '', x0: ev.clientX, y0: ev.clientY, x: ev.clientX, y: ev.clientY, moveu: false, botao: ev.button, u, h };
-      if (ev.button === 2) { gesto.tipo = u && (u.kind === 'ctl' && u.tipo === 'mmknob') ? 'ctl' : 'pan'; return; }
+      if (ev.button === 2) { gesto.tipo = u && (u.kind === 'ctl' && (u.tipo === 'mmknob' || OSC_KNOB[u.tipo])) ? 'ctl' : 'pan'; return; }
       if (!u) { gesto.tipo = ev.shiftKey ? 'pan' : 'orbita'; return; }
       if (u.kind === 'ponta') { gesto.tipo = 'ponta'; }
       else if (u.kind === 'term') { gesto.tipo = 'term'; }
-      else if (u.kind === 'ctl') { gesto.tipo = 'ctl'; if (u.tipo === 'btn' || u.tipo === 'tecla') { acionar(u, true); gesto.fim = () => acionar(u, false); } }
+      else if (u.kind === 'ctl') { gesto.tipo = 'ctl'; if (u.tipo === 'btn' || u.tipo === 'tecla') { acionar(u, true); gesto.fim = () => acionar(u, false); } else if (u.z0 && h.object) { const o = h.object; o.position.z = u.z0 - 0.0015; gesto.fim = () => { o.position.z = u.z0; }; } }
       else if (u.kind === 'fio') gesto.tipo = 'fio';
       else if (u.kind === 'pino') gesto.tipo = 'pino';
       else if (u.kind === 'corpo') { const c = banc.comp(u.id), painel = TIPOS[c.tipo].plano === 'painel'; const p = noPlano(painel ? new V3(0, 0, 1) : new V3(0, 1, 0), h.point); gesto.tipo = 'corpo'; gesto.c = c; gesto.painel = painel; gesto.pt = h.point.clone(); gesto.dx = c.x - p.x; gesto.dy = c.y - (painel ? p.y - MESA_Y : p.z); }
@@ -486,7 +620,7 @@
       else if (gesto.tipo === 'pan') { const k = camD.r * 0.0011, dir = new V3(Math.cos(camS.az), 0, -Math.sin(camS.az)); camD.alvo.addScaledVector(dir, -dx * k); camD.alvo.y = Math.max(0.3, Math.min(2.4, camD.alvo.y + dy * k)); }
       else if (gesto.tipo === 'corpo') {
         raio(ev); const c = gesto.c, q = noPlano(gesto.painel ? new V3(0, 0, 1) : new V3(0, 1, 0), gesto.pt); if (!q) return;
-        const L = LIM[gesto.painel ? 'painel' : 'mesa'], d = TIPOS[c.tipo], mw = gesto.painel ? d.w / 2000 : 0.05, mh = gesto.painel ? d.h / 2000 : 0;
+        const L = LIMS()[gesto.painel ? 'painel' : 'mesa'], d = TIPOS[c.tipo], mw = gesto.painel ? d.w / 2000 : 0.05, mh = gesto.painel ? d.h / 2000 : 0;
         c.x = Math.max(L[0] + mw, Math.min(L[1] - mw, q.x + gesto.dx)); c.y = Math.max(L[2] + mh, Math.min(L[3] - mh, (gesto.painel ? q.y - MESA_Y : q.z) + gesto.dy));
         posiciona(c); refazFiosDe(c.id); dom.style.cursor = 'grabbing';
       } else if (gesto.tipo === 'fio' || gesto.tipo === 'pino') {          // puxando o cabo: o nó mais próximo acompanha o ponteiro
@@ -499,6 +633,7 @@
         raio(ev); const q = noPlano(cam.getWorldDirection(new V3()), v.corda.nos[v.arrasto.k]); if (q) { atualizaCaixas(); colide(q); v.arrasto.p.copy(q); }
         acorda(id, 200); dom.style.cursor = 'grabbing';
       } else if (gesto.tipo === 'ctl' && (gesto.u.tipo === 'pot' || gesto.u.tipo === 'gerknob')) giraBotao(gesto.u, (dx - dy) / 260);
+      else if (gesto.tipo === 'ctl' && OSC_KNOB[gesto.u.tipo]) { gesto.acc = (gesto.acc || 0) + (dx - dy) / 45; while (Math.abs(gesto.acc) >= 1) { const d = Math.sign(gesto.acc); passoOsc(gesto.u, d); gesto.acc -= d; } }
       else if (gesto.tipo === 'term') {                           // arrastando de um borne: fio elástico até o outro borne
         if (!pend) { pend = gesto.u.ref; anelEm(marcaIni, pend); }
         const h = pega(ev, (u) => u.kind === 'term'), t = posT(pend); raio(ev); const q = noPlano(new V3(0, 0, 1), new V3(0, 0, 0.05)) || t.p;
@@ -506,7 +641,7 @@
         elastico.geometry.setFromPoints([t.p.clone().addScaledVector(t.n, 0.02), h ? posT(gesto.sobre).p : q]); elastico.visible = true;
       } else if (gesto.tipo === 'ponta') {
         const h = pega(ev, (u) => u.kind === 'term'), k = gesto.u.k; raio(ev);
-        if (h) { const t = posT(h.object.userData.ref); gesto.sobre = h.object.userData.ref; pontas[k].livre = { p: t.p.clone().addScaledVector(t.n, 0.006), n: t.n.clone().add(new V3(k === 'pv' ? 0.32 : -0.32, t.n.y ? 0 : 0.18, t.n.y ? 0.3 : 0)).normalize() }; anelEm(destaque, gesto.sobre); }
+        if (h) { const t = posT(h.object.userData.ref); gesto.sobre = h.object.userData.ref; pontas[k].livre = { p: t.p.clone().addScaledVector(t.n, 0.006), n: t.n.clone().add(new V3(PD[k].lado * 0.32, t.n.y ? 0 : 0.18, t.n.y ? 0.3 : 0)).normalize() }; anelEm(destaque, gesto.sobre); }
         else { gesto.sobre = null; destaque.visible = false; const q = noPlano(new V3(0, 0, 1), new V3(0, 0, 0.07)); let pp = q && q.y > MESA_Y + 0.05 && Math.abs(q.x) < 1.3 ? q : noPlano(new V3(0, 1, 0), new V3(0, MESA_Y + 0.03, 0)); if (pp) pontas[k].livre = { p: pp, n: new V3(0.2, 0.25, 1).normalize() }; }
       }
     });
@@ -523,15 +658,15 @@
       if (gg.tipo === 'pino' && !gg.moveu) { if (gg.botao === 2) soltaPresilha(u); return; }
       if (gg.tipo === 'corpo' && gg.moveu) { cb.mudou && cb.mudou(); dom.style.cursor = ''; return; }
       if (gg.tipo === 'ponta') {
-        const k = gg.u.k, mm = banc.porTipo('multi'); pontas[k].livre = null; destaque.visible = false;
-        if (gg.moveu) { banc.acao(mm.id, { [k]: gg.sobre || null }); if (gg.sobre) cb.toast && cb.toast(`Ponta ${k === 'pv' ? 'vermelha' : 'preta'} em ${gg.sobre.replace('.', ':')}`); }
-        else { armada = k; pend = null; marcaIni.visible = false; elastico.visible = false; cb.modo && cb.modo(`Ponta ${k === 'pv' ? 'vermelha' : 'preta'}: toque no borne que quer medir (Esc cancela)`); }
+        const k = gg.u.k, mm = banc.porTipo(PD[k].tipo); pontas[k].livre = null; destaque.visible = false;
+        if (gg.moveu) { banc.acao(mm.id, { [k]: gg.sobre || null }); if (gg.sobre) cb.toast && cb.toast(`${PD[k].nome} em ${gg.sobre.replace('.', ':')}`); }
+        else { armada = k; pend = null; marcaIni.visible = false; elastico.visible = false; cb.modo && cb.modo(`${PD[k].nome}: toque no borne que quer medir (Esc cancela)`); }
         return;
       }
       if (gg.tipo === 'term') {
         elastico.visible = false; destaque.visible = false;
         if (gg.moveu) { if (gg.sobre && gg.sobre !== pend) ligar(pend, gg.sobre); cancela(); return; }
-        if (armada) { banc.acao(banc.porTipo('multi').id, { [armada]: u.ref }); cb.toast && cb.toast(`Ponta ${armada === 'pv' ? 'vermelha' : 'preta'} em ${u.ref.replace('.', ':')}`); cancela(); return; }
+        if (armada) { banc.acao(banc.porTipo(PD[armada].tipo).id, { [armada]: u.ref }); cb.toast && cb.toast(`${PD[armada].nome} em ${u.ref.replace('.', ':')}`); cancela(); return; }
         if (pend && pend !== u.ref) { ligar(pend, u.ref); cancela(); return; }
         if (pend === u.ref) { cancela(); return; }
         pend = u.ref; anelEm(marcaIni, pend); sel = null; marcaSel(); cb.modo && cb.modo(`Fio saindo de ${pend.replace('.', ':')}: toque no borne de destino (Esc cancela)`); return;
@@ -539,7 +674,7 @@
       if (cancelado) return;
       if (gg.tipo === 'ctl' && !gg.moveu) { acionar(u, false, ev); return; }
       if (gg.tipo === 'fio' && !gg.moveu) { if (gg.botao === 2) { banc.removerFio(u.id); sel = null; sincFios(); } else { sel = { fio: u.id }; marcaSel(); } return; }
-      if (gg.tipo === 'corpo' && !gg.moveu) { cb.info && cb.info(u.id, gg.botao === 2 || ev.pointerType !== 'mouse'); return; }
+      if (gg.tipo === 'corpo' && !gg.moveu) { sel = { comp: u.id }; marcaSel(); return; }
       if ((gg.tipo === 'orbita' || gg.tipo === 'pan') && !gg.moveu) { if (gg.botao === 2 && u && u.kind === 'pino') { soltaPresilha(u); return; } if (gg.botao === 2 && u && u.kind === 'corpo') { cb.info && cb.info(u.id, true); return; } if (gg.botao === 2 && u && u.kind === 'fio') { banc.removerFio(u.id); sel = null; sincFios(); return; } if (pend || armada) cancela(); if (sel) { sel = null; marcaSel(); } }
     }
     dom.addEventListener('pointerup', (e) => solta(e, false)); dom.addEventListener('pointercancel', (e) => solta(e, true));
@@ -549,18 +684,20 @@
     dom.addEventListener('wheel', (ev) => {
       ev.preventDefault(); const h = pega(ev), u = h && h.object.userData;
       if (u && u.kind === 'ctl' && (u.tipo === 'pot' || u.tipo === 'gerknob')) return giraBotao(u, (ev.deltaY < 0 ? 1 : -1) * (ev.shiftKey ? 0.002 : 0.02));
+      if (u && u.kind === 'ctl' && OSC_KNOB[u.tipo]) return passoOsc(u, ev.deltaY < 0 ? 1 : -1);
       if (u && u.kind === 'ctl' && u.tipo === 'mmknob') { const c = banc.comp(u.id); return banc.acao(c.id, { modo: Math.max(0, Math.min(4, c.st.modo + (ev.deltaY > 0 ? 1 : -1))) }); }
       camD.r = Math.max(0.3, Math.min(6, camD.r * (ev.deltaY > 0 ? 1.12 : 0.89)));
     }, { passive: false });
-    const tecladoH = (ev) => { if (/INPUT|SELECT|TEXTAREA/.test((ev.target.tagName || ''))) return; if (ev.key === 'Escape') cancela(); else if ((ev.key === 'Delete' || ev.key === 'Backspace') && sel) { removerSel(); ev.preventDefault(); } };
+    const tecladoH = (ev) => { if (/INPUT|SELECT|TEXTAREA/.test((ev.target.tagName || ''))) return; if (ev.key === 'Escape') cancela(); else if ((ev.key === 'Delete' || ev.key === 'Backspace') && sel) { removerSel(); ev.preventDefault(); } if (ev.key === 'Escape' && sel) { sel = null; marcaSel(); } };
     g.addEventListener('keydown', tecladoH);
 
     reconstruir(); vista('geral'); camS.alvo.copy(camD.alvo); camS.r = camD.r; camS.az = camD.az; camS.el = camD.el;
     return {
-      reconstruir, sincFios, vista, removerSel, cancela, renderer, dom,
+      reconstruir, sincFios, vista, removerSel, cancela, renderer, dom, corDoFio, adicionar, removerComp, seleciona, miniatura, tamanhoPainel,
       set corFio(v) { corFio = v; }, get corFio() { return corFio; }, get selecao() { return sel; },
       quadro(dt) {
         for (const c of banc.comps) { const v = vistas[c.id]; if (v && v.upd) v.upd(c.st); }
+        if (sel && sel.comp && vistas[sel.comp]) { caixaSel.setFromObject(vistas[sel.comp].gr); caixaSel.visible = true; } else caixaSel.visible = false;
         atualizaPontas(); animaFios(); aplicaCam(Math.min(1, dt * 7)); renderer.render(scene, cam);
       },
       /** posição na tela de um ponto do mundo (para rótulos HTML) */

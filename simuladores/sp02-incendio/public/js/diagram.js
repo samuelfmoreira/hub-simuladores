@@ -135,7 +135,7 @@ function newSheet(n, title) {
   svg('rect', { x: 8, y: 8, width: 1184, height: 704, class: 'frame' }, root);
   const tb = svg('g', { class: 'titleblk' }, root);
   svg('rect', { x: 760, y: 664, width: 432, height: 48 }, tb);
-  txt(tb, 770, 682, 'Simulador Sistema de Incêndio · CLP Altus XP325', 'b');
+  txt(tb, 770, 682, 'Sistema de Incêndio · CLP Altus XP325', 'b');
   txt(tb, 770, 700, `Folha ${n}/5 · ${title}`, 's');
   txt(root, 1182, 24, 'Adaptado do diagrama SAEP (S7-1200) para o Altus XP325', 's end');
   sheets[n] = S;

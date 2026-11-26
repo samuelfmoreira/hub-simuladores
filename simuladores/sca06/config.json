@@ -1,6 +1,6 @@
 {
   "_comentario": "Configuração do simulador SCA06 + ECO5. Portas < 1024 (502) podem exigir administrador no Linux/macOS.",
-  "httpPort": 3000,
+  "httpPort": 3060,
   "enip": {
     "tcpPort": 44818,
     "udpPort": 2222,

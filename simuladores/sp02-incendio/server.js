@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Simulador Sistema de Incêndio — cliente Modbus TCP (exercício SP02)
+ * Sistema de Incêndio — cliente Modbus TCP (exercício SP02)
  * Servidor web local: serve a interface (pasta public) e a API das sessões.
  * Sem dependências externas: só Node.js.
  */
@@ -16,7 +16,7 @@ const os = require('os');
 
 // Rodando como .exe (empacotado)? Então os dados vão para %LOCALAPPDATA%, que sempre aceita gravação.
 const PACKAGED = !!process.pkg;
-const WANTED_PORT = parseInt(process.env.SIM_HTTP_PORT || process.env.PORT || '3001', 10);   // [HUB] porta da tela definida pelo HUB
+const WANTED_PORT = parseInt(process.env.SIM_HTTP_PORT || process.env.PORT || '3070', 10);   // [HUB] porta da tela definida pelo HUB
 let PORT = WANTED_PORT; // porta em que o simulador realmente abriu (pode mudar se a preferida estiver ocupada)
 const HOST = process.env.HOST || '0.0.0.0';
 const PUBLIC = path.join(__dirname, 'public');
@@ -27,7 +27,7 @@ const DATA_DIR = process.env.SIM_DATA_DIR
   : (PACKAGED
     ? path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), '.local', 'share'), 'SimuladorSP02')
     : path.join(__dirname, 'config'));
-process.title = 'Simulador Sistema de Incendio (Modbus TCP)';
+process.title = 'Sistema de Incendio (Modbus TCP)';
 const plcTests = new Map(); // sessionId -> CLP virtual próprio da sessão (nunca compartilhado)
 
 /** Na primeira execução do .exe no Windows, cria o atalho na área de trabalho. */
@@ -40,20 +40,20 @@ function firstRunShortcut() {
   const ps = [
     "$d=[Environment]::GetFolderPath('Desktop')",
     "$o=Join-Path $d 'Simulador SP02.lnk'; if (Test-Path $o) { Remove-Item $o -ErrorAction SilentlyContinue }",
-    "$s=(New-Object -ComObject WScript.Shell).CreateShortcut((Join-Path $d 'Simulador Sistema de Incendio.lnk'))",
+    "$s=(New-Object -ComObject WScript.Shell).CreateShortcut((Join-Path $d 'Sistema de Incendio.lnk'))",
     `$s.TargetPath='${exe}'`, `$s.WorkingDirectory='${dir}'`,
-    "$s.Description='Simulador Sistema de Incendio (Modbus TCP)'", '$s.Save()',
+    "$s.Description='Sistema de Incendio (Modbus TCP)'", '$s.Save()',
   ].join('; ');
   require('child_process').execFile('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', ps], { windowsHide: true }, (err) => {
     if (!err) {
       try { fs.writeFileSync(flag, new Date().toISOString()); } catch (_) { /* */ }
-      console.log('  Atalho "Simulador Sistema de Incêndio" criado na área de trabalho.');
+      console.log('  Atalho "Sistema de Incêndio" criado na área de trabalho.');
     }
   });
 }
 
 // ---------------------------------------------------------------- rede e firewall
-const FW_NAME = 'Simulador Sistema de Incendio';
+const FW_NAME = 'Sistema de Incendio';
 function lanUrls() {
   return Object.values(os.networkInterfaces()).flat().filter((i) => i && i.family === 'IPv4' && !i.internal).map((i) => `http://${i.address}:${PORT}`);
 }
@@ -73,7 +73,7 @@ function allowFirewall() {
     `$n = '${FW_NAME}'`,
     `netsh advfirewall firewall delete rule name="$n" | Out-Null`,
     `netsh advfirewall firewall add rule name="$n" dir=in action=allow program='${exe}' enable=yes profile=any | Out-Null`,
-    `netsh advfirewall firewall add rule name="$n" dir=in action=allow protocol=TCP localport=3001-3041,502,5020-5099 enable=yes profile=private,domain | Out-Null`,
+    `netsh advfirewall firewall add rule name="$n" dir=in action=allow protocol=TCP localport=3070-3099,502,5020-5099 enable=yes profile=private,domain | Out-Null`,
   ].join('\r\n'), 'utf8');
   const cmd = `Start-Process powershell -Verb RunAs -Wait -WindowStyle Hidden -ArgumentList '-NoProfile','-ExecutionPolicy','Bypass','-File','${script.replace(/'/g, "''")}'`;
   return new Promise((resolve, reject) => {
@@ -190,26 +190,33 @@ async function api(req, res, parts) {
     case 'test-plc': {
       // CLP virtual próprio desta sessão
       const cur = plcTests.get(s.id);
-      if (m === 'GET' || !parts[3]) return json(res, 200, { running: !!cur, port: cur?.port || null });
+      if (m === 'GET' || !parts[3]) return json(res, 200, { running: !!cur, port: cur?.port || null, host: cur?.host || null });
       if (parts[3] === 'stop') {
         if (cur) { await cur.close(); plcTests.delete(s.id); }
-        return json(res, 200, { running: false, port: null });
+        return json(res, 200, { running: false, port: null, host: null });
       }
       if (parts[3] === 'start') {
-        if (cur) return json(res, 200, { running: true, port: cur.port });
+        if (cur) return json(res, 200, { running: true, port: cur.port, host: cur.host });
         const b = await body(req);
-        const used = new Set([...plcTests.values()].map((p) => p.port));
+        const used = new Set([...plcTests.values()].map((p) => `${p.host}:${p.port}`));
         const wanted = Math.min(65535, Math.max(1, parseInt(b.port, 10) || 502));
-        const tries = [wanted, 502, ...Array.from({ length: 80 }, (_, i) => 5020 + i)].filter((p, i, a) => a.indexOf(p) === i && !used.has(p));
+        const faixa = Array.from({ length: 80 }, (_, i) => 5020 + i);
+        // [HUB] no HUB, cada sessão ganha o seu endereço de loopback (127.0.0.70, .71… até .99), sempre na porta 502
+        // do Modbus. Se o Windows recusar esses endereços, volta para 127.0.0.1 numa porta alternativa (5030–5099).
+        const tentativas = process.env.HUB === '1'
+          ? [...Array.from({ length: 30 }, (_, i) => ({ host: `127.0.0.${70 + i}`, port: 502 })), ...Array.from({ length: 70 }, (_, i) => ({ host: '127.0.0.1', port: 5030 + i }))]
+          : [wanted, 502, ...faixa].map((port) => ({ host: undefined, port }));
+        const lista = tentativas.filter((t, i, a) => a.findIndex((x) => x.host === t.host && x.port === t.port) === i && !used.has(`${t.host || '127.0.0.1'}:${t.port}`));
         let plc = null, lastErr = null;
-        for (const port of tries) {
-          try { plc = await testPlc.start(port, (t) => console.log(`  [${s.name}] ${t}`)); break; } catch (e) { lastErr = e; }
+        for (const t of lista) {
+          try { plc = await testPlc.start(t.port, (txt) => console.log(`  [${s.name}] ${txt}`), t.host); break; } catch (e) { lastErr = e; }
         }
+        if (plc && process.env.HUB === '1' && plc.port !== 502) console.log(`  [${s.name}] aviso: o Windows não aceitou os endereços 127.0.0.70–99; CLP virtual em 127.0.0.1:${plc.port}`);
         if (!plc) return json(res, 409, { error: `Não achei porta livre para o CLP virtual (${lastErr?.message || ''}).` });
         plcTests.set(s.id, plc);
         // aponta a sessão para o seu CLP virtual (se estiver desconectada)
-        if (!['conectado', 'conectando', 'reconectando'].includes(s.status)) { try { s.setConfig({ host: '127.0.0.1', port: plc.port }); } catch (_) { /* */ } }
-        return json(res, 200, { running: true, port: plc.port });
+        if (!['conectado', 'conectando', 'reconectando'].includes(s.status)) { try { s.setConfig({ host: plc.host, port: plc.port }); } catch (_) { /* */ } }
+        return json(res, 200, { running: true, port: plc.port, host: plc.host });
       }
       return json(res, 404, { error: 'Rota inexistente' });
     }
@@ -244,7 +251,7 @@ const server = http.createServer(async (req, res) => {
 
 // Tenta a porta preferida; se estiver ocupada, passa para a próxima automaticamente.
 // [HUB] dentro do HUB a porta é escolhida pelo HUB (a janela do HUB abre nela): não troca sozinha
-const PORT_TRIES = process.env.HUB === '1' ? [WANTED_PORT] : [WANTED_PORT, ...Array.from({ length: 40 }, (_, i) => 3002 + i)].filter((p, i, a) => a.indexOf(p) === i);
+const PORT_TRIES = process.env.HUB === '1' ? [WANTED_PORT] : [WANTED_PORT, ...Array.from({ length: 29 }, (_, i) => 3071 + i)].filter((p, i, a) => a.indexOf(p) === i);
 function listenWithFallback(idx) {
   if (idx >= PORT_TRIES.length) {
     console.error('\n  Não encontrei nenhuma porta livre (tentei de 3000 a 3040).');
@@ -269,7 +276,7 @@ server.on('listening', () => {
   manager = new SessionManager(path.join(DATA_DIR, 'sessions.json'));
   const ips = Object.values(os.networkInterfaces()).flat().filter((i) => i && i.family === 'IPv4' && !i.internal).map((i) => i.address);
   console.log('');
-  console.log(`  Simulador Sistema de Incêndio (Modbus TCP)  v${pkg.version}`);
+  console.log(`  Sistema de Incêndio (Modbus TCP)  v${pkg.version}`);
   if (PORT !== WANTED_PORT) console.log(`  (a porta ${WANTED_PORT} estava ocupada; abri na porta ${PORT})`);
   console.log(`  Neste PC:        http://localhost:${PORT}`);
   ips.forEach((ip) => console.log(`  Em outros PCs:   http://${ip}:${PORT}`));

@@ -57,7 +57,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\criar-atalho.p
 
 echo  [4/4] Acesso por outros PCs da rede
 echo        Necessario so se alunos/outros PCs forem abrir o simulador pelo navegador.
-choice /c SN /n /m "        Liberar a porta 3350 no firewall do Windows? [S/N] "
+choice /c SN /n /m "        Liberar a porta 3051 no firewall do Windows? [S/N] "
 if errorlevel 2 goto done
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\liberar-firewall.ps1"
 

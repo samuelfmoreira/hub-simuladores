@@ -73,8 +73,8 @@ netsh advfirewall firewall delete rule name="Simulador SCA06 - Pagina web" >nul 
 netsh advfirewall firewall add rule name="Simulador SCA06 - EtherNet/IP" dir=in action=allow protocol=TCP localport=44818 >nul
 netsh advfirewall firewall add rule name="Simulador SCA06 - EtherNet/IP" dir=in action=allow protocol=UDP localport=44818,2222 >nul
 netsh advfirewall firewall add rule name="Simulador SCA06 - Modbus TCP" dir=in action=allow protocol=TCP localport=502,5020 >nul
-netsh advfirewall firewall add rule name="Simulador SCA06 - Pagina web" dir=in action=allow protocol=TCP localport=3000 >nul
-echo       TCP 44818 e UDP 44818/2222 (EtherNet/IP), TCP 502/5020 (Modbus TCP), TCP 3000 (página)
+netsh advfirewall firewall add rule name="Simulador SCA06 - Pagina web" dir=in action=allow protocol=TCP localport=3060 >nul
+echo       TCP 44818 e UDP 44818/2222 (EtherNet/IP), TCP 502/5020 (Modbus TCP), TCP 3060 (página)
 
 rem ---- 4. atalho na Área de Trabalho
 echo.

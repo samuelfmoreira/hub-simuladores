@@ -9,7 +9,7 @@ const fmt = (v, n = 2) => Number(v).toFixed(n).replace('.', ',').replace('-', '�
 const REDUZIDO = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-const VERSAO_TELA = '1.1.1.1';   // tem de ser igual à versão do package.json (os testes conferem)
+const VERSAO_TELA = '1.1.1.4';   // tem de ser igual à versão do package.json (os testes conferem)
 let INFO = null;      // dados fixos do servidor (tabela de variáveis, parâmetros, programas ST)
 let E = null;         // último estado da sessão
 let sid = null, es = null, cena = null, ok3d = false;

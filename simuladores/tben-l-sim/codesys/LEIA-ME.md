@@ -5,7 +5,7 @@
 - Confirme o IP do adaptador host-only do VirtualBox no Windows (padrão: 192.168.56.1). Ele será o IP do controlador.
 
 ## 2. Instalar o GSDML
-- Abra http://IP-DA-VM:8080 e clique em **Baixar GSDML**, ou copie o arquivo da pasta `gsdml/` do projeto.
+- Abra http://IP-DA-VM:8081 e clique em **Baixar GSDML**, ou copie o arquivo da pasta `gsdml/` do projeto.
 - No CODESYS: Ferramentas > Repositório de dispositivos > Instalar, e escolha o arquivo `GSDML-V2.4-Simulab-TBEN-L-SIM-*.xml`.
 
 ## 3. Montar a árvore de dispositivos

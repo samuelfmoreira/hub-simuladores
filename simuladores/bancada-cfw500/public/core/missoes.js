@@ -6,6 +6,8 @@
   const mesmoNo = (b, x, y) => !!b._N && b._N(x) === b._N(y);
   const rem = (b) => !b.inv.loc && b.inv.vivo;
 
+  /** dados de placa do motor: a parametrização automática grava em todas as atividades */
+  SIM.PLACA_P = [[399, 82.6], [401, 3], [402, 1725], [403, 60], [404, 5], [407, 0.8]];
   SIM.MISSOES = [
     { id: 'energizar', titulo: 'Energizar o inversor', montagem: 'forca',
       texto: 'Leve a rede até o inversor passando pelo disjuntor Q1 e aterre o inversor. Depois feche Q1 e ligue a chave geral da bancada.',
@@ -66,6 +68,11 @@
       texto: 'Acople o volante de inércia (aba Bancada) e ajuste a desaceleração para 1 s. Pare o motor a partir de 60 Hz: a tensão do link DC (P0004) sobe e o inversor estica a rampa sozinho para não cair em F0022.',
       passos: ['Aba Bancada: acople o volante de inércia', 'P0101 = 1,0 s', 'Gire até 60 Hz e pare: acompanhe P0004 e o aviso "regulação do link DC"'],
       check: (b, m) => { const i = b.inv; if (b.motor.volante && i.P[101] <= 1 && i.limit === 'link DC') m.a = 1; return !!m.a && !i.pwm && !i.falhaCod; } },
+    { id: 'osciloscopio', titulo: 'Ver a onda da saída no osciloscópio', montagem: 'forca',
+      texto: 'Ponha o CH1 do osciloscópio entre duas saídas do inversor (U e V) e gire o motor a 30 Hz. Sem filtro aparecem os pulsos do PWM entre +Ud e −Ud; com o filtro ligado aparece a senoide que o motor aproveita. Compare o valor eficaz dos dois casos com P0007.',
+      passos: ['Ponteira CH1 + (amarela) em U e CH1 − (preta com anel amarelo) em V', 'Gire o motor e leve a referência a 30,0 Hz', 'Aba Medições: botão Auto. Aparece o PWM, com cerca de 620 V pico a pico', 'Diminua o tempo por divisão até 200 µs para ver os pulsos de 5 kHz (P0297)', 'Ligue o filtro: senoide de 30 Hz com o mesmo valor de P0007 (110 V)'],
+      check: (b, m) => { const o = b.porTipo('osc'); if (!o) return false; const s = o.st, c = b.canal(s.a1, s.b1, 0.05, 20, s.filtro), ok = b.inv.pwm && Math.abs(Math.abs(b.inv.fS) - 30) < 0.5;
+        if (ok && c.tipo === 'pwm') m.a = 1; if (ok && c.tipo === 'fundamental') m.b = 1; return !!m.a && !!m.b; } },
   ];
   if (typeof module !== 'undefined') module.exports = SIM;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

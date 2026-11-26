@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableExtensions
 cd /d "%~dp0"
-title Simulador Sistema de Incendio (Modbus TCP)
+title Sistema de Incendio (Modbus TCP)
 
 where node >nul 2>nul
 if errorlevel 1 if exist "%ProgramFiles%\nodejs\node.exe" set "PATH=%ProgramFiles%\nodejs;%PATH%"

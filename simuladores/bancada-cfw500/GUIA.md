@@ -1,4 +1,4 @@
-# Bancada didática CFW500
+# Bancada didática WEG CFW500
 
 Bancada didática em 3D para **ligar, parametrizar e operar o inversor WEG CFW500** como na prática: você arrasta os componentes, passa os fios de borne a borne, mede com o multímetro e opera pela HMI do inversor. Não tem CLP nem rede.
 
@@ -23,11 +23,15 @@ Para quem vai aprender ou ensinar a instalação do inversor: força, comando po
 | Passar um fio | Clique num borne e depois no outro, ou arraste de um borne ao outro. Esc cancela. |
 | Tirar um fio | Clique no fio e no botão **Remover fio** (ou tecla Delete). Duplo clique ou botão direito no fio também tira. |
 | Arrumar um fio | O cabo é maleável: pende entre os plugues, deita na mesa e contorna o inversor e o motor. Arraste qualquer ponto do fio para puxar; ao soltar, o ponto fica preso numa presilha. Arraste a presilha para mudar; duplo clique ou botão direito nela solta o cabo. |
+| Trocar a cor de um fio | Clique no fio: aparece uma barra com as cores; clique na cor. A cor dos próximos fios fica nas bolinhas do canto de cima da bancada ("auto" escolhe pela função do borne). |
+| Acrescentar ou tirar componentes | Botão **+ Componente**, no canto de cima da bancada. Para tirar: clique no componente e em **Remover** (ou tecla Delete). |
 | Mover um componente | Arraste pela placa; os cabos ligados acompanham. O motor e o multímetro andam sobre a mesa. |
 | Acionar | Clique na chave geral, na alavanca do disjuntor, nas chaves seletoras e no cogumelo. Segure os botões pulsadores e as teclas do inversor. Arraste o botão do potenciômetro (ou use a roda do mouse sobre ele). |
 | Multímetro | Clique no seletor para trocar a função. Arraste cada ponta até o borne, ou toque na ponta e depois no borne. |
+| Osciloscópio | Arraste as ponteiras até os bornes: amarelas = CH1, azuis = CH2; a de corpo colorido é o + e a preta com anel é o −. Os botões e as teclas do osciloscópio em 3D funcionam (os mesmos ajustes estão na aba Medições). Clicar na tela do osciloscópio abre essa aba. |
 | Câmera | Arraste o fundo para girar; botão direito ou dois dedos para deslocar; roda do mouse ou pinça para aproximar. Os botões embaixo levam a cada parte. |
 | Explicação de um componente | Botão direito nele (em tela de toque, um toque rápido). |
+| Ver a bancada em tela cheia | Botão **«** no canto da barra de abas oculta o painel lateral; o botão **» Painel**, no canto da bancada, traz de volta. Clicar no display do inversor em 3D também reabre o painel na aba Inversor. |
 
 ![Fio puxado e preso por uma presilha](guia/fio-maleavel.png)
 
@@ -35,11 +39,11 @@ As cinco abas da lateral:
 
 | Aba | Para que serve |
 |---|---|
-| Missões | A trilha de exercícios. O simulador confere sozinho e marca ✓. "Montar os fios para mim" faz a ligação da missão; "Ver parâmetros" mostra a resposta. |
+| Missões | A trilha de exercícios. O simulador confere sozinho e marca ✓. Cada atividade mostra a lista dos seus parâmetros (valor atual → ajuste) e tem dois botões: **Montar automático** (faz a ligação) e **Parametrizar automático** (carrega o padrão de fábrica, a placa do motor e os parâmetros da atividade). |
 | Inversor | A HMI em tamanho grande, o estado (P0006), a explicação da falha, do alarme ou do CONF e as leituras principais. |
 | Parâmetros | A lista completa com busca e filtro por grupo. Clique no valor para alterar. |
-| Medições | O multímetro em tamanho grande e o que o inversor enxerga em cada entrada e saída. |
-| Bancada | Cor do fio, montagens prontas, componentes extras, freio de carga, volante de inércia, chave S1.1 do plug-in e o registro de acontecimentos. |
+| Medições | O multímetro e o osciloscópio em tamanho grande e o que o inversor enxerga em cada entrada e saída. |
+| Bancada | Cor do fio, montagens prontas, componentes, freio de carga, volante de inércia, chave S1.1 do plug-in e o registro de acontecimentos. |
 
 ![Aba Inversor](guia/aba-inversor.png) ![Aba Medições](guia/aba-medicoes.png)
 
@@ -85,8 +89,30 @@ As sessões ficam guardadas no navegador de cada um (não no servidor). O simula
 | K4 | Chave seletora 2 posições | 13, 14, 21, 22 |
 | M1 | Motor trifásico 1 cv | U1, V1, W1, PE |
 | P1 | Multímetro digital | pontas VΩ e COM |
+| P2 | Osciloscópio 2 canais com ponteiras diferenciais | pontas VΩ e COM |
 
-Botões e chaves têm sempre um contato **NA** (azul) e um **NF** (vermelho). Pela aba Bancada dá para acrescentar mais botões, chaves, sinaleiros, potenciômetro, disjuntor e gerador de sinal.
+Botões e chaves têm sempre um contato **NA** (azul) e um **NF** (vermelho).
+
+### Acrescentar e tirar componentes
+
+O botão **+ Componente**, no canto de cima da bancada, abre a lista do que dá para acrescentar, separada por função (comando, acionamento e alimentação, sinalização, sinais para a AI1). Cada item tem a miniatura do componente (feita a partir do mesmo modelo 3D da bancada), para que serve, como ligar e quantos já estão na bancada. O componente novo vai para o primeiro lugar livre do painel (de cima para baixo) e fica selecionado; arraste pela placa para mudar de lugar. Não há limite de quantidade: cabe o que couber no painel, e quando não houver mais espaço a tela avisa. Para ter mais espaço, aumente o painel: **Normal** (1,9 × 1,0 m), **Grande** (2,7 × 1,0 m) ou **Extra** (3,5 × 1,3 m), nos botões do topo da lista do + Componente ou na aba Bancada. A mesa acompanha a largura; ao voltar para um painel menor, o que ficaria de fora é trazido para dentro. O tamanho fica gravado na sessão. Para tirar, clique no componente e em **Remover** na barra que aparece (ou tecla Delete): os fios ligados nele saem junto. Rede, inversor, motor e os instrumentos fazem parte da bancada e não saem.
+
+| Componente | Bornes | Observação |
+|---|---|---|
+| Botão pulsador (verde, vermelho, preto) | 13, 14, 21, 22 | Acionado só enquanto segura |
+| Chave seletora 2 posições | 13, 14, 21, 22 | Duas posições fixas |
+| Botão de emergência | 23, 24, 11, 12 | Com trava: clique de novo para soltar |
+| Contatora tripolar, bobina 24 Vcc | A1, 1/L1, 3/L2, 5/L3, 13, 21, A2, 2/T1, 4/T2, 6/T3, 14, 22 | Fecha com mais de 18 V na bobina e só abre abaixo de 9,6 V. Cerca de 105 mA por bobina |
+| Fonte 24 Vcc 2,5 A | L, N, PE, +24V, 0V | Liga com mais de 85 Vca entre L e N; até 2,5 A na saída |
+| Sinaleiro 24 Vcc (verde, vermelho, amarelo, azul, branco) | X1, X2 | Cerca de 10 mA; acende acima de 15 V |
+| Sinaleiro 220 Vca (verde, vermelho, amarelo) | X1, X2 | Acende com 220 V (entre duas fases); em 127 V acende fraco |
+| Potenciômetro 5 kΩ | 1, 2, 3 | Linear |
+| Disjuntor tripolar | 1, 3, 5, 2, 4, 6 | Manobra manual |
+| Gerador de sinal 0-10 V / 4-20 mA | +, − | 0-10 V ou 0-24 mA |
+
+![Partida direta com contatora e selo](guia/contatora-perto.png)
+
+A **contatora** é um módulo compacto (160 × 200 mm, bornes a cada 24 mm) com bobina de 24 Vcc (A1-A2), três contatos principais (1-2, 3-4, 5-6) e os auxiliares 13-14 (NA) e 21-22 (NF). A janela da frente fica verde aberta e vermelha fechada. O +24 V do inversor fornece no máximo 150 mA: uma bobina fecha, mas na segunda a tensão cai para cerca de 17 V e ela não fecha (a primeira se mantém, porque uma contatora já fechada só abre abaixo de 9,6 V). Para várias contatoras e sinaleiros, use a **fonte de 24 Vcc**. A montagem pronta "Partida direta com contatora e selo" mostra o circuito clássico: S2 (NF) desliga, S1 (NA) liga, o auxiliar 13-14 sela a bobina, H1 acende com a contatora fechada e H2, pelo NF 21-22, com ela aberta.
 
 ![Motor com freio de carga](guia/motor.png)
 
@@ -188,6 +214,8 @@ Parâmetros marcados **cfg** só mudam com o motor parado. Com senha ativa (P020
 Os valores "conforme o modelo do inversor" do manual foram fixados para o modelo de 4,3 A: P0135 = 6,5 A, P0156 = 4,7 A, P0157 = 4,3 A, P0158 = 3,4 A, P0290 = 4,3 A, P0401 = 4,3 A, P0404 = 1 HP. P0136 = 3,0 % e P0409 = 3,50 Ω seguem o simulador CFW500 do HUB.
 
 ## 8. Trilha de exercícios
+
+Em cada atividade, **Montar automático** faz a ligação e **Parametrizar automático** carrega o padrão de fábrica, os dados de placa do motor (P0399 a P0407) e os parâmetros da tabela. A parametrização automática não passa o inversor para REMOTO: isso continua sendo na tecla LOC/REM.
 
 ### 1. Energizar o inversor
 
@@ -465,9 +493,25 @@ Passo a passo:
 
 **O que observar:** Medido na bancada: com o volante e P0101 = 1 s o motor leva cerca de **5,5 s** para parar e o link DC chega a **396 V**, sem falha. Se subir P0151 para 600 V (regulação fora de ação), a mesma parada dá **F0022**.
 
+### 15. Ver a onda da saída no osciloscópio
+
+Ponha o CH1 do osciloscópio entre duas saídas do inversor (U e V) e gire o motor a 30 Hz. Sem filtro aparecem os pulsos do PWM entre +Ud e −Ud; com o filtro ligado aparece a senoide que o motor aproveita. Compare o valor eficaz dos dois casos com P0007.
+
+![Ligação: Só a força (rede, disjuntor, inversor, motor)](guia/montagem-forca.png)
+
+Passo a passo:
+
+1. Ponteira CH1 + (amarela) em U e CH1 − (preta com anel amarelo) em V
+2. Gire o motor e leve a referência a 30,0 Hz
+3. Aba Medições: botão Auto. Aparece o PWM, com cerca de 620 V pico a pico
+4. Diminua o tempo por divisão até 200 µs para ver os pulsos de 5 kHz (P0297)
+5. Ligue o filtro: senoide de 30 Hz com o mesmo valor de P0007 (110 V)
+
+**O que observar:** Medido na bancada a 30 Hz: sem filtro, pulsos entre +Ud e −Ud (**618 V pico a pico**, com Ud = 309 V) e **170 V eficazes**; com o filtro, senoide de 30 Hz com **110 V eficazes** e 311 V pico a pico, o mesmo valor de P0007. A diferença entre 170 V e 110 V é o conteúdo do PWM: é por isso que um multímetro comum lê a saída do inversor errado. Entre fases o PWM só tem três níveis: +Ud, 0 e −Ud.
+
 ### Fios de cada montagem pronta
 
-A aba Bancada e o botão "Montar os fios para mim" usam estas ligações:
+A aba Bancada e o botão **Montar automático** usam estas ligações (se a montagem usar um componente que não está na bancada, ele é recolocado):
 
 - **Só a força (rede, disjuntor, inversor, motor):** X1 L1 → Q1 1; X1 L2 → Q1 3; X1 L3 → Q1 5; Q1 2 → A1 R/L1; Q1 4 → A1 S/L2; Q1 6 → A1 T/L3; X1 PE → A1 PE; A1 U → M1 U1; A1 V → M1 V1; A1 W → M1 W1; A1 PE → M1 PE.
 - **Gira/Para (K1 em DI1) e sentido (K2 em DI2):** A1 16 GND → K1 13; K1 14 → A1 1 DI1; K1 13 → K2 13; K2 14 → A1 3 DI2 (mais os fios da força).
@@ -476,6 +520,7 @@ A aba Bancada e o botão "Montar os fios para mim" usam estas ligações:
 - **Multispeed: K1 em DI1, K2 em DI2, K3 em DI3 e K4 em DI4:** A1 16 GND → K1 13; K1 14 → A1 1 DI1; K1 13 → K2 13; K2 14 → A1 3 DI2; K2 13 → K3 13; K3 14 → A1 5 DI3; K3 13 → K4 13; K4 14 → A1 7 DI4 (mais os fios da força).
 - **Potenciômetro + DO1 (relé) em H1 e DO2 (transistor) em H3:** A1 8 +10V → RP1 3; A1 6 AI1 → RP1 2; A1 4 GND → RP1 1; A1 16 GND → K1 13; K1 14 → A1 1 DI1; A1 9 +24V → A1 11 DO1-RL-C; A1 13 DO1-RL-NA → H1 X1; H1 X2 → A1 16 GND; A1 9 +24V → H3 X1; H3 X2 → A1 10 DO2-TR (mais os fios da força).
 - **Gira/Para (K1), sentido (K2) e emergência S0 (NF) em DI4:** A1 16 GND → K1 13; K1 14 → A1 1 DI1; K1 13 → K2 13; K2 14 → A1 3 DI2; K2 13 → S0 11; S0 12 → A1 7 DI4 (mais os fios da força).
+- **Partida direta com contatora e selo (fonte U1, S1 liga, S2 desliga, KM1):** X1 L1 → Q1 1; X1 L2 → Q1 3; X1 L3 → Q1 5; Q1 2 → KM1 1/L1; Q1 4 → KM1 3/L2; Q1 6 → KM1 5/L3; KM1 2/T1 → M1 U1; KM1 4/T2 → M1 V1; KM1 6/T3 → M1 W1; X1 PE → M1 PE; Q1 2 → U1 L; X1 N → U1 N; X1 PE → U1 PE; U1 +24V → S2 21; S2 22 → S1 13; S1 14 → KM1 A1; S1 13 → KM1 13; KM1 14 → KM1 A1; KM1 A2 → U1 0V; KM1 A1 → H1 X1; H1 X2 → U1 0V; U1 +24V → KM1 21; KM1 22 → H2 X1; H2 X2 → U1 0V.
 - **Gira/Para em DI1 + gerador 4-20 mA em AI1:** A1 16 GND → K1 13; K1 14 → A1 1 DI1; G1 + → A1 6 AI1; G1 − → A1 4 GND (mais os fios da força).
 
 ## 9. Números para conferir
@@ -494,6 +539,10 @@ Medidos no próprio simulador, com os parâmetros de fábrica e 30 % no freio de
 | Gerador em 12 mA, S1.1 em mA, P0233 = 1 | P0018 = 50,0 % |
 | Resistência entre U1 e V1 do motor | 6,8 Ω |
 | Potenciômetro solto, bornes 1 e 3 | 5,00 kΩ (ligado ao inversor lê 4,94 kΩ: a AI1 fica em paralelo) |
+| Osciloscópio entre U e V a 30 Hz | PWM com 618 V pico a pico e 170 V eficazes; com o filtro, 110 V eficazes (P0007) e 311 V pico a pico |
+| Partida direta com contatora e selo | Pulso em S1: KM1 fecha, sela e o motor chega a 1776 rpm direto da rede; pulso em S2: abre |
+| Duas bobinas de contatora no +24 V do inversor | A tensão cai para 17,2 V: a primeira se mantém fechada e a segunda não fecha |
+| Sinaleiro 220 Vca entre fase e neutro | Acende fraco (127 V) |
 | Motor com duas fases trocadas | Gira ao contrário |
 | Motor com uma fase solta | Não parte e a corrente sobe ao limite |
 | Motor direto na rede (sem inversor) | Partida direta: 1776 rpm |
@@ -503,6 +552,36 @@ Medidos no próprio simulador, com os parâmetros de fábrica e 30 % no freio de
 | Volante de inércia e P0100 = 0,5 s | A limitação de corrente segura a rampa: 1,1 s até 60 Hz, pico de 6,4 A |
 
 ![Multímetro medindo a AI1](guia/multimetro.png)
+
+### Osciloscópio
+
+Osciloscópio digital de 2 canais com **ponteiras diferenciais**: cada canal tem uma ponteira + e uma −, e nenhuma é aterrada. É assim que se mede a saída de um inversor na prática; com ponteira comum, o terra do osciloscópio fecharia curto.
+
+![Osciloscópio na bancada medindo a saída do inversor](guia/osciloscopio.png)
+
+| Onde pôr o canal | O que aparece |
+|---|---|
+| Entre duas saídas do inversor (U e V), sem filtro | Pulsos do PWM entre +Ud e −Ud, com a largura variando em forma de senoide. Em 10 ms/div aparece o envelope; em 200 µs/div, os pulsos de 5 kHz (P0297) |
+| O mesmo, com o filtro ligado | A senoide fundamental, na frequência de saída e com o valor eficaz de P0007 |
+| Entre U1 e V1 do motor | A mesma onda da saída do inversor |
+| Entre uma saída e o PE | Pulsos entre +Ud/2 e −Ud/2 (tensão de fase com o modo comum) |
+| Entre duas fases da rede | Senoide de 60 Hz, 220 V eficazes, 622 V pico a pico |
+| No +24 V, no +10 V, na AI1 ou na AO1 | Linha reta no valor contínuo (a AO1 sobe e desce com a velocidade) |
+
+Os controles funcionam no próprio osciloscópio em 3D e também na aba Medições. Nos botões giratórios: clique = um passo para mais, botão direito = um passo para menos, ou gire com a roda do mouse ou arrastando.
+
+| Controle | Função |
+|---|---|
+| Tempo − / + | Tempo por divisão, de 100 µs a 100 ms |
+| CH1 e CH2 − / + | Volts por divisão de cada canal, de 0,5 V a 200 V |
+| Auto | Ajusta sozinho para 2 a 3 ciclos na tela e a onda ocupando boa parte da altura |
+| POSIÇÃO | Desloca a onda na horizontal, de meia em meia divisão (a seta laranja no topo marca o início do ciclo) |
+| RUN/STOP (Parar / Rodar) | Congela a tela; a tecla fica vermelha parada |
+| FILTRO | Tira o PWM e deixa só a fundamental; a tecla acende ligada |
+
+A tela mostra, para cada canal, a frequência, o valor eficaz e o pico a pico. Com os dois canais ligados, o CH1 fica na metade de cima e o CH2 na de baixo. O disparo é fixo no início do ciclo, então a imagem fica parada.
+
+![Dois canais: saída filtrada a 30 Hz e rede a 60 Hz](guia/aba-osciloscopio.png)
 
 ## 10. Falhas, alarmes e CONF que a bancada provoca
 
@@ -601,7 +680,7 @@ Pontos em que o comportamento é dedução, e não leitura direta do manual:
 
 1. Copie a pasta do simulador para o PC.
 2. Clique duas vezes em **INSTALAR.bat** (instala o Node.js se faltar e cria o atalho).
-3. Clique duas vezes em **INICIAR_SIMULADOR.bat**: o navegador abre em `http://localhost:3350`. Os alunos da mesma rede abrem `http://IP-DO-PC:3350` (o instalador oferece liberar a porta no firewall) e cada um recebe a sua sessão.
+3. Clique duas vezes em **INICIAR_SIMULADOR.bat**: o navegador abre em `http://localhost:3051`. Os alunos da mesma rede abrem `http://IP-DO-PC:3051` (o instalador oferece liberar a porta no firewall) e cada um recebe a sua sessão.
 4. **TESTAR.bat** roda as verificações automáticas; a última linha deve dizer "0 falha(s)".
 
 A simulação inteira roda no navegador. O comando `node tools/build-demo.js` gera `dist/bancada-cfw500.html`, um arquivo único que abre com dois cliques; ele precisa de internet só para baixar o three.js.

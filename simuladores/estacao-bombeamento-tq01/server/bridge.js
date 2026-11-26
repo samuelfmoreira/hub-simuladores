@@ -4,7 +4,9 @@
 const EventEmitter = require('events');
 const { createPhysics } = require('./physics');
 const { PriorityWriteQueue, TagWriter } = require('./queue');
-const { createOpcClient } = require('./opcua-client');
+// [HUB] o cliente OPC UA (node-opcua, milhares de arquivos) só é carregado quando o protocolo OPC UA é usado:
+// no Windows, na primeira vez, o antivírus examina cada arquivo, e a tela demorava a abrir mesmo no Modbus
+const createOpcClient = (...a) => require('./opcua-client').createOpcClient(...a);
 const { createOpcDaClient } = require('./opcda-client');
 const { createModbusClient } = require('./modbus-client');
 const cat = require('./catalog');

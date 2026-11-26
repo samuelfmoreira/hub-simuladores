@@ -1,10 +1,10 @@
 @echo off
 setlocal EnableExtensions
 cd /d "%~dp0"
-title Instalador - Simulador Sistema de Incendio (Modbus TCP)
+title Instalador - Sistema de Incendio (Modbus TCP)
 echo.
 echo  ==============================================================
-echo    Simulador Sistema de Incendio - Modbus TCP
+echo    Sistema de Incendio - Modbus TCP
 echo    Instalacao do Node.js e configuracao
 echo  ==============================================================
 echo.
@@ -47,7 +47,7 @@ node --check server.js
 if errorlevel 1 goto broken
 echo        Arquivos OK. O simulador nao precisa de pacotes extras.
 
-echo  [3/4] Criando atalho "Simulador Sistema de Incendio" na area de trabalho...
+echo  [3/4] Criando atalho "Sistema de Incendio" na area de trabalho...
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\criar-atalho.ps1" -Pasta "%~dp0."
 
 echo  [4/4] Acesso por outros PCs da rede
@@ -61,7 +61,7 @@ echo.
 echo  ==============================================================
 echo    Instalacao concluida.
 echo    Para usar: clique duas vezes em INICIAR_SIMULADOR.bat
-echo    ou no atalho "Simulador Sistema de Incendio" da area de trabalho.
+echo    ou no atalho "Sistema de Incendio" da area de trabalho.
 echo  ==============================================================
 echo.
 pause

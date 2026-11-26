@@ -73,44 +73,48 @@ async function main() {
     return st;
   }
   let falsoModbus = null;
-  // [HUB] o CLP Modbus de demonstração fica só neste PC (127.0.0.1); se a 1502 estiver ocupada, usa a próxima livre
-  let portaDemoModbus = 1502;
+  // [HUB] o CLP Modbus de demonstração fica só neste PC, sempre na porta 502 do Modbus, num endereço de loopback
+  // próprio (127.0.0.50): não disputa a 502 do CODESYS (192.168.100.10) nem a dos CLPs de teste dos outros simuladores.
+  // Se o Windows recusar o endereço, volta para 127.0.0.1 numa porta alternativa (1502–1510) e avisa.
+  let hostDemoModbus = '127.0.0.50', portaDemoModbus = 502;
   async function iniciarDemoModbus() {
     if (!falsoModbus) {
       const { criarClpModbusFalso } = require('./fake/clp-modbus-fake');
+      const tentativas = [{ host: '127.0.0.50', port: 502 }, ...Array.from({ length: 9 }, (_, i) => ({ host: '127.0.0.1', port: 1502 + i }))];
       let ultimoErro = null;
-      for (let p = 1502; p <= 1510 && !falsoModbus; p++) {
-        const s = criarClpModbusFalso({ port: p, host: '127.0.0.1', fundoEscala: CFG.fundoEscala });
+      for (const t of tentativas) {
+        if (falsoModbus) break;
+        const s = criarClpModbusFalso({ port: t.port, host: t.host, fundoEscala: CFG.fundoEscala });
         try {
           const url = await s.iniciar();
-          falsoModbus = s; portaDemoModbus = p;
-          log(`CLP Modbus falso em ${url} (programa de demonstração)${p !== 1502 ? ' — a 1502 estava ocupada' : ''}`);
+          falsoModbus = s; hostDemoModbus = t.host; portaDemoModbus = t.port;
+          log(`CLP Modbus falso em ${url} (programa de demonstração)${t.port !== 502 ? ' — aviso: 127.0.0.50:502 indisponível neste PC' : ''}`);
         } catch (e) { ultimoErro = e; try { if (s.parar) await s.parar(); } catch (_) { /* não abriu */ } }
       }
-      if (!falsoModbus) throw new Error(`não consegui abrir o CLP Modbus de demonstração (portas 1502 a 1510 ocupadas): ${ultimoErro && ultimoErro.message}`);
+      if (!falsoModbus) throw new Error(`não consegui abrir o CLP Modbus de demonstração: ${ultimoErro && ultimoErro.message}`);
     }
-    return conectar({ protocolo: 'modbus', host: '127.0.0.1', port: portaDemoModbus, unitId: 1 });
+    return conectar({ protocolo: 'modbus', host: hostDemoModbus, port: portaDemoModbus, unitId: 1 });
   }
-  // [HUB] a 4840 pode estar ocupada pelo servidor OPC UA do CODESYS Control Win no mesmo PC:
-  // o XP325 de demonstração tenta a próxima porta livre (4841, 4842...) e conecta nela.
-  let portaDemo = 4840;
+  // [HUB] a 4840 é do servidor OPC UA do CODESYS Control Win: o XP325 de demonstração nunca a ocupa
+  // (senão o CODESYS não conseguiria abrir o servidor dele depois) e usa a primeira livre de 4841 a 4850.
+  let portaDemo = 4841;
   async function iniciarDemo() {
     if (!falso) {
       const { criarServidorFalso } = require('./fake/xp325-fake-server');
       let ultimoErro = null;
-      for (let p = 4840; p <= 4850 && !falso; p++) {
+      for (let p = 4841; p <= 4850 && !falso; p++) {
         let s = null;
         try {
           s = await criarServidorFalso({ port: p, fundoEscala: CFG.fundoEscala });
           const url = await s.iniciar();
           falso = s; portaDemo = p;
-          log(`XP325 falso em ${url} (programa de demonstração)${p !== 4840 ? ' — a 4840 estava ocupada' : ''}`);
+          log(`XP325 falso em ${url} (programa de demonstração)`);
         } catch (e) {
           ultimoErro = e;
           try { if (s && s.parar) await s.parar(); } catch (_) { /* não chegou a abrir */ }
         }
       }
-      if (!falso) throw new Error(`não consegui abrir o XP325 de demonstração (portas 4840 a 4850 ocupadas): ${ultimoErro && ultimoErro.message}`);
+      if (!falso) throw new Error(`não consegui abrir o XP325 de demonstração (portas 4841 a 4850 ocupadas): ${ultimoErro && ultimoErro.message}`);
     }
     return conectar({ endpoint: `opc.tcp://127.0.0.1:${portaDemo}` });
   }

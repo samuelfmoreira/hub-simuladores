@@ -14,6 +14,14 @@ const path = require('path');
 const { RAIZ } = require('./config');
 const catalogo = require('./catalogo');
 
+/** Porta da tela repetida com outro simulador instalado: funciona (o HUB troca a do segundo), mas confunde. */
+function avisoPortaRepetida(novo) {
+  const porta = Number(novo && novo.web && novo.web.porta);
+  if (!porta) return null;
+  const outro = catalogo.listar().find((f) => f.id !== novo.id && Number(f.web && f.web.porta) === porta);
+  return outro ? `A porta da tela ${porta} já é a padrão de "${outro.nome}". Os dois funcionam juntos (o HUB abre o segundo noutra porta), mas o ideal é cada simulador ter a sua: mude "web.porta" na ficha deste.` : null;
+}
+
 const BACKUPS = path.join(RAIZ, 'backups');
 const MANTER_BACKUPS = 3;
 const carimbo = () => new Date().toISOString().replace(/[-:]/g, '').replace('T', '-').slice(0, 15);
@@ -144,6 +152,7 @@ async function instalarDeTemp(tmp, nomePasta, gerenciador) {
       const novo = catalogo.obter(alvo.id);
       if (!novo.contrato.portaWeb) avisos.push('Esta versão não lê SIM_HTTP_PORT: a porta da tela fica fixa no código. Veja modelo-simulador/CONTRATO.md.');
       if (!novo.contrato.ip) avisos.push('Esta versão não lê SIM_IP: o IP escolhido no HUB não chega ao simulador.');
+      const repetida = avisoPortaRepetida(novo); if (repetida) avisos.push(repetida);
       return { acao: 'atualizado', id: alvo.id, nome: novo.nome, versaoAntes: alvo.versao, versaoDepois: novo.versao, precisaInstalar, avisos };
     }
 
@@ -154,6 +163,7 @@ async function instalarDeTemp(tmp, nomePasta, gerenciador) {
     fs.renameSync(tmp, path.join(catalogo.PASTA, id));
     const novo = catalogo.obter(id) || catalogo.listar().find((f) => f.pastaNome === id);
     if (novo?.semFicha) avisos.push('O simulador não tem ficha (simulador.json). Preencha a ficha para o HUB saber a porta da tela, o IP e os protocolos.');
+    const repetida = avisoPortaRepetida(novo); if (repetida) avisos.push(repetida);
     return { acao: 'novo', id: novo?.id || id, nome: novo?.nome || id, versaoAntes: null, versaoDepois: novo?.versao, precisaInstalar: novo ? !novo.instalado : true, avisos };
   } finally {
     if (fs.existsSync(tmp)) fs.rmSync(tmp, { recursive: true, force: true });

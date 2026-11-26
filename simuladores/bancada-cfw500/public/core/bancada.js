@@ -36,19 +36,38 @@
     pot: { nome: 'Potenciômetro 5 kΩ', pre: 'RP', w: 130, h: 190, plano: 'painel',
       term: [T('1', '1', -38, -65, 'preto', 'Extremo (início do curso)'), T('2', '2', 0, -65, 'amarelo', 'Cursor'), T('3', '3', 38, -65, 'vermelho', 'Extremo (fim do curso)')] },
     sinal: { nome: 'Sinaleiro 24 Vcc', pre: 'H', w: 90, h: 170, plano: 'painel', term: [T('X1', 'X1', -22, -55, 'vermelho', 'Positivo'), T('X2', 'X2', 22, -55, 'preto', 'Negativo')] },
+    lamp: { nome: 'Sinaleiro 220 Vca', pre: 'H', w: 90, h: 170, plano: 'painel', term: [T('X1', 'X1', -22, -55, 'preto', 'Fase'), T('X2', 'X2', 22, -55, 'azul', 'Neutro ou outra fase')] },
+    cont: { nome: 'Contatora tripolar, bobina 24 Vcc', pre: 'KM', w: 160, h: 200, plano: 'painel', hit: 0.0115,     // compacta: bornes a cada 24 mm
+      term: [T('A1', 'A1', -60, 62, 'vermelho', 'Bobina + (24 Vcc)'), T('1', '1/L1', -36, 62, 'preto', 'Contato principal: entrada'), T('3', '3/L2', -12, 62, 'preto', 'Contato principal: entrada'), T('5', '5/L3', 12, 62, 'preto', 'Contato principal: entrada'), T('13', '13', 36, 62, 'azul', 'Contato auxiliar NA'), T('21', '21', 60, 62, 'vermelho', 'Contato auxiliar NF'),
+        T('A2', 'A2', -60, -78, 'preto', 'Bobina − (0 V)'), T('2', '2/T1', -36, -78, 'preto', 'Contato principal: saída'), T('4', '4/T2', -12, -78, 'preto', 'Contato principal: saída'), T('6', '6/T3', 12, -78, 'preto', 'Contato principal: saída'), T('14', '14', 36, -78, 'azul', 'Contato auxiliar NA'), T('22', '22', 60, -78, 'vermelho', 'Contato auxiliar NF')] },
+    fonte: { nome: 'Fonte 24 Vcc 2,5 A', pre: 'U', w: 140, h: 200, plano: 'painel',
+      term: [T('L', 'L', -40, 62, 'preto', 'Entrada 100-240 Vca: fase'), T('N', 'N', 0, 62, 'azul', 'Entrada: neutro (ou outra fase)'), T('PE', 'PE', 40, 62, 'verde', 'Terra'),
+        T('P', '+24V', -30, -70, 'vermelho', 'Saída +24 Vcc'), T('M', '0V', 30, -70, 'preto', 'Saída 0 V')] },
     gerador: { nome: 'Gerador de sinal 0-10 V / 4-20 mA', pre: 'G', w: 140, h: 190, plano: 'painel', term: [T('P', '+', -28, -65, 'vermelho', 'Saída +'), T('N', '−', 28, -65, 'preto', 'Saída −')] },
     multi: { nome: 'Multímetro digital', pre: 'P', w: 95, h: 190, plano: 'mesa', unico: true, term: [] },
+    osc: { nome: 'Osciloscópio 2 canais com ponteiras diferenciais', pre: 'P', w: 300, h: 200, plano: 'mesa', unico: true, term: [] },
   };
   const MODOS_MULTI = ['OFF', 'V~', 'V⎓', 'Ω', '•)))'];
+  /** tamanhos do painel perfurado (m): a mesa acompanha a largura */
+  const PAINEIS = { normal: { w: 1.86, h: 1.02, nome: 'Normal', med: '1,9 × 1,0 m' }, grande: { w: 2.66, h: 1.02, nome: 'Grande', med: '2,7 × 1,0 m' }, extra: { w: 3.46, h: 1.32, nome: 'Extra', med: '3,5 × 1,3 m' } };
+  const limites = (nome) => { const P = PAINEIS[nome] || PAINEIS.normal; return { painel: [-(P.w / 2 - 0.03), P.w / 2 - 0.03, 0.05, P.h - 0.03], mesa: [-(P.w / 2 + 0.05), P.w / 2 + 0.05, 0.10, 0.70] }; };
+  const PONTAS = { multi: ['pv', 'pc'], osc: ['a1', 'b1', 'a2', 'b2'] };                 // chaves do estado que guardam em que borne cada ponta está
+  const OSC_TB = [0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1], OSC_V = [0.5, 1, 2, 5, 10, 20, 50, 100, 200];   // s/div e V/div
   const PADRAO = [
     ['X1', 'rede', -0.72, 0.77], ['Q1', 'disj', -0.72, 0.45], ['A1', 'cfw', -0.38, 0.60],
     ['RP1', 'pot', -0.08, 0.80], ['G1', 'gerador', 0.08, 0.80], ['H1', 'sinal', 0.30, 0.81, 'verde'], ['H2', 'sinal', 0.41, 0.81, 'vermelho'], ['H3', 'sinal', 0.52, 0.81, 'amarelo'],
     ['S1', 'bot', -0.09, 0.57, 'verde'], ['S2', 'bot', 0.03, 0.57, 'vermelho'], ['S3', 'bot', 0.15, 0.57, 'preto'], ['S0', 'emerg', 0.28, 0.57],
     ['K1', 'chave', -0.09, 0.33], ['K2', 'chave', 0.03, 0.33], ['K3', 'chave', 0.15, 0.33], ['K4', 'chave', 0.27, 0.33],
-    ['M1', 'motor', 0.55, 0.30], ['P1', 'multi', 0.02, 0.50],
+    ['M1', 'motor', 0.55, 0.30], ['P1', 'multi', 0.02, 0.50], ['P2', 'osc', -0.52, 0.36],
   ];
+  const EXTRAS = { KM1: ['KM1', 'cont'], U1: ['U1', 'fonte'] };     // componentes que as montagens prontas acrescentam se faltarem
+  /** O que dá para acrescentar na bancada: [tipo, cor, nome] */
+  const PALETA = [['bot', 'verde', 'Botão pulsador verde'], ['bot', 'vermelho', 'Botão pulsador vermelho'], ['bot', 'preto', 'Botão pulsador preto'], ['chave', '', 'Chave seletora 2 posições'], ['emerg', '', 'Botão de emergência'],
+    ['cont', '', 'Contatora (bobina 24 Vcc)'], ['fonte', '', 'Fonte 24 Vcc 2,5 A'], ['sinal', 'verde', 'Sinaleiro verde 24 Vcc'], ['sinal', 'vermelho', 'Sinaleiro vermelho 24 Vcc'], ['sinal', 'amarelo', 'Sinaleiro amarelo 24 Vcc'],
+    ['sinal', 'azul', 'Sinaleiro azul 24 Vcc'], ['sinal', 'branco', 'Sinaleiro branco 24 Vcc'], ['lamp', 'verde', 'Sinaleiro verde 220 Vca'], ['lamp', 'vermelho', 'Sinaleiro vermelho 220 Vca'], ['lamp', 'amarelo', 'Sinaleiro amarelo 220 Vca'],
+    ['pot', '', 'Potenciômetro 5 kΩ'], ['disj', '', 'Disjuntor tripolar'], ['gerador', '', 'Gerador de sinal V / mA']];
   const ST0 = { rede: () => ({ ligada: false, desarmada: false }), disj: () => ({ fechado: false }), bot: () => ({ ap: false }), chave: () => ({ on: false }), emerg: () => ({ ap: false }),
-    pot: () => ({ pos: 0 }), sinal: () => ({}), gerador: () => ({ modo: 'V', valor: 0 }), multi: () => ({ modo: 0, pv: null, pc: null }), cfw: () => ({ s1: false }), motor: () => ({}) };
+    pot: () => ({ pos: 0 }), sinal: () => ({}), lamp: () => ({}), cont: () => ({ fechado: false }), fonte: () => ({ on: false }), gerador: () => ({ modo: 'V', valor: 0 }), multi: () => ({ modo: 0, pv: null, pc: null }), osc: () => ({ a1: null, b1: null, a2: null, b2: null, tb: 5, v1: 6, v2: 6, pos: 0, filtro: false, parado: false }), cfw: () => ({ s1: false }), motor: () => ({}) };
 
   // montagens prontas: [de, para, cor]
   const FORCA = [['X1.L1', 'Q1.1', 'preto'], ['X1.L2', 'Q1.3', 'preto'], ['X1.L3', 'Q1.5', 'preto'], ['Q1.2', 'A1.R', 'preto'], ['Q1.4', 'A1.S', 'preto'], ['Q1.6', 'A1.T', 'preto'], ['X1.PE', 'A1.PEi', 'verde'],
@@ -64,12 +83,17 @@
     sinalizacao: { nome: 'Potenciômetro + DO1 (relé) em H1 e DO2 (transistor) em H3', fios: FORCA.concat(POT, [['A1.c16', 'K1.13', 'preto'], ['K1.14', 'A1.c1', 'azul'],
       ['A1.c9', 'A1.c11', 'vermelho'], ['A1.c13', 'H1.X1', 'vermelho'], ['H1.X2', 'A1.c16', 'preto'], ['A1.c9', 'H3.X1', 'vermelho'], ['H3.X2', 'A1.c10', 'azul']]) },
     falha_ext: { nome: 'Gira/Para (K1), sentido (K2) e emergência S0 (NF) em DI4', fios: FORCA.concat([['A1.c16', 'K1.13', 'preto'], ['K1.14', 'A1.c1', 'azul'], ['K1.13', 'K2.13', 'preto'], ['K2.14', 'A1.c3', 'azul'], ['K2.13', 'S0.11', 'preto'], ['S0.12', 'A1.c7', 'azul']]) },
+    contatora: { nome: 'Partida direta com contatora e selo (fonte U1, S1 liga, S2 desliga, KM1)', fios: [['X1.L1', 'Q1.1', 'preto'], ['X1.L2', 'Q1.3', 'preto'], ['X1.L3', 'Q1.5', 'preto'],
+      ['Q1.2', 'KM1.1', 'preto'], ['Q1.4', 'KM1.3', 'preto'], ['Q1.6', 'KM1.5', 'preto'], ['KM1.2', 'M1.U1', 'preto'], ['KM1.4', 'M1.V1', 'preto'], ['KM1.6', 'M1.W1', 'preto'], ['X1.PE', 'M1.PE', 'verde'],
+      ['Q1.2', 'U1.L', 'preto'], ['X1.N', 'U1.N', 'azul'], ['X1.PE', 'U1.PE', 'verde'],
+      ['U1.P', 'S2.21', 'vermelho'], ['S2.22', 'S1.13', 'vermelho'], ['S1.14', 'KM1.A1', 'vermelho'], ['S1.13', 'KM1.13', 'vermelho'], ['KM1.14', 'KM1.A1', 'vermelho'], ['KM1.A2', 'U1.M', 'preto'],
+      ['KM1.A1', 'H1.X1', 'vermelho'], ['H1.X2', 'U1.M', 'preto'], ['U1.P', 'KM1.21', 'vermelho'], ['KM1.22', 'H2.X1', 'vermelho'], ['H2.X2', 'U1.M', 'preto']] },
     gerador: { nome: 'Gira/Para em DI1 + gerador 4-20 mA em AI1', fios: FORCA.concat([['A1.c16', 'K1.13', 'preto'], ['K1.14', 'A1.c1', 'azul'], ['G1.P', 'A1.c6', 'vermelho'], ['G1.N', 'A1.c4', 'preto']]) },
   };
 
   class Bancada {
     constructor(o = {}) {
-      this.comps = []; this.fios = []; this.seq = 1; this.eventos = []; this.t = 0; this.n = 0; this.sujo = true;
+      this.comps = []; this.fios = []; this.seq = 1; this.painel = 'normal'; this.eventos = []; this.t = 0; this.n = 0; this.sujo = true;
       this.aoGravar = o.aoGravar || (() => {});
       this.inv = new SIM.CFW500({ salvo: o.salvo && o.salvo.inv, aoGravar: () => this.aoGravar(), aoEvento: (m) => this.evento(m) });
       this.motor = new SIM.Motor();
@@ -79,12 +103,25 @@
     padrao() { this.comps = []; this.fios = []; PADRAO.forEach(([id, tipo, x, y, cor]) => this.comps.push({ id, tipo, x, y, cor: cor || '', st: ST0[tipo]() })); this.sujo = true; }
     carregar(s) {
       this.comps = s.comps.filter((c) => TIPOS[c.tipo]).map((c) => ({ id: c.id, tipo: c.tipo, x: c.x, y: c.y, cor: c.cor || '', st: Object.assign(ST0[c.tipo](), c.st || {}) }));
-      for (const c of this.comps) { if (c.tipo === 'rede') { c.st.ligada = false; c.st.desarmada = false; } if (c.tipo === 'bot') c.st.ap = false; if (c.tipo === 'multi') { c.st.pv = c.st.pc = null; } }
+      for (const c of this.comps) { if (c.tipo === 'rede') { c.st.ligada = false; c.st.desarmada = false; } if (c.tipo === 'bot') c.st.ap = false; if (c.tipo === 'cont') c.st.fechado = false; if (c.tipo === 'fonte') c.st.on = false; (PONTAS[c.tipo] || []).forEach((k) => { c.st[k] = null; }); }
+      if (!this.porTipo('osc')) { const pd = PADRAO.find((x) => x[1] === 'osc'); let n = 2; while (this.comp('P' + n)) n++; this.comps.push({ id: 'P' + n, tipo: 'osc', x: pd[2], y: pd[3], cor: '', st: ST0.osc() }); }   // bancada gravada antes de existir o osciloscópio
       this.fios = (s.fios || []).filter((f) => this.existe(f.a) && this.existe(f.b)); this.seq = 1 + this.fios.reduce((m, f) => Math.max(m, f.id), 0);
       if (s.motor) { this.motor.carga = s.motor.carga; this.motor.volante = !!s.motor.volante; }
+      if (PAINEIS[s.painel]) this.painel = s.painel;
       this.sujo = true;
     }
-    salvar() { return { comps: this.comps, fios: this.fios, motor: { carga: this.motor.carga, volante: this.motor.volante }, inv: this.inv.paraGravar() }; }
+    salvar() { return { comps: this.comps, fios: this.fios, painel: this.painel, motor: { carga: this.motor.carga, volante: this.motor.volante }, inv: this.inv.paraGravar() }; }
+    get limites() { return limites(this.painel); }
+    /** Troca o tamanho do painel. Ao diminuir, o que ficaria fora é trazido para dentro (procurando lugar livre). Devolve quantos mudaram de lugar. */
+    tamanhoPainel(nome) {
+      if (!PAINEIS[nome]) return -1; this.painel = nome; const L = limites(nome); let n = 0;
+      for (const c of this.comps) {
+        const d = TIPOS[c.tipo], pl = d.plano === 'painel', l = L[pl ? 'painel' : 'mesa'], mw = pl ? d.w / 2000 : 0.05, mh = pl ? d.h / 2000 : 0;
+        const x = Math.max(l[0] + mw, Math.min(l[1] - mw, c.x)), y = Math.max(l[2] + mh, Math.min(l[3] - mh, c.y));
+        if (x !== c.x || y !== c.y) { n++; c.x = x; c.y = y; if (pl && this.ocupado(c.tipo, x, y, c.id)) { const id = c.id; c.x = 99; const pos = this.lugarLivre(c.tipo); c.x = pos ? pos[0] : x; c.y = pos ? pos[1] : y; void id; } }
+      }
+      this.sujo = true; this.aoGravar(); return n;
+    }
     evento(m) { this.eventos.push({ t: this.t, m }); if (this.eventos.length > 60) this.eventos.shift(); }
     comp(id) { return this.comps.find((c) => c.id === id); }
     porTipo(t) { return this.comps.find((c) => c.tipo === t); }
@@ -92,15 +129,28 @@
     infoTerm(ref) { const [id, t] = ref.split('.'); const c = this.comp(id); const d = c && TIPOS[c.tipo].term.find((x) => x.id === t); return d ? { comp: c, tipo: TIPOS[c.tipo], term: d } : null; }
 
     // ---------------------------------------------------------------- edição
+    /** Há componente do painel ocupando o retângulo de "tipo" centrado em (x, y)? */
+    ocupado(tipo, x, y, ignora) {
+      const d = TIPOS[tipo], w = d.w / 2000 + 0.006, h = d.h / 2000 + 0.006;
+      return this.comps.some((c) => c.id !== ignora && TIPOS[c.tipo].plano === 'painel' && Math.abs(c.x - x) < w + TIPOS[c.tipo].w / 2000 && Math.abs(c.y - y) < h + TIPOS[c.tipo].h / 2000);
+    }
+    /** Primeiro lugar livre do painel, de cima para baixo e da esquerda para a direita (null = painel cheio). */
+    lugarLivre(tipo) {
+      const d = TIPOS[tipo]; if (d.plano !== 'painel') return [0.45, 0.5]; const w = d.w / 1000, h = d.h / 1000;
+      const L = limites(this.painel).painel;
+      for (let y = L[3] - h / 2; y >= L[2] + h / 2 - 1e-9; y -= 0.01) for (let x = L[0] + w / 2; x <= L[1] - w / 2 + 1e-9; x += 0.01) if (!this.ocupado(tipo, x, y)) return [+x.toFixed(3), +y.toFixed(3)];
+      return null;
+    }
     add(tipo, x, y, cor) {
-      const d = TIPOS[tipo]; if (!d || (d.unico && this.porTipo(tipo))) return null;
+      const d = TIPOS[tipo]; this.motivo = ''; if (!d || (d.unico && this.porTipo(tipo))) { this.motivo = 'unico'; return null; }
+      if (x === undefined) { const pos = this.lugarLivre(tipo); if (!pos) { this.motivo = 'cheio'; return null; } [x, y] = pos; }
       let k = 1; while (this.comp(d.pre + k)) k++;
       const c = { id: d.pre + k, tipo, x, y, cor: cor || '', st: ST0[tipo]() }; this.comps.push(c); this.sujo = true; this.aoGravar(); return c;
     }
     remover(id) {
       const c = this.comp(id); if (!c || TIPOS[c.tipo].unico) return false;
       this.comps = this.comps.filter((x) => x !== c); this.fios = this.fios.filter((f) => !f.a.startsWith(id + '.') && !f.b.startsWith(id + '.'));
-      const m = this.porTipo('multi'); if (m) ['pv', 'pc'].forEach((k) => { if (m.st[k] && m.st[k].startsWith(id + '.')) m.st[k] = null; });
+      for (const m of this.comps) (PONTAS[m.tipo] || []).forEach((k) => { if (m.st[k] && m.st[k].startsWith(id + '.')) m.st[k] = null; });
       this.sujo = true; this.aoGravar(); return true;
     }
     addFio(a, b, cor) {
@@ -108,9 +158,19 @@
       if (this.fios.some((f) => (f.a === a && f.b === b) || (f.a === b && f.b === a))) return null;
       const f = { id: this.seq++, a, b, cor: cor || 'azul' }; this.fios.push(f); this.sujo = true; this.aoGravar(); return f;
     }
+    corFio(id, cor) { const f = this.fios.find((x) => x.id === id); if (!f) return false; f.cor = cor; this.aoGravar(); return true; }
     removerFio(id) { const n = this.fios.length; this.fios = this.fios.filter((f) => f.id !== id); this.sujo = true; this.aoGravar(); return this.fios.length < n; }
-    limparFios() { this.fios = []; const m = this.porTipo('multi'); if (m) m.st.pv = m.st.pc = null; this.sujo = true; this.aoGravar(); }
-    montagem(nome) { const m = MONTAGENS[nome]; if (!m) return false; this.fios = []; m.fios.forEach(([a, b, c]) => this.addFio(a, b, c)); return true; }
+    limparFios() { this.fios = []; for (const m of this.comps) (PONTAS[m.tipo] || []).forEach((k) => { m.st[k] = null; }); this.sujo = true; this.aoGravar(); }
+    /** Liga os fios de uma montagem pronta. Componentes que a montagem usa e que não estão na bancada são recolocados. */
+    montagem(nome) {
+      const m = MONTAGENS[nome]; if (!m) return false; let novos = 0;
+      for (const fio of m.fios) for (const r of [fio[0], fio[1]]) {
+        const id = r.split('.')[0]; if (this.comp(id)) continue; const pd = PADRAO.find((x) => x[0] === id) || EXTRAS[id]; if (!pd) continue;
+        const pos = pd[2] !== undefined && !this.ocupado(pd[1], pd[2], pd[3]) ? [pd[2], pd[3]] : (this.lugarLivre(pd[1]) || [pd[2] || 0.45, pd[3] || 0.5]);
+        this.comps.push({ id, tipo: pd[1], x: pos[0], y: pos[1], cor: pd[4] || '', st: ST0[pd[1]]() }); novos++;
+      }
+      this.fios = []; m.fios.forEach(([a, b, c]) => this.addFio(a, b, c)); this.sujo = true; return { ok: true, novos };
+    }
     /** Muda o estado de um componente: { ligada }, { fechado }, { ap }, { on }, { pos }, { modo }, { pv }, ... */
     acao(id, st) {
       const c = this.comp(id); if (!c) return;
@@ -135,6 +195,8 @@
         else if (c.tipo === 'emerg') { if (s.ap) une(p + '23', p + '24'); else une(p + '11', p + '12'); }
         else if (c.tipo === 'pot') { res.push([p + '1', p + '2', 1 + s.pos * 5000], [p + '2', p + '3', 1 + (1 - s.pos) * 5000]); }
         else if (c.tipo === 'sinal') res.push([p + 'X1', p + 'X2', 2400]);
+        else if (c.tipo === 'lamp') res.push([p + 'X1', p + 'X2', 9680]);
+        else if (c.tipo === 'cont') { if (s.fechado) { une(p + '1', p + '2'); une(p + '3', p + '4'); une(p + '5', p + '6'); une(p + '13', p + '14'); } else une(p + '21', p + '22'); res.push([p + 'A1', p + 'A2', 230]); }
         else if (c.tipo === 'motor') res.push([p + 'U1', p + 'V1', 10.2], [p + 'V1', p + 'W1', 10.2], [p + 'W1', p + 'U1', 10.2]);   // triângulo: 6,8 Ω entre dois bornes
         else if (c.tipo === 'cfw') { une(p + 'c4', p + 'c16'); une(p + 'PEi', p + 'PEo'); une(p + 'c11', inv.vivo && inv.sai.do1 ? p + 'c13' : p + 'c15'); }
       }
@@ -163,7 +225,7 @@
         if (saiInv && !inv.ent.motor.curto && !inv.ent.motor.terra) ['U', 'V', 'W'].forEach((x, i) => { const a = inv.sai.v / R3; poe(A + x, { re: a * Math.cos(-120 * i * RAD), im: a * Math.sin(-120 * i * RAD), fonte: 'inv', fase: i }); });
       }
       // ---- 220 V onde não pode
-      const frageis = { cfw: (t) => t[0] === 'c', pot: () => true, sinal: () => true, gerador: () => true };
+      const frageis = { cfw: (t) => t[0] === 'c', pot: () => true, sinal: () => true, gerador: () => true, cont: (t) => t[0] === 'A', fonte: (t) => t === 'P' || t === 'M' };
       for (const k of nos) {
         const f = fas[N(k)]; if (!f || f.fonte === 'terra') continue;
         const [id, t] = k.split('.'), c = this.comp(id);
@@ -197,11 +259,15 @@
       const fontes = [];
       if (cfw && inv.vivo) {
         const gnd = A + 'c4';
-        fontes.push({ a: A + 'c9', b: gnd, v: 24, r: 2, imax: 0.2, nome: '+24 V' }, { a: A + 'c8', b: gnd, v: 10, r: 20, imax: 0.03, nome: '+10 V' }, { a: A + 'c2', b: gnd, v: inv.sai.ao1, r: 100, imax: 0.02 });
+        fontes.push({ a: A + 'c9', b: gnd, v: 24, r: 2, imax: 0.15, nome: '+24 V' }, { a: A + 'c8', b: gnd, v: 10, r: 20, imax: 0.03, nome: '+10 V' }, { a: A + 'c2', b: gnd, v: inv.sai.ao1, r: 100, imax: 0.02 });
         [1, 3, 5, 7].forEach((n, i) => { if (inv.diPnp(i)) res.push([A + 'c' + n, gnd, 4700]); else fontes.push({ a: A + 'c' + n, b: gnd, v: 24, r: 4700 }); });
         if (inv.sai.do2) res.push([A + 'c10', gnd, 10]);
       }
       if (cfw) res.push([A + 'c6', A + 'c4', cfw.st.s1 ? 500 : 100000]);
+      for (const c of this.comps) if (c.tipo === 'fonte') {                 // fonte chaveada: liga com mais de 85 V entre L e N
+        const p = c.id + '.', fa = fas[N(p + 'L')], fb = fas[N(p + 'N')], u = fa && fb ? Math.hypot(fa.re - fb.re, fa.im - fb.im) : 0;
+        c.st.on = u > 85; if (c.st.on) fontes.push({ a: p + 'P', b: p + 'M', v: 24, r: 0.05, imax: 2.5, nome: '+24 V da fonte ' + c.id });
+      }
       for (const c of this.comps) if (c.tipo === 'gerador') {
         const p = c.id + '.';
         if (c.st.modo === 'V') fontes.push({ a: p + 'P', b: p + 'N', v: c.st.valor, r: 50 }); else fontes.push({ a: p + 'P', b: p + 'N', i: c.st.valor / 1000, vmax: 24, r: 50 });
@@ -245,7 +311,19 @@
         inv.ent.diV = [1, 3, 5, 7].map((n) => (inv.vivo ? dv(vdc, A + 'c' + n, gnd) : 0));
         inv.ent.aiV = dv(vdc, A + 'c6', gnd); inv.ent.aiCorrente = !!cfw.st.s1;
       }
-      for (const c of this.comps) if (c.tipo === 'sinal') { const u = Math.abs(dv(vdc, c.id + '.X1', c.id + '.X2')); c.st.brilho = u < 8 ? 0 : Math.min(1, (u - 8) / 12); c.st.aceso = u > 15; }
+      let mudou = false;
+      for (const c of this.comps) {
+        const p = c.id + '.';
+        if (c.tipo === 'sinal') { const u = Math.abs(dv(vdc, p + 'X1', p + 'X2')); c.st.brilho = u < 8 ? 0 : Math.min(1, (u - 8) / 12); c.st.aceso = u > 15; }
+        else if (c.tipo === 'lamp') {                                   // 220 Vca: acende com tensão alternada entre X1 e X2 (em 24 Vcc fica apagada)
+          const fa = fas[N(p + 'X1')], fb = fas[N(p + 'X2')]; let u = 0;
+          if (fa && fb) u = fa.fonte === fb.fonte || fa.fonte === 'terra' || fb.fonte === 'terra' ? Math.hypot(fa.re - fb.re, fa.im - fb.im) : Math.sqrt(fa.re ** 2 + fa.im ** 2 + fb.re ** 2 + fb.im ** 2);
+          u = Math.max(u, Math.abs(dv(vdc, p + 'X1', p + 'X2'))); c.st.brilho = u < 60 ? 0 : Math.min(1, (u - 60) / 150); c.st.aceso = u > 150;
+        } else if (c.tipo === 'cont') {                                // bobina 24 Vcc: fecha acima de 18 V, abre abaixo de 9,6 V
+          const u = Math.abs(dv(vdc, p + 'A1', p + 'A2')), novo = c.st.fechado ? u > 9.6 : u > 18; c.st.ub = u;
+          if (novo !== c.st.fechado) { c.st.fechado = novo; mudou = true; this.evento(`${c.id} ${novo ? 'fechou (bobina energizada)' : 'abriu'}.`); }
+        }
+      }
       // ---- multímetro
       const L = this.leitura = { txt: '', un: '', bip: false, modo: mm ? MODOS_MULTI[mm.st.modo] : 'OFF' };
       if (mm && mm.st.modo > 0) {
@@ -273,7 +351,33 @@
           L.un = m === 3 ? (L.k ? 'kΩ' : 'Ω') : '•)))';
         }
       }
-      this.sujo = false;
+      this.sujo = mudou;            // contatora mudou de estado: os contatos valem na próxima solução
+    }
+    // ---------------------------------------------------------------- osciloscópio: tensão instantânea
+    /** Potencial de um borne no instante tau (s). Rede: senoide de 60 Hz. Saída do inversor: PWM senoidal de verdade (cada
+     *  fase chaveia entre +Ud/2 e -Ud/2 comparando a referência com a portadora triangular de P0297) ou, com o filtro
+     *  ligado, só a fundamental. Comando: o valor contínuo calculado pelo circuito. tau = 0 é o ponto de disparo. */
+    potencial(ref, tau, filtro) {
+      if (!ref || !this._N) return 0; const n = this._N(ref), f = this.fas[n];
+      if (!f) return this.vdc[n] || 0; if (f.fonte === 'terra') return 0;
+      if (f.fonte === 'rede') { const w = 2 * Math.PI * 60 * tau; return Math.SQRT2 * (f.re * Math.cos(w) - f.im * Math.sin(w)); }
+      const sai = this.inv.sai, th = 2 * Math.PI * sai.f * tau - f.fase * 2 * Math.PI / 3, amp = sai.v * Math.SQRT2 / R3;
+      if (filtro) return amp * Math.sin(th);
+      const ud = this.inv.ud, x = ((tau * this.inv.P[297]) % 1 + 1) % 1, tri = x < 0.5 ? 4 * x - 1 : 3 - 4 * x;
+      return amp / (ud / 2) * Math.sin(th) > tri ? ud / 2 : -ud / 2;
+    }
+    /** Dados de um canal (pontas + e -): tipo do sinal, frequência, valor eficaz, pico a pico e os pontos da tela.
+     *  colunas x 8 subamostras por coluna, guardando mínimo e máximo (como a detecção de pico de um osciloscópio digital). */
+    canal(pa, pb, janela, colunas, filtro, t0 = 0) {
+      const o = { ligado: !!(pa && pb), freq: 0, tipo: 'cc', min: new Float32Array(colunas), max: new Float32Array(colunas), rms: 0, vpp: 0, media: 0 };
+      if (!o.ligado || !this._N) return o;
+      const fa = this.fas[this._N(pa)], fb = this.fas[this._N(pb)], fontes = [fa, fb].filter((f) => f && f.fonte !== 'terra').map((f) => f.fonte);
+      if (fontes.includes('inv')) { o.tipo = filtro ? 'fundamental' : 'pwm'; o.freq = Math.abs(this.inv.sai.f); } else if (fontes.includes('rede')) { o.tipo = 'rede'; o.freq = 60; }
+      const sub = 8, dt = janela / (colunas * sub); let lo = Infinity, hi = -Infinity;
+      for (let c = 0; c < colunas; c++) { let mn = Infinity, mx = -Infinity; for (let k = 0; k < sub; k++) { const t = t0 + (c * sub + k) * dt, v = this.potencial(pa, t, filtro) - this.potencial(pb, t, filtro); if (v < mn) mn = v; if (v > mx) mx = v; } o.min[c] = mn; o.max[c] = mx; if (mn < lo) lo = mn; if (mx > hi) hi = mx; }
+      // eficaz e média sobre um número inteiro de ciclos (ou sobre a janela, se for contínuo)
+      const T = o.freq > 0.2 ? 1 / o.freq : janela, n = 4000; let s2 = 0, sm = 0; for (let k = 0; k < n; k++) { const v = this.potencial(pa, (k + 0.5) * T / n, filtro) - this.potencial(pb, (k + 0.5) * T / n, filtro); s2 += v * v; sm += v; }
+      o.rms = Math.sqrt(s2 / n); o.media = sm / n; o.vpp = hi - lo; return o;
     }
     /** Tensão contínua de um borne em relação ao GND do inversor (para dicas e testes). */
     vcc(ref) { return this.vdc[this._N ? this._N(ref) : ref] || 0; }
@@ -294,6 +398,6 @@
     avanca(seg, dt = 0.002) { for (let t = 0; t < seg; t += dt) this.passo(dt); }
   }
 
-  SIM.Bancada = Bancada; SIM.TIPOS = TIPOS; SIM.MONTAGENS = MONTAGENS; SIM.MODOS_MULTI = MODOS_MULTI; SIM.CTRL = CTRL;
+  SIM.Bancada = Bancada; SIM.TIPOS = TIPOS; SIM.MONTAGENS = MONTAGENS; SIM.MODOS_MULTI = MODOS_MULTI; SIM.CTRL = CTRL; SIM.PONTAS = PONTAS; SIM.ST0 = ST0; SIM.PAINEIS = PAINEIS; SIM.PALETA = PALETA; SIM.EXTRAS = EXTRAS; SIM.OSC_TB = OSC_TB; SIM.OSC_V = OSC_V;
   if (typeof module !== 'undefined') module.exports = SIM;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

@@ -75,5 +75,47 @@
     sete(ctx, st.valor.toFixed(st.modo === 'V' ? 2 : 1), 12, 12, 17, 42, 4, '#141a12', 'rgba(20,26,18,0.07)');
     ctx.fillStyle = '#141a12'; ctx.font = '700 15px Arial'; ctx.fillText(st.modo === 'V' ? 'V' : 'mA', 122, 54); ctx.restore();
   };
+  // ---------------------------------------------------------------- osciloscópio
+  const congelado = {};
+  const txTempo = (t) => (t < 0.001 ? (t * 1e6).toFixed(0) + ' µs' : (t * 1000).toFixed(0) + ' ms'), txVolt = (v) => (v < 1 ? (v * 1000).toFixed(0) + ' mV' : v + ' V');
+  /** Monta o que a tela do osciloscópio mostra: base de tempo, os dois canais (mínimo e máximo por coluna) e as medidas. */
+  SIM.dadosOsc = function (banc, colunas) {
+    const o = banc.porTipo('osc'); if (!o) return null; const s = o.st;
+    if (s.parado && congelado[colunas]) return Object.assign(congelado[colunas], { parado: true });
+    const tb = SIM.OSC_TB[s.tb], d = { tb, tbTxt: txTempo(tb), pos: s.pos || 0, filtro: !!s.filtro, parado: !!s.parado, canais: [] };
+    [['a1', 'b1', 'v1'], ['a2', 'b2', 'v2']].forEach(([a, b, v], i) => { const c = banc.canal(s[a], s[b], tb * 10, colunas, s.filtro, -(s.pos || 0) * tb); c.vdiv = SIM.OSC_V[s[v]]; c.vTxt = txVolt(c.vdiv); c.n = i + 1; d.canais.push(c); });
+    const dois = d.canais[0].ligado && d.canais[1].ligado; d.canais[0].zero = dois ? 2 : 0; d.canais[1].zero = dois ? -2 : 0;
+    congelado[colunas] = d; return d;
+  };
+  /** Ajuste automático: 2 a 3 ciclos na tela e a onda ocupando boa parte da altura. */
+  SIM.autoOsc = function (banc) {
+    const o = banc.porTipo('osc'); if (!o) return {}; const s = o.st, r = {}, dois = !!(s.a1 && s.b1 && s.a2 && s.b2);
+    let f = 0; [['a1', 'b1', 'v1'], ['a2', 'b2', 'v2']].forEach(([a, b, v]) => { const c = banc.canal(s[a], s[b], 0.05, 60, s.filtro); if (!c.ligado) return; if (c.freq > f) f = c.freq;
+      const pico = Math.max(Math.abs(c.media) + c.vpp / 2, 0.2), alvo = pico / (dois ? 1.8 : 3.4); let k = SIM.OSC_V.findIndex((x) => x >= alvo); r[v] = k < 0 ? SIM.OSC_V.length - 1 : k; });
+    const alvoT = f > 0.2 ? 2.5 / f / 10 : 0.005; let k = SIM.OSC_TB.findIndex((x) => x >= alvoT); r.tb = k < 0 ? SIM.OSC_TB.length - 1 : k; return r;
+  };
+  const COR_CH = ['#ffd400', '#35d0ff'];
+  SIM.desenhaOsc = function (ctx, W, H, d) {
+    ctx.save(); ctx.fillStyle = '#07110d'; ctx.fillRect(0, 0, W, H); if (!d) { ctx.restore(); return; }
+    const dx = W / 10, dy = H / 8, px = Math.max(1, W / 300);
+    ctx.strokeStyle = '#1f3a33'; ctx.lineWidth = px; ctx.beginPath(); for (let i = 1; i < 10; i++) { ctx.moveTo(i * dx, 0); ctx.lineTo(i * dx, H); } for (let j = 1; j < 8; j++) { ctx.moveTo(0, j * dy); ctx.lineTo(W, j * dy); } ctx.stroke();
+    ctx.strokeStyle = '#34594f'; ctx.beginPath(); ctx.moveTo(W / 2, 0); ctx.lineTo(W / 2, H); ctx.moveTo(0, H / 2); ctx.lineTo(W, H / 2); ctx.stroke();
+    const fonte = (t) => `600 ${Math.round(t * px)}px Arial, Helvetica, sans-serif`;
+    d.canais.forEach((c, i) => {
+      if (!c.ligado) return; const n = c.min.length, y0 = H / 2 - c.zero * dy, k = dy / c.vdiv, cw = W / n;
+      ctx.fillStyle = COR_CH[i]; ctx.beginPath(); ctx.moveTo(0, y0 - 4 * px); ctx.lineTo(6 * px, y0); ctx.lineTo(0, y0 + 4 * px); ctx.closePath(); ctx.fill();      // marca do zero do canal
+      ctx.strokeStyle = COR_CH[i]; ctx.lineWidth = 1.3 * px; ctx.lineJoin = 'round'; ctx.beginPath();
+      for (let j = 0; j < n; j++) { const a = y0 - c.max[j] * k, b = y0 - c.min[j] * k, x = (j + 0.5) * cw; if (j === 0) ctx.moveTo(x, a); else ctx.lineTo(x, a); if (b - a > 0.6 * px) ctx.lineTo(x, b); }
+      ctx.stroke();
+    });
+    { const xt = W / 10 * Math.max(0, Math.min(10, d.pos || 0)); ctx.fillStyle = '#ff9f43'; ctx.beginPath(); ctx.moveTo(xt - 4 * px, 14 * px); ctx.lineTo(xt + 4 * px, 14 * px); ctx.lineTo(xt, 20 * px); ctx.closePath(); ctx.fill(); }   // T: início do ciclo (disparo)
+    ctx.textBaseline = 'top'; ctx.font = fonte(8.5);
+    d.canais.forEach((c, i) => { ctx.fillStyle = COR_CH[i]; ctx.textAlign = 'left'; ctx.fillText(c.ligado ? `CH${c.n}  ${c.vTxt}/div` : `CH${c.n}  sem ponteira`, (4 + i * 96) * px, 3 * px); });
+    ctx.fillStyle = '#e8f2ee'; ctx.textAlign = 'right'; ctx.fillText(`${d.tbTxt}/div${d.pos ? `  · pos ${d.pos > 0 ? '+' : ''}${String(d.pos).replace('.', ',')} div` : ''}${d.filtro ? '  · FILTRO' : ''}${d.parado ? '  · PARADO' : ''}`, W - 4 * px, 3 * px);
+    ctx.textBaseline = 'bottom'; ctx.font = fonte(8);
+    d.canais.forEach((c, i) => { if (!c.ligado) return; ctx.fillStyle = COR_CH[i]; ctx.textAlign = 'left';
+      ctx.fillText(`CH${c.n}  ${c.freq > 0.2 ? c.freq.toFixed(1).replace('.', ',') + ' Hz  ' : ''}${c.rms.toFixed(c.rms < 30 ? 2 : 0).replace('.', ',')} V ef  ${c.vpp.toFixed(c.vpp < 30 ? 2 : 0).replace('.', ',')} Vpp`, 4 * px, H - (3 + (1 - i) * 11) * px); });
+    ctx.restore();
+  };
   SIM.sete = sete;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

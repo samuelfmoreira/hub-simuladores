@@ -1,9 +1,9 @@
 {
   "id": "sensor-nivel-ultrassonico",
-  "nome": "Sensor ultrassônico de nível LT-01",
-  "fabricante": "Didático · dados do VEGASON 61",
+  "nome": "Sensor ultrassônico VEGA",
+  "fabricante": "Didático · VEGASON 61",
   "tipo": "Transmissor de nível 4–20 mA",
-  "versao": "1.1.1.1",
+  "versao": "1.1.1.4",
   "descricao": "Tanque com transmissor ultrassônico de nível: tempo de voo, zona morta, eco falso, temperatura, espuma e perda de eco, em 3D. O CLP recebe o nível como entrada analógica (contagem de 15 bits), faz a escala e os alarmes. O painel com sinaleiros comandados pelo CLP é opcional. Cada aluno entra na sua sessão, com o seu CLP.",
   "protocolos": [
     "Modbus TCP"

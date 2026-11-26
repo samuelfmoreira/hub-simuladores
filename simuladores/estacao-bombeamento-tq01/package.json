@@ -1,6 +1,6 @@
 {
   "name": "estacao-bombeamento-sim",
-  "version": "0.12.1.4",
+  "version": "0.12.1.6",
   "description": "Simulador da estação de bombeamento TQ-01 (OPC UA, Altus XP325) — HUB de simuladores",
   "main": "server/server.js",
   "scripts": {

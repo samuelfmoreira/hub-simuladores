@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Sensor ultrassônico de nível LT-01: servidor do simulador (padrão do HUB de simuladores).
+ * Sensor ultrassônico VEGA: servidor do simulador (padrão do HUB de simuladores).
  *
  * Contrato do HUB:
  *   SIM_HTTP_PORT  porta da tela (sozinho: PORT ou 3320)
@@ -73,7 +73,7 @@ const srv = http.createServer(async (req, res) => {
   const sessao = () => gerente.obter(u.searchParams.get('s'));
   try {
     if (rota === '/api/info') {
-      return json(res, 200, { nome: 'Sensor ultrassônico de nível LT-01', versao: pkg.version, porta: PORTA_WEB, hub: NO_HUB, enderecos: enderecos(),
+      return json(res, 200, { nome: 'Sensor ultrassônico VEGA', versao: pkg.version, porta: PORTA_WEB, hub: NO_HUB, enderecos: enderecos(),
         tags: TG.tabelaDocs(), parametros: PARAMETROS, sensor: SENSOR, geo: GEO, fundoAd: FUNDO_AD, limitesDemo: LIMITES,
         st: { gvl: textoArquivo('docs/GVL_SIM.st'), io: textoArquivo('docs/PRG_Modbus_IO.st'), nivel: textoArquivo('docs/PRG_Nivel.st') } });
     }
@@ -116,7 +116,7 @@ setInterval(() => {
 
 srv.on('error', (e) => { log(e.code === 'EADDRINUSE' ? `a porta ${PORTA_WEB} da tela já está em uso` : `erro na tela: ${e.message}`); process.exit(1); });
 srv.listen(PORTA_WEB, '0.0.0.0', () => {
-  log(`Sensor ultrassônico de nível LT-01 v${pkg.version} pronto: http://localhost:${PORTA_WEB}${NO_HUB ? ' (iniciado pelo HUB)' : ''} | cliente Modbus TCP, IP informado: ${IP}`);
+  log(`Sensor ultrassônico VEGA v${pkg.version} pronto: http://localhost:${PORTA_WEB}${NO_HUB ? ' (iniciado pelo HUB)' : ''} | cliente Modbus TCP, IP informado: ${IP}`);
   const ips = enderecos();
   if (ips.length) log(`outros PCs da rede abrem por: ${ips.map((i) => `http://${i}:${PORTA_WEB}`).join('  ou  ')}`);
   if (!NO_HUB && process.env.OPEN_BROWSER === '1') {

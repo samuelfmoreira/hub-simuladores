@@ -41,7 +41,7 @@ O `.exe` não instala nada: ele já leva tudo dentro. Basta copiar e abrir.
     2. Clique em **Permitir acesso**.
     3. Isso só é necessário se outros PCs forem abrir o simulador pelo navegador. Para usar só neste PC, pode clicar em Cancelar.
 6. O navegador abre sozinho em `http://localhost:3001`. Se não abrir, abra o Chrome ou o Edge e digite esse endereço.
-7. Na área de trabalho aparece o atalho **Simulador Sistema de Incêndio**. Das próximas vezes, abra por ele.
+7. Na área de trabalho aparece o atalho **Sistema de Incêndio**. Das próximas vezes, abra por ele.
 
 **Para fechar:** feche a janela preta. Tudo o que você configurou (IP, parâmetros das soft-starters, pressostatos, sessões) fica salvo automaticamente em `%LOCALAPPDATA%\SimuladorSP02`.
 

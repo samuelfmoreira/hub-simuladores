@@ -1,4 +1,4 @@
-# Sensor ultrassônico de nível LT-01: guia passo a passo
+# Sensor ultrassônico VEGA: guia passo a passo
 
 Um tanque com transmissor ultrassônico de nível (dados do VEGASON 61) que entrega 4–20 mA. No CLP você recebe a contagem do nível, faz a escala e programa os alarmes.
 
@@ -153,7 +153,7 @@ Este é o motivo de a proteção contra transbordo usar uma chave de nível sepa
 
 ## Parte 1: abrir o simulador e entrar na sua sessão
 
-1. No HUB: **Dispositivos** → **Sensor ultrassônico de nível LT-01** → **Iniciar**. Fora do HUB: clique duas vezes em `INICIAR_SIMULADOR.bat`.
+1. No HUB: **Dispositivos** → **Sensor ultrassônico VEGA** → **Iniciar**. Fora do HUB: clique duas vezes em `INICIAR_SIMULADOR.bat`.
 2. A tela pede a **sua sessão**. Digite o seu nome ou a bancada e clique em **Criar e entrar**.
 3. Para voltar depois, a sessão fica lembrada neste navegador. Para trocar, clique no chip **Sessão**, no topo.
 

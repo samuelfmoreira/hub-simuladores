@@ -14,7 +14,7 @@ Windows                                   VM Linux (VirtualBox)
 │  (adaptador host-only)  │  rede virtual │            │ UDP 127.0.0.1:50100/50101    │
 │                         │               │ src/server.js (Node.js)                   │
 │ Navegador ──────────────┼─── HTTP/WS ───┤  planta, devices IO-Link, ISDU, falhas    │
-└─────────────────────────┘     :8080     └───────────────────────────────────────────┘
+└─────────────────────────┘     :8081     └───────────────────────────────────────────┘
 ```
 
 - **pn-driver/**: driver PROFINET. É o app de exemplo do p-net v0.2.0 com três arquivos trocados. `app_gsdml.*` define os 8 módulos, e `app_data.c` faz a ponte UDP, os diagnósticos e o gateway ISDU.
@@ -51,7 +51,7 @@ No modo CODESYS, as saídas ficam zeradas (estado seguro) enquanto a AR não est
 
 1. **Arquivo > Ferramentas > Network Manager > Host-only Networks**: crie uma rede (ex.: 192.168.56.1/24) e **desative o servidor DHCP** dela. Quem atribui o IP do device é o CODESYS, via DCP.
 2. Na VM:
-   - **Adaptador 1:** NAT, com redirecionamento de porta 8080 → 8080 se quiser abrir em `localhost:8080`.
+   - **Adaptador 1:** NAT, com redirecionamento de porta 8081 → 8081 se quiser abrir em `localhost:8081`.
    - **Adaptador 2:** host-only, na rede acima, com **Modo promíscuo: Permitir tudo**. Essa placa é exclusiva do PROFINET.
 3. Na VM (Ubuntu 22.04/24.04 ou Debian 12), garanta que o adaptador 2 fica sem IP e sem DHCP no netplan.
 
@@ -63,7 +63,7 @@ sudo ./scripts/setup-vm.sh enp0s8     # troque pelo nome real da 2ª placa (veja
 sudo npm start                         # precisa de root: Ethernet bruta e ajuste de IP
 ```
 
-Abra `http://IP-DA-VM:8080` no Windows. Para iniciar junto com a VM, rode `sudo ./scripts/install-service.sh`.
+Abra `http://IP-DA-VM:8081` no Windows. Para iniciar junto com a VM, rode `sudo ./scripts/install-service.sh`.
 
 **Sem PROFINET**, só a planta com o CLP demo, inclusive no Windows: `npm install` e depois `npm run start:demo`.
 

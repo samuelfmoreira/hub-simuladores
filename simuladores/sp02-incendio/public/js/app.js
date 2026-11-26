@@ -1,4 +1,4 @@
-// Simulador Sistema de Incêndio — interface do navegador.
+// Sistema de Incêndio — interface do navegador.
 import { el, fmt } from './util.js';
 import { createSSW05 } from './ssw05-view.js';
 import { createKP } from './kp-view.js';
@@ -133,7 +133,7 @@ $('btnClearLog').addEventListener('click', () => api(`sessions/${sessionId}/clea
 // ------------------------------------------------------------------ CLP virtual de teste
 let testPlc = { running: false, port: null };
 function renderTestPlc() {
-  $('tpState').textContent = testPlc.running ? `CLP virtual ligado na porta ${testPlc.port}` : 'CLP virtual desligado';
+  $('tpState').textContent = testPlc.running ? `CLP virtual ligado em ${testPlc.host || '127.0.0.1'}:${testPlc.port}` : 'CLP virtual desligado';
   $('btnTestPlc').textContent = testPlc.running ? 'Desligar CLP virtual' : 'Ligar CLP virtual de teste';
 }
 $('btnTestPlc').addEventListener('click', async () => {
@@ -143,8 +143,8 @@ $('btnTestPlc').addEventListener('click', async () => {
     } else {
       const port = form.elements.port.disabled ? 502 : (Number(form.elements.port.value) || 502);
       testPlc = await api(`sessions/${sessionId}/test-plc/start`, 'POST', { port });
-      if (!form.elements.host.disabled) { form.elements.host.value = '127.0.0.1'; form.elements.port.value = testPlc.port; }
-      toast(`CLP virtual desta sessão ligado em 127.0.0.1:${testPlc.port}. Clique em Conectar.`);
+      if (!form.elements.host.disabled) { form.elements.host.value = testPlc.host || '127.0.0.1'; form.elements.port.value = testPlc.port; }
+      toast(`CLP virtual desta sessão ligado em ${testPlc.host || '127.0.0.1'}:${testPlc.port}. Clique em Conectar.`);
     }
     renderTestPlc();
   } catch (e) { toast(e.message); }
@@ -574,7 +574,7 @@ function onState(s) {
 // ------------------------------------------------------------------ Início
 (async function init() {
   meta = await api('meta');
-  document.title = `Simulador Sistema de Incêndio v${meta.version} · Modbus TCP`;
+  document.title = `Sistema de Incêndio v${meta.version} · Modbus TCP`;
   setupComm();
   setupEnunciado();
   setupReset();

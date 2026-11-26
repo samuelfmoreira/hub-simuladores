@@ -21,7 +21,7 @@ const iolCall = require('./pn/iol-call');
 
 // ---------- Configuração ----------
 const DEFAULTS = {
-  http: { host: '0.0.0.0', port: 8080 },
+  http: { host: '0.0.0.0', port: 8081 },
   mode: 'demo',
   driver: { enabled: true, autostart: true, interface: 'enp0s8', stationName: 'tben-l-sim', storage: '/var/lib/tben-sim', verbose: true, echoToConsole: false },
   ipc: { nodePort: 50100, driverPort: 50101 },

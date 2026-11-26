@@ -16,7 +16,7 @@
     ]
   },
   "web": {
-    "porta": 3000,
+    "porta": 3060,
     "caminho": "/"
   },
   "rede": {
@@ -70,6 +70,6 @@
   ],
   "cor": "#5B4FA8",
   "icone": "icone.png",
-  "versao": "1.3.0",
+  "versao": "1.3.2",
   "pacote": "sca06-ethernetip-sim"
 }

@@ -38,6 +38,6 @@ cat <<MSG
 Pronto. Próximos passos:
   1. Garanta que o netplan/NetworkManager não configure IP nem DHCP em $IFACE.
   2. Inicie:   sudo npm start
-  3. Abra no Windows:  http://IP-DA-VM:8080
+  3. Abra no Windows:  http://IP-DA-VM:8081
   4. Para iniciar junto com a VM:  sudo ./scripts/install-service.sh
 MSG

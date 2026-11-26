@@ -13,7 +13,7 @@ O caminho principal é o **Modbus TCP** (seção *Interligar*): a tela já abre 
 | Altus XP325 real | Modbus TCP ou OPC UA | o IP do CLP na rede do laboratório |
 | MasterTool em simulação | OPC DA | antes, uma vez: **INSTALAR_OPCDA.bat** como administrador, na pasta `C:\HUB-Simuladores\simuladores\estacao-bombeamento-tq01` |
 
-3. Sem CLP à mão: **Ligar CLP de demonstração** (OPC UA ou Modbus). Ele roda só neste PC (127.0.0.1); se a porta padrão estiver ocupada pelo CODESYS, ele usa a próxima livre e a tela continua mostrando "ligado".
+3. Sem CLP à mão: **Ligar CLP de demonstração** (OPC UA ou Modbus). Ele roda só neste PC: o Modbus em **127.0.0.50, porta 502** (um endereço só dele, para não disputar a 502 do CODESYS), e o OPC UA em 127.0.0.1, porta 4841 (a 4840 fica para o CODESYS); a tela mostra "ligado".
 4. A conexão que você escolher fica guardada. **Restaurar original**, no cartão do HUB, volta o simulador ao de fábrica.
 
 ## Para quem é este guia

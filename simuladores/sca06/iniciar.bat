@@ -18,7 +18,7 @@ if errorlevel 1 goto :erro_npm
 :deps_ok
 
 rem ---- porta da página (config.json)
-set "PORTA=3000"
+set "PORTA=3060"
 for /f "usebackq delims=" %%p in (`node -p "require('./config.json').httpPort"`) do set "PORTA=%%p"
 
 cls

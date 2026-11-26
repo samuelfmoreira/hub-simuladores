@@ -77,7 +77,7 @@ function createPlc() {
   return { I, Q, scan, handle, get scanTimer() { return scanTimer; }, set scanTimer(v) { scanTimer = v; } };
 }
 
-function start(port = 502, log = console.log) {
+function start(port = 502, log = console.log, hostPedido = undefined) {
   const plc = createPlc();
   return new Promise((resolve, reject) => {
   const clients = new Set();
@@ -105,14 +105,14 @@ function start(port = 502, log = console.log) {
   sock.on('error', () => {});
   });
   srv.once('error', reject);
-  // [HUB] dentro do HUB, o CLP de teste escuta só no próprio PC (127.0.0.1): é onde este simulador se conecta,
-  // e assim ele não disputa a porta 502 com os equipamentos da rede virtual SIM-HUB
-  const host = process.env.HUB === '1' ? '127.0.0.1' : undefined;
+  // [HUB] dentro do HUB, o CLP de teste escuta só neste PC: num endereço próprio de loopback (127.0.0.70, .71…),
+  // sempre na porta 502 do Modbus, sem disputar a 502 do CODESYS (192.168.100.10) nem a dos outros simuladores
+  const host = hostPedido || (process.env.HUB === '1' ? '127.0.0.1' : undefined);
   srv.listen(port, host, () => {
     plc.scanTimer = setInterval(plc.scan, 10);
-    log(`[CLP teste] servidor Modbus TCP escutando na porta ${port}`);
+    log(`[CLP teste] servidor Modbus TCP escutando em ${host || 'todas as placas'}:${port}`);
     resolve({
-      port,
+      port, host: host || '127.0.0.1',
       close: () => new Promise((r) => {
         for (const c of clients) c.destroy();
         srv.close(() => { clearInterval(plc.scanTimer); plc.scanTimer = null; r(); });

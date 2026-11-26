@@ -185,7 +185,13 @@ class Gerenciador extends EventEmitter {
       this._mudar(ficha.id, { estado: parouPeloHub || codigo === 0 ? 'parado' : 'erro', proc: null, codigoSaida: codigo, portas: [] });
     });
 
-    const pronto = await portas.aguardarPorta(plano.httpPort, { cancelado: () => i.proc !== proc });
+    // Na primeira vez depois de instalar ou atualizar, o Windows pode demorar (o antivírus confere cada arquivo das
+    // bibliotecas, ex.: OPC UA). Espera até 90 s e avisa depois de 8 s, em vez de desistir e exigir uma segunda tentativa.
+    const avisoDemora = setTimeout(() => {
+      if (i.proc === proc && i.estado === 'iniciando') this.log(ficha.id, 'Carregando o simulador... Na primeira vez depois de instalar ou atualizar, o Windows pode levar mais tempo (o antivírus confere os arquivos). Aguarde: a tela abre sozinha.', 'hub');
+    }, 8000);
+    const pronto = await portas.aguardarPorta(plano.httpPort, { tempoMs: 90000, cancelado: () => i.proc !== proc });
+    clearTimeout(avisoDemora);
     if (i.proc === proc) {
       if (pronto) { this._mudar(ficha.id, { estado: 'rodando' }); this.log(ficha.id, `Tela pronta em http://localhost:${plano.httpPort}${ficha.web.caminho}`, 'hub'); }
       else this.log(ficha.id, `A tela ainda não respondeu na porta ${plano.httpPort}. O simulador pode estar usando outra porta.`, 'aviso');

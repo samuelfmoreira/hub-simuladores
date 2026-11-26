@@ -77,8 +77,19 @@ class Sessao {
   }
   async ligarDemo() {
     await this.desconectar(true);
-    this.demo = criarClpDemo({ port: 1502 });
-    const u = await this.demo.iniciar();
+    // [HUB] cada sessão ganha o seu CLP de demonstração só neste PC, sempre na porta 502 do Modbus, num endereço de
+    // loopback próprio (127.0.0.80, .81… até .99): não disputa a 502 do CODESYS nem a dos outros simuladores.
+    // Se o Windows recusar esses endereços, volta para 127.0.0.1 numa porta alternativa (1520 em diante) e avisa.
+    let u = null, ultimoErro = null;
+    for (let k = 80; k <= 99 && !u; k++) {
+      const d = criarClpDemo({ host: `127.0.0.${k}`, port: 502, tentativas: 0 });
+      try { u = await d.iniciar(); this.demo = d; } catch (e) { ultimoErro = e; try { if (d.parar) await d.parar(); } catch (_) { /* não abriu */ } }
+    }
+    if (!u) {
+      this.log(`aviso: 127.0.0.80–99:502 indisponível (${ultimoErro && (ultimoErro.code || ultimoErro.message)}); CLP de demonstração em 127.0.0.1`);
+      this.demo = criarClpDemo({ host: '127.0.0.1', port: 1520 });
+      u = await this.demo.iniciar();
+    }
     this.conexao = { host: u.host, port: u.port, unitId: 1 }; this.rede.desejado = true; this.rede.demo = true; this.rede.reconexoes = 0;
     if (!this.retorno) { this.retorno = true; this.g.gravar(); }      // a demonstração existe para ver os sinaleiros e a IHM
     this.log(`CLP de demonstração ligado em ${u.host}:${u.port}`);

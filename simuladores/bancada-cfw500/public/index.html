@@ -5,13 +5,13 @@
 <script>/* [HUB] Restaurar original: o HUB abre esta tela com ?hubRestaurar=1 e ela apaga o que guardou neste navegador */
 try { var u = new URL(location.href); if (u.searchParams.has('hubRestaurar')) { localStorage.clear(); sessionStorage.clear(); u.searchParams.delete('hubRestaurar'); history.replaceState(null, '', u.pathname + u.search + u.hash); } } catch (e) { /* sem armazenamento */ }</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Bancada CFW500</title>
+<title>Bancada didática WEG CFW500</title>
 <!--ICO--><link rel="icon" href="favicon.svg"><!--/ICO-->
 <!--CSS--><link rel="stylesheet" href="css/estilo.css"><!--/CSS-->
 </head>
 <body>
 <header class="topo">
-  <div class="marca"><b>Bancada CFW500</b><span>WEG CFW500 + plug-in IOS · bancada didática de ligação</span></div>
+  <div class="marca"><b>Bancada didática WEG CFW500</b><span>WEG CFW500 + plug-in IOS · bancada didática de ligação</span></div>
   <div class="chips">
     <div class="chip" id="chRede">Rede desligada</div>
     <div class="chip" id="chEstado">Inversor apagado</div>
@@ -25,7 +25,7 @@ try { var u = new URL(location.href); if (u.searchParams.has('hubRestaurar')) { 
 <main class="corpo">
   <section class="lado">
     <nav class="abas" id="abas">
-      <button data-aba="missoes" class="ativa">Missões</button><button data-aba="inversor">Inversor</button><button data-aba="parametros">Parâmetros</button><button data-aba="medicoes">Medições</button><button data-aba="bancada">Bancada</button>
+      <button data-aba="missoes" class="ativa">Missões</button><button data-aba="inversor">Inversor</button><button data-aba="parametros">Parâmetros</button><button data-aba="medicoes">Medições</button><button data-aba="bancada">Bancada</button><button class="ocultar" id="btnOcultar" title="Ocultar este painel" aria-label="Ocultar este painel">«</button>
     </nav>
     <div class="painel" id="aba-missoes"><p class="dica">Exercícios em ordem de dificuldade. O simulador confere sozinho: faça a ligação, ajuste os parâmetros e opere.</p><ol id="listaMissoes" class="missoes"></ol></div>
     <div class="painel" id="aba-inversor" hidden>
@@ -61,6 +61,15 @@ try { var u = new URL(location.href); if (u.searchParams.has('hubRestaurar')) { 
       <canvas id="mmLcd" width="400" height="180"></canvas>
       <div class="seg" id="mmModos"></div>
       <div class="bloco" id="mmPontas"></div>
+      <h3>Osciloscópio</h3>
+      <canvas id="oscTela" width="600" height="400"></canvas>
+      <div class="osc" id="oscCtl">
+        <div class="linha"><span>Tempo</span><button class="botao" data-o="tb-" aria-label="Tempo por divisão menor">−</button><b id="oTb"></b><button class="botao" data-o="tb+" aria-label="Tempo por divisão maior">+</button><span>Pos.</span><button class="botao" data-o="pos-" aria-label="Posição para a esquerda">◀</button><button class="botao" data-o="pos+" aria-label="Posição para a direita">▶</button><button class="botao destaque" data-o="auto">Auto</button><button class="botao" data-o="parar" id="oParar">Parar</button></div>
+        <div class="linha"><span class="c1">CH1</span><button class="botao" data-o="v1-" aria-label="CH1 menos volts por divisão">−</button><b id="oV1"></b><button class="botao" data-o="v1+" aria-label="CH1 mais volts por divisão">+</button></div>
+        <div class="linha"><span class="c2">CH2</span><button class="botao" data-o="v2-" aria-label="CH2 menos volts por divisão">−</button><b id="oV2"></b><button class="botao" data-o="v2+" aria-label="CH2 mais volts por divisão">+</button></div>
+        <label class="ck"><input type="checkbox" id="oFiltro"> Filtro passa-baixa: mostra só a fundamental da saída do inversor (sem o PWM)</label>
+      </div>
+      <div class="bloco" id="oscInfo"></div>
       <h3>O que o inversor enxerga</h3><table class="leit" id="tabIO"></table>
       <h3>Motor</h3><table class="leit" id="tabMotor"></table>
     </div>
@@ -69,9 +78,12 @@ try { var u = new URL(location.href); if (u.searchParams.has('hubRestaurar')) { 
       <div class="linha"><label class="cl">Cor do próximo fio <select id="bCor"><option value="auto">automática (pela função do borne)</option><option>preto</option><option>vermelho</option><option>azul</option><option>verde</option><option>amarelo</option><option>branco</option><option>laranja</option></select></label></div>
       <div class="linha"><select id="bMontagem" aria-label="Montagem pronta"></select><button class="botao" id="bMontar">Montar</button></div>
       <div class="linha"><button class="botao perigo" id="bLimpar">Remover todos os fios</button></div>
+      <h3>Tamanho do painel</h3>
+      <div class="seg" id="bPainel"></div>
+      <p class="dica">Painel maior cabe mais componentes; a mesa acompanha. Ao voltar para um menor, o que ficaria de fora é trazido para dentro.</p>
       <h3>Componentes</h3>
       <div class="linha"><select id="bTipo" aria-label="Componente"></select><button class="botao" id="bAdd">Adicionar</button></div>
-      <p class="dica">Arraste o componente pela placa. Clique com o botão direito (ou toque rápido) nele para ver a explicação e remover.</p>
+      <p class="dica">Também pelo botão <b>+ Componente</b>, no canto da bancada. O componente novo vai para o primeiro lugar livre do painel; arraste pela placa para mudar. Clique nele para selecionar e use <b>Remover</b> (ou a tecla Delete); botão direito mostra a explicação.</p>
       <h3>Motor e carga</h3>
       <label class="rg">Freio de carga <output id="bCargaV">30 %</output><input type="range" id="bCarga" min="0" max="150" step="5" value="30"></label>
       <label class="ck"><input type="checkbox" id="bVolante"> Volante de inércia acoplado</label>
@@ -85,10 +97,16 @@ try { var u = new URL(location.href); if (u.searchParams.has('hubRestaurar')) { 
   </section>
   <section class="cena">
     <div id="cena3d"></div>
-    <div class="vistas" id="vistas"><button data-vista="geral">Bancada</button><button data-vista="inversor">Inversor</button><button data-vista="bornes">Bornes</button><button data-vista="comando">Comando</button><button data-vista="motor">Motor</button><button data-vista="multimetro">Multímetro</button></div>
+    <button class="mostrar" id="btnMostrar" hidden title="Mostrar o painel de missões, inversor e parâmetros">» Painel</button>
+    <div class="vistas" id="vistas"><button data-vista="geral">Bancada</button><button data-vista="inversor">Inversor</button><button data-vista="bornes">Bornes</button><button data-vista="comando">Comando</button><button data-vista="motor">Motor</button><button data-vista="multimetro">Multímetro</button><button data-vista="osciloscopio">Osciloscópio</button></div>
     <div class="modo" id="modo" hidden></div>
     <div class="alerta" id="alerta" hidden></div>
-    <button class="botao perigo remover" id="btnRemover" hidden>Remover fio</button>
+    <div class="ferr" id="ferr">
+      <div class="cores" id="corProx" title="Cor do próximo fio"></div>
+      <button class="botao destaque" id="btnPaleta" aria-expanded="false">+ Componente</button>
+    </div>
+    <div class="paleta" id="paleta" hidden></div>
+    <div class="barraSel" id="barraSel" hidden></div>
     <div class="rotulo" id="rotMotor"></div>
     <div class="dicaT" id="dicaT" hidden></div>
     <div class="toast" id="toast" hidden></div>

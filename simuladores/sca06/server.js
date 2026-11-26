@@ -1,7 +1,7 @@
 /* =============================================================================
  *  SIMULADOR SCA06 + ECO5 (EtherNet/IP adapter) — servidor principal
  *  ---------------------------------------------------------------------------
- *  node server.js            → http://localhost:3000  (bancada 3D + painéis)
+ *  node server.js            → http://localhost:3060  (bancada 3D + painéis)
  *
  *  Processos internos:
  *    1. "Firmware" do drive  (public/core/sca06-core.js)   — ciclo de 5 ms
@@ -79,7 +79,7 @@ async function ihmOp(m) {
     case 'demo': {
       if (!m.ligar) { await clpDemo.desligar(); return { ok: true }; }
       const r = await clpDemo.ligar();
-      if (r.ok) { ihm.configurar({ ...ihm.cfg, ip: '127.0.0.1', porta: r.porta, unitId: 1 }); ihm.iniciar(); }
+      if (r.ok) { ihm.configurar({ ...ihm.cfg, ip: r.host || '127.0.0.1', porta: r.porta, unitId: 1 }); ihm.iniciar(); }
       return Object.assign(r, { info: ihm.info() });
     }
     default: return { erro: 'operação desconhecida' };

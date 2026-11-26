@@ -3,7 +3,7 @@
  * Bancada CFW500: servidor do simulador (modelo do HUB de simuladores).
  *
  * Contrato do HUB:
- *   SIM_HTTP_PORT  porta da tela (sozinho: PORT ou 3350)
+ *   SIM_HTTP_PORT  porta da tela (sozinho: PORT ou 3051)
  *   HUB=1          iniciado pelo HUB (sozinho, OPEN_BROWSER=1 abre o navegador)
  * Este simulador não fala com CLP: é uma bancada de ligação. Toda a simulação (circuito, inversor, motor) roda no
  * navegador, em public/core/, e o que o aluno monta fica guardado no próprio navegador (localStorage).
@@ -14,7 +14,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-const PORTA_WEB = Number(process.env.SIM_HTTP_PORT || process.env.PORT || 3350);
+const PORTA_WEB = Number(process.env.SIM_HTTP_PORT || process.env.PORT || 3051);
 const NO_HUB = process.env.HUB === '1';
 function log(msg) { console.log(`[${new Date().toLocaleTimeString('pt-BR')}] ${msg}`); }   // aparece em "Mensagens do simulador"
 

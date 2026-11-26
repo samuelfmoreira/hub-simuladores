@@ -122,7 +122,8 @@ async function redeComSessoes() {
   const a = g.criar('Ana'), b = g.criar('Bruno');
   ok(a.id !== b.id && g.criar('Ana').nome === 'Ana 2', 'cada sessão tem o seu código; nome repetido ganha um número');
   await a.ligarDemo(); await b.ligarDemo();
-  ok(a.rede.conectado && b.rede.conectado && a.conexao.port !== b.conexao.port, `cada sessão liga o seu CLP de demonstração (portas ${a.conexao.port} e ${b.conexao.port}, só em 127.0.0.1)`);
+  ok(a.rede.conectado && b.rede.conectado && a.conexao.host !== b.conexao.host && a.conexao.port === 502 && b.conexao.port === 502 && /^127\./.test(a.conexao.host) && /^127\./.test(b.conexao.host),
+    `cada sessão liga o seu CLP de demonstração, sempre na porta 502 do Modbus, num endereço próprio só deste PC (${a.conexao.host}:${a.conexao.port} e ${b.conexao.host}:${b.conexao.port})`);
   await a.comando({ tipo: 'proc', campo: 'nivel', v: 2.3 }); await b.comando({ tipo: 'proc', campo: 'nivel', v: 0.2 });
   await espera(2500);
   const ca = a.nucleo.clp, cb = b.nucleo.clp;
@@ -133,12 +134,12 @@ async function redeComSessoes() {
   const taxa = a.cli.taxa();
   ok(taxa > 5 && taxa <= 15, `carga no CLP: ${taxa.toFixed(1)} requisições por segundo (limite 15)`);
   ok(a.cli.est.timeouts === 0 && a.cli.est.excecoes === 0, `sem timeouts nem exceções (${a.cli.est.ok} respostas, tempo médio ${a.cli.est.rtMedio.toFixed(1)} ms)`);
-  const r = await g.criar('Caio').comando({ tipo: 'conectar', host: '127.0.0.1', port: a.conexao.port, unitId: 1 });
+  const r = await g.criar('Caio').comando({ tipo: 'conectar', host: a.conexao.host, port: a.conexao.port, unitId: 1 });
   ok(r.ok === false && /já está conectada/.test(r.erro), 'duas sessões não conectam no mesmo CLP: a segunda é recusada com explicação');
   // queda do CLP e reconexão sozinha
-  const porta = a.conexao.port; await a.demo.parar(); await espera(400);
+  const porta = a.conexao.port, hostA = a.conexao.host; await a.demo.parar(); await espera(400);
   ok(!a.rede.conectado && a.nucleo.clp === null, 'CLP caiu: sessão marca desconectado e apaga sinaleiros e IHM (estado seguro)');
-  a.demo = criarClpDemo({ port: porta }); await a.demo.iniciar(); await espera(6500);
+  a.demo = criarClpDemo({ host: hostA, port: porta, tentativas: 0 }); await a.demo.iniciar(); await espera(6500);
   ok(a.rede.conectado && Math.abs(a.demo.holding[0] - a.nucleo.m.bruto) < 8, 'CLP de volta: reconecta sozinho em até 5 s e reenvia o valor atual');
   // CLP que não responde: timeouts, queda declarada
   const mudo = net.createServer((s) => { s.on('data', () => {}); s.on('error', () => {}); }); await new Promise((res) => mudo.listen(15599, '127.0.0.1', res));
@@ -160,7 +161,7 @@ async function redeComSessoes() {
   ok(voltou, 'desconectar e conectar de novo 3 vezes seguidas: sempre volta');
   await e.desconectar(true); await clpE.parar();
   // gravação e recarga
-  await a.comando({ tipo: 'param', id: 'atenuacao', v: 7 }); await b.comando({ tipo: 'conectar', host: '127.0.0.1', port: b.conexao.port, unitId: 1 }).catch(() => {});
+  await a.comando({ tipo: 'param', id: 'atenuacao', v: 7 }); await b.comando({ tipo: 'conectar', host: b.conexao.host, port: b.conexao.port, unitId: 1 }).catch(() => {});
   g.gravarAgora();
   const g2 = new Gerente({ pastaDados: pasta });
   const a2 = g2.obter(a.id);
