@@ -55,10 +55,10 @@
   $('#jFechar').onclick = () => { $('#janela').hidden = true; };
   $('#janela').addEventListener('pointerdown', (e) => { if (e.target.id === 'janela') $('#janela').hidden = true; });
   const INFO = {
-    rede: 'Tomada trifásica da bancada: 220 V entre fases e 127 V entre fase e neutro, 60 Hz. A chave geral tem proteção: curto-circuito ou 220 V em borne de comando desarmam a bancada e o motivo aparece na tela. Para rearmar, corrija a ligação e gire a chave de novo.',
+    rede: 'Tomada trifásica da bancada, 60 Hz. A tensão é escolhida na aba Bancada: 220 V entre fases (127 V fase-neutro) ou 380 V entre fases (220 V fase-neutro). A chave geral tem proteção: curto-circuito ou 220 V em borne de comando desarmam a bancada e o motivo aparece na tela. Para rearmar, corrija a ligação e gire a chave de novo.',
     disj: 'Disjuntor tripolar (curva C, 10 A). Entra entre a rede e o inversor: bornes 1-3-5 em cima (entrada) e 2-4-6 embaixo (saída). Clique na alavanca para ligar e desligar.',
     cfw: 'Inversor WEG CFW500A04P3B2 (200-240 V, 4,3 A, mecânica A) com o módulo plug-in CFW500-IOS: 4 entradas digitais, 1 entrada analógica, 1 saída analógica, 1 saída a relé, 1 saída a transistor e RS-485. Os bornes da placa têm a mesma numeração do produto. As teclas da HMI funcionam no 3D e na aba Inversor. De fábrica as DIs são NPN: ficam ativas quando ligadas ao GND (bornes 4 ou 16).',
-    motor: 'Motor de indução trifásico WEG W22, 0,75 kW (1 cv), 4 polos, já fechado em triângulo para 220 V. Placa: 2,98 A, 1725 rpm, 60 Hz, cos φ 0,80, rendimento 82,6 %, FS 1,25. No eixo há um disco com freio de carga (aba Bancada) e um volante de inércia opcional. Trocar duas fases inverte o sentido.',
+    motor: 'O botão “Campo girante”, no topo da tela, mostra o motor em corte com o campo do estator girando, o escorregamento e o memorial de cálculo. Motor de indução trifásico WEG W22, 0,75 kW (1 cv), 4 polos, de 6 pontas: o fechamento é feito por você na caixa de ligação. Triângulo (220 V, 2,98 A): U1–W2, V1–U2, W1–V2. Estrela (380 V, 1,72 A): W2–U2–V2 juntos. Em qualquer dos dois, cada enrolamento trabalha com 220 V. Placa: 1725 rpm, 60 Hz, cos φ 0,80, rendimento 82,6 %, FS 1,25. No eixo há um disco com freio de carga (aba Bancada) e um volante de inércia opcional. Trocar duas fases inverte o sentido.',
     bot: 'Botão pulsador de 22 mm com um contato NA (13-14) e um NF (21-22). Fica acionado só enquanto você segura.',
     chave: 'Chave seletora de 2 posições fixas com um contato NA (13-14) e um NF (21-22). Clique para mudar de posição.',
     emerg: 'Botão de emergência tipo cogumelo com trava: NF (11-12) e NA (23-24). Clique para acionar e clique de novo para destravar.',
@@ -78,6 +78,11 @@
       (d.unico ? '' : `<div class="linha"><button class="botao perigo" id="jRemover">Remover ${esc(c.id)} da bancada</button></div>`));
     const b = $('#jRemover'); if (b) b.onclick = () => { cena.removerComp(id); gravar(); $('#janela').hidden = true; toast(`${id} removido`); };
   }
+  // ---- tela à parte: campo girante (também abre pelo endereço com #campo-girante)
+  const campo = SIM.criaCampo($('#campo'), banc); SIM.campo = campo;
+  $('#btnCampo').onclick = () => { if (campo.aberto) campo.fechar(); else campo.abrir(banc.alim.via ? 'banc' : 'demo', 'popup'); };      // abre em janela flutuante, junto com a bancada
+  addEventListener('keydown', (e) => { if (e.key === 'Escape' && campo.aberto) campo.fechar(); });
+  if (location.hash === '#campo-girante') campo.abrir('demo', 'cheia');
   $('#btnAjuda').onclick = () => janela(`<h2>Como usar a bancada</h2><ul>
     <li><b>Fio:</b> clique num borne e depois no outro (ou arraste de um borne ao outro). <kbd>Esc</kbd> cancela.</li>
     <li><b>Cor do fio:</b> clique no fio e escolha a cor na barra que aparece. A cor dos próximos fios fica nas bolinhas do canto de cima da bancada.</li>
@@ -198,17 +203,17 @@
   }
   function atualizaResp() {
     const li = est.aberta && $(`#listaMissoes li[data-id="${est.aberta}"]`), m = SIM.MISSOES.find((x) => x.id === est.aberta); if (!li || !m) return;
-    const box = $('.resp', li), P = banc.inv.P, placaOk = SIM.PLACA_P.every(([n, v]) => P[n] === v);
+    const box = $('.resp', li), P = banc.inv.P, placa = SIM.placaP(banc), placaOk = placa.every(([n, v]) => P[n] === v);
     const linha = (n, v) => { const ok = P[n] === v; return `<tr><td>${nomeP(n)} ${esc(MAPA[n].nome)}</td><td class="${ok ? 'c' : 'e'}">${fmt(n, P[n])}</td><td>→ ${esc(fmt(n, v) + (MAPA[n].opc && MAPA[n].opc[v] !== undefined ? ' · ' + MAPA[n].opc[v] : ''))}</td></tr>`; };
     const h = `<div class="tit-resp">Parâmetros desta atividade <small>(atual → ajuste)</small></div><table class="tresp">${(m.params && m.id !== 'motor' ? m.params : []).map(([n, v]) => linha(n, v)).join('') || '<tr><td colspan="3">Nenhum além do padrão de fábrica.</td></tr>'}
-      <tr><td>Placa do motor (P0399 a P0407)</td><td class="${placaOk ? 'c' : 'e'}">${placaOk ? 'ok' : 'diferente'}</td><td>→ 1 cv, 3,0 A, 1725 rpm</td></tr></table>`;
+      <tr><td>Placa do motor (P0399 a P0407)</td><td class="${placaOk ? 'c' : 'e'}">${placaOk ? 'ok' : 'diferente'}</td><td>→ ${banc.tensao === 380 ? '380 V Y · 1,7 A' : '220 V Δ · 3,0 A'} · 1725 rpm</td></tr></table>`;
     if (box.dataset.h !== h) { box.dataset.h = h; box.innerHTML = h; }
   }
   $('#listaMissoes').onclick = (e) => {
     const li = e.target.closest('li[data-id]'); if (!li) return; const id = li.dataset.id, m = SIM.MISSOES.find((x) => x.id === id), ac = e.target.dataset.ac;
     if (e.target.closest('.cab')) { est.aberta = est.aberta === id ? null : id; return desenhaMissoes(); }
     if (ac === 'fios') { const r = banc.montagem(m.montagem); if (r.novos) cena.reconstruir(); else cena.sincFios(); gravar(); toast('Fios montados: ' + SIM.MONTAGENS[m.montagem].nome); }
-    else if (ac === 'param') { const n = banc.inv.parametrizar(SIM.PLACA_P.concat(m.id === 'motor' ? [] : (m.params || []))); atualizaResp(); toast(`Parametrizado: padrão de fábrica, placa do motor${m.params && m.id !== 'motor' ? ` e ${m.params.length} parâmetro(s) da atividade` : ''}${banc.inv.vivo ? '' : ' (gravado com o inversor desligado)'}`); }
+    else if (ac === 'param') { const n = banc.inv.parametrizar(SIM.placaP(banc).concat(m.id === 'motor' ? [] : (m.params || []))); atualizaResp(); toast(`Parametrizado: padrão de fábrica, placa do motor${m.params && m.id !== 'motor' ? ` e ${m.params.length} parâmetro(s) da atividade` : ''}${banc.inv.vivo ? '' : ' (gravado com o inversor desligado)'}`); }
     else if (ac === 'refazer') { delete est.feitas[id]; est.mem[id] = {}; gravar(); desenhaMissoes(); }
   };
   function confereMissoes() {
@@ -245,7 +250,7 @@
   // ---------------------------------------------------------------- aba Parâmetros
   function filtro() {
     const q = $('#pBusca').value.trim().toLowerCase(), gp = $('#pGrupo').value, P = banc.inv.P;
-    return LISTA.filter((p) => (gp === 'PARAM' || (gp === 'SIM' ? !p.guardado : gp === 'MODIF' ? !p.ro && p.n !== 0 && P[p.n] !== p.def : p.grupos.includes(gp))) &&
+    return LISTA.filter((p) => (gp === 'PARAM' || (gp === 'SIM' ? !p.guardado : gp === 'MODIF' ? !p.ro && p.n !== 0 && P[p.n] !== banc.inv.padrao(p.n) : p.grupos.includes(gp))) &&
       (!q || nomeP(p.n).toLowerCase().includes(q) || String(p.n) === q || p.nome.toLowerCase().includes(q)));
   }
   const textoValor = (p, v) => fmt(p.n, v, true) + (p.opc && p.opc[v] !== undefined ? ' · ' + p.opc[v] : '');
@@ -255,7 +260,7 @@
   }
   function atualizaParams() {
     const P = banc.inv.P;
-    for (const tr of $$('#pCorpo tr')) { const p = MAPA[tr.dataset.n], c = tr.lastChild; if (c.firstElementChild) continue; const t = (p.n === 1 || p.n === 2) ? banc.inv.hmi._fmt(p.n, P[p.n]).txt.replace('.', ',') + ' ' + banc.inv.hmi._fmt(p.n, 0).un : textoValor(p, P[p.n]); if (c.textContent !== t) c.textContent = t; tr.classList.toggle('mod', !p.ro && P[p.n] !== p.def); }
+    for (const tr of $$('#pCorpo tr')) { const p = MAPA[tr.dataset.n], c = tr.lastChild; if (c.firstElementChild) continue; const t = (p.n === 1 || p.n === 2) ? banc.inv.hmi._fmt(p.n, P[p.n]).txt.replace('.', ',') + ' ' + banc.inv.hmi._fmt(p.n, 0).un : textoValor(p, P[p.n]); if (c.textContent !== t) c.textContent = t; tr.classList.toggle('mod', !p.ro && P[p.n] !== banc.inv.padrao(p.n)); }
   }
   $('#pBusca').oninput = desenhaParams; $('#pGrupo').onchange = desenhaParams;
   $('#pCorpo').onclick = (e) => {
@@ -308,7 +313,7 @@
     ln.push([`DO2 transistor · ${OPC[276][P[276]]}`, inv.vivo && inv.sai.do2 ? 'fechado' : 'aberto', inv.vivo && inv.sai.do2 ? '<span class="on">conduz ao GND</span>' : '<span class="off">desligado</span>']);
     $('#tabIO').innerHTML = ln.map((l) => `<tr><td>${esc(l[0])}</td><td>${l[1]}</td><td>${l[2]}</td></tr>`).join('');
     const m = banc.motor, al = banc.alim;
-    $('#tabMotor').innerHTML = [['Rotação', br(m.rpm, 0), 'rpm ' + (m.rpm > 1 ? '(horário)' : m.rpm < -1 ? '(anti-horário)' : '')], ['Corrente', br(m.i, 2), 'A (placa 2,98 A)'], ['Conjugado', br(m.torque / 4.152 * 100, 0), '% do nominal'],
+    $('#tabMotor').innerHTML = [['Rotação', br(m.rpm, 0), 'rpm ' + (m.rpm > 1 ? '(horário)' : m.rpm < -1 ? '(anti-horário)' : '')], ['Corrente de linha', br(banc.iLinha, 2), `A (placa: Δ 2,98 A · Y 1,72 A)`], ['Fechamento', al.lig === 'Y' ? 'estrela Y' : al.lig === 'Δ' ? 'triângulo Δ' : al.via ? 'incompleto' : 'aberto', al.via ? `${br(banc.vEnrol, 0)} V em cada enrolamento (nominal 220 V)` : 'sem caminho para a corrente'], ['Conjugado', br(m.torque / 4.152 * 100, 0), '% do nominal'],
       ['Alimentação', al.via === 'inv' ? 'inversor' : al.via === 'rede' ? 'REDE' : 'nenhuma', al.fases === 2 ? '<span class="f">só 2 fases!</span>' : al.via === 'rede' ? 'partida direta' : al.fases === 3 ? '3 fases' : '']].map((l) => `<tr><td>${l[0]}</td><td>${l[1]}</td><td>${l[2]}</td></tr>`).join('');
   }
 
@@ -319,6 +324,12 @@
   $('#bMontar').onclick = () => { const r = banc.montagem($('#bMontagem').value); if (r.novos) cena.reconstruir(); else cena.sincFios(); gravar(); toast('Fios montados'); };
   $('#bLimpar').onclick = () => { banc.limparFios(); cena.sincFios(); toast('Todos os fios foram removidos'); };
   $('#bAdd').onclick = () => { const [t, cor] = SIM.PALETA[+$('#bTipo').value]; acrescenta(t, cor); };
+  // ---- rede 220/380 V e atalho do fechamento do motor
+  function sincRede() { $('#bRede').innerHTML = [[220, '127 V fase-neutro · motor em triângulo'], [380, '220 V fase-neutro · motor em estrela']].map(([v, t]) => `<button data-rede="${v}" class="${banc.tensao === v ? 'ativa' : ''}">${v} V<small>${t}</small></button>`).join('');
+    $$('#bFecho button').forEach((b) => b.classList.toggle('ativa', (b.dataset.fecho === 'D' ? 'Δ' : b.dataset.fecho) === (banc.alim.lig || '') && (b.dataset.fecho !== '' || !banc.fios.some((f) => f.a.startsWith('M1.') && f.b.startsWith('M1.'))))); }
+  $('#bRede').onclick = (e) => { const b = e.target.closest('button[data-rede]'); if (!b) return; const v = +b.dataset.rede; if (!banc.tensaoRede(v)) return; cena.reconstruir(); gravar(); sincRede();
+    toast(`Rede em ${v} V: inversor ${v === 380 ? '380-480 V' : '200-240 V'} no padrão de fábrica. Feche o motor em ${v === 380 ? 'estrela' : 'triângulo'} e religue a chave geral.`); };
+  $('#bFecho').onclick = (e) => { const b = e.target.closest('button[data-fecho]'); if (!b) return; banc.fechamento(b.dataset.fecho); cena.sincFios(); banc.resolver(); sincRede(); toast(b.dataset.fecho === 'Y' ? 'Motor fechado em estrela (W2–U2–V2)' : b.dataset.fecho === 'D' ? 'Motor fechado em triângulo (U1–W2, V1–U2, W1–V2)' : 'Fechamento do motor aberto'); };
   $('#bCarga').oninput = (e) => { banc.motor.carga = e.target.value / 100; $('#bCargaV').textContent = e.target.value + ' %'; gravar(); };
   $('#bVolante').onchange = (e) => { banc.motor.volante = e.target.checked; gravar(); };
   $('#bTravado').onchange = (e) => { banc.motor.travado = e.target.checked; };
@@ -341,7 +352,7 @@
   addEventListener('pagehide', () => { if (tGravar) gravarJa(); });
   if (avisoSessao) setTimeout(() => toast(avisoSessao), 800);
   SIM.sessao = SID;
-  function sincControles() { sincPainel(); $('#bCarga').value = Math.round(banc.motor.carga * 100); $('#bCargaV').textContent = Math.round(banc.motor.carga * 100) + ' %'; $('#bVolante').checked = banc.motor.volante; $('#bS1').checked = !!banc.porTipo('cfw').st.s1; }
+  function sincControles() { sincPainel(); sincRede(); $('#bCarga').value = Math.round(banc.motor.carga * 100); $('#bCargaV').textContent = Math.round(banc.motor.carga * 100) + ' %'; $('#bVolante').checked = banc.motor.volante; $('#bS1').checked = !!banc.porTipo('cfw').st.s1; }
 
   // ---------------------------------------------------------------- bip de continuidade
   let ac = null, osc = null, ganho = null;
@@ -354,10 +365,10 @@
     const inv = banc.inv, r = banc.porTipo('rede'), P = inv.P;
     chip('#chRede', r.st.desarmada ? 'Bancada DESARMADA' : r.st.ligada ? 'Rede ligada' : 'Rede desligada', r.st.desarmada ? 'er' : r.st.ligada ? 'ok' : '');
     chip('#chEstado', !inv.vivo ? 'Inversor apagado' : inv.falhaCod ? `Falha F${String(inv.falhaCod).padStart(4, '0')}` : P[47] ? `CONF ${P[47]}` : `${OPC[6][inv.estado].split(' ')[0]} · ${inv.loc ? 'LOC' : 'REM'}`, !inv.vivo ? '' : inv.falhaCod ? 'er' : P[47] || inv.estado === 2 || inv.alarme ? 'al' : 'ok');
-    chip('#chHz', br(inv.vivo ? Math.abs(inv.fOut) : 0, 1) + ' Hz'); chip('#chA', br(banc.motor.i, 1) + ' A'); chip('#chRpm', br(banc.motor.rpm, 0) + ' rpm');
+    chip('#chHz', br(inv.vivo ? Math.abs(inv.fOut) : 0, 1) + ' Hz'); chip('#chA', br(banc.iLinha, 1) + ' A'); chip('#chRpm', br(banc.motor.rpm, 0) + ' rpm');
     const al = $('#alerta'); if (r.st.desarmada && banc.erros.length) { al.hidden = false; al.className = 'alerta'; al.innerHTML = `<b>A proteção da bancada desarmou</b>${esc(banc.erros[0])}<br>Corrija a ligação e gire a chave geral de novo.`; }
     else if (banc.avisos.length) { al.hidden = false; al.className = 'alerta av'; al.innerHTML = `<b>Atenção</b>${esc(banc.avisos[0])}`; } else al.hidden = true;
-    const mt = banc.porTipo('motor'), p = cena.tela(mt.x - 0.06, 0.80 + 0.31, mt.y), rot = $('#rotMotor'); rot.style.left = p.x + 'px'; rot.style.top = p.y + 'px'; rot.textContent = `${mt.id} · ${br(banc.motor.rpm, 0)} rpm · ${br(banc.motor.i, 1)} A`; rot.hidden = !p.visivel;
+    const mt = banc.porTipo('motor'), p = cena.tela(mt.x - 0.06, 0.80 + 0.31, mt.y), rot = $('#rotMotor'); rot.style.left = p.x + 'px'; rot.style.top = p.y + 'px'; rot.textContent = `${mt.id} · ${br(banc.motor.rpm, 0)} rpm · ${br(banc.iLinha, 1)} A${banc.alim.lig ? ' · ' + banc.alim.lig : ''}`; rot.hidden = !p.visivel;
     if (ganho) ganho.gain.value = banc.leitura.bip ? 0.05 : 0;
     confereMissoes();
     if (est.aba === 'inversor') atualizaInversor(); else if (est.aba === 'parametros') atualizaParams(); else if (est.aba === 'medicoes') atualizaMedicoes(); else if (est.aba === 'missoes' && est.aberta) atualizaResp();
@@ -367,7 +378,8 @@
   function quadro(agora) {
     const dt = Math.min(0.25, (agora - ult) / 1000); ult = agora; acum += dt; let n = 0;          // PC lento: a simulação continua em tempo real até ~4 quadros/s
     while (acum >= 0.002 && n < 140) { banc.passo(0.002); acum -= 0.002; n++; } if (n >= 140) acum = 0;
-    cena.quadro(dt);
+    if (!campo.aberto || campo.popup) cena.quadro(dt);            // em tela cheia a bancada não precisa ser redesenhada
+    if (campo.aberto) campo.quadro(dt);
     if (est.aba === 'inversor') SIM.desenhaHMI(hmiCtx, 648, 400, banc.inv.hmi.display());
     tUI += dt; if (tUI >= 0.1) { tUI = 0; atualiza(false); }
     requestAnimationFrame(quadro);

@@ -28,8 +28,9 @@
         T('U', 'U', 30, 203, 'preto', 'Saída para o motor'), T('V', 'V', 65, 203, 'preto', 'Saída para o motor'), T('W', 'W', 100, 203, 'preto', 'Saída para o motor'), T('PEo', 'PE', 135, 203, 'verde', 'Terra (motor)')]
         .concat(linha([1, 3, 5, 7, 9, 11, 13, 15], -150, -133, 38, (n, x, y) => T('c' + n, n + ' ' + CTRL[n][0], x, y, corCtrl(n), CTRL[n][1])))
         .concat(linha([2, 4, 6, 8, 10, 12, 14, 16], -212, -133, 38, (n, x, y) => T('c' + n, n + ' ' + CTRL[n][0], x, y, corCtrl(n), CTRL[n][1]))) },
-    motor: { nome: 'Motor trifásico 1 cv', pre: 'M', w: 470, h: 260, plano: 'mesa', unico: true,
-      term: [T('U1', 'U1', -45, 0, 'preto', 'Bobina U (ligação triângulo 220 V)'), T('V1', 'V1', -15, 0, 'preto', 'Bobina V'), T('W1', 'W1', 15, 0, 'preto', 'Bobina W'), T('PE', 'PE', 45, 0, 'verde', 'Terra da carcaça')] },
+    motor: { nome: 'Motor trifásico 1 cv, 6 pontas (220 V Δ / 380 V Y)', pre: 'M', w: 470, h: 260, plano: 'mesa', unico: true,      // y dos bornes = profundidade na caixa de ligação
+      term: [T('U1', 'U1', -38, -18, 'preto', 'Início do enrolamento U'), T('V1', 'V1', -4, -18, 'preto', 'Início do enrolamento V'), T('W1', 'W1', 30, -18, 'preto', 'Início do enrolamento W'),
+        T('W2', 'W2', -38, 18, 'cinza', 'Fim do enrolamento W'), T('U2', 'U2', -4, 18, 'cinza', 'Fim do enrolamento U'), T('V2', 'V2', 30, 18, 'cinza', 'Fim do enrolamento V'), T('PE', 'PE', 60, 0, 'verde', 'Terra da carcaça')] },
     bot: { nome: 'Botão pulsador', pre: 'S', w: 100, h: 190, plano: 'painel', term: contatos(['13', '14'], ['21', '22'], -30, -70) },
     chave: { nome: 'Chave seletora 2 posições', pre: 'K', w: 100, h: 190, plano: 'painel', term: contatos(['13', '14'], ['21', '22'], -30, -70) },
     emerg: { nome: 'Botão de emergência', pre: 'S', w: 110, h: 190, plano: 'painel', term: contatos(['23', '24'], ['11', '12'], -30, -70) },
@@ -66,13 +67,15 @@
     ['cont', '', 'Contatora (bobina 24 Vcc)'], ['fonte', '', 'Fonte 24 Vcc 2,5 A'], ['sinal', 'verde', 'Sinaleiro verde 24 Vcc'], ['sinal', 'vermelho', 'Sinaleiro vermelho 24 Vcc'], ['sinal', 'amarelo', 'Sinaleiro amarelo 24 Vcc'],
     ['sinal', 'azul', 'Sinaleiro azul 24 Vcc'], ['sinal', 'branco', 'Sinaleiro branco 24 Vcc'], ['lamp', 'verde', 'Sinaleiro verde 220 Vca'], ['lamp', 'vermelho', 'Sinaleiro vermelho 220 Vca'], ['lamp', 'amarelo', 'Sinaleiro amarelo 220 Vca'],
     ['pot', '', 'Potenciômetro 5 kΩ'], ['disj', '', 'Disjuntor tripolar'], ['gerador', '', 'Gerador de sinal V / mA']];
-  const ST0 = { rede: () => ({ ligada: false, desarmada: false }), disj: () => ({ fechado: false }), bot: () => ({ ap: false }), chave: () => ({ on: false }), emerg: () => ({ ap: false }),
+  const ST0 = { rede: () => ({ ligada: false, desarmada: false, tensao: 220 }), disj: () => ({ fechado: false }), bot: () => ({ ap: false }), chave: () => ({ on: false }), emerg: () => ({ ap: false }),
     pot: () => ({ pos: 0 }), sinal: () => ({}), lamp: () => ({}), cont: () => ({ fechado: false }), fonte: () => ({ on: false }), gerador: () => ({ modo: 'V', valor: 0 }), multi: () => ({ modo: 0, pv: null, pc: null }), osc: () => ({ a1: null, b1: null, a2: null, b2: null, tb: 5, v1: 6, v2: 6, pos: 0, filtro: false, parado: false }), cfw: () => ({ s1: false }), motor: () => ({}) };
 
   // montagens prontas: [de, para, cor]
   const FORCA = [['X1.L1', 'Q1.1', 'preto'], ['X1.L2', 'Q1.3', 'preto'], ['X1.L3', 'Q1.5', 'preto'], ['Q1.2', 'A1.R', 'preto'], ['Q1.4', 'A1.S', 'preto'], ['Q1.6', 'A1.T', 'preto'], ['X1.PE', 'A1.PEi', 'verde'],
     ['A1.U', 'M1.U1', 'preto'], ['A1.V', 'M1.V1', 'preto'], ['A1.W', 'M1.W1', 'preto'], ['A1.PEo', 'M1.PE', 'verde']];
   const POT = [['A1.c8', 'RP1.3', 'vermelho'], ['A1.c6', 'RP1.2', 'amarelo'], ['A1.c4', 'RP1.1', 'preto']];
+  /** jumpers do fechamento do motor: triângulo (rede 220 V) ou estrela (rede 380 V) */
+  const FECHAMENTO = { 220: [['U1', 'W2'], ['V1', 'U2'], ['W1', 'V2']], 380: [['W2', 'U2'], ['U2', 'V2']] };
   const MONTAGENS = {
     forca: { nome: 'Só a força (rede, disjuntor, inversor, motor)', fios: FORCA },
     dois_fios: { nome: 'Gira/Para (K1 em DI1) e sentido (K2 em DI2)', fios: FORCA.concat([['A1.c16', 'K1.13', 'preto'], ['K1.14', 'A1.c1', 'azul'], ['K1.13', 'K2.13', 'preto'], ['K2.14', 'A1.c3', 'azul']]) },
@@ -97,7 +100,7 @@
       this.aoGravar = o.aoGravar || (() => {});
       this.inv = new SIM.CFW500({ salvo: o.salvo && o.salvo.inv, aoGravar: () => this.aoGravar(), aoEvento: (m) => this.evento(m) });
       this.motor = new SIM.Motor();
-      this.net = {}; this.vdc = {}; this.fas = {}; this.erros = []; this.avisos = []; this.alim = { f: 0, v: 0, seq: 1, fases: 0, cc: 0, via: '' }; this.leitura = { txt: '', un: '', bip: false };
+      this.net = {}; this.vdc = {}; this.fas = {}; this.erros = []; this.avisos = []; this.iLinha = 0; this.vEnrol = 0; this.alim = { f: 0, v: 0, seq: 1, fases: 0, cc: 0, via: '', kv: 0, kI: 1, lig: '' }; this.leitura = { txt: '', un: '', bip: false };
       if (o.salvo && o.salvo.comps) this.carregar(o.salvo); else this.padrao();
     }
     padrao() { this.comps = []; this.fios = []; PADRAO.forEach(([id, tipo, x, y, cor]) => this.comps.push({ id, tipo, x, y, cor: cor || '', st: ST0[tipo]() })); this.sujo = true; }
@@ -108,10 +111,25 @@
       this.fios = (s.fios || []).filter((f) => this.existe(f.a) && this.existe(f.b)); this.seq = 1 + this.fios.reduce((m, f) => Math.max(m, f.id), 0);
       if (s.motor) { this.motor.carga = s.motor.carga; this.motor.volante = !!s.motor.volante; }
       if (PAINEIS[s.painel]) this.painel = s.painel;
+      const mt = this.porTipo('motor'); if (mt && !(s.v >= 2)) FECHAMENTO[220].forEach(([a, b]) => this.addFio(`${mt.id}.${a}`, `${mt.id}.${b}`, 'cinza'));   // antes da versão 1.5 o triângulo era interno
       this.sujo = true;
     }
-    salvar() { return { comps: this.comps, fios: this.fios, painel: this.painel, motor: { carga: this.motor.carga, volante: this.motor.volante }, inv: this.inv.paraGravar() }; }
+    salvar() { return { v: 2, comps: this.comps, fios: this.fios, painel: this.painel, motor: { carga: this.motor.carga, volante: this.motor.volante }, inv: this.inv.paraGravar() }; }
     get limites() { return limites(this.painel); }
+    get tensao() { const r = this.porTipo('rede'); return r && r.st.tensao === 380 ? 380 : 220; }
+    /** Troca a rede da bancada (220 ou 380 V entre fases). A rede é desligada e o inversor passa a ser o da classe correspondente. */
+    tensaoRede(v) {
+      const r = this.porTipo('rede'); if (!r || (v !== 220 && v !== 380) || r.st.tensao === v) return false;
+      r.st.tensao = v; r.st.ligada = false; r.st.desarmada = false; this.erros = []; this.inv.trocaClasse(v); this.sujo = true;
+      this.evento(`Rede da bancada em ${v} V entre fases (${v === 380 ? 220 : 127} V fase-neutro).`); this.aoGravar(); return true;
+    }
+    /** Fecha o motor com jumpers: 'D' triângulo, 'Y' estrela, '' abre. Só mexe nos fios entre os bornes do próprio motor. */
+    fechamento(tipo) {
+      const m = this.porTipo('motor'); if (!m) return; const meu = (r) => r.startsWith(m.id + '.') && r !== m.id + '.PE';
+      this.fios = this.fios.filter((f) => !(meu(f.a) && meu(f.b)));
+      if (tipo) FECHAMENTO[tipo === 'Y' ? 380 : 220].forEach(([a, b]) => this.addFio(`${m.id}.${a}`, `${m.id}.${b}`, 'cinza'));
+      this.sujo = true; this.aoGravar();
+    }
     /** Troca o tamanho do painel. Ao diminuir, o que ficaria fora é trazido para dentro (procurando lugar livre). Devolve quantos mudaram de lugar. */
     tamanhoPainel(nome) {
       if (!PAINEIS[nome]) return -1; this.painel = nome; const L = limites(nome); let n = 0;
@@ -169,7 +187,9 @@
         const pos = pd[2] !== undefined && !this.ocupado(pd[1], pd[2], pd[3]) ? [pd[2], pd[3]] : (this.lugarLivre(pd[1]) || [pd[2] || 0.45, pd[3] || 0.5]);
         this.comps.push({ id, tipo: pd[1], x: pos[0], y: pos[1], cor: pd[4] || '', st: ST0[pd[1]]() }); novos++;
       }
-      this.fios = []; m.fios.forEach(([a, b, c]) => this.addFio(a, b, c)); this.sujo = true; return { ok: true, novos };
+      this.fios = []; m.fios.forEach(([a, b, c]) => this.addFio(a, b, c));
+      const mt = this.porTipo('motor'); if (mt && this.fios.some((f) => f.a.startsWith(mt.id + '.') || f.b.startsWith(mt.id + '.'))) FECHAMENTO[this.tensao].forEach(([a, b]) => this.addFio(`${mt.id}.${a}`, `${mt.id}.${b}`, 'cinza'));
+      this.sujo = true; return { ok: true, novos };
     }
     /** Muda o estado de um componente: { ligada }, { fechado }, { ap }, { on }, { pos }, { modo }, { pv }, ... */
     acao(id, st) {
@@ -197,7 +217,7 @@
         else if (c.tipo === 'sinal') res.push([p + 'X1', p + 'X2', 2400]);
         else if (c.tipo === 'lamp') res.push([p + 'X1', p + 'X2', 9680]);
         else if (c.tipo === 'cont') { if (s.fechado) { une(p + '1', p + '2'); une(p + '3', p + '4'); une(p + '5', p + '6'); une(p + '13', p + '14'); } else une(p + '21', p + '22'); res.push([p + 'A1', p + 'A2', 230]); }
-        else if (c.tipo === 'motor') res.push([p + 'U1', p + 'V1', 10.2], [p + 'V1', p + 'W1', 10.2], [p + 'W1', p + 'U1', 10.2]);   // triângulo: 6,8 Ω entre dois bornes
+        else if (c.tipo === 'motor') res.push([p + 'U1', p + 'U2', 10.2], [p + 'V1', p + 'V2', 10.2], [p + 'W1', p + 'W2', 10.2]);   // três enrolamentos de 10,2 Ω: 6,8 Ω entre fases em triângulo, 20,4 Ω em estrela
         else if (c.tipo === 'cfw') { une(p + 'c4', p + 'c16'); une(p + 'PEi', p + 'PEo'); une(p + 'c11', inv.vivo && inv.sai.do1 ? p + 'c13' : p + 'c15'); }
       }
       const N = (k) => acha(k);
@@ -215,7 +235,8 @@
       if (rede) {
         const p = rede.id + '.';
         poe(p + 'N', { re: 0, im: 0, fonte: 'terra' }); poe(p + 'PE', { re: 0, im: 0, fonte: 'terra' });
-        if (viva) ['L1', 'L2', 'L3'].forEach((l, i) => poe(p + l, { re: 127 * Math.cos(-120 * i * RAD), im: 127 * Math.sin(-120 * i * RAD), fonte: 'rede', fase: i }));
+        const vf = (rede.st.tensao === 380 ? 380 : 220) / R3;      // tensão fase-neutro: 127 V na rede de 220 V, 220 V na de 380 V
+        if (viva) ['L1', 'L2', 'L3'].forEach((l, i) => poe(p + l, { re: vf * Math.cos(-120 * i * RAD), im: vf * Math.sin(-120 * i * RAD), fonte: 'rede', fase: i }));
       }
       const saiInv = cfw && inv.sai.pwm && inv.sai.v > 1 && !inv.sai.cc;
       if (cfw) {
@@ -231,6 +252,11 @@
         const [id, t] = k.split('.'), c = this.comp(id);
         if (frageis[c.tipo] && frageis[c.tipo](t)) { erros.push(`${f.fonte === 'rede' ? 'Tensão da rede (220 V)' : 'Tensão da saída do inversor'} no borne ${id}:${this.infoTerm(k).term.nome}, que é de comando em baixa tensão.`); trip = true; if (f.fonte === 'inv') this.inv._falha(70); }
       }
+      const uCA = (x, y) => { const fa = fas[N(x)], fb = fas[N(y)]; return fa && fb ? Math.hypot(fa.re - fb.re, fa.im - fb.im) : 0; };
+      for (const c of this.comps) {
+        if (c.tipo === 'fonte') { const u = uCA(c.id + '.L', c.id + '.N'); if (u > 264) { erros.push(`Fonte ${c.id} ligada em ${u.toFixed(0)} V: a entrada é de 100 a 240 V. Na rede de 380 V use uma fase e o neutro.`); trip = true; } }
+        else if (c.tipo === 'lamp') { const u = uCA(c.id + '.X1', c.id + '.X2'); if (u > 264) { erros.push(`Sinaleiro ${c.id} de 220 V ligado em ${u.toFixed(0)} V. Na rede de 380 V use uma fase e o neutro.`); trip = true; } }
+      }
       if (mm && mm.st.modo >= 3) for (const k of ['pv', 'pc']) { const r = mm.st[k], f = r && fas[N(r)]; if (f && f.fonte !== 'terra') avisos.push('Multímetro em Ω com tensão no circuito: desligue a rede antes de medir resistência.'); }
       if (trip && rede) { rede.st.desarmada = true; this.evento('A proteção geral da bancada desarmou: ' + erros[0]); this.erros = erros; return this.resolver(); }
       if (erros.length) this.erros = erros;
@@ -242,15 +268,26 @@
         inv.ent.vLinha = vmax; inv.ent.fases = new Set(fs.filter((f) => f.fonte === 'rede').map((f) => f.fase)).size;
       }
       // ---- alimentação do motor: pelo inversor (U, V, W) ou direto da rede
-      const al = { f: 0, v: 0, seq: 1, fases: 0, cc: 0, via: '' };
+      const al = { f: 0, v: 0, seq: 1, fases: 0, cc: 0, via: '', kv: 0, kI: 1, lig: '' };
       if (mot) {
-        const nm = ['U1', 'V1', 'W1'].map((x) => N(mot.id + '.' + x));
-        const liga = (prefixo, bornes) => nm.map((n) => bornes.findIndex((b) => N(prefixo + b) === n));
-        const par = (ix) => { const v = ix.filter((i) => i >= 0); if (new Set(v).size !== v.length) return null; return { n: v.length, seq: v.length === 3 ? ((ix[1] - ix[0] + 3) % 3 === 1 ? 1 : -1) : 1 }; };
-        const pi = cfw ? par(liga(A, ['U', 'V', 'W'])) : null, pr = viva ? par(liga(rede.id + '.', ['L1', 'L2', 'L3'])) : null;
-        if (cfw) inv.ent.motor.fases = pi ? (pi.n >= 2 ? pi.n : 0) : 0;
-        if (pr && pr.n >= 2 && !trip) Object.assign(al, { f: 60, v: 220, seq: pr.seq, fases: pr.n, via: 'rede' });
-        else if (pi && pi.n >= 2) Object.assign(al, { seq: pi.seq, fases: pi.n, via: 'inv' });
+        // Cada enrolamento (U1-U2, V1-V2, W1-W2) recebe a diferença de potencial entre os seus dois bornes. Nós sem fonte
+        // (o centro da estrela, um jumper solto) assumem a média dos outros lados dos enrolamentos ligados a eles.
+        const pm = mot.id + '.', enr = [['U1', 'U2'], ['V1', 'V2'], ['W1', 'W2']].map(([x, y]) => [N(pm + x), N(pm + y)]);
+        const analisa = (pot) => {
+          const V = Object.assign({}, pot), soltos = new Set(); enr.forEach((par) => par.forEach((n) => { if (!(n in V)) soltos.add(n); }));
+          for (let it = 0; it < 24; it++) for (const u of soltos) { let sr = 0, si = 0, n = 0; for (const [x, y] of enr) { const o = x === u ? y : y === u ? x : null; if (o === null || o === u || !(o in V)) continue; sr += V[o].re; si += V[o].im; n++; } if (n) V[u] = { re: sr / n, im: si / n }; }
+          const w = enr.map(([x, y]) => (x in V && y in V ? { re: V[x].re - V[y].re, im: V[x].im - V[y].im } : { re: 0, im: 0 })), mg = w.map((q) => Math.hypot(q.re, q.im)), mx = Math.max(...mg);
+          if (mx < 1e-6) return null;
+          const tres = mg.every((q) => q > 0.85 * mx), estrela = [...soltos].some((u) => enr.filter(([x, y]) => x === u || y === u).length >= 2);
+          return { v: tres ? (mg[0] + mg[1] + mg[2]) / 3 : mx, fases: tres ? 3 : 2, seq: w[0].re * w[1].im - w[0].im * w[1].re < 0 ? 1 : -1, estrela };
+        };
+        const potR = {}, potI = {}; for (const n in fas) if (fas[n].fonte !== 'inv') { potR[n] = fas[n]; if (fas[n].fonte === 'terra') potI[n] = fas[n]; }
+        if (cfw) ['U', 'V', 'W'].forEach((x, i) => { const n = N(A + x); if (!(n in potR)) potI[n] = { re: Math.cos(-120 * i * RAD) / R3, im: Math.sin(-120 * i * RAD) / R3 }; });   // saída do inversor em "por unidade": 1 = tensão entre fases
+        const rr = viva && !trip ? analisa(potR) : null, ri = cfw && !inv.ent.motor.curto ? analisa(potI) : null;
+        if (cfw) inv.ent.motor.fases = ri ? ri.fases : 0;
+        const fecho = (r) => (r.fases === 3 ? (r.estrela ? 'Y' : 'Δ') : '');
+        if (rr && rr.v > 20) Object.assign(al, { f: 60, v: rr.v, seq: rr.seq, fases: rr.fases, via: 'rede', kv: rr.v / this.tensao, kI: rr.estrela ? 1 / R3 : 1, lig: fecho(rr) });
+        else if (ri && ri.v > 0.05) Object.assign(al, { seq: ri.seq, fases: ri.fases, via: 'inv', kv: ri.v, kI: ri.estrela ? 1 / R3 : 1, lig: fecho(ri) });
       }
       this.alim = al;
 
@@ -387,10 +424,13 @@
       this.t += dt;
       if (this.sujo || this.n++ % 5 === 0) this.resolver();
       const inv = this.inv, m = this.motor, al = this.alim;
-      const s = al.via === 'inv' ? { f: Math.abs(inv.sai.f), v: inv.sai.v, seq: al.seq * (inv.sai.f < 0 ? -1 : 1), fases: inv.sai.pwm ? al.fases : 0, cc: inv.sai.cc } : al;
+      const s = al.via === 'inv' ? { f: Math.abs(inv.sai.f), v: inv.sai.v * al.kv, seq: al.seq * (inv.sai.f < 0 ? -1 : 1), fases: inv.sai.pwm ? al.fases : 0, cc: inv.sai.cc } : al;   // v = tensão em cada enrolamento
       m.passo(dt, s);
-      const via = al.via === 'inv';
-      Object.assign(inv.ent, { i: via ? m.i : 0, ia: via ? m.ia : 0, torque: via ? Math.abs(m.torque) * (m.ia >= 0 ? 1 : -1) : 0, pe: via ? m.pe : 0, hzRotor: via ? m.hzRotor * al.seq : 0 });
+      const via = al.via === 'inv', kI = al.kI || 1; this.iLinha = m.i * kI; this.vEnrol = s.fases ? s.v : 0;      // em estrela a corrente de linha é a do enrolamento (÷ √3 da de triângulo)
+      if (al.via === 'rede' && this.iLinha > 1.6 * SIM.PLACA.i * kI) { this.tSobre = (this.tSobre || 0) + dt; if (this.tSobre > 4) { const r = this.porTipo('rede'); r.st.desarmada = true; this.tSobre = 0; this.sujo = true;
+        this.erros = [al.v > 264 ? `Motor com ${al.v.toFixed(0)} V em cada enrolamento (o certo é 220 V): fechado em triângulo numa rede de 380 V. Feche em estrela.` : `Sobrecorrente no motor por mais de 4 s (${this.iLinha.toFixed(1)} A): confira o fechamento, a carga e as três fases.`]; this.evento('A proteção geral da bancada desarmou: ' + this.erros[0]); } }
+      else this.tSobre = Math.max(0, (this.tSobre || 0) - dt);
+      Object.assign(inv.ent, { i: via ? m.i * kI : 0, ia: via ? m.ia * kI : 0, torque: via ? Math.abs(m.torque) * (m.ia >= 0 ? 1 : -1) : 0, pe: via ? m.pe : 0, hzRotor: via ? m.hzRotor * al.seq : 0 });
       const pwm = inv.sai.pwm, do1 = inv.sai.do1, do2 = inv.sai.do2, vivo = inv.vivo;
       inv.passo(dt);
       if (pwm !== inv.sai.pwm || do1 !== inv.sai.do1 || do2 !== inv.sai.do2 || vivo !== inv.vivo) this.sujo = true;
@@ -398,6 +438,6 @@
     avanca(seg, dt = 0.002) { for (let t = 0; t < seg; t += dt) this.passo(dt); }
   }
 
-  SIM.Bancada = Bancada; SIM.TIPOS = TIPOS; SIM.MONTAGENS = MONTAGENS; SIM.MODOS_MULTI = MODOS_MULTI; SIM.CTRL = CTRL; SIM.PONTAS = PONTAS; SIM.ST0 = ST0; SIM.PAINEIS = PAINEIS; SIM.PALETA = PALETA; SIM.EXTRAS = EXTRAS; SIM.OSC_TB = OSC_TB; SIM.OSC_V = OSC_V;
+  SIM.Bancada = Bancada; SIM.TIPOS = TIPOS; SIM.MONTAGENS = MONTAGENS; SIM.MODOS_MULTI = MODOS_MULTI; SIM.CTRL = CTRL; SIM.PONTAS = PONTAS; SIM.ST0 = ST0; SIM.FECHAMENTO = FECHAMENTO; SIM.PAINEIS = PAINEIS; SIM.PALETA = PALETA; SIM.EXTRAS = EXTRAS; SIM.OSC_TB = OSC_TB; SIM.OSC_V = OSC_V;
   if (typeof module !== 'undefined') module.exports = SIM;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

@@ -8,7 +8,7 @@ const raiz = path.join(__dirname, '..'), pub = path.join(raiz, 'public');
 const ler = (p) => fs.readFileSync(path.join(pub, p), 'utf8');
 let html = ler('index.html');
 const css = ler('css/estilo.css').replace(/\/\*FONTES\*\/[\s\S]*?\/\*\/FONTES\*\/\n?/, '');
-const js = ['core/params.js', 'core/hmi.js', 'core/cfw500.js', 'core/bancada.js', 'core/missoes.js', 'js/lcd.js', 'js/cena.js', 'js/app.js'].map((f) => `/* ---- ${f} ---- */\n${ler(f)}`).join('\n');
+const js = ['core/params.js', 'core/hmi.js', 'core/cfw500.js', 'core/bancada.js', 'core/missoes.js', 'js/lcd.js', 'js/cena.js', 'js/campo.js', 'js/app.js'].map((f) => `/* ---- ${f} ---- */\n${ler(f)}`).join('\n');
 if (/<\/script/i.test(js)) throw new Error('há "</script" dentro do código: o arquivo único quebraria');
 const troca = (marca, novo) => { const re = new RegExp(`<!--${marca}-->[\\s\\S]*?<!--/${marca}-->`); if (!re.test(html)) throw new Error('marca ' + marca + ' não encontrada'); html = html.replace(re, () => novo); };
 troca('ICO', '');

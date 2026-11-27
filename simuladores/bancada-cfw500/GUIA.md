@@ -10,11 +10,11 @@ Para quem vai aprender ou ensinar a instalação do inversor: força, comando po
 
 | Equipamento simulado | Dado |
 |---|---|
-| Inversor | WEG CFW500A04P3B2: 200-240 V, 4,3 A, mecânica A, alimentação monofásica ou trifásica |
+| Inversor | WEG CFW500 de 4,3 A, mecânica A: CFW500A04P3B2 (200-240 V) na rede de 220 V ou CFW500A04P3T4 (380-480 V) na rede de 380 V |
 | Plug-in | CFW500-IOS: 4 DIs, 1 AI, 1 AO, 1 relé, 1 transistor, RS-485 |
 | Firmware de referência | V3.9X (Manual de Programação 10006739493/09) |
 | Motor | WEG W22 IR3 Premium, 0,75 kW (1 cv), 4 polos, ligado em triângulo 220 V, 2,98 A, 1725 rpm, cos φ 0,80, rendimento 82,6 % |
-| Rede da bancada | Trifásica 220 V entre fases, 127 V fase-neutro, 60 Hz |
+| Rede da bancada | Trifásica 60 Hz, à escolha: 220 V entre fases (127 V fase-neutro) ou 380 V (220 V fase-neutro) |
 
 ## 2. A tela
 
@@ -30,6 +30,7 @@ Para quem vai aprender ou ensinar a instalação do inversor: força, comando po
 | Multímetro | Clique no seletor para trocar a função. Arraste cada ponta até o borne, ou toque na ponta e depois no borne. |
 | Osciloscópio | Arraste as ponteiras até os bornes: amarelas = CH1, azuis = CH2; a de corpo colorido é o + e a preta com anel é o −. Os botões e as teclas do osciloscópio em 3D funcionam (os mesmos ajustes estão na aba Medições). Clicar na tela do osciloscópio abre essa aba. |
 | Câmera | Arraste o fundo para girar; botão direito ou dois dedos para deslocar; roda do mouse ou pinça para aproximar. Os botões embaixo levam a cada parte. |
+| Campo girante | Botão **Campo girante**, no topo: tela à parte com o motor em corte, o escorregamento e o memorial de cálculo. **Voltar à bancada** ou Esc fecha. |
 | Explicação de um componente | Botão direito nele (em tela de toque, um toque rápido). |
 | Ver a bancada em tela cheia | Botão **«** no canto da barra de abas oculta o painel lateral; o botão **» Painel**, no canto da bancada, traz de volta. Clicar no display do inversor em 3D também reabre o painel na aba Inversor. |
 
@@ -43,7 +44,7 @@ As cinco abas da lateral:
 | Inversor | A HMI em tamanho grande, o estado (P0006), a explicação da falha, do alarme ou do CONF e as leituras principais. |
 | Parâmetros | A lista completa com busca e filtro por grupo. Clique no valor para alterar. |
 | Medições | O multímetro e o osciloscópio em tamanho grande e o que o inversor enxerga em cada entrada e saída. |
-| Bancada | Cor do fio, montagens prontas, componentes, freio de carga, volante de inércia, chave S1.1 do plug-in e o registro de acontecimentos. |
+| Bancada | Rede 220 ou 380 V, fechamento do motor, cor do fio, montagens prontas, componentes, freio de carga, volante de inércia, chave S1.1 do plug-in e o registro de acontecimentos. |
 
 ![Aba Inversor](guia/aba-inversor.png) ![Aba Medições](guia/aba-medicoes.png)
 
@@ -87,7 +88,7 @@ As sessões ficam guardadas no navegador de cada um (não no servidor). O simula
 | K2 | Chave seletora 2 posições | 13, 14, 21, 22 |
 | K3 | Chave seletora 2 posições | 13, 14, 21, 22 |
 | K4 | Chave seletora 2 posições | 13, 14, 21, 22 |
-| M1 | Motor trifásico 1 cv | U1, V1, W1, PE |
+| M1 | Motor trifásico 1 cv, 6 pontas (220 V Δ / 380 V Y) | U1, V1, W1, W2, U2, V2, PE |
 | P1 | Multímetro digital | pontas VΩ e COM |
 | P2 | Osciloscópio 2 canais com ponteiras diferenciais | pontas VΩ e COM |
 
@@ -115,6 +116,29 @@ O botão **+ Componente**, no canto de cima da bancada, abre a lista do que dá 
 A **contatora** é um módulo compacto (160 × 200 mm, bornes a cada 24 mm) com bobina de 24 Vcc (A1-A2), três contatos principais (1-2, 3-4, 5-6) e os auxiliares 13-14 (NA) e 21-22 (NF). A janela da frente fica verde aberta e vermelha fechada. O +24 V do inversor fornece no máximo 150 mA: uma bobina fecha, mas na segunda a tensão cai para cerca de 17 V e ela não fecha (a primeira se mantém, porque uma contatora já fechada só abre abaixo de 9,6 V). Para várias contatoras e sinaleiros, use a **fonte de 24 Vcc**. A montagem pronta "Partida direta com contatora e selo" mostra o circuito clássico: S2 (NF) desliga, S1 (NA) liga, o auxiliar 13-14 sela a bobina, H1 acende com a contatora fechada e H2, pelo NF 21-22, com ela aberta.
 
 ![Motor com freio de carga](guia/motor.png)
+
+### Fechamento do motor e tensão da rede
+
+O motor tem **6 pontas** na caixa de ligação, na disposição padrão: U1, V1, W1 atrás e W2, U2, V2 na frente. Quem fecha é o aluno, com fios curtos entre os bornes. Cada enrolamento (U1-U2, V1-V2, W1-W2) foi feito para **220 V**; o fechamento serve para que ele receba esses 220 V em qualquer das duas redes.
+
+![Caixa de ligação com o motor fechado em triângulo](guia/fechamento.png)
+
+| Rede (aba Bancada) | Fase-neutro | Fechamento | Jumpers | Corrente de linha | P0400 | P0401 | Inversor da bancada |
+|---|---|---|---|---|---|---|---|
+| 220 V | 127 V | Triângulo Δ | U1–W2, V1–U2, W1–V2 | 2,98 A | 220 V | 3,0 A | CFW500A04P3B2 (200-240 V) |
+| 380 V | 220 V | Estrela Y | W2–U2–V2 juntos | 1,72 A | 380 V | 1,7 A | CFW500A04P3T4 (380-480 V) |
+
+Trocar a rede desliga a chave geral e troca o inversor pelo da classe correspondente, no padrão de fábrica. O que muda no inversor de 380-480 V: link DC perto de **537 V** (311 V no de 220 V), subtensão abaixo de 360 V (200 V), sobretensão F0022 acima de 810 V (410 V), P0151 = 800 V (400 V), P0296 = 1 e P0400 = 380 V.
+
+| Situação | O que acontece na bancada |
+|---|---|
+| 6 pontas soltas (sem fechamento) | Não há caminho para a corrente: o motor não gira e a corrente é zero |
+| Estrela na rede de 220 V | Só 127 V em cada enrolamento: fluxo em cerca de 58 %, o motor fica fraco e com carga perde rotação ou cai em falha |
+| Triângulo direto na rede de 380 V | 380 V em cada enrolamento: o ferro satura, a corrente dispara e a proteção da bancada desarma em 4 s, dizendo o motivo |
+| Triângulo na rede de 380 V pelo inversor, com P0400 = 220 V | Funciona: o inversor limita a tensão de saída em P0400 e entrega 220 V em 60 Hz |
+| Fonte de 24 Vcc ou sinaleiro de 220 V entre duas fases em 380 V | Desarma: na rede de 380 V eles vão entre uma fase e o neutro (220 V) |
+
+Para conferir com o multímetro em Ω (rede desligada): um enrolamento solto mede **10,2 Ω**; entre U1 e V1 dá **6,8 Ω** em triângulo e **20,4 Ω** em estrela. A aba Medições mostra o fechamento reconhecido e a tensão em cada enrolamento. A aba Bancada tem um atalho (Aberto / Triângulo / Estrela), e o **Montar automático** já fecha o motor do jeito certo para a rede escolhida.
 
 ## 5. Os bornes do CFW500
 
@@ -232,22 +256,23 @@ Passo a passo:
 
 **O que observar:** O display acende, passa cerca de 1,5 s inicializando e mostra a monitoração. P0004 (link DC) fica perto de **311 V**. Com o multímetro em V~: **220 V** entre R e S e **127 V** entre fase e neutro. Se ligar só uma fase e o neutro (127 V), o inversor acende mas fica em **SUB** (subtensão, link DC em 179 V).
 
-### 2. Ligar o motor e informar a placa
+### 2. Fechar e ligar o motor, informar a placa
 
-Ligue U, V, W e PE do inversor ao motor. Leia a placa do motor (clique nele com o botão direito) e grave os dados no grupo MOTOR.
+O motor tem 6 pontas: feche os enrolamentos conforme a rede da bancada (triângulo em 220 V, estrela em 380 V), ligue U, V, W e PE do inversor ao motor e grave os dados da placa no grupo MOTOR. A placa aparece clicando no motor (Explicação).
 
 ![Ligação: Só a força (rede, disjuntor, inversor, motor)](guia/montagem-forca.png)
 
 Passo a passo:
 
-1. U → U1, V → V1, W → W1 e PE → PE
-2. P0401 = 3,0 A (placa: 2,98 A)
-3. P0402 = 1725 rpm · P0403 = 60 Hz
-4. P0404 = 5 (1 HP / 0,75 kW)
-5. P0399 = 82,6 % · P0407 = 0,80
+1. Rede 220 V: triângulo, com U1–W2, V1–U2 e W1–V2
+2. Rede 380 V: estrela, com W2–U2–V2 juntos
+3. U → U1, V → V1, W → W1 e PE → PE
+4. P0400 = tensão do motor nesse fechamento (220 ou 380 V) · P0401 = corrente (3,0 ou 1,7 A)
+5. P0402 = 1725 rpm · P0403 = 60 Hz · P0404 = 5 (1 HP) · P0399 = 82,6 % · P0407 = 0,80
 
 | Parâmetro | Nome | Ajuste |
 |---|---|---|
+| P0400 | Tensão Nom. Motor | 220 V |
 | P0401 | Corrente Nom. Motor | 3,0 A |
 | P0402 | Rotação Nom. Motor | 1725 rpm |
 | P0403 | Frequência Nom. Motor | 60 Hz |
@@ -255,7 +280,7 @@ Passo a passo:
 | P0399 | Rendimento Nom. Motor | 82,6 % |
 | P0407 | Fator Pot. Nom. Motor | 0,80 |
 
-**O que observar:** A placa do motor aparece clicando nele com o botão direito. P0401 tem uma casa decimal: 2,98 A vira 3,0 A. Estes dados alimentam a proteção de sobrecarga (P0156 a P0158 continuam os de fábrica) e o controle VVW.
+**O que observar:** A figura mostra a rede de 220 V (triângulo). P0401 tem uma casa decimal: 2,98 A vira 3,0 A; em estrela, 1,72 A vira 1,7 A. Estes dados alimentam a proteção de sobrecarga (P0156 a P0158 continuam os de fábrica) e o controle VVW.
 
 ### 3. Comando local pela HMI
 
@@ -511,7 +536,7 @@ Passo a passo:
 
 ### Fios de cada montagem pronta
 
-A aba Bancada e o botão **Montar automático** usam estas ligações (se a montagem usar um componente que não está na bancada, ele é recolocado):
+A aba Bancada e o botão **Montar automático** usam estas ligações, mais o fechamento do motor conforme a rede (triângulo em 220 V, estrela em 380 V). Se a montagem usar um componente que não está na bancada, ele é recolocado:
 
 - **Só a força (rede, disjuntor, inversor, motor):** X1 L1 → Q1 1; X1 L2 → Q1 3; X1 L3 → Q1 5; Q1 2 → A1 R/L1; Q1 4 → A1 S/L2; Q1 6 → A1 T/L3; X1 PE → A1 PE; A1 U → M1 U1; A1 V → M1 V1; A1 W → M1 W1; A1 PE → M1 PE.
 - **Gira/Para (K1 em DI1) e sentido (K2 em DI2):** A1 16 GND → K1 13; K1 14 → A1 1 DI1; K1 13 → K2 13; K2 14 → A1 3 DI2 (mais os fios da força).
@@ -534,7 +559,9 @@ Medidos no próprio simulador, com os parâmetros de fábrica e 30 % no freio de
 | 30 Hz | 875 rpm, 110 V, 1,9 A |
 | 60 Hz | 1776 rpm, 220 V, 2,0 A |
 | 60 Hz com 100 % no freio | 1725 rpm, 3,0 A, torque 99 %, 0,90 kW (a placa do motor) |
-| Partida com 100 % no freio e P0136 = 3 % | O motor não parte: a corrente vai ao limite de 6,5 A (P0135). Com P0136 = 10 % ele parte e chega a 1725 rpm |
+| Partida pelo inversor com 100 % no freio | Parte e chega a 1725 rpm com 3,0 A |
+| Partida pelo inversor com 150 % no freio | O motor não parte: a corrente vai ao limite de 6,5 A (P0135) e a frequência fica presa perto de 20 Hz |
+| Partida direta (contatora) com 100 % no freio | Parte com pico de 9,9 A (3,3 × a corrente de placa) e chega a 1725 rpm |
 | Potenciômetro no meio | 4,92 V, P0018 = 49,2 %, 34,0 Hz |
 | Gerador em 12 mA, S1.1 em mA, P0233 = 1 | P0018 = 50,0 % |
 | Resistência entre U1 e V1 do motor | 6,8 Ω |
@@ -543,6 +570,7 @@ Medidos no próprio simulador, com os parâmetros de fábrica e 30 % no freio de
 | Partida direta com contatora e selo | Pulso em S1: KM1 fecha, sela e o motor chega a 1776 rpm direto da rede; pulso em S2: abre |
 | Duas bobinas de contatora no +24 V do inversor | A tensão cai para 17,2 V: a primeira se mantém fechada e a segunda não fecha |
 | Sinaleiro 220 Vca entre fase e neutro | Acende fraco (127 V) |
+| Rede 380 V, motor em estrela, carga nominal a 60 Hz | 1725 rpm, 1,72 A de linha, 380 V na saída, 220 V em cada enrolamento, link DC 537 V |
 | Motor com duas fases trocadas | Gira ao contrário |
 | Motor com uma fase solta | Não parte e a corrente sobe ao limite |
 | Motor direto na rede (sem inversor) | Partida direta: 1776 rpm |
@@ -552,6 +580,50 @@ Medidos no próprio simulador, com os parâmetros de fábrica e 30 % no freio de
 | Volante de inércia e P0100 = 0,5 s | A limitação de corrente segura a rampa: 1,1 s até 60 Hz, pico de 6,4 A |
 
 ![Multímetro medindo a AI1](guia/multimetro.png)
+
+### Campo girante (janela flutuante e tela à parte)
+
+O botão **Campo girante**, no topo da tela, abre uma **janela flutuante** sobre a bancada com o motor de indução de 4 polos em **3D**: o estator com um setor recortado para ver por dentro, as ranhuras com as três fases, o campo girando no entreferro (vermelho = polo norte, azul = polo sul), os laços de fluxo com setas amarelas mostrando o sentido, uma seta amarela em cada ranhura mostrando a corrente (apontando para fora = saindo, para dentro = entrando), o rotor de gaiola com as correntes induzidas nas barras e a seta do conjugado. Assim dá para operar o inversor e ver o campo ao mesmo tempo. Tem dois modos: **Motor da bancada (ao vivo)**, que acompanha o que o inversor está fazendo, e **Demonstração** (frequência e carga em controles).
+
+![Janela flutuante do campo girante sobre a bancada](guia/campo-popup.png)
+
+| Como fazer | Ação |
+|---|---|
+| Mover a janela | Arraste pelo título |
+| Mudar o tamanho | Puxe o canto de baixo à direita |
+| Girar o motor 3D | Arraste sobre o desenho; roda do mouse aproxima; duplo clique volta à posição inicial |
+| Visual | **3D**, **3D de frente** (o mesmo modelo quase de frente, com uma leve inclinação para as setas das ranhuras aparecerem) ou **Corte 2D** (desenho plano, com ponto e cruz) |
+| Ver o memorial de cálculo inteiro | Botão **Tela cheia**; **Janela flutuante** volta para a janela. Na janela ele também aparece, rolando para baixo |
+| Fechar | Botão × (ou Esc) |
+
+![Tela do campo girante com o memorial de cálculo](guia/campo-girante.png)
+
+| Controle | Para que serve |
+|---|---|
+| Frequência do estator (0 a 90 Hz) | Muda a velocidade do campo: ns = 120 × f ÷ p |
+| Carga no eixo (0 a 250 %) | Mais carga = rotor mais atrás do campo = mais escorregamento |
+| Manter V/f | Ligado, a tensão acompanha a frequência (como o inversor) e o fluxo fica constante. Desligado, a tensão fica em 220 V: em baixa frequência o fluxo satura |
+| Rotor travado | Escorregamento de 100 %: a frequência no rotor é igual à do estator |
+| Ponto de vista | Parado no estator; girando com o campo (vê-se o rotor escorregar para trás); girando com o rotor (vê-se o campo passar na frequência f2) |
+| Câmera lenta | 1/300 a 1/3. Campo e rotor são desacelerados pelo mesmo fator, então a diferença entre eles é a real |
+
+**Memorial de cálculo** (a tela mostra estas contas com os valores do instante). Exemplo na carga nominal a 60 Hz:
+
+| Grandeza | Fórmula | Conta | Resultado |
+|---|---|---|---|
+| Velocidade síncrona | ns = 120 × f ÷ p | 120 × 60 ÷ 4 | 1800 rpm |
+| Escorregamento | s = (ns − n) ÷ ns | (1800 − 1725) ÷ 1800 | 4,17 % (75 rpm) |
+| Frequência no rotor | f2 = s × f | 0,0417 × 60 | 2,50 Hz |
+| Relação V/f | V ÷ f | 220 ÷ 60 | 3,67 V/Hz (fluxo 100 %) |
+| Conjugado nominal | Tn = P ÷ ω | 750 ÷ (2π × 1725 ÷ 60) | 4,15 N·m |
+| Conjugado desenvolvido (Kloss) | T = 2·Tmáx·Φ²·x ÷ (1 + x²), x = f2 ÷ fk | Tmáx = 11,6 N·m, fk = 13,54 Hz, x = 0,185 | 4,15 N·m |
+| Potência no entreferro | Pg = T × ωs | 4,15 × 188,5 | 783 W |
+| Perdas no rotor | Pj2 = s × Pg | 0,0417 × 783 | 33 W |
+| Potência no eixo | P = T × ω = (1 − s) × Pg | 4,15 × 180,6 | 750 W |
+
+O que observar: com V/f constante e a mesma carga, o rotor fica sempre a mesma distância atrás do campo. A 60 Hz são 75 rpm (4,2 %); a 30 Hz, cerca de 80 rpm, que já são 8,9 %. Em vazio o escorregamento quase some (0,2 %) e as barras do rotor apagam: sem diferença de velocidade não há corrente induzida nem conjugado. Com o rotor travado, s = 100 % e f2 = 60 Hz: é a condição da partida direta.
+
+O conjugado segue a fórmula de Kloss na faixa de trabalho (erro menor que 1 %). Com escorregamento alto o modelo soma o efeito de barra profunda da gaiola, que dá o conjugado de partida de um motor real (cerca de 1,5 × o nominal com a queda de tensão no estator); a tela mostra esse fator quando ele pesa.
 
 ### Osciloscópio
 
@@ -680,7 +752,7 @@ Pontos em que o comportamento é dedução, e não leitura direta do manual:
 
 1. Copie a pasta do simulador para o PC.
 2. Clique duas vezes em **INSTALAR.bat** (instala o Node.js se faltar e cria o atalho).
-3. Clique duas vezes em **INICIAR_SIMULADOR.bat**: o navegador abre em `http://localhost:3051`. Os alunos da mesma rede abrem `http://IP-DO-PC:3051` (o instalador oferece liberar a porta no firewall) e cada um recebe a sua sessão.
+3. Clique duas vezes em **INICIAR_SIMULADOR.bat**: o navegador abre em `http://localhost:3053`. Os alunos da mesma rede abrem `http://IP-DO-PC:3053` (o instalador oferece liberar a porta no firewall) e cada um recebe a sua sessão.
 4. **TESTAR.bat** roda as verificações automáticas; a última linha deve dizer "0 falha(s)".
 
 A simulação inteira roda no navegador. O comando `node tools/build-demo.js` gera `dist/bancada-cfw500.html`, um arquivo único que abre com dois cliques; ele precisa de internet só para baixar o three.js.

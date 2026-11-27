@@ -2,6 +2,7 @@
 // assistente "Comunicação com o CLP", missões, curva de eco e cena 3D. A física roda no servidor (src/nucleo.js).
 import { criarCena, G } from './cena3d.js';
 import { MISSOES, avaliar } from './missoes.mjs';
+import { criarModulo } from './modulo-ajuste.mjs';
 
 const $ = (id) => document.getElementById(id);
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -9,7 +10,7 @@ const fmt = (v, n = 2) => Number(v).toFixed(n).replace('.', ',').replace('-', '�
 const REDUZIDO = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-const VERSAO_TELA = '1.1.1.4';   // tem de ser igual à versão do package.json (os testes conferem)
+const VERSAO_TELA = '1.3.0.2';   // tem de ser igual à versão do package.json (os testes conferem)
 let INFO = null;      // dados fixos do servidor (tabela de variáveis, parâmetros, programas ST)
 let E = null;         // último estado da sessão
 let sid = null, es = null, cena = null, ok3d = false;
@@ -61,13 +62,12 @@ async function abrirSessoes(aviso) {
   const d = $('dlgSessao'); d.hidden = false;
   $('msgSessao').hidden = !aviso; $('msgSessao').textContent = aviso || '';
   $('btnFecharSessao').hidden = !(sid && E);
+  $('linhaRenomear').hidden = !(sid && E); if (sid && E) $('inRenomear').value = E.nome;
   const { sessoes } = await api('api/sessoes');
   $('blocoSessoes').hidden = !sessoes.length;
   $('listaSessoes').innerHTML = sessoes.map((s) => `<li><b>${esc(s.nome)}</b><small>${s.conectado ? (s.demo ? 'CLP de demonstração' : 'CLP ' + esc(s.clp)) : 'sem CLP'}${s.telas ? ' · aberta em ' + s.telas + ' tela' + (s.telas > 1 ? 's' : '') : ''}</small>
     <button class="btn small" data-entrar="${s.id}">Entrar</button><button class="btn small" data-excluir="${s.id}">Excluir</button></li>`).join('');
-  if (!$('inNome').value) $('inNome').placeholder = `Seu nome ou bancada (ex.: Bancada ${sessoes.length + 1})`;
   if (INFO && INFO.enderecos.length) $('enderecos').textContent = `Outros PCs da rede abrem este simulador em ${INFO.enderecos.map((i) => `http://${i}:${INFO.porta}`).join(' ou ')}.`;
-  setTimeout(() => $('inNome').focus(), 30);
 }
 function ligarSessoes() {
   $('formSessao').addEventListener('submit', async (ev) => {
@@ -87,6 +87,7 @@ function ligarSessoes() {
     }
   });
   $('chipSessao').addEventListener('click', () => abrirSessoes());
+  $('btnRenomear').addEventListener('click', async () => { const r = await cmd({ tipo: 'renomear', nome: $('inRenomear').value }); if (r.ok) { E.nome = r.nome; $('dlgSessao').hidden = true; desenharLeituras(); } else { $('msgSessao').hidden = false; $('msgSessao').textContent = r.erro; } });
   $('btnFecharSessao').addEventListener('click', () => { $('dlgSessao').hidden = true; });
 }
 
@@ -179,9 +180,10 @@ function desenharLeituras() {
   $('vT').textContent = sem ? (off ? '—' : 'sem eco') : fmt(m.tof, 2) + ' ms';
   $('fD').textContent = sem ? 'c × t ÷ 2' : `c × t ÷ 2 = ${fmt(m.cUsado, 1)} × ${fmt(m.tof / 1000, 5)} ÷ 2`;
   $('vD').textContent = sem ? '—' : fmt(m.D, 3) + ' m';
-  $('fL').textContent = sem ? '(mín − D) ÷ faixa' : `(${fmt(p.calMin, 3)} − ${fmt(m.D, 3)}) ÷ ${fmt(p.calMin - p.calMax, 3)}`;
+  const direta = p.calMinPct === 0 && p.calMaxPct === 100;
+  $('fL').textContent = sem ? '(mín − D) ÷ faixa' : (direta ? `(${fmt(p.calMin, 3)} − ${fmt(m.D, 3)}) ÷ ${fmt(p.calMin - p.calMax, 3)}` : `${fmt(p.calMinPct, 0)} + (${fmt(p.calMin, 3)} − ${fmt(m.D, 3)}) × ${fmt(p.calMaxPct - p.calMinPct, 0)} ÷ ${fmt(p.calMin - p.calMax, 3)}`) + (p.linearizacao ? ' → lin.' : '');
   $('vL').textContent = off ? 'apagado' : fal ? m.erro : `${fmt(m.pct, 1)} % · ${fmt(m.L, 3)} m`;
-  $('fI').textContent = off ? 'laço aberto' : fal ? `modo de falha: ${m.modoFalha}` : `4 + 16 × ${fmt(m.pct, 1)} ÷ 100`;
+  $('fI').textContent = off ? 'laço aberto' : p.hartMulti ? 'Multidrop: saída fixa em 4 mA' : m.sim ? 'saída simulada (Serviço 4.4)' : fal ? `modo de falha: ${m.modoFalha}` : p.caracteristica ? `20 − 16 × ${fmt(m.pct, 1)} ÷ 100` : `4 + 16 × ${fmt(m.pct, 1)} ÷ 100`;
   $('vI').textContent = fmt(m.mA, 2) + ' mA';
   $('vR').textContent = String(m.bruto).replace('-', '−') + (m.mA > 20.004 ? ' (saturado)' : '');
   const pos = clamp((m.mA - 3.6) / 18.4 * 100, 0, 100);
@@ -193,6 +195,7 @@ function desenharLeituras() {
   let [cls, txt] = ESTADOS[m.status] || ESTADOS.ok;
   if (m.status === 'aguardando') txt = `Sem eco, aguardando ${Math.max(1, Math.ceil(4 - m.semEco))} s`;
   if (fal) txt = m.erro === 'E017' ? 'E017 · faixa de calibração pequena demais' : 'E013 · sem valor de medição';
+  if (m.sim && !off) { cls = 'warn'; txt = 'Simulação da saída ativa'; }
   const st = $('status'); st.className = 'pill ' + cls; st.textContent = txt;
 
   // chips do topo
@@ -220,7 +223,7 @@ const AULA = [
   { t: 'Da distância ao nível', run: 'Encher o tanque', cam: 'geral', proc: { nivel: 0.2, vazao: 1 }, par: {},
     h: `<p>O plano de referência é a borda inferior do transdutor. O sensor mede a distância <b>D</b> até a superfície, e o nível sai por subtração:</p>
         <div class="formula">L = E − D</div>
-        <p><b>E</b> é a distância do sensor ao fundo. Na parametrização, a calibração mín. diz qual distância vale 0 % (4 mA) e a calibração máx. diz qual vale 100 % (20 mA). Dá para calibrar com o tanque vazio: basta digitar as duas distâncias.</p>
+        <p><b>E</b> é a distância do sensor ao fundo. No módulo do transmissor, “Calibrar mín.” (1.1) diz qual distância vale 0 % e “Calibração Máx.” (1.2) diz qual vale 100 %. O nível atual não importa: dá para calibrar com o tanque vazio, só digitando as duas distâncias.</p>
         <p class="see"><b>Observe:</b> enquanto o tanque enche, D diminui e L aumenta. A corrente e a contagem LT01_Bruto sobem juntas.</p>` },
   { t: 'Zona morta', run: 'Encher até a zona morta', cam: 'feixe', proc: { nivel: 2.3, vazao: 1 }, par: {},
     h: `<p>Depois de emitir, o cristal do transdutor continua vibrando por um instante e não consegue ouvir. Ecos que voltam nesse intervalo se perdem. Neste sensor, isso cobre os primeiros <b>0,25 m</b>.</p>
@@ -230,19 +233,19 @@ const AULA = [
     h: `<p>O som abre em cone de 11°. Quanto mais longe, maior o círculo coberto no líquido:</p>
         <div class="formula">Ø = 2 × D × tan(5,5°)</div>
         <p>Tudo o que entra no cone devolve eco: tubo, escada, serpentina, cordão de solda, jato de enchimento. O eco do obstáculo chega antes do eco do líquido e o sensor passa a indicar um nível alto e fixo.</p>
-        <p>Correções: mudar o sensor de lugar ou ligar a <b>supressão de sinal falso</b>, que grava os ecos fixos do tanque e sobe o limiar naquele ponto.</p>
-        <p class="see"><b>Observe:</b> com o obstáculo, a indicação trava em 1,80 m (72 %). Na aba Bancada, ligue “Supressão de sinal falso” e veja o limiar cobrir o eco falso.</p>` },
+        <p>Correções: mudar o sensor de lugar ou fazer a <b>supressão de sinais falsos</b>, que grava os ecos fixos do tanque e sobe o limiar naquele ponto. Ela deve ser feita com o nível baixo. Cuidado com a distância: se você informar um valor grande demais, o próprio nível é gravado como sinal falso.</p>
+        <p class="see"><b>Observe:</b> com o obstáculo, a indicação trava em 1,80 m (72 %). Corrija na Bancada, pelo módulo do transmissor: Serviço → Supressão de sinais de interferência → Criar novo, com a distância real até o líquido (2,200 m). O limiar sobe e cobre o eco falso.</p>` },
   { t: 'Temperatura', run: 'Aquecer a 50 °C sem correção', cam: 'geral', proc: { temp: 50 }, par: { correcaoTemp: 0 },
     h: `<p>A velocidade do som no ar depende da temperatura:</p>
         <div class="formula">c ≈ 331,3 + 0,606 × T  (m/s)</div>
         <p>São cerca de 0,17 % por °C. Se o sensor calculasse sempre com 20 °C e o ar estivesse a 50 °C, a distância sairia 5 % menor. Por isso o transdutor tem um sensor de temperatura e corrige <b>c</b> sozinho.</p>
         <p>A correção só vale para ar. Vapor de solvente e outros gases mudam <b>c</b> e o erro volta. Sol direto no sensor também engana a correção.</p>
-        <p class="see"><b>Observe:</b> sem a correção, a 50 °C, o nível indicado sobe cerca de 10 cm com o líquido parado. Religue a correção na Bancada e o erro some.</p>` },
+        <p class="see"><b>Observe:</b> sem a correção, a 50 °C, o nível indicado sobe cerca de 10 cm com o líquido parado. Religue a correção em “Ajuste rápido”, na Bancada, e o erro some.</p>` },
   { t: 'Espuma e perda de eco', run: 'Cobrir de espuma', cam: 'geral', proc: { espuma: 90 }, par: {},
     h: `<p>Espuma densa, superfície muito agitada e vapor amortecem o som. O eco enfraquece até cair abaixo do limiar de detecção.</p>
         <p>Sem eco válido, o transmissor mostra <b>E013</b> e leva a corrente para o modo de falha escolhido: abaixo de 3,6 mA, 20,5 mA, 22 mA ou manter o último valor.</p>
         <p>Com espuma permanente, use tubo acalmador ou radar de onda guiada.</p>
-        <p class="see"><b>Observe:</b> na Bancada, mova a espuma aos poucos e veja o pico baixar na curva. Depois troque o modo de falha para “Manter valor”: a saída congela e ninguém percebe o defeito.</p>` },
+        <p class="see"><b>Observe:</b> na Bancada, mova a espuma aos poucos e veja o pico baixar na curva. Depois troque o modo de falha para “Manter valor” (Serviço → Saída de corrente): a saída congela e ninguém percebe o defeito.</p>` },
   { t: 'Regras de instalação', run: 'Ver o tanque por cima', cam: 'topo', proc: {}, par: {},
     h: `<ul>
         <li>Pelo menos <b>200 mm</b> da parede. Em teto abaulado, fora do centro, que concentra ecos múltiplos.</li>
@@ -317,6 +320,65 @@ function ligarBancada() {
   $('btnPause').addEventListener('click', (e) => { P.paused = !P.paused; e.currentTarget.setAttribute('aria-pressed', String(P.paused)); e.currentTarget.textContent = P.paused ? 'Soltar pulso' : 'Pausar pulso'; });
   if (P.paused) { $('btnPause').setAttribute('aria-pressed', 'true'); $('btnPause').textContent = 'Soltar pulso'; P.s = 1.2; }
   document.querySelectorAll('[data-cam]').forEach((b) => b.addEventListener('click', () => ok3d && cena.ir(b.dataset.cam)));
+}
+
+// ------------------------------------------------------------------ módulo de visualização e configuração
+const modulo = criarModulo({
+  estado: () => E,
+  enviar: async (c) => {              // o valor aceito pelo servidor entra já no estado local, para a próxima tela mostrar o certo
+    const r = await cmd(c);
+    if (r && r.ok && E) { if (c.tipo === 'param' && c.id in E.par) E.par[c.id] = r.v; if (c.tipo === 'tag') E.tag = r.v; }
+    return r;
+  },
+});
+let htmlLcd = '';
+function desenharModulo() {
+  if (!E) return;
+  const T = modulo.tela(), lcd = $('lcd');
+  lcd.classList.toggle('luz', !!T.luz); lcd.classList.toggle('apagado', !!T.apagado);
+  let h = `<div class="lcd-topo"><span>${esc(T.titulo || '')}</span><b>${esc(T.num || '')}</b></div><div class="lcd-corpo">`;
+  if (T.lista) h += T.lista.itens.map((x, i) => `<div class="lcd-item${i === T.lista.sel ? ' sel' : ''}">${i === T.lista.sel ? '▶' : '&nbsp;'} ${esc(x)}</div>`).join('');
+  for (const l of T.linhas || []) {
+    const txt = l.cur === undefined ? esc(l.t) : esc(l.t.slice(0, l.cur)) + `<u>${l.t[l.cur] === ' ' ? '_' : esc(l.t[l.cur])}</u>` + esc(l.t.slice(l.cur + 1));
+    h += `<div class="lcd-l${l.g ? ' g' : ''}${l.p ? ' p' : ''}${l.d ? ' d' : ''}${l.e ? ' e' : ''}${l.pisca ? ' pisca' : ''}">${txt}</div>`;
+  }
+  if (T.barra !== null && T.barra !== undefined) h += `<div class="lcd-barra"><i style="width:${Math.round(T.barra * 100)}%"></i></div>`;
+  if (T.curva === 'eco' || T.curva === 'falso') h += '<canvas class="lcd-curva" width="600" height="184"></canvas>';
+  h += '</div>';
+  if (T.apagado) h = '';
+  if (h !== htmlLcd) { htmlLcd = h; lcd.innerHTML = h; }
+  const cv = lcd.querySelector('canvas'); if (!cv) return;
+  const g = cv.getContext('2d'), W = cv.width, H = cv.height, X = (x) => 6 + x / 3.5 * (W - 12), Y = (d) => H - 16 - Math.min(100, Math.max(0, d)) / 100 * (H - 22);
+  g.clearRect(0, 0, W, H); g.strokeStyle = '#141c18'; g.fillStyle = '#141c18'; g.lineWidth = 2; g.font = '600 15px monospace';
+  g.beginPath(); g.moveTo(X(0), Y(0)); g.lineTo(X(3.5), Y(0)); g.stroke();
+  for (let x = 0; x <= 3.5; x += 0.5) { g.fillRect(X(x) - 1, Y(0), 2, 5); if (x % 1 === 0) g.fillText(String(x), X(x) - 4, H - 1); }
+  g.fillText('m(d)', W - 44, H - 1); g.fillText('dB', 8, 14);
+  g.beginPath();
+  for (let i = 0; i <= 175; i++) {
+    const x = i * 0.02; let d;
+    if (T.curva === 'eco') d = E.curva[i]; else { d = 0; for (const f of E.falsos || []) d = Math.max(d, f.a * Math.exp(-(((x - f.x) / 0.05) ** 2))); }
+    i ? g.lineTo(X(x), Y(d)) : g.moveTo(X(x), Y(d));
+  }
+  g.lineWidth = 2.5; g.stroke();
+}
+function ligarModulo() {
+  const apertar = async (k) => { await modulo.tecla(k); desenharModulo(); if (ok3d && E) cena.telas(estadoVisual()); };
+  let repeticao = null;
+  const soltar = () => { clearTimeout(repeticao); clearInterval(repeticao); repeticao = null; document.querySelectorAll('.teclas .apertada').forEach((b) => b.classList.remove('apertada')); };
+  document.querySelectorAll('[data-tecla]').forEach((b) => {
+    const k = b.dataset.tecla;
+    b.addEventListener('pointerdown', (ev) => {
+      ev.preventDefault(); soltar(); b.classList.add('apertada'); apertar(k);
+      if (k === 'mais' || k === 'seta') repeticao = setTimeout(() => { repeticao = setInterval(() => apertar(k), 110); }, 1000);      // segurar por mais de 1 s muda continuamente
+    });
+    for (const e of ['pointerup', 'pointerleave', 'pointercancel']) b.addEventListener(e, soltar);
+    b.addEventListener('click', (ev) => { if (ev.detail === 0) apertar(k); });        // teclado (Enter ou espaço com o botão em foco)
+  });
+  $('modulo').addEventListener('keydown', (ev) => {       // com o módulo em foco: Enter = OK, seta para a direita = ->, + ou seta para cima = +, Esc = ESC
+    if (ev.target.closest('button')) return;
+    const k = { Enter: 'ok', ArrowRight: 'seta', '+': 'mais', ArrowUp: 'mais', Escape: 'esc' }[ev.key];
+    if (k) { ev.preventDefault(); ev.stopPropagation(); apertar(k); }
+  });
 }
 
 // ------------------------------------------------------------------ abas
@@ -521,7 +583,7 @@ function estadoVisual() {
   return {
     nivel: vis.nivel, vazao: E.proc.vazao, espuma: E.proc.espuma, obstaculo: E.proc.obstaculo, sel: m.sel, ecoFalso: m.ecoFalso,
     D: m.D, L: m.L, pct: m.pct, erro: m.erro, ligado: m.status !== 'desligado', valido: m.status !== 'falha' && m.status !== 'desligado',
-    clp: E.rede.conectado ? E.clp : null, retorno: E.rede.retorno, mA: m.mA, bruto: m.bruto,
+    clp: E.rede.conectado ? E.clp : null, retorno: E.rede.retorno, mA: m.mA, bruto: m.bruto, tela: modulo.tela(), curva: E.curva, falsos: E.falsos,
   };
 }
 let ultimo = performance.now(), lento = 0;
@@ -531,6 +593,7 @@ function quadro(agora) {
     vis.nivel += (E.proc.nivel - vis.nivel) * (1 - Math.exp(-dt / 0.09));
     avancarPulso(dt);
     lento += dt; const tique = lento > 0.12; if (tique) lento = 0;
+    if (tique) desenharModulo();
     if (ok3d) { const V = estadoVisual(); if (tique) cena.telas(V); cena.quadro(dt, agora / 1000, V, P); }
     desenharEco(); desenharCronometro();
   }
@@ -545,7 +608,7 @@ function quadro(agora) {
     const f = $('faixaVersao'); f.hidden = false;
     f.textContent = `Atenção: a tela é da versão ${VERSAO_TELA}, mas o programa do simulador que está rodando é da versão ${INFO.versao}. Feche o simulador (a janela preta ou o cartão do HUB) e abra de novo.`;
   }
-  montarTabelaTags(); ligarLayout(); ligarSessoes(); ligarBancada(); ligarClp(); ligarAssistente();
+  montarTabelaTags(); ligarLayout(); ligarSessoes(); ligarBancada(); ligarModulo(); ligarClp(); ligarAssistente();
   document.querySelectorAll('.abas button').forEach((b) => b.addEventListener('click', () => abrirAba(b.dataset.aba)));
   const st = $('steps');
   AULA.forEach((L, i) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = i + 1; b.title = L.t; b.setAttribute('aria-label', `Passo ${i + 1}: ${L.t}`); b.addEventListener('click', () => mostrarPasso(i)); st.appendChild(b); });
@@ -556,12 +619,18 @@ function quadro(agora) {
   mostrarPasso(0);
   try {
     cena = criarCena({ view: $('view'), canvas: $('gl'), labelsEl: $('labels'), insetEl: $('inset'), reduzido: REDUZIDO,
-      aoMudarCamera: (nome) => document.querySelectorAll('[data-cam]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.cam === nome))) });
+      aoMudarCamera: (nome) => document.querySelectorAll('[data-cam]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.cam === nome))),
+      aoTecla: async (k) => { await modulo.tecla(k); desenharModulo(); if (E) cena.telas(estadoVisual()); } });
+    for (const ev of ['click', 'keydown']) $('inset').addEventListener(ev, (e) => { if (ev === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return; cena.ir('visor'); });
     cena.ir('geral', true); ok3d = true;
   } catch (err) { ok3d = false; $('view').classList.add('fail'); console.warn('3D indisponível:', err); }
 
   const daUrl = new URL(location.href).searchParams.get('s');
-  if (!(await entrar(daUrl)) && !(await entrar(ler(CHAVE)))) abrirSessoes();
+  // sem pedir nome: quem chega pela primeira vez ganha uma sessão própria ("Bancada N"); o chip Sessão troca ou renomeia
+  if (!(await entrar(daUrl)) && !(await entrar(ler(CHAVE)))) {
+    const r = await api('api/sessoes', { nome: '' });
+    if (!(r.ok && await entrar(r.id))) abrirSessoes(r.erro || 'Não foi possível criar a sessão.');
+  }
   requestAnimationFrame(quadro);
-  window.__sim = { get E() { return E; }, cmd, entrar, abrirAba, mostrarPasso };
+  window.__sim = { get E() { return E; }, cmd, entrar, abrirAba, mostrarPasso, posTecla: (k) => cena.posTecla(k) };
 })();

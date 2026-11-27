@@ -60,7 +60,9 @@ button,input,select{font:inherit;color:inherit}
 .tof .ph.tx{color:#a84a00}.tof .ph.rx{color:var(--rx)}.tof .ph.bad{color:var(--bad)}
 .tof .row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:4px}
 .tof small{color:var(--muted);font-size:12px}
-.inset{position:absolute;right:10px;top:10px;width:212px;height:250px;border:2px solid var(--ink);border-radius:8px;pointer-events:none}
+.inset{position:absolute;right:10px;top:10px;width:212px;height:250px;border:2px solid var(--ink);border-radius:8px;cursor:pointer}
+.inset:hover{border-color:var(--rx)}
+.dlg #inRenomear{flex:1;min-width:160px;font-family:var(--font-body);font-size:15px;padding:7px 9px}
 .inset span{position:absolute;left:-2px;bottom:-2px;right:-2px;background:var(--ink);color:#fff;font-family:var(--font-display);font-weight:600;font-size:13px;letter-spacing:.4px;padding:3px 8px;border-radius:0 0 6px 6px}
 .keys{position:absolute;left:10px;bottom:10px;display:flex;gap:12px;flex-wrap:wrap;background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:6px;padding:4px 9px;font-size:13px;color:var(--muted)}
 .keys i{display:inline-block;width:14px;height:6px;border-radius:2px;margin-right:5px;vertical-align:middle}
@@ -280,3 +282,28 @@ table.tags.sem-retorno tr.do-clp{display:none}
 .faixa-versao[hidden]{display:none}
 #versaoTela{font-style:normal}
 @media (prefers-reduced-motion:reduce){ .tarja.amarela::before,.tarja.mudou{animation:none} }
+
+/* ---------- módulo de visualização e configuração (visor + 4 teclas) ---------- */
+.modulo{max-width:330px;margin:6px auto 4px;padding:12px 12px 10px;border-radius:16px;background:linear-gradient(#3a424b,#252b32);box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 2px 6px rgba(0,0,0,.25);outline-offset:3px}
+.lcd{height:158px;border-radius:6px;background:#b9c6b2;color:#141c18;font-family:var(--font-num);padding:6px 9px 7px;display:flex;flex-direction:column;box-shadow:inset 0 2px 5px rgba(0,0,0,.35);overflow:hidden}
+.lcd.luz{background:#dfeec4}
+.lcd.apagado{background:#5d6860}
+.lcd-topo{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;font-weight:700;line-height:1.2;min-height:16px;border-bottom:1px solid rgba(20,28,24,.35);padding-bottom:3px}
+.lcd-topo b{flex:none}
+.lcd-corpo{flex:1;display:flex;flex-direction:column;justify-content:center;gap:1px;min-height:0;padding-top:3px}
+.lcd-l{text-align:center;font-size:15px;font-weight:700;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lcd-l.g{font-size:26px;line-height:1.15}
+.lcd-l.p{font-size:11.5px;font-weight:600;white-space:normal}
+.lcd-l.d{text-align:right}.lcd-l.e{text-align:left}
+.lcd-l u{text-decoration:none;background:#141c18;color:#b9c6b2;padding:0 1px;animation:lcdcur 1s steps(2,start) infinite}
+.lcd-item{font-size:13px;font-weight:700;line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 3px}
+.lcd-item.sel{background:#141c18;color:#b9c6b2}
+.lcd.luz .lcd-item.sel,.lcd.luz .lcd-l u{color:#dfeec4}
+.lcd-barra{height:9px;border:1.5px solid #141c18;margin:5px 14px 0}.lcd-barra i{display:block;height:100%;background:#141c18}
+.lcd-curva{display:block;width:100%;height:92px}
+.lcd-l.pisca{animation:lcdcur 1s steps(2,start) infinite}
+@keyframes lcdcur{to{visibility:hidden}}
+.teclas{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.teclas button{border:0;border-radius:50px;padding:8px 0;background:linear-gradient(#f2f4f1,#cfd4ce);color:#141c18;font-family:var(--font-display);font-weight:700;font-size:15.5px;cursor:pointer;box-shadow:0 2px 0 #11161b;touch-action:manipulation;user-select:none}
+.teclas button:active,.teclas button.apertada{transform:translateY(2px);box-shadow:none;background:#c3c9c2}
+@media (prefers-reduced-motion:reduce){ .lcd-l u,.lcd-l.pisca{animation:none} }

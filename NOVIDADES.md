@@ -2,6 +2,16 @@
 
 As notas de cada versão aparecem no HUB quando a atualização é oferecida. Escreva a seção da versão nova antes do push.
 
+## 1.18.2
+- Varredura de portas: nenhuma porta de tela repetida, nenhuma na faixa reservada do HUB (3100–3299) nem nas portas do CODESYS. Corrigida a sobreposição dos endereços dos CLPs de teste: o CLP virtual do Sistema de Incêndio (2.0.3.5) passa a usar 127.0.0.100 a .149 e o CLP de demonstração do sensor VEGA (1.3.0.2) 127.0.0.150 a .199, sempre na porta 502 (antes, 127.0.0.70–99 e 127.0.0.80–99 se cruzavam). Cada bloco comporta 50 sessões. O mapa de portas do CONTRATO.md foi atualizado.
+
+## 1.18.1
+- Bancada didática WEG CFW500 atualizada para a 1.6.3 (1.6.3.1 no HUB). A tela passa a usar a porta 3053, sem conflito com nenhum outro simulador; o mapa de portas do CONTRATO.md foi atualizado. Ajuste do HUB mantido: o topo e a aba do navegador mostram "Bancada didática WEG CFW500".
+
+## 1.18.0
+- Bancada didática WEG CFW500 atualizada para a 1.5.1 (1.5.1.1 no HUB). A tela passa a usar a porta 3052, sem conflito com nenhum outro simulador; o mapa de portas do CONTRATO.md foi atualizado. Ajuste do HUB mantido: o topo e a aba do navegador mostram "Bancada didática WEG CFW500".
+- Sensor ultrassônico VEGA atualizado para a 1.3.0 (1.3.0.1 no HUB); cada aba entra numa sessão sozinha. Ajustes do HUB reaplicados: nome "Sensor ultrassônico VEGA" e fabricante "Didático · VEGASON 61"; IP padrão do CLP 192.168.100.10 (o CODESYS na rede virtual); CLP de demonstração sempre na porta 502, num endereço próprio por sessão (127.0.0.80, .81…).
+
 ## 1.17.6
 - Keyence (1.0.2): o nome passa a ser "Sistema de visão Keyence CV-X400" no cartão, no topo da tela, na aba do navegador e no guia. A linha de tipo do cartão fica "Controlador e câmeras", para não repetir.
 

@@ -20,6 +20,7 @@ try { var u = new URL(location.href); if (u.searchParams.has('hubRestaurar')) { 
     <div class="chip num" id="chRpm">0 rpm</div>
   </div>
   <button class="chip" id="chSessao" title="Sessões independentes: cada aba tem a sua bancada">Sessão</button>
+  <button class="botao" id="btnCampo" title="Tela à parte: campo magnético girante, escorregamento e memorial de cálculo">Campo girante</button>
   <button class="botao" id="btnAjuda">Como usar</button>
 </header>
 <main class="corpo">
@@ -84,7 +85,12 @@ try { var u = new URL(location.href); if (u.searchParams.has('hubRestaurar')) { 
       <h3>Componentes</h3>
       <div class="linha"><select id="bTipo" aria-label="Componente"></select><button class="botao" id="bAdd">Adicionar</button></div>
       <p class="dica">Também pelo botão <b>+ Componente</b>, no canto da bancada. O componente novo vai para o primeiro lugar livre do painel; arraste pela placa para mudar. Clique nele para selecionar e use <b>Remover</b> (ou a tecla Delete); botão direito mostra a explicação.</p>
+      <h3>Rede da bancada</h3>
+      <div class="seg" id="bRede"></div>
+      <p class="dica">Em 380 V a bancada usa o inversor da classe 380-480 V (volta ao padrão de fábrica) e o motor fecha em estrela. A troca desliga a rede.</p>
       <h3>Motor e carga</h3>
+      <div class="linha"><span class="rot">Fechamento (atalho)</span><div class="seg" id="bFecho" style="flex:1;margin:0"><button data-fecho="">Aberto</button><button data-fecho="D">Triângulo Δ</button><button data-fecho="Y">Estrela Y</button></div></div>
+      <p class="dica">O fechamento é feito com fios na caixa de ligação do motor: triângulo = U1–W2, V1–U2, W1–V2 · estrela = W2–U2–V2. Os botões acima fazem isso por você.</p>
       <label class="rg">Freio de carga <output id="bCargaV">30 %</output><input type="range" id="bCarga" min="0" max="150" step="5" value="30"></label>
       <label class="ck"><input type="checkbox" id="bVolante"> Volante de inércia acoplado</label>
       <label class="ck"><input type="checkbox" id="bTravado"> Eixo travado</label>
@@ -98,7 +104,7 @@ try { var u = new URL(location.href); if (u.searchParams.has('hubRestaurar')) { 
   <section class="cena">
     <div id="cena3d"></div>
     <button class="mostrar" id="btnMostrar" hidden title="Mostrar o painel de missões, inversor e parâmetros">» Painel</button>
-    <div class="vistas" id="vistas"><button data-vista="geral">Bancada</button><button data-vista="inversor">Inversor</button><button data-vista="bornes">Bornes</button><button data-vista="comando">Comando</button><button data-vista="motor">Motor</button><button data-vista="multimetro">Multímetro</button><button data-vista="osciloscopio">Osciloscópio</button></div>
+    <div class="vistas" id="vistas"><button data-vista="geral">Bancada</button><button data-vista="inversor">Inversor</button><button data-vista="bornes">Bornes</button><button data-vista="comando">Comando</button><button data-vista="motor">Motor</button><button data-vista="caixa" title="Caixa de ligação do motor, vista de cima: para fazer o fechamento">Fechamento</button><button data-vista="multimetro">Multímetro</button><button data-vista="osciloscopio">Osciloscópio</button></div>
     <div class="modo" id="modo" hidden></div>
     <div class="alerta" id="alerta" hidden></div>
     <div class="ferr" id="ferr">
@@ -112,12 +118,47 @@ try { var u = new URL(location.href); if (u.searchParams.has('hubRestaurar')) { 
     <div class="toast" id="toast" hidden></div>
   </section>
 </main>
+<section class="campo" id="campo" hidden aria-label="Campo magnético girante">
+  <header class="cg-topo">
+    <div class="cg-tit"><b>Campo magnético girante</b><span>Motor de indução de 4 polos em corte: estator, entreferro e rotor de gaiola</span></div>
+    <div class="seg cg-seg"><button data-fonte="demo">Demonstração</button><button data-fonte="banc">Motor da bancada (ao vivo)</button></div>
+    <button class="botao" id="cgPopup" title="Alterna entre a janela flutuante sobre a bancada e a tela cheia">Janela flutuante</button>
+    <button class="botao" id="cgFechar">Voltar à bancada</button>
+  </header>
+  <div class="cg-corpo">
+    <div class="cg-esq">
+      <div class="cg-palco"><canvas id="cgMotor3d"></canvas><canvas id="cgMotor" hidden></canvas><div class="cg-sobre" id="cgSobre"></div></div>
+      <div class="cg-linha"><span>Visual</span><div class="seg"><button data-vis="3d" title="Arraste para girar, roda do mouse para aproximar, duplo clique para voltar">3D</button><button data-vis="frente">3D de frente</button><button data-vis="2d">Corte 2D</button></div></div>
+      <div class="cg-linha"><span>Ponto de vista</span><div class="seg"><button data-ref="estator">Parado no estator</button><button data-ref="campo">Girando com o campo</button><button data-ref="rotor">Girando com o rotor</button></div></div>
+      <div class="cg-linha"><span>Câmera lenta</span><div class="seg"><button data-lento="300">1/300</button><button data-lento="60">1/60</button><button data-lento="15">1/15</button><button data-lento="3">1/3</button></div></div>
+      <div class="cg-leg"><i style="background:#ff5a5f"></i>fase U · polo N<i style="background:#f5c542"></i>fase V<i style="background:#4f9dff"></i>fase W · polo S<i style="background:#ff9f43"></i><i style="background:#35d0ff"></i>corrente induzida nas barras<i style="background:#7dffb0"></i>conjugado<i style="background:#ffc400"></i>setas: sentido do fluxo e da corrente em cada ranhura (para fora = saindo, para dentro = entrando)</div>
+    </div>
+    <div class="cg-dir">
+      <div class="cg-origem" id="cgOrigem"></div>
+      <div class="cg-nums" id="cgNum"></div>
+      <div class="aviso" id="cgAviso" hidden></div>
+      <div class="cg-demo" id="cgDemo">
+        <label class="rg">Frequência do estator <output id="cgFv"></output><input type="range" id="cgF" min="0" max="90" step="0.5" value="60"></label>
+        <label class="rg">Carga no eixo <output id="cgCv"></output><input type="range" id="cgC" min="0" max="250" step="5" value="100"></label>
+        <div class="cg-linha"><label class="ck"><input type="checkbox" id="cgVf" checked> Manter V/f (como o inversor faz)</label><label class="ck"><input type="checkbox" id="cgTrava"> Rotor travado</label><button class="botao" id="cgSent">Sentido: horário</button></div>
+        <div class="cg-linha cg-pre"><span>Situações</span><button class="botao" data-pre="60,0,0">Vazio 60 Hz</button><button class="botao" data-pre="60,100,0">Nominal 60 Hz</button><button class="botao" data-pre="30,100,0">Nominal 30 Hz</button><button class="botao" data-pre="10,100,0">Nominal 10 Hz</button><button class="botao" data-pre="60,100,1">Rotor travado</button><button class="botao" data-pre="90,60,0">90 Hz</button></div>
+      </div>
+      <canvas id="cgOndas"></canvas>
+      <h3>Memorial de cálculo (valores do instante)</h3>
+      <table class="cg-mem"><thead><tr><th>Grandeza e fórmula</th><th>Conta</th><th>Resultado</th></tr></thead><tbody id="cgMem"></tbody></table>
+      <p class="dica" id="cgPlaca"></p>
+      <h3>O mesmo conjugado em outras frequências (V/f constante)</h3>
+      <table class="cg-tab"><tbody id="cgTab"></tbody></table>
+      <p class="dica">Como ler: o campo do estator gira a ns = 120·f/p. O rotor só recebe corrente (e conjugado) se girar mais devagar que o campo, porque é a diferença de velocidade que faz o fluxo “cortar” as barras. Essa diferença é o escorregamento. Mudando a frequência, o inversor muda a velocidade do campo; o rotor acompanha, sempre o mesmo tanto atrás para a mesma carga.</p>
+    </div>
+  </div>
+</section>
 <div class="janela" id="janela" hidden><div class="jcx"><button class="fechar" id="jFechar" aria-label="Fechar">×</button><div id="jCorpo"></div></div></div>
 <!--JS-->
 <script type="module">
   import * as THREE from './vendor/three/three.module.min.js';
   window.THREE = THREE;
-  for (const s of ['core/params.js', 'core/hmi.js', 'core/cfw500.js', 'core/bancada.js', 'core/missoes.js', 'js/lcd.js', 'js/cena.js', 'js/app.js']) {
+  for (const s of ['core/params.js', 'core/hmi.js', 'core/cfw500.js', 'core/bancada.js', 'core/missoes.js', 'js/lcd.js', 'js/cena.js', 'js/campo.js', 'js/app.js']) {
     await new Promise((ok, erro) => { const e = document.createElement('script'); e.src = s; e.onload = ok; e.onerror = erro; document.body.appendChild(e); });
   }
 </script>

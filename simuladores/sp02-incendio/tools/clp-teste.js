@@ -105,7 +105,7 @@ function start(port = 502, log = console.log, hostPedido = undefined) {
   sock.on('error', () => {});
   });
   srv.once('error', reject);
-  // [HUB] dentro do HUB, o CLP de teste escuta só neste PC: num endereço próprio de loopback (127.0.0.70, .71…),
+  // [HUB] dentro do HUB, o CLP de teste escuta só neste PC: num endereço próprio de loopback (127.0.0.100, .101…),
   // sempre na porta 502 do Modbus, sem disputar a 502 do CODESYS (192.168.100.10) nem a dos outros simuladores
   const host = hostPedido || (process.env.HUB === '1' ? '127.0.0.1' : undefined);
   srv.listen(port, host, () => {

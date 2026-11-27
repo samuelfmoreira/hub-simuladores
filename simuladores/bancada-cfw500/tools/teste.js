@@ -76,7 +76,7 @@ function roda(b, m, mem, seg) { let okk = false; for (let t = 0; t < seg; t += 0
   b = nova('forca'); b.addFio('A1.U', 'A1.V'); liga(b); tecla(b, 'i'); b.avanca(1); ok(b.inv.falhaCod === 70, 'curto entre U e V: F0070', b.inv.falhaCod);
   tecla(b, 'o'); ok(b.inv.falhaCod === 0, 'tecla O faz o reset da falha');
   b = nova(); ['X1.L1,A1.R', 'X1.N,A1.S'].forEach((x) => b.addFio(...x.split(','))); b.acao('X1', { ligada: true }); b.avanca(2); ok(b.inv.vivo && b.inv.estado === 2, 'alimentado em 127 V (fase-neutro): subtensão', b.inv.P[4]);
-  b = nova(); ['X1.L1,M1.U1', 'X1.L2,M1.V1', 'X1.L3,M1.W1'].forEach((x) => b.addFio(...x.split(','))); b.acao('X1', { ligada: true }); b.avanca(2); ok(b.motor.rpm > 1700, 'motor direto na rede (partida direta) gira a 60 Hz', b.motor.rpm.toFixed(0));
+  b = nova(); ['X1.L1,M1.U1', 'X1.L2,M1.V1', 'X1.L3,M1.W1'].forEach((x) => b.addFio(...x.split(','))); b.fechamento('D'); b.acao('X1', { ligada: true }); b.avanca(2); ok(b.motor.rpm > 1700, 'motor direto na rede (partida direta) gira a 60 Hz', b.motor.rpm.toFixed(0));
   b = nova('forca'); liga(b); b.addFio('A1.c9', 'A1.c16'); b.avanca(0.1); ok(b.avisos.length > 0 && b.vcc('A1.c9') < 1, 'curto no +24 V: fonte limita e avisa', b.avisos[0]);
 }
 // ------------------------------------------------------------------ CONFIG, falhas e proteções
@@ -179,10 +179,52 @@ function prep(id) { const m = missao(id), b = nova(m.montagem); liga(b); (m.para
   const pg = JSON.parse(JSON.stringify(pe.salvar())); pg.painel = 'extra'; ok(new SIM.Bancada({ salvo: pg }).painel === 'extra', 'o tamanho do painel é gravado na sessão');
   const f = nova('forca'); ok(f.corFio(f.fios[0].id, 'laranja') && f.fios[0].cor === 'laranja', 'trocar a cor de um fio');
   const g = nova('forca'); liga(g); g.inv.set(222, 8); g.inv.set(100, 2.5); const np = g.inv.parametrizar(SIM.PLACA_P.concat(SIM.MISSOES.find((m) => m.id === 'multispeed').params));
-  ok(np === 16 && g.inv.P[222] === 8 && g.inv.P[265] === 13 && g.inv.P[100] === 10 && g.inv.P[401] === 3, 'parametrizar automático: fábrica + placa + parâmetros da atividade', np);
+  ok(np === 17 && g.inv.P[222] === 8 && g.inv.P[265] === 13 && g.inv.P[100] === 10 && g.inv.P[401] === 3, 'parametrizar automático: fábrica + placa + parâmetros da atividade', np);
   g.avanca(0.1); ok(g.inv.P[47] === 0, 'a atividade parametrizada não fica em CONF', g.inv.P[47]);
   for (const m of SIM.MISSOES) { const x = nova('forca'); liga(x); x.inv.parametrizar(SIM.PLACA_P.concat(m.params || [])); x.avanca(0.05); if (x.inv.P[47] !== 0) ok(false, `  ${m.id} parametrizada sem CONF`, x.inv.P[47]); }
   ok(true, 'nenhuma atividade parametrizada automaticamente cai em CONF');
+}
+// ------------------------------------------------------------------ campo girante: grandezas do memorial de cálculo
+{
+  const K = SIM.MOTOR_K, m = new SIM.Motor(); m.carga = 1; for (let t = 0; t < 4; t += 0.002) m.passo(0.002, { f: 60, v: 220, seq: 1, fases: 3, cc: 0 });
+  const ns = 120 * 60 / 4, sl = (ns - m.rpm) / ns, f2 = sl * 60, x = f2 / K.FK, T = 2 * K.TMAX * m.phi * m.phi * x / (1 + x * x) * (1 + K.BP * x * x / (K.CP + x * x));
+  ok(perto(m.rpm, 1725, 3) && perto(sl * 100, 4.17, 0.2) && perto(f2, 2.5, 0.1) && perto(m.fs, f2, 0.01), 'carga nominal a 60 Hz: ns 1800, n 1725, s 4,17 %, f2 2,5 Hz', `${m.rpm.toFixed(0)} rpm · s ${(sl * 100).toFixed(2)} % · f2 ${f2.toFixed(2)} Hz`);
+  ok(perto(T, m.torque, 0.01) && perto(m.torque, K.TN, 0.1) && perto(m.phi, 1, 0.02), 'conjugado pela fórmula de Kloss = conjugado do modelo = nominal (4,15 N·m), fluxo 100 %', `${T.toFixed(2)} N·m, fluxo ${(m.phi * 100).toFixed(0)} %`);
+  const m2 = new SIM.Motor(); m2.carga = 1; for (let t = 0; t < 4; t += 0.002) m2.passo(0.002, { f: 30, v: 0.03 * 220 + 0.97 * 110, seq: 1, fases: 3, cc: 0 });
+  ok(perto(900 - m2.rpm, 1800 - m.rpm, 25) && (900 - m2.rpm) / 900 > sl * 1.6, 'a 30 Hz com V/f: o escorregamento em rpm quase não muda e em % dobra', `${(900 - m2.rpm).toFixed(0)} rpm (${((900 - m2.rpm) / 9).toFixed(1)} %) x ${(1800 - m.rpm).toFixed(0)} rpm (${(sl * 100).toFixed(1)} %)`);
+  ok(perto(2 * K.TMAX * x / (1 + x * x) / K.TN, 1, 0.03), 'na faixa de trabalho a fórmula de Kloss simples já dá o conjugado (erro menor que 3 %)', (2 * K.TMAX * x / (1 + x * x) / K.TN).toFixed(3));
+  const m3 = new SIM.Motor(); m3.travado = true; for (let t = 0; t < 1; t += 0.002) m3.passo(0.002, { f: 60, v: 220, seq: 1, fases: 3, cc: 0 }); ok(m3.rpm === 0 && perto(m3.fs, 60, 0.01), 'rotor travado: s = 100 % e f2 = f', m3.fs);
+  ok(perto(m3.torque / K.TN, 1.55, 0.25), 'conjugado de partida com rotor travado e 220 V (com a queda no estator)', (m3.torque / K.TN).toFixed(2) + ' x Tn');
+}
+// ------------------------------------------------------------------ fechamento do motor (6 pontas) e rede 220 / 380 V
+{
+  let b = nova('forca'); ok(b.fios.filter((f) => f.a.startsWith('M1.') && f.b.startsWith('M1.')).length === 3, 'rede 220 V: a montagem pronta fecha o motor em triângulo (3 jumpers)');
+  liga(b); ok(b.alim.lig === 'Δ' && perto(b.alim.kv, 1, 0.01) && b.inv.ent.motor.fases === 3, 'triângulo: cada enrolamento recebe a tensão entre fases', `kv ${b.alim.kv.toFixed(2)}`);
+  tecla(b, 'i'); b.inv.P[121] = 60; b.motor.carga = 1; b.avanca(14); ok(perto(b.motor.rpm, 1725, 8) && perto(b.iLinha, 2.98, 0.15) && perto(b.vEnrol, 220, 3), 'triângulo em 220 V na carga nominal: 1725 rpm, 2,98 A de linha, 220 V no enrolamento', `${b.motor.rpm.toFixed(0)} rpm · ${b.iLinha.toFixed(2)} A · ${b.vEnrol.toFixed(0)} V`);
+  b = nova('forca'); b.fechamento(''); liga(b); tecla(b, 'i'); b.inv.P[121] = 30; b.avanca(4); ok(b.alim.via === '' && Math.abs(b.motor.rpm) < 1 && b.inv.ent.motor.fases === 0, 'sem fechamento (6 pontas soltas): não passa corrente e o motor não gira');
+  b = nova('forca'); b.fechamento('Y'); liga(b); ok(b.alim.lig === 'Y' && perto(b.alim.kv, 0.577, 0.01), 'estrela: cada enrolamento recebe a tensão entre fases ÷ √3', b.alim.kv.toFixed(3));
+  tecla(b, 'i'); b.inv.P[121] = 60; b.motor.carga = 0.3; b.avanca(14); ok(perto(b.vEnrol, 127, 3) && b.motor.phi < 0.65, 'estrela em 220 V (errado): só 127 V no enrolamento, fluxo fraco', `${b.vEnrol.toFixed(0)} V · fluxo ${(b.motor.phi * 100).toFixed(0)} %`);
+  b.motor.carga = 1; b.avanca(6); ok(b.motor.rpm < 1650 || b.inv.falhaCod !== 0, '  e com carga nominal ele perde rotação ou cai em falha', `${b.motor.rpm.toFixed(0)} rpm, falha ${b.inv.falhaCod}`);
+  b = nova('forca'); b.acao('P1', { modo: 3, pv: 'M1.U1', pc: 'M1.U2' }); b.fechamento(''); b.avanca(0.05); ok(perto(parseFloat(b.leitura.txt), 10.2, 0.1), 'multímetro em Ω num enrolamento solto (U1-U2): 10,2 Ω', b.leitura.txt);
+  b.fios = b.fios.filter((f) => !f.b.startsWith('M1.') && !f.a.startsWith('M1.')); b.fechamento('Y'); b.acao('P1', { pv: 'M1.U1', pc: 'M1.V1' }); b.avanca(0.05); ok(perto(parseFloat(b.leitura.txt), 20.4, 0.2), 'em estrela, entre U1 e V1: 20,4 Ω (dois enrolamentos em série)', b.leitura.txt);
+  b.fechamento('D'); b.avanca(0.05); ok(perto(parseFloat(b.leitura.txt), 6.8, 0.1), 'em triângulo, entre U1 e V1: 6,8 Ω', b.leitura.txt);
+  // rede 380 V
+  b = nova(); ok(b.tensaoRede(380) && b.tensao === 380 && b.inv.classe === 380 && b.inv.P[296] === 1 && b.inv.P[400] === 380 && b.inv.P[151] === 800 && b.inv.P[29] === 9, 'rede 380 V: o inversor passa a ser o de 380-480 V, com os padrões dele');
+  b.montagem('forca'); ok(b.fios.filter((f) => f.a.startsWith('M1.') && f.b.startsWith('M1.')).length === 2, 'rede 380 V: a montagem pronta fecha o motor em estrela (2 jumpers)');
+  liga(b); ok(perto(b.inv.P[4], 537, 6) && b.inv.estado === 0, 'link DC perto de 537 V e inversor pronto', b.inv.P[4]);
+  b.acao('P1', { modo: 1, pv: 'X1.L1', pc: 'X1.L2' }); b.avanca(0.05); const vll = parseFloat(b.leitura.txt); b.acao('P1', { pc: 'X1.N' }); b.avanca(0.05); ok(perto(vll, 380, 1) && perto(parseFloat(b.leitura.txt), 219.4, 1), 'multímetro: 380 V entre fases e 220 V fase-neutro', `${vll} / ${b.leitura.txt}`);
+  b.inv.parametrizar(SIM.placaP(b)); ok(b.inv.P[400] === 380 && b.inv.P[401] === 1.7, 'placa em estrela: P0400 = 380 V e P0401 = 1,7 A'); ok(missao('motor').check(b, {}), 'missão motor na rede de 380 V (estrela + placa)');
+  tecla(b, 'i'); b.inv.P[121] = 60; b.motor.carga = 1; b.avanca(14); ok(perto(b.motor.rpm, 1725, 8) && perto(b.iLinha, 1.72, 0.1) && perto(b.inv.P[7], 380, 4) && perto(b.vEnrol, 220, 3), 'estrela em 380 V na carga nominal: 1725 rpm, 1,72 A de linha, 380 V na saída, 220 V no enrolamento', `${b.motor.rpm.toFixed(0)} rpm · ${b.iLinha.toFixed(2)} A · ${b.inv.P[7]} V · ${b.vEnrol.toFixed(0)} V`);
+  const ca = b.canal('A1.U', 'A1.V', 0.05, 100, true); ok(perto(ca.rms, 380, 5), 'osciloscópio na saída em 380 V', ca.rms.toFixed(0));
+  b = nova(); b.tensaoRede(380); ['X1.L1,M1.U1', 'X1.L2,M1.V1', 'X1.L3,M1.W1'].forEach((x) => b.addFio(...x.split(','))); b.fechamento('D'); b.acao('X1', { ligada: true }); b.avanca(7);
+  ok(b.comp('X1').st.desarmada && /triângulo/.test(b.erros[0]), 'triângulo direto em 380 V: 380 V em cada enrolamento, a proteção desarma e explica', b.erros[0]);
+  b = nova(); b.tensaoRede(380); ['X1.L1,M1.U1', 'X1.L2,M1.V1', 'X1.L3,M1.W1'].forEach((x) => b.addFio(...x.split(','))); b.fechamento('Y'); b.acao('X1', { ligada: true }); b.avanca(5); ok(b.motor.rpm > 1700 && !b.comp('X1').st.desarmada && perto(b.iLinha, 1.15, 0.2), 'estrela direto em 380 V: gira normal', `${b.motor.rpm.toFixed(0)} rpm · ${b.iLinha.toFixed(2)} A`);
+  b = nova(); b.tensaoRede(380); const fo = b.add('fonte'); b.addFio('X1.L1', fo.id + '.L'); b.addFio('X1.L2', fo.id + '.N'); b.acao('X1', { ligada: true }); b.avanca(0.1); ok(b.comp('X1').st.desarmada && /Fonte/.test(b.erros[0]), 'fonte de 24 V entre duas fases em 380 V: desarma', b.erros[0]);
+  b = nova(); b.tensaoRede(380); const f2 = b.add('fonte'); b.addFio('X1.L1', f2.id + '.L'); b.addFio('X1.N', f2.id + '.N'); b.acao('X1', { ligada: true }); b.avanca(0.1); ok(f2.st.on && !b.comp('X1').st.desarmada, 'fonte entre fase e neutro em 380 V (220 V): liga');
+  ok(b.tensaoRede(220) && b.inv.classe === 220 && b.inv.P[400] === 220 && !b.comp('X1').st.ligada, 'voltar para 220 V: inversor de 200-240 V e rede desligada');
+  const antigo = JSON.parse(JSON.stringify(nova('forca').salvar())); delete antigo.v; antigo.fios = antigo.fios.filter((f) => !(f.a.startsWith('M1.') && f.b.startsWith('M1.')));
+  const nb = new SIM.Bancada({ salvo: antigo }); ok(nb.fios.filter((f) => f.a.startsWith('M1.') && f.b.startsWith('M1.')).length === 3, 'bancada gravada antes (triângulo interno) ganha os 3 jumpers ao abrir');
+  const s380 = nova(); s380.tensaoRede(380); const r380 = new SIM.Bancada({ salvo: JSON.parse(JSON.stringify(s380.salvar())) }); ok(r380.tensao === 380 && r380.inv.classe === 380, 'a rede de 380 V e a classe do inversor ficam gravadas');
 }
 // ------------------------------------------------------------------ gravar e recarregar
 {

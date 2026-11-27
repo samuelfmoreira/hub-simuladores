@@ -33,7 +33,7 @@ try { var u = new URL(location.href); if (u.searchParams.has('hubRestaurar')) { 
         <span class="ph tx" id="tofPhase">pulso descendo</span>
         <div class="row"><small>câmera lenta ≈ 215×</small><button class="btn small" id="btnPause" aria-pressed="false">Pausar pulso</button></div>
       </div>
-      <div class="inset" id="inset"><span>Detalhe do sensor LT-01</span></div>
+      <div class="inset" id="inset" role="button" tabindex="0" title="Ir até o visor do transmissor"><span>Sensor LT-01 · clique para ir ao visor</span></div>
       <div class="keys">
         <span><i style="background:var(--tx)"></i>pulso emitido</span>
         <span><i style="background:var(--rx)"></i>eco do líquido</span>
@@ -43,6 +43,7 @@ try { var u = new URL(location.href); if (u.searchParams.has('hubRestaurar')) { 
         <span>Câmera</span>
         <button class="btn" data-cam="geral" aria-pressed="true">Geral</button>
         <button class="btn" data-cam="sensor" aria-pressed="false">Sensor</button>
+        <button class="btn" data-cam="visor" aria-pressed="false" title="Chega perto do módulo do transmissor: as teclas funcionam com clique">Visor</button>
         <button class="btn" data-cam="feixe" aria-pressed="false">Feixe</button>
         <button class="btn" data-cam="topo" aria-pressed="false">Topo</button>
         <button class="btn" data-cam="painel" aria-pressed="false">Painel</button>
@@ -131,14 +132,28 @@ try { var u = new URL(location.href); if (u.searchParams.has('hubRestaurar')) { 
       <label class="sw"><input type="checkbox" id="inObs"><span>Obstáculo dentro do feixe<small>Um tubo a 1,20 m do sensor, como uma serpentina ou travessa</small></span></label>
       <label class="sw"><input type="checkbox" id="inCabo"><span>Romper o cabo do laço 4–20 mA<small>Dois fios: sem o laço o transmissor apaga e o CLP lê 0 mA</small></span></label>
       </details>
-      <details class="sec" id="sec-param" open>
-        <summary class="grp">Parâmetros do transmissor</summary>
+      <details class="sec" id="sec-modulo" open>
+        <summary class="grp">Módulo de visualização e configuração</summary>
+        <div class="modulo" id="modulo" tabindex="0" aria-label="Módulo de visualização e configuração do transmissor">
+          <div class="lcd" id="lcd" role="status"></div>
+          <div class="teclas">
+            <button type="button" data-tecla="esc">ESC</button>
+            <button type="button" data-tecla="mais">+</button>
+            <button type="button" data-tecla="seta">-&gt;</button>
+            <button type="button" data-tecla="ok">OK</button>
+          </div>
+        </div>
+        <p class="mini"><b>[OK]</b> abre o menu, entra no item, edita e salva · <b>[-&gt;]</b> próximo item ou próxima casa · <b>[+]</b> muda o valor · <b>[ESC]</b> cancela e volta. Valor que não for confirmado com [OK] não é salvo. Idioma: Serviço → Idioma (4.7).</p>
+      </details>
+      <details class="sec" id="sec-rapido">
+        <summary class="grp">Ajuste rápido (atalho do instrutor)</summary>
+        <p class="mini">Os mesmos parâmetros, sem passar pelos menus do aparelho.</p>
       <div class="par2">
-        <label for="inCalMin">Calibração mín. (0 % → 4 mA)</label><span><input type="number" id="inCalMin" min="0.25" max="5" step="0.001" value="3"> m</span>
-        <label for="inCalMax">Calibração máx. (100 % → 20 mA)</label><span><input type="number" id="inCalMax" min="0.25" max="5" step="0.001" value="0.5"> m</span>
+        <label for="inCalMin">Calibração mín. (0 % → 4 mA)</label><span><input type="number" id="inCalMin" min="0" max="5" step="0.001" value="3"> m</span>
+        <label for="inCalMax">Calibração máx. (100 % → 20 mA)</label><span><input type="number" id="inCalMax" min="0" max="5" step="0.001" value="0.5"> m</span>
       </div>
       <p class="mini">As duas calibrações são distâncias medidas a partir da borda inferior do transdutor.</p>
-      <label class="sw"><input type="checkbox" id="inMap"><span>Supressão de sinal falso<small>Grava os ecos fixos do tanque e passa a ignorá-los</small></span></label>
+      <label class="sw"><input type="checkbox" id="inMap"><span>Supressão de sinais falsos<small>Atalho: cria a supressão com a distância certa até o líquido. Desligar apaga.</small></span></label>
       <div class="ctl">
         <label for="inDamp">Atenuação (damping)</label><output id="outDamp"></output>
         <input type="range" id="inDamp" min="0" max="10" step="1" value="0">
@@ -153,16 +168,16 @@ try { var u = new URL(location.href); if (u.searchParams.has('hubRestaurar')) { 
         <summary class="grp">Ficha técnica usada (VEGASON 61)</summary>
       <dl class="spec">
         <dt>Faixa de medição</dt><dd>até 5 m em líquidos, 2 m em sólidos</dd>
-        <dt>Zona morta</dt><dd>0,25 m</dd>
+        <dt>Zona morta (distância de bloqueio)</dt><dd>0,25 m</dd>
         <dt>Frequência</dt><dd>70 kHz (λ ≈ 4,9 mm no ar)</dd>
         <dt>Ângulo do feixe</dt><dd>11° a −3 dB</dd>
-        <dt>Desvio</dt><dd>±4 mm ou &lt; 0,2 %</dd>
+        <dt>Erro de medição</dt><dd>±4 mm ou &lt; 0,2 %</dd>
         <dt>Intervalo de medição</dt><dd>&gt; 2 s</dd>
         <dt>Saída</dt><dd>4…20 mA/HART, 2 fios, 14…36 V CC</dd>
         <dt>Processo</dt><dd>−40…+80 °C, −0,2…+2 bar</dd>
         <dt>Transdutor</dt><dd>PVDF, Ø 39 mm, rosca G1½</dd>
       </dl>
-      <p class="note">Simulador didático independente, sem vínculo com o fabricante. Os números da ficha e as dimensões do sensor em 3D vêm da folha de especificação e do manual de operação do VEGASON 61 (documentos 34584 e 28775); o acabamento do sensor é genérico. A seleção de eco, as amplitudes da curva e o tempo até a falha são um modelo simplificado para a aula.</p>
+      <p class="note">Simulador didático independente, sem vínculo com o fabricante. Os números da ficha, as dimensões do sensor em 3D e os menus do módulo vêm da documentação do VEGASON 61 (folha 34584, manual 28775 e guia rápido 51852-PT); o acabamento do sensor e do módulo é genérico. A seleção de eco, as amplitudes da curva e o tempo até a falha são um modelo simplificado para a aula.</p>
       </details>
     </section>
 
@@ -211,14 +226,15 @@ try { var u = new URL(location.href); if (u.searchParams.has('hubRestaurar')) { 
 <div class="veu" id="dlgSessao" hidden>
   <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dlgSessaoT">
     <h2 id="dlgSessaoT">Sua sessão</h2>
-    <p>Cada aluno trabalha na sua sessão: um tanque, um transmissor e uma conexão com o seu próprio CLP. O que você fizer aqui não muda a tela dos colegas.</p>
+    <p>Cada navegador entra sozinho numa sessão própria: um tanque, um transmissor e uma conexão com o seu CLP. Aqui você troca de sessão ou muda o nome da sua.</p>
+    <div class="linha" id="linhaRenomear"><input type="text" id="inRenomear" maxlength="28" autocomplete="off" aria-label="Nome desta sessão"><button class="btn" type="button" id="btnRenomear">Renomear esta sessão</button></div>
     <form id="formSessao" class="linha">
-      <input type="text" id="inNome" maxlength="28" placeholder="Seu nome ou bancada" autocomplete="off">
-      <button class="btn primary" type="submit">Criar e entrar</button>
+      <input type="text" id="inNome" maxlength="28" placeholder="Nome da nova sessão (opcional)" autocomplete="off">
+      <button class="btn" type="submit">Criar outra sessão</button>
     </form>
     <p class="aviso" id="msgSessao" hidden></p>
     <div id="blocoSessoes" hidden>
-      <div class="grp">Ou continue numa sessão que já existe</div>
+      <div class="grp">Sessões abertas neste simulador</div>
       <ul class="lista-sessoes" id="listaSessoes"></ul>
     </div>
     <p class="mini" id="enderecos"></p>

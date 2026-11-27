@@ -27,9 +27,10 @@ const CAMS = {
   feixe: { p: [2.9, 3.15, 4.3], t: [0.3, 2.3, 0] },
   topo: { p: [0.3, 7.9, 0.45], t: [0.3, 1.3, 0] },
   painel: { p: [2.74, 1.6, 1.62], t: [2.35, 1.53, 0.28] },
+  visor: { p: [G.sx, FACE_Y + 0.276 + 0.15, 0.028], t: [G.sx, FACE_Y + 0.276, 0] },       // de cima, a um palmo do módulo do transmissor
 };
 
-export function criarCena({ view, canvas, labelsEl, insetEl, reduzido = false, aoMudarCamera = () => {} }) {
+export function criarCena({ view, canvas, labelsEl, insetEl, reduzido = false, aoMudarCamera = () => {}, aoTecla = () => {} }) {
   const T3 = {}, labels = [];
   let tween = null;
 
@@ -49,7 +50,7 @@ export function criarCena({ view, canvas, labelsEl, insetEl, reduzido = false, a
   const controls = new OrbitControls(camera, canvas);
   controls.target.set(...CAMS.geral.t);
   controls.enableDamping = true; controls.dampingFactor = 0.08;
-  controls.minDistance = 0.5; controls.maxDistance = 18; controls.maxPolarAngle = Math.PI / 2 - 0.03;
+  controls.minDistance = 0.1; controls.maxDistance = 18; controls.maxPolarAngle = Math.PI / 2 - 0.03;
   controls.addEventListener('start', () => { tween = null; aoMudarCamera(null); });
 
   scene.add(new THREE.HemisphereLight(0xffffff, 0xb9bfb8, 1.9));
@@ -154,8 +155,8 @@ export function criarCena({ view, canvas, labelsEl, insetEl, reduzido = false, a
   sen.add(mesh(cylG(0.0385, 0.0385, 0.050, 48), mHouse, 0, 0.210, 0));
   sen.add(mesh(cylG(0.0405, 0.0405, 0.041, 48), mLid, 0, 0.2555, 0));
   for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2; const r = mesh(new THREE.BoxGeometry(0.004, 0.03, 0.007), mLid, 0.0415 * Math.cos(a), 0.258, 0.0415 * Math.sin(a), false); r.rotation.y = -a; sen.add(r); }
-  T3.disp = canvasTex(256, 256);
-  { const d = mesh(new THREE.CircleGeometry(0.034, 48), new THREE.MeshBasicMaterial({ map: T3.disp.tex }), 0, 0.2764, 0, false); d.rotation.x = -Math.PI / 2; sen.add(d); }
+  T3.disp = canvasTex(512, 512);             // o módulo de visualização e configuração, desenhado e clicável
+  T3.dispMesh = mesh(new THREE.CircleGeometry(0.034, 48), new THREE.MeshBasicMaterial({ map: T3.disp.tex }), 0, 0.2764, 0, false); T3.dispMesh.rotation.x = -Math.PI / 2; sen.add(T3.dispMesh);
   sen.add(mesh(new THREE.BoxGeometry(0.024, 0.032, 0.058), mHouse, 0.046, 0.210, 0));        // saída dos prensa-cabos M20
   for (const z of [-0.0145, 0.0145]) {
     const n = mesh(cylG(0.0135, 0.0135, 0.008, 6), mBlack, 0.062, 0.210, z); n.rotation.z = Math.PI / 2; sen.add(n);
@@ -272,17 +273,82 @@ export function criarCena({ view, canvas, labelsEl, insetEl, reduzido = false, a
   }
 
   // ---------------------------------------------------------------- telas desenhadas: display do sensor e IHM do painel
-  function telas(V) {
-    { const { g, tex } = T3.disp; g.clearRect(0, 0, 256, 256);
-      g.fillStyle = '#2b3138'; g.beginPath(); g.arc(128, 128, 128, 0, 7); g.fill();
-      g.fillStyle = V.ligado ? '#c9d6c4' : '#5b6660'; g.fillRect(48, 70, 160, 96);
-      if (V.ligado) {
-        g.fillStyle = '#18222b'; g.textAlign = 'center'; g.textBaseline = 'middle';
-        g.font = '700 50px Arial'; g.fillText(V.erro || fmt(V.pct, 1) + ' %', 128, 112);
-        g.font = '600 20px Arial'; g.fillText(V.erro ? 'sem medição' : fmt(V.D, 3) + ' m(d)', 128, 150);
+  // ---------------------------------------------------------------- módulo do transmissor desenhado na tampa do sensor
+  // A mesma tela do módulo da Bancada (V.tela vem de modulo.tela()). As teclas são clicáveis na própria cena.
+  const TECLAS = [['esc', 'ESC', 142], ['mais', '+', 218], ['seta', '->', 294], ['ok', 'OK', 370]], TECLA_Y = 392, TECLA_R = 33;
+  const LCD = { x: 96, y: 106, w: 320, h: 206 };
+  function desenharModulo3D(V) {
+    const { g, tex } = T3.disp, T = V.tela || { linhas: [] }, mono = 'ui-monospace, Consolas, monospace';
+    g.clearRect(0, 0, 512, 512);
+    g.fillStyle = '#2b3138'; g.beginPath(); g.arc(256, 256, 256, 0, 7); g.fill();
+    const fundo = !V.ligado ? '#566158' : T.luz ? '#dfeec4' : '#b9c6b2', tinta = '#141c18';
+    g.fillStyle = fundo; g.fillRect(LCD.x, LCD.y, LCD.w, LCD.h);
+    if (V.ligado) {
+      g.fillStyle = tinta; g.textBaseline = 'middle';
+      g.font = `700 17px ${mono}`; g.textAlign = 'left'; g.fillText(String(T.titulo || '').slice(0, 27), LCD.x + 8, LCD.y + 15);
+      g.textAlign = 'right'; g.fillText(T.num || '', LCD.x + LCD.w - 8, LCD.y + 15);
+      g.fillRect(LCD.x + 6, LCD.y + 27, LCD.w - 12, 1.5);
+      const y0 = LCD.y + 32, altura = LCD.h - 38, cx = LCD.x + LCD.w / 2, pisca = Math.floor(performance.now() / 500) % 2 === 0;
+      if (T.lista) {
+        const hL = Math.min(28, altura / T.lista.itens.length); let y = y0 + (altura - hL * T.lista.itens.length) / 2;
+        g.font = `700 ${Math.round(hL * 0.68)}px ${mono}`; g.textAlign = 'left';
+        T.lista.itens.forEach((x, k) => { const sel = k === T.lista.sel; if (sel) { g.fillStyle = tinta; g.fillRect(LCD.x + 6, y, LCD.w - 12, hL); } g.fillStyle = sel ? fundo : tinta; g.fillText((sel ? '> ' : '  ') + x, LCD.x + 10, y + hL / 2 + 1); y += hL; });
+      } else if (T.curva === 'eco' || T.curva === 'falso') {
+        const X = (x) => LCD.x + 10 + x / 3.5 * (LCD.w - 20), Y = (d) => y0 + altura - 16 - Math.min(100, Math.max(0, d)) / 100 * (altura - 22);
+        g.strokeStyle = tinta; g.lineWidth = 1.5; g.beginPath(); g.moveTo(X(0), Y(0)); g.lineTo(X(3.5), Y(0)); g.stroke();
+        g.font = `600 12px ${mono}`; g.textAlign = 'center'; for (let x = 0; x <= 3; x++) g.fillText(String(x), X(x), y0 + altura - 6);
+        g.beginPath();
+        for (let k = 0; k <= 175; k++) { const x = k * 0.02; let d = 0; if (T.curva === 'eco') d = (V.curva || [])[k] || 0; else for (const fz of V.falsos || []) d = Math.max(d, fz.a * Math.exp(-(((x - fz.x) / 0.05) ** 2))); k ? g.lineTo(X(x), Y(d)) : g.moveTo(X(x), Y(d)); }
+        g.lineWidth = 2; g.stroke();
+      } else {
+        const linhas = [];
+        for (const l of T.linhas || []) {           // linhas pequenas e compridas quebram em duas
+          if (l.p && l.t.length > 34 && l.cur === undefined) { const meio = l.t.lastIndexOf(' ', 34); linhas.push(Object.assign({}, l, { t: l.t.slice(0, meio) }), Object.assign({}, l, { t: l.t.slice(meio + 1) })); } else linhas.push(l);
+        }
+        const hDe = (l) => (l.g ? 48 : l.p ? 20 : 28), total = linhas.reduce((s, l) => s + hDe(l), 0) + (T.barra !== null && T.barra !== undefined ? 22 : 0);
+        let y = y0 + Math.max(0, (altura - total) / 2);
+        for (const l of linhas) {
+          const h = hDe(l); g.font = `${l.p ? 600 : 700} ${l.g ? 40 : l.p ? 15 : 22}px ${mono}`;
+          const w = g.measureText(l.t).width, x = l.e ? LCD.x + 10 : l.d ? LCD.x + LCD.w - 10 - w : cx - w / 2;
+          if (!(l.pisca && !pisca)) {
+            g.textAlign = 'left'; g.fillStyle = tinta; g.fillText(l.t, x, y + h / 2 + 1);
+            if (l.cur !== undefined && pisca) { const antes = g.measureText(l.t.slice(0, l.cur)).width, wc = g.measureText(l.t[l.cur] || ' ').width; g.fillRect(x + antes - 1, y + 2, wc + 2, h - 4); g.fillStyle = fundo; g.fillText(l.t[l.cur] === ' ' ? '_' : l.t[l.cur], x + antes, y + h / 2 + 1); }
+          }
+          y += h;
+        }
+        if (T.barra !== null && T.barra !== undefined) { g.strokeStyle = tinta; g.lineWidth = 2; g.strokeRect(LCD.x + 40, y + 5, LCD.w - 80, 13); g.fillStyle = tinta; g.fillRect(LCD.x + 40, y + 5, (LCD.w - 80) * T.barra, 13); }
       }
-      g.fillStyle = '#8a949c'; for (let i = 0; i < 4; i++) { g.beginPath(); g.arc(68 + i * 40, 200, 11, 0, 7); g.fill(); }
-      tex.needsUpdate = true; }
+    }
+    for (const [, rot, x] of TECLAS) {
+      g.fillStyle = '#dfe3df'; g.beginPath(); g.arc(x, TECLA_Y, TECLA_R, 0, 7); g.fill();
+      g.fillStyle = '#141c18'; g.font = '700 22px Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(rot, x, TECLA_Y + 1);
+    }
+    tex.needsUpdate = true;
+  }
+  // clique (sem arrastar) numa tecla desenhada na tampa do sensor
+  const raio = new THREE.Raycaster(), ponteiro = new THREE.Vector2();
+  function teclaEm(ev) {
+    const r = canvas.getBoundingClientRect();
+    ponteiro.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
+    raio.setFromCamera(ponteiro, camera);
+    const hit = raio.intersectObject(T3.dispMesh, false)[0];
+    if (!hit || !hit.uv) return null;
+    const px = hit.uv.x * 512, py = (1 - hit.uv.y) * 512;
+    const k = TECLAS.find(([, , x]) => Math.hypot(px - x, py - TECLA_Y) <= TECLA_R + 6);
+    return k ? k[0] : 'visor';
+  }
+  let toque = null;
+  canvas.addEventListener('pointerdown', (ev) => { toque = { x: ev.clientX, y: ev.clientY }; });
+  canvas.addEventListener('pointerup', (ev) => {
+    if (!toque || Math.hypot(ev.clientX - toque.x, ev.clientY - toque.y) > 6) { toque = null; return; }
+    toque = null;
+    const k = teclaEm(ev);
+    if (k && k !== 'visor') aoTecla(k);
+  });
+  canvas.addEventListener('pointermove', (ev) => { if (ev.buttons) return; const k = teclaEm(ev); canvas.style.cursor = k && k !== 'visor' ? 'pointer' : ''; });
+
+  function telas(V) {
+    desenharModulo3D(V);
     { const { g, tex } = T3.ihm, W = 736, H = 564, c = V.clp; g.fillStyle = '#0f1d29'; g.fillRect(0, 0, W, H);
       g.fillStyle = '#1d3954'; g.fillRect(0, 0, W, 72);
       g.fillStyle = '#fff'; g.textAlign = 'left'; g.textBaseline = 'middle'; g.font = '700 36px Arial'; g.fillText('TQ-01  NÍVEL  LT-01', 26, 38);
@@ -412,5 +478,12 @@ export function criarCena({ view, canvas, labelsEl, insetEl, reduzido = false, a
     }
   }
 
-  return { quadro, telas, ir };
+  // posição na página de uma tecla desenhada no visor do sensor (para os testes automáticos)
+  function posTecla(nome) {
+    const k = TECLAS.find((t) => t[0] === nome), p = new THREE.Vector3((k[2] / 512 * 2 - 1) * 0.034, ((1 - TECLA_Y / 512) * 2 - 1) * 0.034, 0);
+    T3.dispMesh.localToWorld(p); p.project(camera);
+    const r = canvas.getBoundingClientRect();
+    return { x: r.left + (p.x * 0.5 + 0.5) * r.width, y: r.top + (-p.y * 0.5 + 0.5) * r.height };
+  }
+  return { quadro, telas, ir, posTecla };
 }

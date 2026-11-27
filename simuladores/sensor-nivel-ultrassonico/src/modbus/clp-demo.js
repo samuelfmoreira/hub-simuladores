@@ -54,7 +54,7 @@ function criarClpDemo(opts = {}) {
   }
   // tenta a porta pedida e, se estiver ocupada, as seguintes (até 60 tentativas)
   function iniciar() {
-    const primeira = opts.port || 1520, host = opts.host || '127.0.0.1';
+    const primeira = opts.port || 1502, host = opts.host || '127.0.0.1';
     return new Promise((resolve, reject) => {
       const tentar = (p, resto) => {
         const s = net.createServer(aoConectar);
@@ -79,5 +79,5 @@ function criarClpDemo(opts = {}) {
 module.exports = { criarClpDemo };
 
 if (require.main === module) {
-  criarClpDemo({ port: Number(process.argv[2] || 1520) }).iniciar().then((u) => console.log(`CLP de demonstração ouvindo em ${u.host}:${u.port}`)).catch((e) => { console.error(e.message); process.exit(1); });
+  criarClpDemo({ port: Number(process.argv[2] || 1502) }).iniciar().then((u) => console.log(`CLP de demonstração ouvindo em ${u.host}:${u.port}`)).catch((e) => { console.error(e.message); process.exit(1); });
 }

@@ -473,7 +473,7 @@
       9: 'CFW500-CRS485', 10: 'CFW500-ENC', 11: 'CFW500-CETH-IP / CEMB-TCP / CEPN-IO', 12: 'CFW500-ENC2', 13: 'CFW500-IOSP', 14: 'CFW500-ENC1', 15: 'CFW500-CRS485P',
       16: 'CFW500-CETH2', 17: 'CFW500-IORP' },
     28: { 0: 'Conector Jumper STO', 1: 'CFW500-SFY2' },
-    29: { 0: 'Não Identificado', 1: '200-240 V / 1,6 A', 2: '200-240 V / 2,6 A', 3: '200-240 V / 4,3 A', 4: '200-240 V / 7,0 A', 5: '200-240 V / 9,6 A' },
+    29: { 0: 'Não Identificado', 1: '200-240 V / 1,6 A', 2: '200-240 V / 2,6 A', 3: '200-240 V / 4,3 A', 4: '200-240 V / 7,0 A', 5: '200-240 V / 9,6 A', 9: '380-480 V / 4,3 A' },
     104: { 0: 'Inativa', 1: 'Ativa' },
     105: { 0: '1ª Rampa', 1: '2ª Rampa', 2: 'DIx', 3: 'Serial/USB', 4: 'Reservado', 5: 'CO/DN/PB/Eth', 6: 'SoftPLC' },
     120: { 0: 'Inativo', 1: 'Ativo', 2: 'Backup por P0121' },

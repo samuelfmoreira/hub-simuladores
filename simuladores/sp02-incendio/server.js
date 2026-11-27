@@ -201,17 +201,17 @@ async function api(req, res, parts) {
         const used = new Set([...plcTests.values()].map((p) => `${p.host}:${p.port}`));
         const wanted = Math.min(65535, Math.max(1, parseInt(b.port, 10) || 502));
         const faixa = Array.from({ length: 80 }, (_, i) => 5020 + i);
-        // [HUB] no HUB, cada sessão ganha o seu endereço de loopback (127.0.0.70, .71… até .99), sempre na porta 502
+        // [HUB] no HUB, cada sessão ganha o seu endereço de loopback (127.0.0.100, .101… até .149), sempre na porta 502
         // do Modbus. Se o Windows recusar esses endereços, volta para 127.0.0.1 numa porta alternativa (5030–5099).
         const tentativas = process.env.HUB === '1'
-          ? [...Array.from({ length: 30 }, (_, i) => ({ host: `127.0.0.${70 + i}`, port: 502 })), ...Array.from({ length: 70 }, (_, i) => ({ host: '127.0.0.1', port: 5030 + i }))]
+          ? [...Array.from({ length: 50 }, (_, i) => ({ host: `127.0.0.${100 + i}`, port: 502 })), ...Array.from({ length: 70 }, (_, i) => ({ host: '127.0.0.1', port: 5030 + i }))]
           : [wanted, 502, ...faixa].map((port) => ({ host: undefined, port }));
         const lista = tentativas.filter((t, i, a) => a.findIndex((x) => x.host === t.host && x.port === t.port) === i && !used.has(`${t.host || '127.0.0.1'}:${t.port}`));
         let plc = null, lastErr = null;
         for (const t of lista) {
           try { plc = await testPlc.start(t.port, (txt) => console.log(`  [${s.name}] ${txt}`), t.host); break; } catch (e) { lastErr = e; }
         }
-        if (plc && process.env.HUB === '1' && plc.port !== 502) console.log(`  [${s.name}] aviso: o Windows não aceitou os endereços 127.0.0.70–99; CLP virtual em 127.0.0.1:${plc.port}`);
+        if (plc && process.env.HUB === '1' && plc.port !== 502) console.log(`  [${s.name}] aviso: o Windows não aceitou os endereços 127.0.0.100–149; CLP virtual em 127.0.0.1:${plc.port}`);
         if (!plc) return json(res, 409, { error: `Não achei porta livre para o CLP virtual (${lastErr?.message || ''}).` });
         plcTests.set(s.id, plc);
         // aponta a sessão para o seu CLP virtual (se estiver desconectada)

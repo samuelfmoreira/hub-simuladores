@@ -78,15 +78,15 @@ class Sessao {
   async ligarDemo() {
     await this.desconectar(true);
     // [HUB] cada sessão ganha o seu CLP de demonstração só neste PC, sempre na porta 502 do Modbus, num endereço de
-    // loopback próprio (127.0.0.80, .81… até .99): não disputa a 502 do CODESYS nem a dos outros simuladores.
+    // loopback próprio (127.0.0.150, .151… até .199): não disputa a 502 do CODESYS nem a dos outros simuladores.
     // Se o Windows recusar esses endereços, volta para 127.0.0.1 numa porta alternativa (1520 em diante) e avisa.
     let u = null, ultimoErro = null;
-    for (let k = 80; k <= 99 && !u; k++) {
+    for (let k = 150; k <= 199 && !u; k++) {
       const d = criarClpDemo({ host: `127.0.0.${k}`, port: 502, tentativas: 0 });
       try { u = await d.iniciar(); this.demo = d; } catch (e) { ultimoErro = e; try { if (d.parar) await d.parar(); } catch (_) { /* não abriu */ } }
     }
     if (!u) {
-      this.log(`aviso: 127.0.0.80–99:502 indisponível (${ultimoErro && (ultimoErro.code || ultimoErro.message)}); CLP de demonstração em 127.0.0.1`);
+      this.log(`aviso: 127.0.0.150–199:502 indisponível (${ultimoErro && (ultimoErro.code || ultimoErro.message)}); CLP de demonstração em 127.0.0.1`);
       this.demo = criarClpDemo({ host: '127.0.0.1', port: 1520 });
       u = await this.demo.iniciar();
     }
@@ -235,8 +235,13 @@ class Gerente {
     return nome;
   }
   criar(nome) {
-    if (this.sessoes.size >= MAX_SESSOES) throw new Error(`limite de ${MAX_SESSOES} sessões: exclua as que não estão em uso`);
-    let n = limparNome(nome); if (!n) n = `Bancada ${this.sessoes.size + 1}`;
+    if (this.sessoes.size >= MAX_SESSOES) {       // no limite, a sessão parada há mais tempo (sem tela aberta e sem CLP) dá lugar à nova
+      const parada = [...this.sessoes.values()].filter((s) => s.telas === 0 && !s.rede.desejado).sort((a, b) => a.ultimoUso - b.ultimoUso)[0];
+      if (!parada) throw new Error(`limite de ${MAX_SESSOES} sessões em uso ao mesmo tempo`);
+      this.sessoes.delete(parada.id); this.log(`sessão parada removida para abrir espaço: ${parada.nome}`);
+    }
+    let n = limparNome(nome);
+    if (!n) { let k = 1; const usados = new Set([...this.sessoes.values()].map((s) => s.nome.toLowerCase())); while (usados.has(`bancada ${k}`)) k++; n = `Bancada ${k}`; }
     let id; do { id = crypto.randomBytes(3).toString('hex'); } while (this.sessoes.has(id));
     const s = new Sessao(this, { id, nome: this.nomeLivre(n) });
     this.sessoes.set(id, s); this.log(`sessão criada: ${s.nome} (${id})`); this.gravar();

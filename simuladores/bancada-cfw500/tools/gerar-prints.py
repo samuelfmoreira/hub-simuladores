@@ -37,6 +37,9 @@ try:
         cena(pg, "b.montagem('forca'); SIM.cena.sincFios(); await liga(); b.inv.hmi.tecla('i',true); b.inv.hmi.tecla('i',false); b.inv.P[121]=30; while(Math.abs(b.inv.fS)<29.9) await e(200); b.acao('P2',{a1:'A1.U',b1:'A1.V'}); b.acao('P2',SIM.autoOsc(b)); SIM.cena.vista('osciloscopio'); await e(2500);", 'osciloscopio.png', 800)
         cena(pg, "b.montagem('forca'); SIM.cena.sincFios(); await liga(); b.inv.hmi.tecla('i',true); b.inv.hmi.tecla('i',false); b.inv.P[121]=30; while(Math.abs(b.inv.fS)<29.9) await e(200); b.acao('P2',{a1:'A1.U',b1:'A1.V',a2:'X1.L1',b2:'X1.L2',filtro:true}); b.acao('P2',SIM.autoOsc(b)); document.querySelector('[data-aba=medicoes]').click(); await e(600); document.querySelector('#oscTela').scrollIntoView();", 'aba-osciloscopio.png', 900, alvo='.lado')
         cena(pg, "const r=b.montagem('contatora'); SIM.cena.reconstruir(); b.acao('Q1',{fechado:true}); b.acao('X1',{ligada:true}); await e(1500); b.acao('S1',{ap:true}); await e(300); b.acao('S1',{ap:false}); await e(2500); const k=b.comp('KM1'); SIM.cena.seleciona(null); SIM.cena.vista('comando');", 'contatora-perto.png', 1500, alvo='body')
+        cena(pg, "SIM.campo.abrir('demo','cheia'); await e(300); document.querySelector('#campo [data-pre]:nth-of-type(2)').click(); await e(4500);", 'campo-girante.png', 600, alvo='body')
+        cena(pg, "const m=b.montagem('forca'); if(m.novos) SIM.cena.reconstruir(); else SIM.cena.sincFios(); await liga(); b.inv.hmi.tecla('i',true); b.inv.hmi.tecla('i',false); b.inv.P[121]=40; b.motor.carga=1; while(Math.abs(b.inv.fS)<39.9) await e(200); SIM.campo.abrir('banc','popup'); await e(2500);", 'campo-popup.png', 600, alvo='body')
+        cena(pg, "b.montagem('forca'); SIM.cena.sincFios(); SIM.cena.vista('caixa');", 'fechamento.png', 2600)
         nav.close()
 finally:
     os.killpg(srv.pid, signal.SIGTERM)

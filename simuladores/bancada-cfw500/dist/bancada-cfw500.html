@@ -136,6 +136,41 @@ select, input[type="search"], input[type="number"] { background: var(--fundo); b
 .fechar { position: absolute; right: 10px; top: 8px; background: none; border: 0; font-size: 26px; cursor: pointer; color: var(--fraco); line-height: 1; }
 kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius: 4px; padding: 0 5px; font: 12px var(--mono); }
 @media (max-width: 880px) { .corpo { flex-direction: column-reverse; } .lado { width: 100%; max-width: none; height: 46%; border-right: 0; border-top: 1px solid var(--borda); } .marca span, .chips .num { display: none; } .chips { justify-content: flex-start; } }
+
+/* tela à parte: campo girante */
+.campo { position: fixed; inset: 0; z-index: 25; background: var(--fundo); display: flex; flex-direction: column; padding-top: env(safe-area-inset-top, 0px); }
+.campo[hidden] { display: none; }
+.cg-topo { display: flex; align-items: center; gap: 14px; padding: 9px 14px; background: var(--painel); border-bottom: 1px solid var(--borda); flex-wrap: wrap; }
+.cg-tit { flex: 1; min-width: 220px; } .cg-tit b { display: block; font-size: 17px; } .cg-tit span { color: var(--fraco); font-size: 12px; }
+.cg-seg { margin: 0; min-width: 330px; } .campo .seg button { padding: 6px 9px; font-size: 12.5px; white-space: nowrap; }
+.cg-corpo { flex: 1; min-height: 0; display: flex; }
+.cg-esq { flex: none; width: min(52vw, calc(100vh - 170px)); min-width: 300px; padding: 12px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+.cg-palco { position: relative; width: 100%; aspect-ratio: 1; border-radius: 10px; border: 1px solid var(--borda); background: #0d1216; overflow: hidden; flex: none; }
+#cgMotor, #cgMotor3d { position: absolute; inset: 0; width: 100%; height: 100%; display: block; } #cgMotor3d { cursor: grab; touch-action: none; } #cgMotor[hidden], #cgMotor3d[hidden] { display: none; }
+.cg-sobre { position: absolute; left: 10px; right: 10px; top: 8px; font-size: 12px; color: #9fb0c0; pointer-events: none; text-shadow: 0 1px 2px #000; }
+.cg-linha { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; } .cg-linha > span { color: var(--fraco); font-size: 12.5px; min-width: 96px; } .cg-linha .seg { flex: 1; margin: 0; }
+.cg-leg { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; font-size: 12px; color: var(--fraco); } .cg-leg i { width: 11px; height: 11px; border-radius: 50%; display: inline-block; margin-left: 8px; }
+.cg-dir { flex: 1; min-width: 0; overflow-y: auto; padding: 12px 16px 28px 4px; }
+.cg-origem { font-size: 12.5px; color: #9fd0ff; margin-bottom: 8px; }
+.cg-nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-bottom: 10px; }
+.cg-n { background: var(--painel2); border: 1px solid var(--borda); border-radius: 8px; padding: 7px 10px; } .cg-n span { display: block; font-size: 11.5px; color: var(--fraco); } .cg-n b { font: 600 22px var(--mono); font-variant-numeric: tabular-nums; } .cg-n small { margin-left: 5px; color: var(--fraco); font-size: 11.5px; }
+.cg-demo { background: var(--painel); border: 1px solid var(--borda); border-radius: 9px; padding: 9px 11px; margin-bottom: 10px; } .cg-demo .ck { margin: 0; } .cg-pre .botao { padding: 4px 9px; font-size: 12.5px; }
+#cgOndas { width: 100%; height: 130px; display: block; border-radius: 8px; margin-bottom: 4px; }
+.cg-mem, .cg-tab { width: 100%; border-collapse: collapse; font-size: 12.8px; } .cg-mem th { text-align: left; font-size: 11.5px; color: var(--fraco); font-weight: 600; padding: 3px 6px; }
+.cg-mem td, .cg-tab td { padding: 5px 6px; border-top: 1px solid var(--borda); vertical-align: top; } .cg-mem td:first-child b { display: block; font-weight: 600; } .cg-mem td:first-child span { font-family: var(--mono); font-size: 12px; color: #9fd0ff; }
+.cg-mem td:nth-child(2) { font-family: var(--mono); font-size: 12px; color: #cfd8e0; } .cg-mem td:nth-child(3) { font-family: var(--mono); white-space: nowrap; color: #8ff0bd; text-align: right; }
+.cg-tab td { font-family: var(--mono); font-size: 12px; text-align: right; } .cg-tab td:first-child { text-align: left; font-family: inherit; color: var(--fraco); } .cg-tab td[colspan] { text-align: left; font-family: inherit; color: #cfd8e0; }
+@media (max-width: 900px) { .cg-corpo { flex-direction: column; overflow-y: auto; } .cg-esq { width: 100%; overflow: visible; } .cg-dir { overflow: visible; padding: 4px 12px 28px; } .cg-nums { grid-template-columns: repeat(2, 1fr); } }
+
+.linha .rot { color: var(--fraco); font-size: 12.5px; } #bRede button, #bFecho button { padding: 6px 4px; font-size: 12.5px; } #bRede button small { display: block; font-weight: 400; font-size: 10.5px; color: var(--fraco); } #bRede button.ativa small { color: #dbe8ff; }
+
+/* campo girante em janela flutuante sobre a bancada: arrasta pelo título, redimensiona pelo canto */
+.campo.popup { inset: auto; right: 14px; top: 66px; width: 440px; height: min(700px, calc(100vh - 86px)); min-width: 300px; min-height: 240px; max-width: 96vw; max-height: 96vh; border: 1px solid #55657a; border-radius: 12px; box-shadow: 0 18px 44px rgba(0, 0, 0, .55); resize: both; overflow: hidden; padding-top: 0; z-index: 24; }
+.campo.popup .cg-topo { cursor: move; padding: 6px 8px 6px 12px; gap: 6px; touch-action: none; user-select: none; -webkit-user-select: none; } .campo.popup .cg-tit { min-width: 0; } .campo.popup .cg-tit span { display: none; } .campo.popup .cg-tit b { font-size: 14px; }
+.campo.popup .cg-topo .botao { padding: 4px 9px; font-size: 12.5px; } .campo.popup .cg-seg { min-width: 0; order: 5; flex-basis: 100%; }
+.campo.popup .cg-corpo { flex-direction: column; overflow-y: auto; } .campo.popup .cg-esq { width: 100%; min-width: 0; overflow: visible; padding: 8px; } .campo.popup .cg-dir { overflow: visible; padding: 2px 10px 18px; flex: none; }
+.campo.popup .cg-n b { font-size: 17px; } .campo.popup .cg-n { padding: 5px 8px; } .campo.popup .cg-leg { display: none; } .campo.popup .cg-linha > span { min-width: 70px; } .campo.popup #cgOndas { height: 96px; }
+@media (max-width: 700px) { .campo.popup { right: 2vw; width: 96vw; top: auto; bottom: 2vh; height: 62vh; } }
 </style>
 </head>
 <body>
@@ -149,6 +184,7 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
     <div class="chip num" id="chRpm">0 rpm</div>
   </div>
   <button class="chip" id="chSessao" title="Sessões independentes: cada aba tem a sua bancada">Sessão</button>
+  <button class="botao" id="btnCampo" title="Tela à parte: campo magnético girante, escorregamento e memorial de cálculo">Campo girante</button>
   <button class="botao" id="btnAjuda">Como usar</button>
 </header>
 <main class="corpo">
@@ -213,7 +249,12 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
       <h3>Componentes</h3>
       <div class="linha"><select id="bTipo" aria-label="Componente"></select><button class="botao" id="bAdd">Adicionar</button></div>
       <p class="dica">Também pelo botão <b>+ Componente</b>, no canto da bancada. O componente novo vai para o primeiro lugar livre do painel; arraste pela placa para mudar. Clique nele para selecionar e use <b>Remover</b> (ou a tecla Delete); botão direito mostra a explicação.</p>
+      <h3>Rede da bancada</h3>
+      <div class="seg" id="bRede"></div>
+      <p class="dica">Em 380 V a bancada usa o inversor da classe 380-480 V (volta ao padrão de fábrica) e o motor fecha em estrela. A troca desliga a rede.</p>
       <h3>Motor e carga</h3>
+      <div class="linha"><span class="rot">Fechamento (atalho)</span><div class="seg" id="bFecho" style="flex:1;margin:0"><button data-fecho="">Aberto</button><button data-fecho="D">Triângulo Δ</button><button data-fecho="Y">Estrela Y</button></div></div>
+      <p class="dica">O fechamento é feito com fios na caixa de ligação do motor: triângulo = U1–W2, V1–U2, W1–V2 · estrela = W2–U2–V2. Os botões acima fazem isso por você.</p>
       <label class="rg">Freio de carga <output id="bCargaV">30 %</output><input type="range" id="bCarga" min="0" max="150" step="5" value="30"></label>
       <label class="ck"><input type="checkbox" id="bVolante"> Volante de inércia acoplado</label>
       <label class="ck"><input type="checkbox" id="bTravado"> Eixo travado</label>
@@ -227,7 +268,7 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
   <section class="cena">
     <div id="cena3d"></div>
     <button class="mostrar" id="btnMostrar" hidden title="Mostrar o painel de missões, inversor e parâmetros">» Painel</button>
-    <div class="vistas" id="vistas"><button data-vista="geral">Bancada</button><button data-vista="inversor">Inversor</button><button data-vista="bornes">Bornes</button><button data-vista="comando">Comando</button><button data-vista="motor">Motor</button><button data-vista="multimetro">Multímetro</button><button data-vista="osciloscopio">Osciloscópio</button></div>
+    <div class="vistas" id="vistas"><button data-vista="geral">Bancada</button><button data-vista="inversor">Inversor</button><button data-vista="bornes">Bornes</button><button data-vista="comando">Comando</button><button data-vista="motor">Motor</button><button data-vista="caixa" title="Caixa de ligação do motor, vista de cima: para fazer o fechamento">Fechamento</button><button data-vista="multimetro">Multímetro</button><button data-vista="osciloscopio">Osciloscópio</button></div>
     <div class="modo" id="modo" hidden></div>
     <div class="alerta" id="alerta" hidden></div>
     <div class="ferr" id="ferr">
@@ -241,6 +282,41 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
     <div class="toast" id="toast" hidden></div>
   </section>
 </main>
+<section class="campo" id="campo" hidden aria-label="Campo magnético girante">
+  <header class="cg-topo">
+    <div class="cg-tit"><b>Campo magnético girante</b><span>Motor de indução de 4 polos em corte: estator, entreferro e rotor de gaiola</span></div>
+    <div class="seg cg-seg"><button data-fonte="demo">Demonstração</button><button data-fonte="banc">Motor da bancada (ao vivo)</button></div>
+    <button class="botao" id="cgPopup" title="Alterna entre a janela flutuante sobre a bancada e a tela cheia">Janela flutuante</button>
+    <button class="botao" id="cgFechar">Voltar à bancada</button>
+  </header>
+  <div class="cg-corpo">
+    <div class="cg-esq">
+      <div class="cg-palco"><canvas id="cgMotor3d"></canvas><canvas id="cgMotor" hidden></canvas><div class="cg-sobre" id="cgSobre"></div></div>
+      <div class="cg-linha"><span>Visual</span><div class="seg"><button data-vis="3d" title="Arraste para girar, roda do mouse para aproximar, duplo clique para voltar">3D</button><button data-vis="frente">3D de frente</button><button data-vis="2d">Corte 2D</button></div></div>
+      <div class="cg-linha"><span>Ponto de vista</span><div class="seg"><button data-ref="estator">Parado no estator</button><button data-ref="campo">Girando com o campo</button><button data-ref="rotor">Girando com o rotor</button></div></div>
+      <div class="cg-linha"><span>Câmera lenta</span><div class="seg"><button data-lento="300">1/300</button><button data-lento="60">1/60</button><button data-lento="15">1/15</button><button data-lento="3">1/3</button></div></div>
+      <div class="cg-leg"><i style="background:#ff5a5f"></i>fase U · polo N<i style="background:#f5c542"></i>fase V<i style="background:#4f9dff"></i>fase W · polo S<i style="background:#ff9f43"></i><i style="background:#35d0ff"></i>corrente induzida nas barras<i style="background:#7dffb0"></i>conjugado<i style="background:#ffc400"></i>setas: sentido do fluxo e da corrente em cada ranhura (para fora = saindo, para dentro = entrando)</div>
+    </div>
+    <div class="cg-dir">
+      <div class="cg-origem" id="cgOrigem"></div>
+      <div class="cg-nums" id="cgNum"></div>
+      <div class="aviso" id="cgAviso" hidden></div>
+      <div class="cg-demo" id="cgDemo">
+        <label class="rg">Frequência do estator <output id="cgFv"></output><input type="range" id="cgF" min="0" max="90" step="0.5" value="60"></label>
+        <label class="rg">Carga no eixo <output id="cgCv"></output><input type="range" id="cgC" min="0" max="250" step="5" value="100"></label>
+        <div class="cg-linha"><label class="ck"><input type="checkbox" id="cgVf" checked> Manter V/f (como o inversor faz)</label><label class="ck"><input type="checkbox" id="cgTrava"> Rotor travado</label><button class="botao" id="cgSent">Sentido: horário</button></div>
+        <div class="cg-linha cg-pre"><span>Situações</span><button class="botao" data-pre="60,0,0">Vazio 60 Hz</button><button class="botao" data-pre="60,100,0">Nominal 60 Hz</button><button class="botao" data-pre="30,100,0">Nominal 30 Hz</button><button class="botao" data-pre="10,100,0">Nominal 10 Hz</button><button class="botao" data-pre="60,100,1">Rotor travado</button><button class="botao" data-pre="90,60,0">90 Hz</button></div>
+      </div>
+      <canvas id="cgOndas"></canvas>
+      <h3>Memorial de cálculo (valores do instante)</h3>
+      <table class="cg-mem"><thead><tr><th>Grandeza e fórmula</th><th>Conta</th><th>Resultado</th></tr></thead><tbody id="cgMem"></tbody></table>
+      <p class="dica" id="cgPlaca"></p>
+      <h3>O mesmo conjugado em outras frequências (V/f constante)</h3>
+      <table class="cg-tab"><tbody id="cgTab"></tbody></table>
+      <p class="dica">Como ler: o campo do estator gira a ns = 120·f/p. O rotor só recebe corrente (e conjugado) se girar mais devagar que o campo, porque é a diferença de velocidade que faz o fluxo “cortar” as barras. Essa diferença é o escorregamento. Mudando a frequência, o inversor muda a velocidade do campo; o rotor acompanha, sempre o mesmo tanto atrás para a mesma carga.</p>
+    </div>
+  </div>
+</section>
 <div class="janela" id="janela" hidden><div class="jcx"><button class="fechar" id="jFechar" aria-label="Fechar">×</button><div id="jCorpo"></div></div></div>
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 <script>
@@ -720,7 +796,7 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
       9: 'CFW500-CRS485', 10: 'CFW500-ENC', 11: 'CFW500-CETH-IP / CEMB-TCP / CEPN-IO', 12: 'CFW500-ENC2', 13: 'CFW500-IOSP', 14: 'CFW500-ENC1', 15: 'CFW500-CRS485P',
       16: 'CFW500-CETH2', 17: 'CFW500-IORP' },
     28: { 0: 'Conector Jumper STO', 1: 'CFW500-SFY2' },
-    29: { 0: 'Não Identificado', 1: '200-240 V / 1,6 A', 2: '200-240 V / 2,6 A', 3: '200-240 V / 4,3 A', 4: '200-240 V / 7,0 A', 5: '200-240 V / 9,6 A' },
+    29: { 0: 'Não Identificado', 1: '200-240 V / 1,6 A', 2: '200-240 V / 2,6 A', 3: '200-240 V / 4,3 A', 4: '200-240 V / 7,0 A', 5: '200-240 V / 9,6 A', 9: '380-480 V / 4,3 A' },
     104: { 0: 'Inativa', 1: 'Ativa' },
     105: { 0: '1ª Rampa', 1: '2ª Rampa', 2: 'DIx', 3: 'Serial/USB', 4: 'Reservado', 5: 'CO/DN/PB/Eth', 6: 'SoftPLC' },
     120: { 0: 'Inativo', 1: 'Ativo', 2: 'Backup por P0121' },
@@ -834,7 +910,7 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
     _avisa(m) { this.msg = m; this.tMsg = 4; }
     _montaLista() {
       const nome = MENUS[this.menu], P = this.inv.P;
-      this.lista = nome === 'PARAM' ? LISTA : nome === 'MODIF' ? LISTA.filter((p) => !p.ro && p.n !== 0 && P[p.n] !== p.def) : LISTA.filter((p) => p.grupos.includes(nome));
+      this.lista = nome === 'PARAM' ? LISTA : nome === 'MODIF' ? LISTA.filter((p) => !p.ro && p.n !== 0 && P[p.n] !== this.inv.padrao(p.n)) : LISTA.filter((p) => p.grupos.includes(nome));
       this.i = Math.min(this.idx[nome] || 0, Math.max(0, this.lista.length - 1));
     }
     /** nome: esc · enter · up · down · i · o · giro · locrem · jog */
@@ -938,17 +1014,18 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
   const RS = 3.4;                       // ohm por fase (equivalente em estrela): 6,8 ohm medidos entre dois bornes
   const WN = PLACA.rpm * 2 * Math.PI / 60, TN = PLACA.kw * 1000 / WN;   // 180,6 rad/s · 4,15 N·m
   const TMAX = 2.8 * TN, FK = 13.54;    // conjugado máximo e escorregamento (Hz) em que ele ocorre -> 4,15 N·m com 2,5 Hz de escorregamento
+  const BP = 1.33, CP = 9;              // barra profunda da gaiola: conjugado de partida de 2,3 x o nominal com tensão plena (sem isso a fórmula de Kloss daria 1,2 x)
   const IM0 = 1.8, CR = 13.08;          // corrente de magnetização e constante da corrente do rotor -> 2,98 A na carga nominal
   const EN = PLACA.v / R3 - RS * PLACA.i * 0.85;
 
   class Motor {
     constructor() { this.placa = PLACA; this.w = 0; this.ang = 0; this.carga = 0.3; this.volante = false; this.travado = false; this.zera(); this.iF = 0; }
-    zera() { this.i = 0; this.ia = 0; this.torque = 0; this.pe = 0; }
+    zera() { this.i = 0; this.ia = 0; this.torque = 0; this.pe = 0; this.phi = 0; this.fe = 0; this.fs = 0; }
     get rpm() { return this.w * 60 / (2 * Math.PI); }
     get hzRotor() { return this.w / Math.PI; }               // 4 polos: f = w·(p/2)/(2π)
     /** s = { f (Hz ≥ 0), v (V eficaz fase-fase), seq (+1 horário / -1), fases (0, 2 ou 3), cc (0..1 frenagem CC) } */
     passo(dt, s) {
-      const fr = this.hzRotor; let te = 0, i = 0, ia = 0, pe = 0;
+      const fr = this.hzRotor; let te = 0, i = 0, ia = 0, pe = 0, fluxo = 0, fEst = 0;
       if (s.cc > 0 && s.fases >= 2) {                         // corrente contínua no estator: freia proporcional à velocidade
         i = s.cc * PLACA.v / (2 * RS);
         te = -TN * 0.5 * (i / PLACA.i) ** 2 * Math.tanh(this.w / 12); pe = 2 * RS * i * i;
@@ -958,9 +1035,9 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
         const sat = (p) => (p <= 1 ? p : p + 5 * (p - 1) ** 2);                // saturação: boost demais vira corrente
         let phi = vph / (0.85 * RS * Math.hypot(IM0, CR * gx) + s.f * kE);
         for (let k = 0; k < 4 && phi > 1; k++) phi = 0.5 * phi + 0.5 * vph / (0.85 * RS * Math.hypot(IM0 * sat(phi) / phi, CR * gx) + s.f * kE);
-        const im = IM0 * sat(phi);
+        const im = IM0 * sat(phi); fluxo = phi; fEst = fe;
         let ir = phi * CR * gx;
-        te = 2 * TMAX * phi * phi * x / (1 + x * x);
+        te = 2 * TMAX * phi * phi * x / (1 + x * x) * (1 + BP * x * x / (CP + x * x));   // Kloss + efeito de barra profunda (só pesa com escorregamento alto: partida)
         if (s.fases === 2) { te *= Math.abs(this.w) < 8 ? 0 : 0.45; ir *= 1.9; }   // falta de fase: não parte, ronca e a corrente sobe
         ia = ir * sg(x); i = Math.sqrt(im * im + ir * ir);
         pe = te * (2 * Math.PI * fe / 2) + 3 * RS * i * i + 25;
@@ -976,17 +1053,22 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
       }
       this.ang += this.w * dt;
       this.i = i; this.ia = ia; this.torque = te; this.pe = pe;
+      this.phi = fluxo; this.fe = fEst; this.fs = fEst ? fEst - fr : 0;      // fluxo (pu), frequência do estator e de escorregamento (Hz, com sinal): usados na tela do campo girante
     }
   }
 
   // =================================================================== INVERSOR
-  const UD_SUB = 200, UD_SOBRE = 410, C_LINK = 940e-6, I_F70 = 2.3 * INOM;
+  const C_LINK = 940e-6, I_F70 = 2.3 * INOM;
+  // classe de tensão do inversor: 220 = CFW500A04P3B2 (200-240 V) · 380 = CFW500A04P3T4 (380-480 V). Muda os níveis do link DC e alguns padrões de fábrica.
+  const CLASSE = { 220: { sub: 200, sobre: 410, liga: 170, desliga: 110, faixaUd: 40, def: { 29: 3 } },
+    380: { sub: 360, sobre: 810, liga: 300, desliga: 200, faixaUd: 80, def: { 29: 9, 296: 1, 151: 800, 153: 750, 185: 800, 190: 380, 321: 436, 322: 423, 323: 462, 400: 380 } } };
   const DEF50 = { 125: 5, 126: 10, 127: 20, 128: 30, 129: 40, 130: 50, 131: 55, 134: 55, 145: 50, 146: 33.3, 147: 16.7, 208: 500, 402: 1425, 403: 50 };
   const HIST = [50, 51, 52, 53, 54, 55, 60, 61, 62, 63, 64, 65, 70, 71, 72, 73, 74, 75];
 
   class CFW500 {
     constructor(o = {}) {
-      this.P = {}; LISTA.forEach((p) => { this.P[p.n] = p.def; });
+      this.classe = o.salvo && CLASSE[o.salvo.classe] ? o.salvo.classe : 220;
+      this.P = {}; LISTA.forEach((p) => { this.P[p.n] = p.def; }); Object.assign(this.P, CLASSE[this.classe].def);
       this.usuario = { 1: null, 2: null }; this.senha = 5; this.acesso = false;
       this.aoGravar = o.aoGravar || (() => {}); this.aoEvento = o.aoEvento || (() => {});
       if (o.salvo) this.carregar(o.salvo);
@@ -1008,10 +1090,10 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
     }
     paraGravar() {
       const P = {}; LISTA.forEach((p) => { if ((!p.ro && this.P[p.n] !== p.def && p.n !== 0) || HIST.includes(p.n) || [42, 43, 44].includes(p.n)) P[p.n] = this.P[p.n]; });
-      return { P, usuario: this.usuario, senha: this.senha };
+      return { P, usuario: this.usuario, senha: this.senha, classe: this.classe };
     }
     _fabrica(hz50) {
-      LISTA.forEach((p) => { if (!p.ro) this.P[p.n] = p.def; }); if (hz50) Object.assign(this.P, DEF50);
+      LISTA.forEach((p) => { if (!p.ro) this.P[p.n] = p.def; }); Object.assign(this.P, CLASSE[this.classe].def); if (hz50) Object.assign(this.P, DEF50);
       this.acesso = false; this.locHMI = true; this.giroHMI = 1; this.runHMI = false;
     }
     /** Parametrização automática: padrão de fábrica e depois a lista [[n, valor], ...]. Grava mesmo com o inversor desligado. */
@@ -1022,6 +1104,11 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
       this.aoGravar(); this.aoEvento(`Parametrização automática: padrão de fábrica e ${n} parâmetro(s).`); return n;
     }
     get rodando() { return this.pwm; }
+    get niveis() { return CLASSE[this.classe]; }
+    /** valor de fábrica de um parâmetro neste inversor (alguns dependem da classe de tensão) */
+    padrao(n) { const d = CLASSE[this.classe].def; return n in d ? d[n] : MAPA[n].def; }
+    /** Troca o inversor pelo de outra classe de tensão (220 ou 380 V): volta ao padrão de fábrica daquele modelo. */
+    trocaClasse(v) { if (!CLASSE[v] || v === this.classe) return false; this.classe = v; this._fabrica(false); this.ud = 0; this.falhaCod = 0; this.aoGravar(); this.aoEvento(`Inversor da classe ${v === 380 ? '380-480 V (CFW500A04P3T4)' : '200-240 V (CFW500A04P3B2)'}, no padrão de fábrica.`); return true; }
 
     /** Altera um parâmetro pela HMI ou pela aba Parâmetros, com as mesmas recusas do inversor real. */
     set(n, v) {
@@ -1116,7 +1203,7 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
       this.ud -= ((this.vivo ? 14 : 3) + u0 * u0 / 60000) * dt / (C_LINK * u0);
       if (this.ud < udRet) this.ud += (udRet - this.ud) * Math.min(1, dt / 0.008);
       if (this.ud < 0) this.ud = 0;
-      if (!this.vivo && this.ud > 170) this._energizar(); else if (this.vivo && this.ud < 110) this._desenergizar();
+      if (!this.vivo && this.ud > this.niveis.liga) this._energizar(); else if (this.vivo && this.ud < this.niveis.desliga) this._desenergizar();
       if (!this.vivo) { Object.assign(s, { vivo: false, pwm: false, f: 0, v: 0, cc: 0, do1: false, do2: false, ao1: 0 }); return; }
       s.vivo = true; P[42] += dt / 3600; P[4] = Math.round(this.ud);
       if (this.boot > 0) { this.boot -= dt; if (this.hmi) this.hmi.passo(dt); return; }
@@ -1134,7 +1221,7 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
 
       // ---- situação geral
       const conf = P[47] = this._config();
-      const sub = this.ud < UD_SUB * P[639] / 100;
+      const sub = this.ud < this.niveis.sub * P[639] / 100;
       const loc = this.loc, pwmAnt = this.pwm;
       if (this._bordaFn(20)) this.reset();
       if (this.falhaCod && P[340] > 0) { this.tReset += dt; if (this.tReset >= P[340]) this.reset(); }
@@ -1234,7 +1321,7 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
         // o regulador olha a tensão e a velocidade com que ela sobe (antecipa a energia que ainda volta do motor)
         this.dUd += ((this.ud - this.udAnt) / dt - this.dUd) * Math.min(1, dt / 0.006); this.udAnt = this.ud;
         const udPrev = this.ud + Math.max(0, this.dUd) * 0.09;
-        const kUd = lim((P[151] - udPrev) / 40, 0, 1), kI = lim((P[135] - iNow) / (0.1 * P[135] + 0.01), 0, 1);
+        const kUd = lim((P[151] - udPrev) / this.niveis.faixaUd, 0, 1), kI = lim((P[135] - iNow) / (0.1 * P[135] + 0.01), 0, 1);
         const d = alvo - this.fr, acel = this.fr === 0 || sg(d) === sg(this.fr);
         if (Math.abs(d) > 1e-6) {
           if (acel && kI < 1) this.limit = 'corrente'; if (!acel && kUd < 1) this.limit = 'link DC';
@@ -1292,7 +1379,7 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
         else if (P[202] === 4) this._falha(79);
         if ((P[343] & 0x10) && fa > 0.1 * P[403] && e.motor.fases === 2 && e.i > 0.2 * P[401]) { this.t76 += dt; if (this.t76 > 2) this._falha(76); } else this.t76 = 0;
       }
-      if (this.ud > UD_SOBRE) this._falha(22);
+      if (this.ud > this.niveis.sobre) this._falha(22);
       // sobrecarga do motor Ixt (P0156/P0157/P0158 conforme a velocidade; 60 s em 1,5x)
       const rel = fa / (P[403] || 60);
       const iol = P[406] === 1 || rel >= 1 ? P[156] : rel >= 0.5 ? P[157] + (P[156] - P[157]) * (rel - 0.5) / 0.5 : rel >= 0.2 ? P[158] + (P[157] - P[158]) * (rel - 0.2) / 0.3 : P[158];
@@ -1339,7 +1426,7 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
     _desenergizar() { this.vivo = false; this.pwm = false; this.fr = this.fS = this.fOut = 0; if (this.hmi) this.hmi.desligar(); this.aoGravar(); this.aoEvento('Inversor desenergizado.'); }
   }
 
-  SIM.Motor = Motor; SIM.CFW500 = CFW500; SIM.PLACA = PLACA; SIM.RS_MOTOR = RS;
+  SIM.Motor = Motor; SIM.CFW500 = CFW500; SIM.PLACA = PLACA; SIM.RS_MOTOR = RS; SIM.MOTOR_K = { TN, TMAX, FK, IM0, CR, RS, EN, BP, CP };
   if (typeof module !== 'undefined') module.exports = SIM;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
 
@@ -1374,8 +1461,9 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
         T('U', 'U', 30, 203, 'preto', 'Saída para o motor'), T('V', 'V', 65, 203, 'preto', 'Saída para o motor'), T('W', 'W', 100, 203, 'preto', 'Saída para o motor'), T('PEo', 'PE', 135, 203, 'verde', 'Terra (motor)')]
         .concat(linha([1, 3, 5, 7, 9, 11, 13, 15], -150, -133, 38, (n, x, y) => T('c' + n, n + ' ' + CTRL[n][0], x, y, corCtrl(n), CTRL[n][1])))
         .concat(linha([2, 4, 6, 8, 10, 12, 14, 16], -212, -133, 38, (n, x, y) => T('c' + n, n + ' ' + CTRL[n][0], x, y, corCtrl(n), CTRL[n][1]))) },
-    motor: { nome: 'Motor trifásico 1 cv', pre: 'M', w: 470, h: 260, plano: 'mesa', unico: true,
-      term: [T('U1', 'U1', -45, 0, 'preto', 'Bobina U (ligação triângulo 220 V)'), T('V1', 'V1', -15, 0, 'preto', 'Bobina V'), T('W1', 'W1', 15, 0, 'preto', 'Bobina W'), T('PE', 'PE', 45, 0, 'verde', 'Terra da carcaça')] },
+    motor: { nome: 'Motor trifásico 1 cv, 6 pontas (220 V Δ / 380 V Y)', pre: 'M', w: 470, h: 260, plano: 'mesa', unico: true,      // y dos bornes = profundidade na caixa de ligação
+      term: [T('U1', 'U1', -38, -18, 'preto', 'Início do enrolamento U'), T('V1', 'V1', -4, -18, 'preto', 'Início do enrolamento V'), T('W1', 'W1', 30, -18, 'preto', 'Início do enrolamento W'),
+        T('W2', 'W2', -38, 18, 'cinza', 'Fim do enrolamento W'), T('U2', 'U2', -4, 18, 'cinza', 'Fim do enrolamento U'), T('V2', 'V2', 30, 18, 'cinza', 'Fim do enrolamento V'), T('PE', 'PE', 60, 0, 'verde', 'Terra da carcaça')] },
     bot: { nome: 'Botão pulsador', pre: 'S', w: 100, h: 190, plano: 'painel', term: contatos(['13', '14'], ['21', '22'], -30, -70) },
     chave: { nome: 'Chave seletora 2 posições', pre: 'K', w: 100, h: 190, plano: 'painel', term: contatos(['13', '14'], ['21', '22'], -30, -70) },
     emerg: { nome: 'Botão de emergência', pre: 'S', w: 110, h: 190, plano: 'painel', term: contatos(['23', '24'], ['11', '12'], -30, -70) },
@@ -1412,13 +1500,15 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
     ['cont', '', 'Contatora (bobina 24 Vcc)'], ['fonte', '', 'Fonte 24 Vcc 2,5 A'], ['sinal', 'verde', 'Sinaleiro verde 24 Vcc'], ['sinal', 'vermelho', 'Sinaleiro vermelho 24 Vcc'], ['sinal', 'amarelo', 'Sinaleiro amarelo 24 Vcc'],
     ['sinal', 'azul', 'Sinaleiro azul 24 Vcc'], ['sinal', 'branco', 'Sinaleiro branco 24 Vcc'], ['lamp', 'verde', 'Sinaleiro verde 220 Vca'], ['lamp', 'vermelho', 'Sinaleiro vermelho 220 Vca'], ['lamp', 'amarelo', 'Sinaleiro amarelo 220 Vca'],
     ['pot', '', 'Potenciômetro 5 kΩ'], ['disj', '', 'Disjuntor tripolar'], ['gerador', '', 'Gerador de sinal V / mA']];
-  const ST0 = { rede: () => ({ ligada: false, desarmada: false }), disj: () => ({ fechado: false }), bot: () => ({ ap: false }), chave: () => ({ on: false }), emerg: () => ({ ap: false }),
+  const ST0 = { rede: () => ({ ligada: false, desarmada: false, tensao: 220 }), disj: () => ({ fechado: false }), bot: () => ({ ap: false }), chave: () => ({ on: false }), emerg: () => ({ ap: false }),
     pot: () => ({ pos: 0 }), sinal: () => ({}), lamp: () => ({}), cont: () => ({ fechado: false }), fonte: () => ({ on: false }), gerador: () => ({ modo: 'V', valor: 0 }), multi: () => ({ modo: 0, pv: null, pc: null }), osc: () => ({ a1: null, b1: null, a2: null, b2: null, tb: 5, v1: 6, v2: 6, pos: 0, filtro: false, parado: false }), cfw: () => ({ s1: false }), motor: () => ({}) };
 
   // montagens prontas: [de, para, cor]
   const FORCA = [['X1.L1', 'Q1.1', 'preto'], ['X1.L2', 'Q1.3', 'preto'], ['X1.L3', 'Q1.5', 'preto'], ['Q1.2', 'A1.R', 'preto'], ['Q1.4', 'A1.S', 'preto'], ['Q1.6', 'A1.T', 'preto'], ['X1.PE', 'A1.PEi', 'verde'],
     ['A1.U', 'M1.U1', 'preto'], ['A1.V', 'M1.V1', 'preto'], ['A1.W', 'M1.W1', 'preto'], ['A1.PEo', 'M1.PE', 'verde']];
   const POT = [['A1.c8', 'RP1.3', 'vermelho'], ['A1.c6', 'RP1.2', 'amarelo'], ['A1.c4', 'RP1.1', 'preto']];
+  /** jumpers do fechamento do motor: triângulo (rede 220 V) ou estrela (rede 380 V) */
+  const FECHAMENTO = { 220: [['U1', 'W2'], ['V1', 'U2'], ['W1', 'V2']], 380: [['W2', 'U2'], ['U2', 'V2']] };
   const MONTAGENS = {
     forca: { nome: 'Só a força (rede, disjuntor, inversor, motor)', fios: FORCA },
     dois_fios: { nome: 'Gira/Para (K1 em DI1) e sentido (K2 em DI2)', fios: FORCA.concat([['A1.c16', 'K1.13', 'preto'], ['K1.14', 'A1.c1', 'azul'], ['K1.13', 'K2.13', 'preto'], ['K2.14', 'A1.c3', 'azul']]) },
@@ -1443,7 +1533,7 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
       this.aoGravar = o.aoGravar || (() => {});
       this.inv = new SIM.CFW500({ salvo: o.salvo && o.salvo.inv, aoGravar: () => this.aoGravar(), aoEvento: (m) => this.evento(m) });
       this.motor = new SIM.Motor();
-      this.net = {}; this.vdc = {}; this.fas = {}; this.erros = []; this.avisos = []; this.alim = { f: 0, v: 0, seq: 1, fases: 0, cc: 0, via: '' }; this.leitura = { txt: '', un: '', bip: false };
+      this.net = {}; this.vdc = {}; this.fas = {}; this.erros = []; this.avisos = []; this.iLinha = 0; this.vEnrol = 0; this.alim = { f: 0, v: 0, seq: 1, fases: 0, cc: 0, via: '', kv: 0, kI: 1, lig: '' }; this.leitura = { txt: '', un: '', bip: false };
       if (o.salvo && o.salvo.comps) this.carregar(o.salvo); else this.padrao();
     }
     padrao() { this.comps = []; this.fios = []; PADRAO.forEach(([id, tipo, x, y, cor]) => this.comps.push({ id, tipo, x, y, cor: cor || '', st: ST0[tipo]() })); this.sujo = true; }
@@ -1454,10 +1544,25 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
       this.fios = (s.fios || []).filter((f) => this.existe(f.a) && this.existe(f.b)); this.seq = 1 + this.fios.reduce((m, f) => Math.max(m, f.id), 0);
       if (s.motor) { this.motor.carga = s.motor.carga; this.motor.volante = !!s.motor.volante; }
       if (PAINEIS[s.painel]) this.painel = s.painel;
+      const mt = this.porTipo('motor'); if (mt && !(s.v >= 2)) FECHAMENTO[220].forEach(([a, b]) => this.addFio(`${mt.id}.${a}`, `${mt.id}.${b}`, 'cinza'));   // antes da versão 1.5 o triângulo era interno
       this.sujo = true;
     }
-    salvar() { return { comps: this.comps, fios: this.fios, painel: this.painel, motor: { carga: this.motor.carga, volante: this.motor.volante }, inv: this.inv.paraGravar() }; }
+    salvar() { return { v: 2, comps: this.comps, fios: this.fios, painel: this.painel, motor: { carga: this.motor.carga, volante: this.motor.volante }, inv: this.inv.paraGravar() }; }
     get limites() { return limites(this.painel); }
+    get tensao() { const r = this.porTipo('rede'); return r && r.st.tensao === 380 ? 380 : 220; }
+    /** Troca a rede da bancada (220 ou 380 V entre fases). A rede é desligada e o inversor passa a ser o da classe correspondente. */
+    tensaoRede(v) {
+      const r = this.porTipo('rede'); if (!r || (v !== 220 && v !== 380) || r.st.tensao === v) return false;
+      r.st.tensao = v; r.st.ligada = false; r.st.desarmada = false; this.erros = []; this.inv.trocaClasse(v); this.sujo = true;
+      this.evento(`Rede da bancada em ${v} V entre fases (${v === 380 ? 220 : 127} V fase-neutro).`); this.aoGravar(); return true;
+    }
+    /** Fecha o motor com jumpers: 'D' triângulo, 'Y' estrela, '' abre. Só mexe nos fios entre os bornes do próprio motor. */
+    fechamento(tipo) {
+      const m = this.porTipo('motor'); if (!m) return; const meu = (r) => r.startsWith(m.id + '.') && r !== m.id + '.PE';
+      this.fios = this.fios.filter((f) => !(meu(f.a) && meu(f.b)));
+      if (tipo) FECHAMENTO[tipo === 'Y' ? 380 : 220].forEach(([a, b]) => this.addFio(`${m.id}.${a}`, `${m.id}.${b}`, 'cinza'));
+      this.sujo = true; this.aoGravar();
+    }
     /** Troca o tamanho do painel. Ao diminuir, o que ficaria fora é trazido para dentro (procurando lugar livre). Devolve quantos mudaram de lugar. */
     tamanhoPainel(nome) {
       if (!PAINEIS[nome]) return -1; this.painel = nome; const L = limites(nome); let n = 0;
@@ -1515,7 +1620,9 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
         const pos = pd[2] !== undefined && !this.ocupado(pd[1], pd[2], pd[3]) ? [pd[2], pd[3]] : (this.lugarLivre(pd[1]) || [pd[2] || 0.45, pd[3] || 0.5]);
         this.comps.push({ id, tipo: pd[1], x: pos[0], y: pos[1], cor: pd[4] || '', st: ST0[pd[1]]() }); novos++;
       }
-      this.fios = []; m.fios.forEach(([a, b, c]) => this.addFio(a, b, c)); this.sujo = true; return { ok: true, novos };
+      this.fios = []; m.fios.forEach(([a, b, c]) => this.addFio(a, b, c));
+      const mt = this.porTipo('motor'); if (mt && this.fios.some((f) => f.a.startsWith(mt.id + '.') || f.b.startsWith(mt.id + '.'))) FECHAMENTO[this.tensao].forEach(([a, b]) => this.addFio(`${mt.id}.${a}`, `${mt.id}.${b}`, 'cinza'));
+      this.sujo = true; return { ok: true, novos };
     }
     /** Muda o estado de um componente: { ligada }, { fechado }, { ap }, { on }, { pos }, { modo }, { pv }, ... */
     acao(id, st) {
@@ -1543,7 +1650,7 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
         else if (c.tipo === 'sinal') res.push([p + 'X1', p + 'X2', 2400]);
         else if (c.tipo === 'lamp') res.push([p + 'X1', p + 'X2', 9680]);
         else if (c.tipo === 'cont') { if (s.fechado) { une(p + '1', p + '2'); une(p + '3', p + '4'); une(p + '5', p + '6'); une(p + '13', p + '14'); } else une(p + '21', p + '22'); res.push([p + 'A1', p + 'A2', 230]); }
-        else if (c.tipo === 'motor') res.push([p + 'U1', p + 'V1', 10.2], [p + 'V1', p + 'W1', 10.2], [p + 'W1', p + 'U1', 10.2]);   // triângulo: 6,8 Ω entre dois bornes
+        else if (c.tipo === 'motor') res.push([p + 'U1', p + 'U2', 10.2], [p + 'V1', p + 'V2', 10.2], [p + 'W1', p + 'W2', 10.2]);   // três enrolamentos de 10,2 Ω: 6,8 Ω entre fases em triângulo, 20,4 Ω em estrela
         else if (c.tipo === 'cfw') { une(p + 'c4', p + 'c16'); une(p + 'PEi', p + 'PEo'); une(p + 'c11', inv.vivo && inv.sai.do1 ? p + 'c13' : p + 'c15'); }
       }
       const N = (k) => acha(k);
@@ -1561,7 +1668,8 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
       if (rede) {
         const p = rede.id + '.';
         poe(p + 'N', { re: 0, im: 0, fonte: 'terra' }); poe(p + 'PE', { re: 0, im: 0, fonte: 'terra' });
-        if (viva) ['L1', 'L2', 'L3'].forEach((l, i) => poe(p + l, { re: 127 * Math.cos(-120 * i * RAD), im: 127 * Math.sin(-120 * i * RAD), fonte: 'rede', fase: i }));
+        const vf = (rede.st.tensao === 380 ? 380 : 220) / R3;      // tensão fase-neutro: 127 V na rede de 220 V, 220 V na de 380 V
+        if (viva) ['L1', 'L2', 'L3'].forEach((l, i) => poe(p + l, { re: vf * Math.cos(-120 * i * RAD), im: vf * Math.sin(-120 * i * RAD), fonte: 'rede', fase: i }));
       }
       const saiInv = cfw && inv.sai.pwm && inv.sai.v > 1 && !inv.sai.cc;
       if (cfw) {
@@ -1577,6 +1685,11 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
         const [id, t] = k.split('.'), c = this.comp(id);
         if (frageis[c.tipo] && frageis[c.tipo](t)) { erros.push(`${f.fonte === 'rede' ? 'Tensão da rede (220 V)' : 'Tensão da saída do inversor'} no borne ${id}:${this.infoTerm(k).term.nome}, que é de comando em baixa tensão.`); trip = true; if (f.fonte === 'inv') this.inv._falha(70); }
       }
+      const uCA = (x, y) => { const fa = fas[N(x)], fb = fas[N(y)]; return fa && fb ? Math.hypot(fa.re - fb.re, fa.im - fb.im) : 0; };
+      for (const c of this.comps) {
+        if (c.tipo === 'fonte') { const u = uCA(c.id + '.L', c.id + '.N'); if (u > 264) { erros.push(`Fonte ${c.id} ligada em ${u.toFixed(0)} V: a entrada é de 100 a 240 V. Na rede de 380 V use uma fase e o neutro.`); trip = true; } }
+        else if (c.tipo === 'lamp') { const u = uCA(c.id + '.X1', c.id + '.X2'); if (u > 264) { erros.push(`Sinaleiro ${c.id} de 220 V ligado em ${u.toFixed(0)} V. Na rede de 380 V use uma fase e o neutro.`); trip = true; } }
+      }
       if (mm && mm.st.modo >= 3) for (const k of ['pv', 'pc']) { const r = mm.st[k], f = r && fas[N(r)]; if (f && f.fonte !== 'terra') avisos.push('Multímetro em Ω com tensão no circuito: desligue a rede antes de medir resistência.'); }
       if (trip && rede) { rede.st.desarmada = true; this.evento('A proteção geral da bancada desarmou: ' + erros[0]); this.erros = erros; return this.resolver(); }
       if (erros.length) this.erros = erros;
@@ -1588,15 +1701,26 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
         inv.ent.vLinha = vmax; inv.ent.fases = new Set(fs.filter((f) => f.fonte === 'rede').map((f) => f.fase)).size;
       }
       // ---- alimentação do motor: pelo inversor (U, V, W) ou direto da rede
-      const al = { f: 0, v: 0, seq: 1, fases: 0, cc: 0, via: '' };
+      const al = { f: 0, v: 0, seq: 1, fases: 0, cc: 0, via: '', kv: 0, kI: 1, lig: '' };
       if (mot) {
-        const nm = ['U1', 'V1', 'W1'].map((x) => N(mot.id + '.' + x));
-        const liga = (prefixo, bornes) => nm.map((n) => bornes.findIndex((b) => N(prefixo + b) === n));
-        const par = (ix) => { const v = ix.filter((i) => i >= 0); if (new Set(v).size !== v.length) return null; return { n: v.length, seq: v.length === 3 ? ((ix[1] - ix[0] + 3) % 3 === 1 ? 1 : -1) : 1 }; };
-        const pi = cfw ? par(liga(A, ['U', 'V', 'W'])) : null, pr = viva ? par(liga(rede.id + '.', ['L1', 'L2', 'L3'])) : null;
-        if (cfw) inv.ent.motor.fases = pi ? (pi.n >= 2 ? pi.n : 0) : 0;
-        if (pr && pr.n >= 2 && !trip) Object.assign(al, { f: 60, v: 220, seq: pr.seq, fases: pr.n, via: 'rede' });
-        else if (pi && pi.n >= 2) Object.assign(al, { seq: pi.seq, fases: pi.n, via: 'inv' });
+        // Cada enrolamento (U1-U2, V1-V2, W1-W2) recebe a diferença de potencial entre os seus dois bornes. Nós sem fonte
+        // (o centro da estrela, um jumper solto) assumem a média dos outros lados dos enrolamentos ligados a eles.
+        const pm = mot.id + '.', enr = [['U1', 'U2'], ['V1', 'V2'], ['W1', 'W2']].map(([x, y]) => [N(pm + x), N(pm + y)]);
+        const analisa = (pot) => {
+          const V = Object.assign({}, pot), soltos = new Set(); enr.forEach((par) => par.forEach((n) => { if (!(n in V)) soltos.add(n); }));
+          for (let it = 0; it < 24; it++) for (const u of soltos) { let sr = 0, si = 0, n = 0; for (const [x, y] of enr) { const o = x === u ? y : y === u ? x : null; if (o === null || o === u || !(o in V)) continue; sr += V[o].re; si += V[o].im; n++; } if (n) V[u] = { re: sr / n, im: si / n }; }
+          const w = enr.map(([x, y]) => (x in V && y in V ? { re: V[x].re - V[y].re, im: V[x].im - V[y].im } : { re: 0, im: 0 })), mg = w.map((q) => Math.hypot(q.re, q.im)), mx = Math.max(...mg);
+          if (mx < 1e-6) return null;
+          const tres = mg.every((q) => q > 0.85 * mx), estrela = [...soltos].some((u) => enr.filter(([x, y]) => x === u || y === u).length >= 2);
+          return { v: tres ? (mg[0] + mg[1] + mg[2]) / 3 : mx, fases: tres ? 3 : 2, seq: w[0].re * w[1].im - w[0].im * w[1].re < 0 ? 1 : -1, estrela };
+        };
+        const potR = {}, potI = {}; for (const n in fas) if (fas[n].fonte !== 'inv') { potR[n] = fas[n]; if (fas[n].fonte === 'terra') potI[n] = fas[n]; }
+        if (cfw) ['U', 'V', 'W'].forEach((x, i) => { const n = N(A + x); if (!(n in potR)) potI[n] = { re: Math.cos(-120 * i * RAD) / R3, im: Math.sin(-120 * i * RAD) / R3 }; });   // saída do inversor em "por unidade": 1 = tensão entre fases
+        const rr = viva && !trip ? analisa(potR) : null, ri = cfw && !inv.ent.motor.curto ? analisa(potI) : null;
+        if (cfw) inv.ent.motor.fases = ri ? ri.fases : 0;
+        const fecho = (r) => (r.fases === 3 ? (r.estrela ? 'Y' : 'Δ') : '');
+        if (rr && rr.v > 20) Object.assign(al, { f: 60, v: rr.v, seq: rr.seq, fases: rr.fases, via: 'rede', kv: rr.v / this.tensao, kI: rr.estrela ? 1 / R3 : 1, lig: fecho(rr) });
+        else if (ri && ri.v > 0.05) Object.assign(al, { seq: ri.seq, fases: ri.fases, via: 'inv', kv: ri.v, kI: ri.estrela ? 1 / R3 : 1, lig: fecho(ri) });
       }
       this.alim = al;
 
@@ -1733,10 +1857,13 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
       this.t += dt;
       if (this.sujo || this.n++ % 5 === 0) this.resolver();
       const inv = this.inv, m = this.motor, al = this.alim;
-      const s = al.via === 'inv' ? { f: Math.abs(inv.sai.f), v: inv.sai.v, seq: al.seq * (inv.sai.f < 0 ? -1 : 1), fases: inv.sai.pwm ? al.fases : 0, cc: inv.sai.cc } : al;
+      const s = al.via === 'inv' ? { f: Math.abs(inv.sai.f), v: inv.sai.v * al.kv, seq: al.seq * (inv.sai.f < 0 ? -1 : 1), fases: inv.sai.pwm ? al.fases : 0, cc: inv.sai.cc } : al;   // v = tensão em cada enrolamento
       m.passo(dt, s);
-      const via = al.via === 'inv';
-      Object.assign(inv.ent, { i: via ? m.i : 0, ia: via ? m.ia : 0, torque: via ? Math.abs(m.torque) * (m.ia >= 0 ? 1 : -1) : 0, pe: via ? m.pe : 0, hzRotor: via ? m.hzRotor * al.seq : 0 });
+      const via = al.via === 'inv', kI = al.kI || 1; this.iLinha = m.i * kI; this.vEnrol = s.fases ? s.v : 0;      // em estrela a corrente de linha é a do enrolamento (÷ √3 da de triângulo)
+      if (al.via === 'rede' && this.iLinha > 1.6 * SIM.PLACA.i * kI) { this.tSobre = (this.tSobre || 0) + dt; if (this.tSobre > 4) { const r = this.porTipo('rede'); r.st.desarmada = true; this.tSobre = 0; this.sujo = true;
+        this.erros = [al.v > 264 ? `Motor com ${al.v.toFixed(0)} V em cada enrolamento (o certo é 220 V): fechado em triângulo numa rede de 380 V. Feche em estrela.` : `Sobrecorrente no motor por mais de 4 s (${this.iLinha.toFixed(1)} A): confira o fechamento, a carga e as três fases.`]; this.evento('A proteção geral da bancada desarmou: ' + this.erros[0]); } }
+      else this.tSobre = Math.max(0, (this.tSobre || 0) - dt);
+      Object.assign(inv.ent, { i: via ? m.i * kI : 0, ia: via ? m.ia * kI : 0, torque: via ? Math.abs(m.torque) * (m.ia >= 0 ? 1 : -1) : 0, pe: via ? m.pe : 0, hzRotor: via ? m.hzRotor * al.seq : 0 });
       const pwm = inv.sai.pwm, do1 = inv.sai.do1, do2 = inv.sai.do2, vivo = inv.vivo;
       inv.passo(dt);
       if (pwm !== inv.sai.pwm || do1 !== inv.sai.do1 || do2 !== inv.sai.do2 || vivo !== inv.vivo) this.sujo = true;
@@ -1744,7 +1871,7 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
     avanca(seg, dt = 0.002) { for (let t = 0; t < seg; t += dt) this.passo(dt); }
   }
 
-  SIM.Bancada = Bancada; SIM.TIPOS = TIPOS; SIM.MONTAGENS = MONTAGENS; SIM.MODOS_MULTI = MODOS_MULTI; SIM.CTRL = CTRL; SIM.PONTAS = PONTAS; SIM.ST0 = ST0; SIM.PAINEIS = PAINEIS; SIM.PALETA = PALETA; SIM.EXTRAS = EXTRAS; SIM.OSC_TB = OSC_TB; SIM.OSC_V = OSC_V;
+  SIM.Bancada = Bancada; SIM.TIPOS = TIPOS; SIM.MONTAGENS = MONTAGENS; SIM.MODOS_MULTI = MODOS_MULTI; SIM.CTRL = CTRL; SIM.PONTAS = PONTAS; SIM.ST0 = ST0; SIM.FECHAMENTO = FECHAMENTO; SIM.PAINEIS = PAINEIS; SIM.PALETA = PALETA; SIM.EXTRAS = EXTRAS; SIM.OSC_TB = OSC_TB; SIM.OSC_V = OSC_V;
   if (typeof module !== 'undefined') module.exports = SIM;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
 
@@ -1758,16 +1885,19 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
   const rem = (b) => !b.inv.loc && b.inv.vivo;
 
   /** dados de placa do motor: a parametrização automática grava em todas as atividades */
-  SIM.PLACA_P = [[399, 82.6], [401, 3], [402, 1725], [403, 60], [404, 5], [407, 0.8]];
+  SIM.PLACA_P = [[399, 82.6], [400, 220], [401, 3], [402, 1725], [403, 60], [404, 5], [407, 0.8]];
+  /** ajusta uma lista de parâmetros à rede da bancada: em 380 V o motor fecha em estrela (P0400 = 380 V, P0401 = 1,7 A) */
+  SIM.porRede = (lista, b) => (b.tensao === 380 ? lista.map(([n, v]) => (n === 400 ? [400, 380] : n === 401 ? [401, 1.7] : [n, v])) : lista);
+  SIM.placaP = (b) => SIM.porRede(SIM.PLACA_P, b);
   SIM.MISSOES = [
     { id: 'energizar', titulo: 'Energizar o inversor', montagem: 'forca',
       texto: 'Leve a rede até o inversor passando pelo disjuntor Q1 e aterre o inversor. Depois feche Q1 e ligue a chave geral da bancada.',
       passos: ['X1 L1, L2, L3 → Q1 bornes 1, 3, 5', 'Q1 bornes 2, 4, 6 → inversor R/L1, S/L2, T/L3', 'X1 PE → PE do inversor', 'Feche Q1 e ligue a chave geral: o display acende'],
       check: (b) => { const q = b.comp('Q1'); return b.inv.vivo && b.inv.boot <= 0 && b.inv.ent.fases >= 2 && !!q && q.st.fechado && ['2', '4', '6'].some((t) => ['R', 'S', 'T'].some((r) => mesmoNo(b, 'Q1.' + t, 'A1.' + r))) && mesmoNo(b, 'X1.PE', 'A1.PEi'); } },
-    { id: 'motor', titulo: 'Ligar o motor e informar a placa', montagem: 'forca', params: [[401, 3.0], [402, 1725], [403, 60], [404, 5], [399, 82.6], [407, 0.80]],
-      texto: 'Ligue U, V, W e PE do inversor ao motor. Leia a placa do motor (clique nele com o botão direito) e grave os dados no grupo MOTOR.',
-      passos: ['U → U1, V → V1, W → W1 e PE → PE', 'P0401 = 3,0 A (placa: 2,98 A)', 'P0402 = 1725 rpm · P0403 = 60 Hz', 'P0404 = 5 (1 HP / 0,75 kW)', 'P0399 = 82,6 % · P0407 = 0,80'],
-      check: (b) => { const P = b.inv.P; return b.inv.ent.motor.fases === 3 && mesmoNo(b, 'A1.PEo', 'M1.PE') && P[401] === 3 && P[402] === 1725 && P[403] === 60 && P[404] === 5 && P[399] === 82.6 && P[407] === 0.8; } },
+    { id: 'motor', titulo: 'Fechar e ligar o motor, informar a placa', montagem: 'forca', params: [[400, 220], [401, 3.0], [402, 1725], [403, 60], [404, 5], [399, 82.6], [407, 0.80]],
+      texto: 'O motor tem 6 pontas: feche os enrolamentos conforme a rede da bancada (triângulo em 220 V, estrela em 380 V), ligue U, V, W e PE do inversor ao motor e grave os dados da placa no grupo MOTOR. A placa aparece clicando no motor (Explicação).',
+      passos: ['Rede 220 V: triângulo, com U1–W2, V1–U2 e W1–V2', 'Rede 380 V: estrela, com W2–U2–V2 juntos', 'U → U1, V → V1, W → W1 e PE → PE', 'P0400 = tensão do motor nesse fechamento (220 ou 380 V) · P0401 = corrente (3,0 ou 1,7 A)', 'P0402 = 1725 rpm · P0403 = 60 Hz · P0404 = 5 (1 HP) · P0399 = 82,6 % · P0407 = 0,80'],
+      check: (b) => { const P = b.inv.P; return b.inv.ent.motor.fases === 3 && b.alim.lig === (b.tensao === 380 ? 'Y' : 'Δ') && mesmoNo(b, 'A1.PEo', 'M1.PE') && SIM.porRede(SIM.MISSOES.find((x) => x.id === 'motor').params, b).every(([n, v]) => P[n] === v); } },
     { id: 'hmi', titulo: 'Comando local pela HMI', montagem: 'forca',
       texto: 'Em modo LOCAL (fábrica), gire o motor pela tecla I, leve a referência a 30,0 Hz com as setas, inverta o sentido pela tecla de giro e pare com a tecla O.',
       passos: ['Tecla I: o motor parte na velocidade mínima (P0133)', 'Setas ▲▼ na tela de monitoração: 30,0 Hz', 'Tecla de sentido de giro: desacelera, inverte e volta a 30 Hz', 'Tecla O: para por rampa'],
@@ -2052,7 +2182,7 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
     const FAB = {
       rede(c) {
         const gr = baseModulo(c, (x) => {
-          txt(x, '3~ 220 V  60 Hz', 11, 0, -86, '#c62828'); txt(x, 'CHAVE GERAL COM PROTEÇÃO', 6.5, 30, -62, '#3a4753');
+          txt(x, `3~ ${c.st.tensao === 380 ? 380 : 220} V  60 Hz`, 11, 0, -86, '#c62828'); txt(x, `fase-neutro ${c.st.tensao === 380 ? 220 : 127} V`, 6, -70, -70, '#3a4753', 400); txt(x, 'CHAVE GERAL COM PROTEÇÃO', 6.5, 30, -62, '#3a4753');
           x.fillStyle = '#f3c300'; x.beginPath(); x.roundRect(-8, -52, 76, 76, 6); x.fill(); txt(x, '0', 12, -1, -40); txt(x, 'I', 12, 60, -14);
           ['L1', 'L2', 'L3'].forEach((l, i) => txt(x, l, 7, -92, -52 + i * 26 + 12, '#3a4753')); txt(x, 'DESARMADO', 5.5, -76, 36, '#c62828');
         });
@@ -2200,10 +2330,15 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
         const tampaT = poe(gr, new T.Mesh(new T.CircleGeometry(0.072, 48), new T.MeshStandardMaterial({ map: grade, roughness: 0.5, metalness: 0.15 })), -0.2465, cy, 0); tampaT.rotation.y = -Math.PI / 2;
         for (const x of [-0.14, 0.02]) poe(gr, caixa(0.03, 0.045, 0.19, azul), x, 0.036, 0);
         // caixa de ligação com os bornes no topo
-        const cl = poe(gr, caixa(0.13, 0.05, 0.085, azul), -0.06, cy + 0.092, 0);
-        const tampa = placaTex(130, 85, (x) => { x.fillStyle = '#e9ebe6'; x.beginPath(); x.roundRect(-63, -40, 126, 80, 4); x.fill(); txt(x, c.id + ' · LIGAÇÃO Δ 220 V', 7.5, 0, -30, '#1c2530'); for (const t of d.term) txt(x, t.nome, 9, t.x, 26, '#1c2530'); });
-        const tp = poe(gr, plano(0.13, 0.085, tampa), -0.06, cy + 0.1175, 0); tp.rotation.x = -Math.PI / 2; tp.userData = { kind: 'corpo', id: c.id }; alvos.push(tp); cl.userData = tp.userData; alvos.push(cl);
-        for (const t of d.term) borne(gr, c.id + '.' + t.id, t, -0.06 + t.x / 1000, cy + 0.117, 0, new V3(0, 1, 0));
+        const cl = poe(gr, caixa(0.16, 0.05, 0.09, azul), -0.05, cy + 0.092, 0);
+        // placa de bornes de 6 pontas, como no motor: U1 V1 W1 atrás, W2 U2 V2 na frente. O fechamento (triângulo ou estrela) é do aluno.
+        const tampa = placaTex(160, 90, (x) => {
+          x.fillStyle = '#e9ebe6'; x.beginPath(); x.roundRect(-78, -43, 156, 86, 4); x.fill(); x.fillStyle = '#d3d7d1'; x.beginPath(); x.roundRect(-62, -33, 96, 66, 3); x.fill();
+          for (const t of d.term) { const cxm = t.x - 10; if (t.id === 'PE') txt(x, 'PE', 7.5, cxm, 15, '#2e8b3d'); else txt(x, t.nome, 7.5, cxm, t.y + (t.y < 0 ? -13.5 : 13.5), '#1c2530'); }
+          txt(x, 'Δ 220 V: U1-W2 · V1-U2 · W1-V2', 3.9, -14, -2.2, '#3a4753'); txt(x, 'Y 380 V: W2-U2-V2 juntos', 3.9, -14, 3, '#3a4753');
+        }, 5);
+        const tp = poe(gr, plano(0.16, 0.09, tampa), -0.05, cy + 0.1175, 0); tp.rotation.x = -Math.PI / 2; tp.userData = { kind: 'corpo', id: c.id }; alvos.push(tp); cl.userData = tp.userData; alvos.push(cl);
+        for (const t of d.term) borne(gr, c.id + '.' + t.id, t, -0.06 + t.x / 1000, cy + 0.117, t.y / 1000, new V3(0, 1, 0));
         const pl = placaTex(70, 44, (x) => { x.fillStyle = '#cfd3d6'; x.fillRect(-35, -22, 70, 44); txt(x, 'weg  W22 IR3 Premium', 5, 0, -16, '#111'); const P = SIM.PLACA; x.textAlign = 'left';
           [`3~  ${P.kw} kW (${P.cv} cv)  ${P.polos} polos`, `Δ ${P.v} V  ${String(P.i).replace('.', ',')} A`, `Y ${P.vY} V  ${String(P.iY).replace('.', ',')} A`, `${P.rpm} rpm   ${P.hz} Hz`, `cos φ ${P.cos.toFixed(2).replace('.', ',')}  η ${String(P.rend).replace('.', ',')} %  FS ${String(P.fs).replace('.', ',')}`].forEach((l, i) => txt(x, l, 4.6, -32, -8 + i * 6.6, '#111', 700)); }, 6);
         poe(gr, plano(0.07, 0.044, pl, { metalness: 0.5, roughness: 0.4 }), -0.06, cy - 0.005, 0.0735).castShadow = false;
@@ -2434,7 +2569,7 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
     const camS = { alvo: new V3(-0.05, 1.27, 0.12), r: 2.5, az: 0, el: 0.17 }, camD = { alvo: camS.alvo.clone(), r: camS.r, az: camS.az, el: camS.el };
     const VISTAS = { geral: () => [new V3(PW > 2 ? 0 : -0.05, 1.27 + (PH - 1.02) / 2, 0.12), 2.5 * Math.max(1, (PW + 0.3) / 2.16, (PH + 0.5) / 1.52), 0, 0.17], inversor: () => { const c = banc.porTipo('cfw'); return [new V3(c.x, MESA_Y + c.y + 0.05, 0.1), 0.75, 0, 0.05]; },
       bornes: () => { const c = banc.porTipo('cfw'); return [new V3(c.x, MESA_Y + c.y - 0.18, 0.02), 0.5, 0, 0.12]; }, comando: () => [new V3(0.12, MESA_Y + 0.57, 0.02), 1.25, 0, 0.06],
-      motor: () => { const c = banc.porTipo('motor'); return [new V3(c.x, MESA_Y + 0.12, c.y), 0.95, 0.35, 0.42]; }, motorTras: () => { const c = banc.porTipo('motor'); return [new V3(c.x - 0.2, MESA_Y + 0.12, c.y), 0.7, -1.2, 0.3]; }, osciloscopio: () => { const c = banc.porTipo('osc'); return [new V3(c.x + 0.02, MESA_Y + 0.1, c.y + 0.05), 0.62, 0, 0.42]; }, multimetro: () => { const c = banc.porTipo('multi'); return [new V3(c.x, MESA_Y + 0.1, c.y), 0.55, 0, 0.75]; } };
+      motor: () => { const c = banc.porTipo('motor'); return [new V3(c.x - 0.02, MESA_Y + 0.16, c.y), 0.85, 0.3, 0.72]; }, caixa: () => { const c = banc.porTipo('motor'); return [new V3(c.x - 0.05, MESA_Y + 0.23, c.y), 0.34, 0, 1.38]; }, motorTras: () => { const c = banc.porTipo('motor'); return [new V3(c.x - 0.2, MESA_Y + 0.12, c.y), 0.7, -1.2, 0.3]; }, osciloscopio: () => { const c = banc.porTipo('osc'); return [new V3(c.x + 0.02, MESA_Y + 0.1, c.y + 0.05), 0.62, 0, 0.42]; }, multimetro: () => { const c = banc.porTipo('multi'); return [new V3(c.x, MESA_Y + 0.1, c.y), 0.55, 0, 0.75]; } };
     function vista(n) { const v = VISTAS[n] && VISTAS[n](); if (!v) return; camD.alvo.copy(v[0]); camD.r = v[1]; camD.az = v[2]; camD.el = v[3]; }
     function aplicaCam(k) {
       camS.alvo.lerp(camD.alvo, k); camS.r += (camD.r - camS.r) * k; camS.az += (camD.az - camS.az) * k; camS.el += (camD.el - camS.el) * k;
@@ -2664,6 +2799,282 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
   };
 })(typeof globalThis !== 'undefined' ? globalThis : this);
 
+/* ---- js/campo.js ---- */
+/* Bancada CFW500 - tela "Campo girante": corte do motor de indução de 4 polos com o campo do estator girando na
+ * velocidade síncrona, o rotor girando um pouco mais devagar (escorregamento) e as correntes induzidas nas barras.
+ * Fonte dos dados: o motor da bancada (ao vivo) ou um motor de demonstração com frequência e carga em controles.
+ * A animação é em câmera lenta, mas campo e rotor são desacelerados pelo MESMO fator: a diferença entre eles é exata. */
+(function (g) {
+  'use strict';
+  const SIM = g.SIM = g.SIM || {};
+  SIM.criaCampo = function (raiz, banc) {
+    const $ = (s) => raiz.querySelector(s), K = SIM.MOTOR_K, PL = SIM.PLACA, P2 = PL.polos / 2;
+    const br = (v, d = 1) => (isFinite(v) ? Number(v).toFixed(d).replace('.', ',') : '—'), lim = (v, a, b) => Math.max(a, Math.min(b, v));
+    const est = { aberto: false, popup: false, vis: '3d', fonte: 'demo', ref: 'estator', lento: 60, thF: 0, thR: 0, f: 60, carga: 100, vf: true, travado: false, sentido: 1, tTxt: 0 };
+    const md = new SIM.Motor(); md.carga = 1;
+    const cv = $('#cgMotor'), cx = cv.getContext('2d'), co = $('#cgOndas'), cxo = co.getContext('2d');
+    const COR = { U: '#ff5a5f', V: '#f5c542', W: '#4f9dff', N: '#ff5a5f', S: '#4f9dff' };
+    const TH0 = Math.PI / 3;                                      // eixo magnético da fase U (60° mecânicos), definido pela posição das ranhuras
+
+    /** Estado atual: alimentação e rotor, do motor da bancada ou do motor de demonstração. */
+    function le() {
+      if (est.fonte === 'demo') {
+        const v = est.f <= 0.05 ? 0 : est.vf ? Math.min(220, (0.03 + 0.97 * est.f / 60) * 220) : 220;
+        return { f: est.f, v, seq: est.sentido, fases: est.f > 0.05 ? 3 : 0, m: md, origem: 'Motor de demonstração (controles ao lado)' };
+      }
+      const al = banc.alim, inv = banc.inv;
+      if (al.via === 'inv') return { f: Math.abs(inv.sai.f), v: inv.sai.v * al.kv, seq: al.seq * (inv.sai.f < 0 ? -1 : 1), fases: inv.sai.pwm && !inv.sai.cc ? al.fases : 0, m: banc.motor, origem: `Motor da bancada, pelo inversor (${inv.loc ? 'LOCAL' : 'REMOTO'})${al.lig ? ' · fechado em ' + (al.lig === 'Y' ? 'estrela' : 'triângulo') : ''} · tensão por enrolamento` };
+      if (al.via === 'rede') return { f: 60, v: al.v, seq: al.seq, fases: al.fases, m: banc.motor, origem: 'Motor da bancada, direto na rede' };
+      return { f: 0, v: 0, seq: 1, fases: 0, m: banc.motor, origem: 'Motor da bancada, sem alimentação' };
+    }
+    /** Grandezas do memorial, com sinal no sentido do campo. */
+    function contas(e) {
+      const m = e.m, tem = e.fases >= 2 && e.f > 0.05, ns = 120 * e.f / PL.polos, n = m.rpm * e.seq, frRel = m.hzRotor * e.seq;
+      const s = tem ? (e.f - frRel) / e.f : NaN, f2 = tem ? e.f - frRel : 0, x = f2 / K.FK, phi = tem ? m.phi : 0, T = tem ? m.torque * e.seq : 0;
+      return { tem, ns, n, s, f2, x, phi, T, dn: ns - n, i: tem ? m.i : 0, vf: e.f > 0.05 ? e.v / e.f : 0, e };
+    }
+
+    // ---------------------------------------------------------------- desenho do corte do motor
+    function desenha2d(c) {
+      const dpr = Math.min(g.devicePixelRatio || 1, 2), lado = Math.round(cv.clientWidth * dpr); if (!lado) return;
+      if (cv.width !== lado) { cv.width = lado; cv.height = lado; }
+      const S = lado, X = cx; X.setTransform(1, 0, 0, 1, 0, 0); X.fillStyle = '#0d1216'; X.fillRect(0, 0, S, S); X.translate(S / 2, S / 2);
+      const giro = est.ref === 'rotor' ? -est.thR : est.ref === 'campo' ? -est.thF : 0; X.rotate(giro);
+      const R = S * 0.47, rs = S * 0.335, rr = S * 0.288, e = c.e, thE = P2 * est.thF, amp = c.tem ? lim(c.i / PL.i, 0.35, 1.4) : 0;
+      // estator: coroa de aço com 24 ranhuras (2 por polo e por fase), na ordem U+ W− V+ U− W+ V−
+      X.fillStyle = '#39424b'; X.beginPath(); X.arc(0, 0, R, 0, 2 * Math.PI); X.arc(0, 0, rs, 2 * Math.PI, 0, true); X.fill();
+      X.strokeStyle = '#59646e'; X.lineWidth = S * 0.004; X.beginPath(); X.arc(0, 0, R, 0, 7); X.stroke();
+      const FAIXA = [['U', 1], ['W', -1], ['V', 1], ['U', -1], ['W', 1], ['V', -1]], iF = { U: Math.cos(thE), V: Math.cos(thE - 2.0944), W: Math.cos(thE + 2.0944) };
+      for (let k = 0; k < 24; k++) {
+        const a = (k + 0.5) * Math.PI / 12, [fase, sn] = FAIXA[Math.floor(k / 2) % 6], i = iF[fase] * sn * amp, px = Math.cos(a) * S * 0.385, py = Math.sin(a) * S * 0.385, r0 = S * 0.026;
+        X.fillStyle = '#1a2026'; X.beginPath(); X.arc(px, py, r0, 0, 7); X.fill();
+        X.globalAlpha = 0.25 + 0.75 * Math.min(1, Math.abs(i)); X.fillStyle = COR[fase]; X.beginPath(); X.arc(px, py, r0 * 0.82, 0, 7); X.fill(); X.globalAlpha = 1;
+        if (Math.abs(i) > 0.12) { X.strokeStyle = X.fillStyle = '#0d1216'; X.lineWidth = S * 0.005;
+          if (i > 0) { X.beginPath(); X.arc(px, py, r0 * 0.24, 0, 7); X.fill(); } else { const d = r0 * 0.42; X.beginPath(); X.moveTo(px - d, py - d); X.lineTo(px + d, py + d); X.moveTo(px + d, py - d); X.lineTo(px - d, py + d); X.stroke(); } }
+      }
+      // entreferro: indução B(θ) = Φ·cos(p/2·(θ − θ0) − θe): vermelho = polo norte, azul = polo sul
+      const B = (a) => (c.tem ? c.phi * Math.cos(P2 * (a - TH0) - thE) : 0);
+      for (let k = 0; k < 96; k++) {
+        const a0 = k * Math.PI / 48, b = B(a0 + Math.PI / 96); X.globalAlpha = Math.min(1, Math.abs(b)) * 0.9; X.fillStyle = b > 0 ? COR.N : COR.S;
+        X.beginPath(); X.arc(0, 0, rs, a0, a0 + Math.PI / 48 + 0.004); X.arc(0, 0, rr, a0 + Math.PI / 48 + 0.004, a0, true); X.closePath(); X.fill();
+      }
+      X.globalAlpha = 1;
+      if (c.tem) for (let k = 0; k < PL.polos; k++) {             // setas do fluxo e letras dos polos, girando com o campo
+        const a = TH0 + est.thF + k * Math.PI / P2, norte = k % 2 === 0, cor = norte ? COR.N : COR.S, r0 = norte ? rr - S * 0.02 : rs + S * 0.02, r1 = norte ? rs + S * 0.02 : rr - S * 0.02;
+        X.strokeStyle = X.fillStyle = '#ffffff'; X.lineWidth = S * 0.006; X.beginPath(); X.moveTo(Math.cos(a) * r0, Math.sin(a) * r0); X.lineTo(Math.cos(a) * r1, Math.sin(a) * r1); X.stroke();
+        const pa = Math.cos(a) * r1, pb = Math.sin(a) * r1, d = (norte ? 1 : -1) * S * 0.018; X.beginPath(); X.moveTo(pa, pb); X.lineTo(pa - Math.cos(a) * d - Math.sin(a) * d * 0.6, pb - Math.sin(a) * d + Math.cos(a) * d * 0.6); X.lineTo(pa - Math.cos(a) * d + Math.sin(a) * d * 0.6, pb - Math.sin(a) * d - Math.cos(a) * d * 0.6); X.closePath(); X.fill();
+        X.save(); X.translate(Math.cos(a) * S * 0.44, Math.sin(a) * S * 0.44); X.rotate(-giro); X.fillStyle = cor; X.font = `800 ${S * 0.05}px Arial, sans-serif`; X.textAlign = 'center'; X.textBaseline = 'middle'; X.fillText(norte ? 'N' : 'S', 0, 0); X.restore();
+      }
+      // rotor: núcleo, 22 barras da gaiola com a corrente induzida, marca branca e eixo
+      X.save(); X.rotate(est.thR);
+      X.fillStyle = '#6b7580'; X.beginPath(); X.arc(0, 0, rr - S * 0.004, 0, 7); X.fill(); X.fillStyle = '#56606a'; X.beginPath(); X.arc(0, 0, rr * 0.62, 0, 7); X.fill();
+      const gx = c.x / Math.sqrt(1 + c.x * c.x), atx = Math.atan(c.x);
+      for (let k = 0; k < 22; k++) {
+        const al = k * 2 * Math.PI / 22, mundo = al + est.thR, ib = c.tem ? gx * c.phi * Math.cos(P2 * (mundo - TH0) - thE + atx) : 0, px = Math.cos(al) * rr * 0.88, py = Math.sin(al) * rr * 0.88, r0 = S * 0.017;
+        X.fillStyle = '#2a3138'; X.beginPath(); X.arc(px, py, r0, 0, 7); X.fill();
+        X.globalAlpha = Math.min(1, Math.abs(ib) * 3.2); X.fillStyle = ib > 0 ? '#ff9f43' : '#35d0ff'; X.beginPath(); X.arc(px, py, r0 * 0.86, 0, 7); X.fill(); X.globalAlpha = 1;
+      }
+      X.fillStyle = '#f2f2f2'; X.fillRect(rr * 0.2, -S * 0.006, rr * 0.5, S * 0.012); X.fillStyle = '#c9ced3'; X.beginPath(); X.arc(0, 0, S * 0.045, 0, 7); X.fill(); X.fillStyle = '#39424b'; X.fillRect(-S * 0.008, -S * 0.052, S * 0.016, S * 0.02);
+      X.restore();
+      // seta do conjugado no centro e legendas fixas na tela
+      X.rotate(-giro);
+      if (c.tem && Math.abs(c.T) > 0.05) { const sn = Math.sign(c.T) * e.seq, r0 = S * 0.11, a1 = -Math.PI / 2 + sn * lim(Math.abs(c.T) / K.TN, 0.15, 2.2) * 0.9; X.strokeStyle = X.fillStyle = '#7dffb0'; X.lineWidth = S * 0.008; X.beginPath(); X.arc(0, 0, r0, -Math.PI / 2, a1, sn < 0); X.stroke();
+        const px = Math.cos(a1) * r0, py = Math.sin(a1) * r0, tx = -Math.sin(a1) * sn, ty = Math.cos(a1) * sn, d = S * 0.022; X.beginPath(); X.moveTo(px + tx * d, py + ty * d); X.lineTo(px + Math.cos(a1) * d * 0.6, py + Math.sin(a1) * d * 0.6); X.lineTo(px - Math.cos(a1) * d * 0.6, py - Math.sin(a1) * d * 0.6); X.closePath(); X.fill(); }
+      X.fillStyle = '#9fb0c0'; X.font = `600 ${S * 0.024}px Arial, sans-serif`; X.textAlign = 'left'; X.textBaseline = 'top';
+      X.fillText(est.ref === 'estator' ? 'Visto do estator (parado)' : est.ref === 'campo' ? 'Visto de cima do campo: o rotor escorrega para trás' : 'Visto de cima do rotor: o campo passa devagar (f2)', -S / 2 + S * 0.02, -S / 2 + S * 0.02);
+      X.textAlign = 'right'; X.fillText(`câmera lenta 1/${est.lento}`, S / 2 - S * 0.02, -S / 2 + S * 0.02);
+      if (!c.tem) { X.textAlign = 'center'; X.textBaseline = 'middle'; X.fillStyle = '#ffd98a'; X.font = `700 ${S * 0.03}px Arial, sans-serif`; X.fillText('Estator sem alimentação: não há campo girante', 0, S * 0.455); }
+    }
+
+    // ---------------------------------------------------------------- o mesmo corte em 3D (three.js): estator com um setor
+    // recortado para ver o entreferro e o rotor por dentro; ângulos no sentido horário visto de frente (por isso o sinal −)
+    let v3 = null, v3falhou = false;
+    function cria3d() {
+      const T = g.THREE, cv3 = $('#cgMotor3d'); if (!T || !cv3) return null;
+      let rd; try { rd = new T.WebGLRenderer({ canvas: cv3, antialias: true }); } catch (e) { return null; }
+      rd.setPixelRatio(Math.min(g.devicePixelRatio || 1, 2)); rd.outputColorSpace = T.SRGBColorSpace;
+      const sc = new T.Scene(); sc.background = new T.Color(0x0d1216); const cam = new T.PerspectiveCamera(34, 1, 0.1, 60);
+      sc.add(new T.HemisphereLight(0xffffff, 0x3a4450, 1.9)); const dl = new T.DirectionalLight(0xffffff, 2.4); dl.position.set(2.5, 3, 4); sc.add(dl); const d2 = new T.DirectionalLight(0xbfd4ff, 0.8); d2.position.set(-3, 1, 2); sc.add(d2);
+      const raizG = new T.Group(), gF = new T.Group(), gR = new T.Group(); sc.add(raizG); raizG.add(gF, gR);
+      const L = 0.9, Z = L / 2, pos = (a, r, z = 0) => new T.Vector3(r * Math.cos(a), -r * Math.sin(a), z), eixoZ = (geo) => { geo.rotateX(Math.PI / 2); return geo; };
+      const std = (cor, o) => new T.MeshStandardMaterial(Object.assign({ color: cor, roughness: 0.6, metalness: 0.25 }, o));
+      // estator: coroa de aço com 75° recortados (em cima, à direita)
+      const A0 = 12 * Math.PI / 180, A1 = 78 * Math.PI / 180, forma = new T.Shape(); forma.absarc(0, 0, 1.0, A1, A0 + 2 * Math.PI, false); forma.absarc(0, 0, 0.70, A0 + 2 * Math.PI, A1, true); forma.closePath();
+      const gEst = new T.ExtrudeGeometry(forma, { depth: L, bevelEnabled: false, curveSegments: 72 }); gEst.translate(0, 0, -Z); raizG.add(new T.Mesh(gEst, std(0x46515c, { roughness: 0.75 })));
+      const gCone = new T.ConeGeometry(0.046, 0.12, 16), gConeB = new T.ConeGeometry(0.062, 0.16, 16), gHaste = new T.CylinderGeometry(0.016, 0.016, 0.15, 10), gHasteB = new T.CylinderGeometry(0.026, 0.026, 0.16, 10),      // seta = haste + ponta
+      matConeC = new T.MeshBasicMaterial({ color: 0xffc400 }), matBordaC = new T.MeshBasicMaterial({ color: 0x0d1216, side: T.BackSide });
+      const FAIXA = [['U', 1], ['W', -1], ['V', 1], ['U', -1], ['W', 1], ['V', -1]], bob = [];
+      for (let k = 0; k < 24; k++) {
+        const a = (k + 0.5) * Math.PI / 12, mat = (((-a) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI), [fase, sn] = FAIXA[Math.floor(k / 2) % 6];
+        if (mat > A0 - 0.06 && mat < A1 + 0.06) { bob.push(null); continue; }                           // ranhura que caiu no recorte
+        const m = std(COR[fase], { emissive: COR[fase], emissiveIntensity: 0.2, roughness: 0.45 }), fio = new T.Mesh(eixoZ(new T.CylinderGeometry(0.052, 0.052, L + 0.1, 14)), m); fio.position.copy(pos(a, 0.81)); raizG.add(fio);
+        // seta da corrente na ranhura: triângulo (cone) âmbar com contorno escuro, na frente do condutor. Aponta para fora quando a corrente sai e para dentro quando entra
+        const seta = new T.Group(); for (const [geo, mt, y] of [[gHaste, matConeC, -0.06], [gHasteB, matBordaC, -0.06], [gConeB, matBordaC, 0.07], [gCone, matConeC, 0.07]]) { const q = new T.Mesh(geo, mt); q.position.y = y; seta.add(q); } seta.position.copy(pos(a, 0.81, Z + 0.19)); raizG.add(seta); bob.push({ fase, sn, m, seta });
+      }
+      // entreferro: faixa cilíndrica e anel da frente com cor por vértice (vermelho = N, azul = S)
+      const faixaB = (geo) => { const n = geo.attributes.position.count, cor = new T.BufferAttribute(new Float32Array(n * 3), 3), ang = new Float32Array(n); for (let i = 0; i < n; i++) ang[i] = -Math.atan2(geo.attributes.position.getY(i), geo.attributes.position.getX(i)); geo.setAttribute('color', cor);
+        const m = new T.Mesh(geo, new T.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.72, side: T.DoubleSide, depthWrite: false })); raizG.add(m); return { cor, ang, n }; };
+      const fx1 = faixaB(eixoZ(new T.CylinderGeometry(0.652, 0.652, L, 120, 1, true))), anel = new T.RingGeometry(0.612, 0.692, 120, 1); anel.translate(0, 0, Z + 0.004); const fx2 = faixaB(anel);
+      // campo: laços de fluxo na face da frente (saem do rotor no polo N, voltam no S, fecham pela coroa) e letras dos polos
+      const matLaco = new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9 }), letras = [], setas = [];
+      const tri = (c, l) => { const f = new T.Shape(); f.moveTo(0, c * 0.6); f.lineTo(l / 2, -c * 0.4); f.lineTo(-l / 2, -c * 0.4); f.closePath(); return new T.ShapeGeometry(f); };
+      const gSeta = tri(0.105, 0.1), gSetaB = tri(0.155, 0.15), matSeta = new T.MeshBasicMaterial({ color: 0xffc400, side: T.DoubleSide }), matBorda = new T.MeshBasicMaterial({ color: 0x0d1216, side: T.DoubleSide });   // âmbar com contorno escuro: aparece sobre o branco do laço, de frente ou de lado
+      for (let k = 0; k < 4; k++) {
+        const norte = k % 2 === 0, aN = TH0 + (norte ? k : k + 1) * Math.PI / 2, aS = TH0 + (norte ? k + 1 : k) * Math.PI / 2, d = (aS > aN ? 1 : -1) * 0.2, pts = [], zf = Z + 0.03;
+        const arco = (r, de, ate) => { for (let i = 1; i < 7; i++) pts.push(pos(de + (ate - de) * i / 7, r, zf)); };
+        pts.push(pos(aN + d, 0.36, zf), pos(aN + d, 0.62, zf), pos(aN + d, 0.9, zf)); arco(0.9, aN + d, aS - d); pts.push(pos(aS - d, 0.9, zf), pos(aS - d, 0.62, zf), pos(aS - d, 0.36, zf)); arco(0.36, aS - d, aN + d);
+        gF.add(new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(pts, true, 'catmullrom', 0.25), 90, 0.013, 6, true), matLaco));
+        const am = (aN + aS) / 2, sg2 = aS > aN ? 1 : -1, tang = (a) => new T.Vector3(-Math.sin(a), -Math.cos(a), 0);
+        for (const [p0, dir] of [[pos(aN + d, 0.652, zf), pos(aN + d, 1)], [pos(aS - d, 0.652, zf), pos(aS - d, 1).multiplyScalar(-1)], [pos(am, 0.9, zf), tang(am).multiplyScalar(sg2)], [pos(am, 0.36, zf), tang(am).multiplyScalar(-sg2)]]) {
+          const rot = Math.atan2(dir.y, dir.x) - Math.PI / 2;
+          for (const [geo, m, dz] of [[gSetaB, matBorda, 0.008], [gSeta, matSeta, 0.014]]) { const t = new T.Mesh(geo, m); t.position.set(p0.x, p0.y, zf + dz); t.rotation.z = rot; t.renderOrder = 4; gF.add(t); setas.push(t); }
+        }
+        const cvL = document.createElement('canvas'); cvL.width = cvL.height = 96; const xl = cvL.getContext('2d'); xl.fillStyle = norte ? COR.N : COR.S; xl.font = '800 78px Arial, sans-serif'; xl.textAlign = 'center'; xl.textBaseline = 'middle'; xl.fillText(norte ? 'N' : 'S', 48, 52);
+        const tx = new T.CanvasTexture(cvL); tx.colorSpace = T.SRGBColorSpace; const sp = new T.Sprite(new T.SpriteMaterial({ map: tx, depthTest: false, transparent: true })); sp.scale.set(0.22, 0.22, 1); sp.position.copy(pos(TH0 + k * Math.PI / 2, 1.13, Z + 0.05)); sp.renderOrder = 5; gF.add(sp); letras.push(sp);
+      }
+      // rotor: núcleo, 22 barras da gaiola, anéis de curto, marca branca e eixo
+      gR.add(new T.Mesh(eixoZ(new T.CylinderGeometry(0.60, 0.60, L, 64)), std(0x7c8791, { metalness: 0.45 })));
+      const barras = []; for (let k = 0; k < 22; k++) { const m = std(0x2a3138, { emissive: 0x000000, roughness: 0.4 }), b = new T.Mesh(eixoZ(new T.CylinderGeometry(0.032, 0.032, L + 0.07, 10)), m); b.position.copy(pos(k * 2 * Math.PI / 22, 0.582)); gR.add(b); barras.push(m); }
+      for (const z of [Z + 0.045, -Z - 0.045]) { const a = new T.Mesh(new T.TorusGeometry(0.56, 0.04, 10, 56), std(0xb87333, { metalness: 0.6, roughness: 0.35 })); a.position.z = z; gR.add(a); }
+      const marca = new T.Mesh(new T.BoxGeometry(0.3, 0.035, 0.012), new T.MeshBasicMaterial({ color: 0xf2f2f2 })); marca.position.set(0.3, 0, Z + 0.007); gR.add(marca);
+      gR.add(new T.Mesh(eixoZ(new T.CylinderGeometry(0.11, 0.11, L + 0.9, 28)), std(0xc9ced3, { metalness: 0.7, roughness: 0.3 }))); const chav = new T.Mesh(new T.BoxGeometry(0.05, 0.05, 0.3), std(0x39424b)); chav.position.set(0, 0.11, Z + 0.3); gR.add(chav);
+      // seta do conjugado, na frente do rotor
+      const matT = new T.MeshBasicMaterial({ color: 0x7dffb0 }), gT = new T.Group(); gT.position.z = Z + 0.09; raizG.add(gT); let tAnt = 99;
+      const fazT = (t) => { while (gT.children.length) { const o = gT.children.pop(); o.geometry.dispose(); } if (Math.abs(t) < 0.02) return; const arc = lim(Math.abs(t), 0.12, 2.2) * 0.95, sn = Math.sign(t);
+        const tor = new T.Mesh(new T.TorusGeometry(0.27, 0.016, 8, 40, arc), matT); tor.rotation.z = sn > 0 ? Math.PI / 2 - arc : Math.PI / 2; gT.add(tor);
+        const af = sn > 0 ? Math.PI / 2 - arc : Math.PI / 2 + arc, c = new T.Mesh(new T.ConeGeometry(0.045, 0.11, 12), matT); c.position.set(0.27 * Math.cos(af), 0.27 * Math.sin(af), 0); c.rotation.z = af + (sn > 0 ? Math.PI : 0); gT.add(c); };
+      // câmera: arrastar gira, roda aproxima, duplo clique volta
+      const cm = { az: 0.62, el: 0.36, d: 4.3 }; let arr = null;
+      cv3.addEventListener('pointerdown', (e) => { arr = { x: e.clientX, y: e.clientY }; cv3.setPointerCapture(e.pointerId); });
+      cv3.addEventListener('pointermove', (e) => { if (!arr) return; cm.az = lim(cm.az - (e.clientX - arr.x) * 0.008, -1.5, 1.5); cm.el = lim(cm.el + (e.clientY - arr.y) * 0.008, -1.2, 1.3); arr = { x: e.clientX, y: e.clientY }; est.vis = '3d'; sinc(); });
+      const solta = () => { arr = null; }; cv3.addEventListener('pointerup', solta); cv3.addEventListener('pointercancel', solta);
+      cv3.addEventListener('wheel', (e) => { e.preventDefault(); cm.d = lim(cm.d * (e.deltaY > 0 ? 1.1 : 0.9), 2.4, 9); }, { passive: false });
+      cv3.addEventListener('dblclick', () => { cm.az = 0.62; cm.el = 0.36; cm.d = 4.3; });
+      const N = new T.Color(COR.N), Sx = new T.Color(COR.S), esc = new T.Color(0x10161b), tmp = new T.Color();
+      return {
+        cm,
+        desenha(c) {
+          const w = cv3.clientWidth, h = cv3.clientHeight; if (!w || !h) return; if (rd.domElement.width !== Math.round(w * rd.getPixelRatio()) || rd.domElement.height !== Math.round(h * rd.getPixelRatio())) { rd.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
+          if (est.vis === 'frente') { cm.az += (0.3 - cm.az) * 0.2; cm.el += (0.2 - cm.el) * 0.2; cm.d += (4.8 - cm.d) * 0.2; }
+          const ce = Math.cos(cm.el); cam.position.set(cm.d * Math.sin(cm.az) * ce, cm.d * Math.sin(cm.el), cm.d * Math.cos(cm.az) * ce); cam.lookAt(0, 0, 0);
+          const giro = est.ref === 'rotor' ? -est.thR : est.ref === 'campo' ? -est.thF : 0, thE = P2 * est.thF, amp = c.tem ? lim(c.i / PL.i, 0.35, 1.4) : 0;
+          raizG.rotation.z = -giro; gF.rotation.z = -est.thF; gR.rotation.z = -est.thR; gF.visible = c.tem; matLaco.opacity = c.tem ? lim(c.phi, 0.25, 1) * 0.9 : 0;
+          const iF = { U: Math.cos(thE), V: Math.cos(thE - 2.0944), W: Math.cos(thE + 2.0944) };
+          for (const b of bob) { if (!b) continue; const i = iF[b.fase] * b.sn * amp; b.m.emissiveIntensity = 0.08 + 0.9 * Math.min(1, Math.abs(i)); b.seta.visible = Math.abs(i) > 0.12; b.seta.rotation.x = i > 0 ? Math.PI / 2 : -Math.PI / 2; const k = 0.55 + 0.45 * Math.min(1, Math.abs(i)); b.seta.scale.set(k, k, k); }
+          for (const fx of [fx1, fx2]) { for (let i = 0; i < fx.n; i++) { const B = c.tem ? c.phi * Math.cos(P2 * (fx.ang[i] - TH0) - thE) : 0; tmp.copy(esc).lerp(B > 0 ? N : Sx, Math.min(1, Math.abs(B))); fx.cor.setXYZ(i, tmp.r, tmp.g, tmp.b); } fx.cor.needsUpdate = true; }
+          const gx = c.x / Math.sqrt(1 + c.x * c.x), atx = Math.atan(c.x);
+          barras.forEach((m, k) => { const ib = c.tem ? gx * c.phi * Math.cos(P2 * (k * 2 * Math.PI / 22 + est.thR - TH0) - thE + atx) : 0, v = Math.min(1, Math.abs(ib) * 3.2); m.emissive.setHex(ib > 0 ? 0xff9f43 : 0x35d0ff); m.emissiveIntensity = v * 1.6; });
+          for (const sp of letras) sp.material.rotation = 0;
+          const tq = c.tem ? c.T / K.TN * c.e.seq : 0; if (Math.abs(tq - tAnt) > 0.04) { tAnt = tq; fazT(tq); } gT.rotation.z = 0;
+          rd.render(sc, cam);
+        },
+        pixel() { const gl = rd.getContext(), px = new Uint8Array(4); gl.readPixels(Math.floor(rd.domElement.width / 2), Math.floor(rd.domElement.height / 2), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); return Array.from(px); },
+      };
+    }
+    function desenha(c) {
+      const usa3d = est.vis !== '2d' && !v3falhou; if (usa3d && !v3) { v3 = cria3d(); if (!v3) { v3falhou = true; est.vis = '2d'; sinc(); } }
+      $('#cgMotor3d').hidden = !(usa3d && v3); cv.hidden = usa3d && !!v3;
+      if (usa3d && v3) v3.desenha(c); else desenha2d(c);
+      const txt = (est.ref === 'estator' ? 'Visto do estator (parado)' : est.ref === 'campo' ? 'Visto de cima do campo: o rotor escorrega para trás' : 'Visto de cima do rotor: o campo passa devagar (f2)') + ` · câmera lenta 1/${est.lento}` + (c.tem ? '' : ' · estator sem alimentação: não há campo girante');
+      const so = $('#cgSobre'); if (so.textContent !== txt) so.textContent = txt; so.hidden = !(usa3d && v3);
+    }
+
+    // ---------------------------------------------------------------- ondas: correntes do estator (f) e de uma barra do rotor (f2)
+    function ondas(c) {
+      const dpr = Math.min(g.devicePixelRatio || 1, 2), W = Math.round(co.clientWidth * dpr), H = Math.round(co.clientHeight * dpr); if (!W) return;
+      if (co.width !== W || co.height !== H) { co.width = W; co.height = H; }
+      const X = cxo; X.fillStyle = '#0d1216'; X.fillRect(0, 0, W, H); const mw = W / 2, px = dpr;
+      const painel = (x0, titulo, curvas, cursor, rodape) => {
+        const w = mw - 14 * px, y0 = H * 0.5, a = H * 0.3; X.strokeStyle = '#24303a'; X.lineWidth = px; X.strokeRect(x0 + 0.5, 0.5, w, H - 1); X.beginPath(); X.moveTo(x0, y0); X.lineTo(x0 + w, y0); X.stroke();
+        for (const [cor, fn] of curvas) { X.strokeStyle = cor; X.lineWidth = 1.6 * px; X.beginPath(); for (let k = 0; k <= 120; k++) { const t = k / 120 * 2 * Math.PI, y = y0 - fn(t) * a; if (k) X.lineTo(x0 + k / 120 * w, y); else X.moveTo(x0, y); } X.stroke(); }
+        const xc = x0 + ((cursor % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI) / (2 * Math.PI) * w; X.strokeStyle = '#ffffff'; X.lineWidth = px; X.beginPath(); X.moveTo(xc, 4 * px); X.lineTo(xc, H - 4 * px); X.stroke();
+        X.fillStyle = '#e6ebf0'; X.font = `600 ${11 * px}px Arial, sans-serif`; X.textBaseline = 'top'; X.textAlign = 'left'; X.fillText(titulo, x0 + 6 * px, 5 * px); X.fillStyle = '#9fb0c0'; X.textBaseline = 'bottom'; X.fillText(rodape, x0 + 6 * px, H - 4 * px);
+      };
+      const A = c.tem ? lim(c.i / PL.i, 0.3, 1) : 0, thE = P2 * est.thF, gx = c.tem ? lim(Math.abs(c.x) / Math.sqrt(1 + c.x * c.x) * 3.2, 0, 1) : 0, thS = P2 * (est.thF - est.thR);
+      painel(0, 'Correntes do estator: U, V, W', [[COR.U, (t) => A * Math.cos(t)], [COR.V, (t) => A * Math.cos(t - 2.0944)], [COR.W, (t) => A * Math.cos(t + 2.0944)]], thE, c.tem ? `f = ${br(c.e.f)} Hz · um ciclo = ${br(1000 / c.e.f, 1)} ms` : 'sem alimentação');
+      painel(mw + 7 * px, 'Corrente induzida em uma barra do rotor', [['#ff9f43', (t) => gx * Math.cos(t)]], thS, c.tem ? (Math.abs(c.f2) > 0.005 ? `f2 = s·f = ${br(Math.abs(c.f2), 2)} Hz · um ciclo = ${br(1000 / Math.abs(c.f2), 0)} ms` : 'f2 = 0: sem corrente induzida, sem conjugado') : 'sem alimentação');
+    }
+
+    // ---------------------------------------------------------------- números e memorial de cálculo
+    function textos(c) {
+      const e = c.e, pc = (v) => br(v * 100, 2) + ' %', cartao = (rot, val, un, cor) => `<div class="cg-n"><span>${rot}</span><b style="color:${cor || '#fff'}">${val}</b><small>${un}</small></div>`;
+      $('#cgOrigem').textContent = e.origem;
+      $('#cgNum').innerHTML = cartao('Campo (síncrona)', c.tem ? br(c.ns, 0) : '—', 'rpm', '#ff8f93') + cartao('Rotor', br(c.n, 0), 'rpm', '#f2f2f2') + cartao('Escorregamento', c.tem ? br(c.s * 100, 2) : '—', `% · ${c.tem ? br(c.dn, 0) : '—'} rpm`, '#ffd98a') +
+        cartao('Frequência no estator', c.tem ? br(e.f) : '—', 'Hz', '#ff8f93') + cartao('Frequência no rotor (f2)', c.tem ? br(Math.abs(c.f2), 2) : '—', 'Hz', '#ffb26b') + cartao('Conjugado', c.tem ? br(c.T / K.TN * 100, 0) : '—', `% · ${c.tem ? br(c.T, 2) : '—'} N·m`, '#7dffb0');
+      let aviso = '';
+      if (c.tem && c.s < -0.002) aviso = 'Escorregamento negativo: o rotor está mais rápido que o campo. O motor vira gerador e devolve energia (no inversor, o link DC sobe).';
+      else if (c.tem && c.s > 0.5) aviso = 'Escorregamento muito alto: a frequência no rotor é quase a da rede, a corrente é de partida e o motor aquece. Com inversor isso não acontece: a frequência sobe aos poucos e o escorregamento fica pequeno.';
+      else if (c.tem && c.phi > 1.15) aviso = `Fluxo em ${br(c.phi * 100, 0)} %: tensão demais para essa frequência (V/f alto). O ferro satura e a corrente de magnetização dispara.`;
+      else if (c.tem && c.phi < 0.8 && e.f > 62) aviso = `Acima de 60 Hz a tensão já está no máximo: V/f cai, o fluxo fica em ${br(c.phi * 100, 0)} % (enfraquecimento de campo) e o conjugado disponível diminui.`;
+      else if (c.tem && c.phi < 0.8) aviso = `Fluxo em ${br(c.phi * 100, 0)} %: em baixa frequência a queda de tensão na resistência do estator pesa. É para isso que serve o boost de torque (P0136).`;
+      $('#cgAviso').hidden = !aviso; $('#cgAviso').textContent = aviso;
+      const L = [], ln = (titulo, formula, conta, res) => L.push(`<tr><td><b>${titulo}</b><span>${formula}</span></td><td>${conta}</td><td><b>${res}</b></td></tr>`);
+      if (!c.tem) { $('#cgMem').innerHTML = '<tr><td colspan="3">Alimente o estator para ver as contas: ligue o motor na bancada ou use a demonstração.</td></tr>'; return; }
+      const sn = (120 * PL.hz / PL.polos - PL.rpm) / (120 * PL.hz / PL.polos), ws = 2 * Math.PI * c.ns / 60, w = 2 * Math.PI * c.n / 60, pg = c.T * ws, peixo = c.T * w, a = Math.abs(c.T) / (2 * K.TMAX);
+      ln('1. Velocidade síncrona (do campo)', 'ns = 120 × f ÷ p', `120 × ${br(e.f)} ÷ ${PL.polos}`, `${br(c.ns, 0)} rpm`);
+      ln('2. Escorregamento', 's = (ns − n) ÷ ns', `(${br(c.ns, 0)} − ${br(c.n, 0)}) ÷ ${br(c.ns, 0)}`, `${pc(c.s)} · ${br(c.dn, 0)} rpm`);
+      ln('3. Frequência das correntes do rotor', 'f2 = s × f', `${br(c.s, 4)} × ${br(e.f)}`, `${br(c.f2, 2)} Hz`);
+      ln('4. Relação V/f e fluxo', 'V/f ; Φ = E/f ÷ (En/fn)', `${br(e.v, 0)} V no enrolamento ÷ ${br(e.f)} Hz = ${br(c.vf, 2)} V/Hz (nominal ${br(PL.v / PL.hz, 2)})`, `fluxo ${br(c.phi * 100, 0)} %`);
+      ln('5. Conjugado nominal (placa)', 'Tn = P ÷ ω', `${PL.kw * 1000} W ÷ (2π × ${PL.rpm} ÷ 60)`, `${br(K.TN, 2)} N·m`);
+      ln('6. Conjugado desenvolvido (Kloss)', 'T = 2·Tmáx·Φ²·x ÷ (1 + x²), x = f2 ÷ fk', `Tmáx = ${br(K.TMAX, 1)} N·m · fk = ${br(K.FK, 2)} Hz · x = ${br(c.x, 3)}${Math.abs(c.x) > 0.5 ? ` · fator de partida ${br(1 + K.BP * c.x * c.x / (K.CP + c.x * c.x), 2)}` : ''}`, `${br(c.T, 2)} N·m · ${br(c.T / K.TN * 100, 0)} %`);
+      ln('7. Potência que atravessa o entreferro', 'Pg = T × ωs', `${br(c.T, 2)} × ${br(ws, 1)} rad/s`, `${br(pg, 0)} W`);
+      ln('8. Perdas no rotor (viram calor)', 'Pj2 = s × Pg', `${br(c.s, 4)} × ${br(pg, 0)}`, `${br(c.s * pg, 0)} W`);
+      ln('9. Potência mecânica no eixo', 'P = T × ω = (1 − s) × Pg', `${br(c.T, 2)} × ${br(w, 1)} rad/s`, `${br(peixo, 0)} W`);
+      ln('10. Corrente do estator', 'I = √(Im² + Ir²)', `magnetização ${br(K.IM0 * c.phi, 2)} A · carga ${br(Math.sqrt(Math.max(0, c.i * c.i - (K.IM0 * c.phi) ** 2)), 2)} A`, `${br(c.i, 2)} A (placa ${br(PL.i, 2)})`);
+      $('#cgMem').innerHTML = L.join('');
+      // mesmo conjugado em outras frequências, com V/f constante: o escorregamento em rpm quase não muda
+      let h = '';
+      if (a < 0.499 && Math.abs(c.T) > 0.05) { const xx = (1 - Math.sqrt(1 - 4 * a * a)) / (2 * a), f2 = xx * K.FK;
+        h = '<tr><td>Frequência</td>' + [60, 45, 30, 15, 5].map((f) => `<td>${f} Hz</td>`).join('') + '</tr><tr><td>Campo (ns)</td>' + [60, 45, 30, 15, 5].map((f) => `<td>${30 * f} rpm</td>`).join('') + '</tr><tr><td>Rotor (n)</td>' + [60, 45, 30, 15, 5].map((f) => `<td>${br(Math.max(0, (f - f2) * 30), 0)} rpm</td>`).join('') +
+          '</tr><tr><td>Escorregamento</td>' + [60, 45, 30, 15, 5].map((f) => `<td>${f2 < f ? br(f2 / f * 100, 1) + ' %' : 'não gira'}</td>`).join('') + `</tr><tr><td>ns − n</td><td colspan="5">${br(f2 * 30, 0)} rpm em todas (f2 = ${br(f2, 2)} Hz): com o mesmo conjugado e o mesmo fluxo, o rotor fica sempre a mesma distância atrás do campo</td></tr>`; }
+      $('#cgTab').innerHTML = h || '<tr><td>Aplique carga para ver a comparação entre frequências.</td></tr>';
+      $('#cgPlaca').textContent = `Placa: ${PL.kw} kW, ${PL.polos} polos, ${PL.v} V, ${String(PL.i).replace('.', ',')} A, ${PL.rpm} rpm a ${PL.hz} Hz → escorregamento nominal ${pc(sn)} (${120 * PL.hz / PL.polos - PL.rpm} rpm, f2 = ${br(sn * PL.hz, 2)} Hz).`;
+    }
+
+    // ---------------------------------------------------------------- controles
+    const sinc = () => {
+      raiz.querySelectorAll('[data-fonte]').forEach((b) => b.classList.toggle('ativa', b.dataset.fonte === est.fonte)); raiz.querySelectorAll('[data-ref]').forEach((b) => b.classList.toggle('ativa', b.dataset.ref === est.ref));
+      raiz.querySelectorAll('[data-lento]').forEach((b) => b.classList.toggle('ativa', +b.dataset.lento === est.lento)); $('#cgDemo').hidden = est.fonte !== 'demo';
+      raiz.querySelectorAll('[data-vis]').forEach((b) => b.classList.toggle('ativa', b.dataset.vis === est.vis)); raiz.classList.toggle('popup', est.popup); $('#cgPopup').textContent = est.popup ? 'Tela cheia' : 'Janela flutuante'; $('#cgFechar').textContent = est.popup ? '×' : 'Voltar à bancada'; $('#cgFechar').title = 'Fechar';
+      $('#cgF').value = est.f; $('#cgFv').textContent = br(est.f) + ' Hz'; $('#cgC').value = est.carga; $('#cgCv').textContent = est.carga + ' %'; $('#cgVf').checked = est.vf; $('#cgTrava').checked = est.travado; $('#cgSent').textContent = est.sentido > 0 ? 'Sentido: horário' : 'Sentido: anti-horário';
+    };
+    raiz.addEventListener('click', (ev) => {
+      const b = ev.target.closest('button'); if (!b) return; const d = b.dataset;
+      if (d.fonte) est.fonte = d.fonte; else if (d.ref) est.ref = d.ref; else if (d.lento) est.lento = +d.lento; else if (d.vis) { est.vis = d.vis; if (d.vis === '3d' && v3) Object.assign(v3.cm, { az: 0.62, el: 0.36, d: 4.3 }); }
+      else if (b.id === 'cgPopup') { est.popup = !est.popup; if (!est.popup) { raiz.style.left = raiz.style.top = raiz.style.width = raiz.style.height = ''; } }
+      else if (d.pre) { const [f, cg, tr] = d.pre.split(',').map(Number); est.fonte = 'demo'; est.f = f; est.carga = cg; est.travado = !!tr; est.vf = true; }
+      else if (b.id === 'cgSent') est.sentido = -est.sentido; else if (b.id === 'cgFechar') return api.fechar(); else return;
+      sinc();
+    });
+    $('#cgF').oninput = (e) => { est.f = +e.target.value; sinc(); }; $('#cgC').oninput = (e) => { est.carga = +e.target.value; sinc(); };
+    $('#cgVf').onchange = (e) => { est.vf = e.target.checked; }; $('#cgTrava').onchange = (e) => { est.travado = e.target.checked; };
+
+    { let mv = null; const topo = raiz.querySelector('.cg-topo');
+      topo.addEventListener('pointerdown', (e) => { if (!est.popup || e.target.closest('button')) return; const r = raiz.getBoundingClientRect(); mv = { dx: e.clientX - r.left, dy: e.clientY - r.top }; topo.setPointerCapture(e.pointerId); });
+      topo.addEventListener('pointermove', (e) => { if (!mv) return; const r = raiz.getBoundingClientRect(); raiz.style.left = lim(e.clientX - mv.dx, 4 - r.width + 80, g.innerWidth - 80) + 'px'; raiz.style.top = lim(e.clientY - mv.dy, 0, g.innerHeight - 40) + 'px'; raiz.style.right = 'auto'; });
+      const fim = () => { mv = null; }; topo.addEventListener('pointerup', fim); topo.addEventListener('pointercancel', fim); }
+    const api = {
+      get aberto() { return est.aberto; },
+      get popup() { return est.aberto && est.popup; },
+      /** modo: 'popup' (janela flutuante sobre a bancada) ou 'cheia' (tela à parte) */
+      abrir(fonte, modo) { if (fonte) est.fonte = fonte; if (modo) est.popup = modo === 'popup'; if (!est.popup) raiz.style.left = raiz.style.top = raiz.style.width = raiz.style.height = ''; est.aberto = true; raiz.hidden = false; sinc(); est.tTxt = 1; },
+      pixel3d: () => (v3 ? v3.pixel() : null),
+      fechar() { est.aberto = false; raiz.hidden = true; },
+      /** chamado a cada quadro pela tela principal enquanto a janela está aberta */
+      quadro(dt) {
+        if (!est.aberto) return;
+        if (est.fonte === 'demo') { md.carga = est.carga / 100; md.travado = est.travado; const e0 = le(); let t = Math.min(dt, 0.1); while (t > 1e-6) { const h = Math.min(0.002, t); md.passo(h, { f: e0.f, v: e0.v, seq: e0.seq, fases: e0.fases, cc: 0 }); t -= h; } }
+        const c = contas(le());
+        if (c.tem) est.thF += c.e.seq * (2 * Math.PI * c.e.f / P2) * dt / est.lento;
+        est.thR += c.e.m.w * dt / est.lento;
+        desenha(c); ondas(c); est.tTxt += dt; if (est.tTxt >= 0.2) { est.tTxt = 0; textos(c); }
+      },
+      estado: () => Object.assign({}, est), contas: () => contas(le()),
+    };
+    return api;
+  };
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
 /* ---- js/app.js ---- */
 /* Bancada CFW500 - interface. Tudo roda no navegador; o estado fica no localStorage (sem cadastro, sem nome). */
 (async function (g) {
@@ -2722,10 +3133,10 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
   $('#jFechar').onclick = () => { $('#janela').hidden = true; };
   $('#janela').addEventListener('pointerdown', (e) => { if (e.target.id === 'janela') $('#janela').hidden = true; });
   const INFO = {
-    rede: 'Tomada trifásica da bancada: 220 V entre fases e 127 V entre fase e neutro, 60 Hz. A chave geral tem proteção: curto-circuito ou 220 V em borne de comando desarmam a bancada e o motivo aparece na tela. Para rearmar, corrija a ligação e gire a chave de novo.',
+    rede: 'Tomada trifásica da bancada, 60 Hz. A tensão é escolhida na aba Bancada: 220 V entre fases (127 V fase-neutro) ou 380 V entre fases (220 V fase-neutro). A chave geral tem proteção: curto-circuito ou 220 V em borne de comando desarmam a bancada e o motivo aparece na tela. Para rearmar, corrija a ligação e gire a chave de novo.',
     disj: 'Disjuntor tripolar (curva C, 10 A). Entra entre a rede e o inversor: bornes 1-3-5 em cima (entrada) e 2-4-6 embaixo (saída). Clique na alavanca para ligar e desligar.',
     cfw: 'Inversor WEG CFW500A04P3B2 (200-240 V, 4,3 A, mecânica A) com o módulo plug-in CFW500-IOS: 4 entradas digitais, 1 entrada analógica, 1 saída analógica, 1 saída a relé, 1 saída a transistor e RS-485. Os bornes da placa têm a mesma numeração do produto. As teclas da HMI funcionam no 3D e na aba Inversor. De fábrica as DIs são NPN: ficam ativas quando ligadas ao GND (bornes 4 ou 16).',
-    motor: 'Motor de indução trifásico WEG W22, 0,75 kW (1 cv), 4 polos, já fechado em triângulo para 220 V. Placa: 2,98 A, 1725 rpm, 60 Hz, cos φ 0,80, rendimento 82,6 %, FS 1,25. No eixo há um disco com freio de carga (aba Bancada) e um volante de inércia opcional. Trocar duas fases inverte o sentido.',
+    motor: 'O botão “Campo girante”, no topo da tela, mostra o motor em corte com o campo do estator girando, o escorregamento e o memorial de cálculo. Motor de indução trifásico WEG W22, 0,75 kW (1 cv), 4 polos, de 6 pontas: o fechamento é feito por você na caixa de ligação. Triângulo (220 V, 2,98 A): U1–W2, V1–U2, W1–V2. Estrela (380 V, 1,72 A): W2–U2–V2 juntos. Em qualquer dos dois, cada enrolamento trabalha com 220 V. Placa: 1725 rpm, 60 Hz, cos φ 0,80, rendimento 82,6 %, FS 1,25. No eixo há um disco com freio de carga (aba Bancada) e um volante de inércia opcional. Trocar duas fases inverte o sentido.',
     bot: 'Botão pulsador de 22 mm com um contato NA (13-14) e um NF (21-22). Fica acionado só enquanto você segura.',
     chave: 'Chave seletora de 2 posições fixas com um contato NA (13-14) e um NF (21-22). Clique para mudar de posição.',
     emerg: 'Botão de emergência tipo cogumelo com trava: NF (11-12) e NA (23-24). Clique para acionar e clique de novo para destravar.',
@@ -2745,6 +3156,11 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
       (d.unico ? '' : `<div class="linha"><button class="botao perigo" id="jRemover">Remover ${esc(c.id)} da bancada</button></div>`));
     const b = $('#jRemover'); if (b) b.onclick = () => { cena.removerComp(id); gravar(); $('#janela').hidden = true; toast(`${id} removido`); };
   }
+  // ---- tela à parte: campo girante (também abre pelo endereço com #campo-girante)
+  const campo = SIM.criaCampo($('#campo'), banc); SIM.campo = campo;
+  $('#btnCampo').onclick = () => { if (campo.aberto) campo.fechar(); else campo.abrir(banc.alim.via ? 'banc' : 'demo', 'popup'); };      // abre em janela flutuante, junto com a bancada
+  addEventListener('keydown', (e) => { if (e.key === 'Escape' && campo.aberto) campo.fechar(); });
+  if (location.hash === '#campo-girante') campo.abrir('demo', 'cheia');
   $('#btnAjuda').onclick = () => janela(`<h2>Como usar a bancada</h2><ul>
     <li><b>Fio:</b> clique num borne e depois no outro (ou arraste de um borne ao outro). <kbd>Esc</kbd> cancela.</li>
     <li><b>Cor do fio:</b> clique no fio e escolha a cor na barra que aparece. A cor dos próximos fios fica nas bolinhas do canto de cima da bancada.</li>
@@ -2865,17 +3281,17 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
   }
   function atualizaResp() {
     const li = est.aberta && $(`#listaMissoes li[data-id="${est.aberta}"]`), m = SIM.MISSOES.find((x) => x.id === est.aberta); if (!li || !m) return;
-    const box = $('.resp', li), P = banc.inv.P, placaOk = SIM.PLACA_P.every(([n, v]) => P[n] === v);
+    const box = $('.resp', li), P = banc.inv.P, placa = SIM.placaP(banc), placaOk = placa.every(([n, v]) => P[n] === v);
     const linha = (n, v) => { const ok = P[n] === v; return `<tr><td>${nomeP(n)} ${esc(MAPA[n].nome)}</td><td class="${ok ? 'c' : 'e'}">${fmt(n, P[n])}</td><td>→ ${esc(fmt(n, v) + (MAPA[n].opc && MAPA[n].opc[v] !== undefined ? ' · ' + MAPA[n].opc[v] : ''))}</td></tr>`; };
     const h = `<div class="tit-resp">Parâmetros desta atividade <small>(atual → ajuste)</small></div><table class="tresp">${(m.params && m.id !== 'motor' ? m.params : []).map(([n, v]) => linha(n, v)).join('') || '<tr><td colspan="3">Nenhum além do padrão de fábrica.</td></tr>'}
-      <tr><td>Placa do motor (P0399 a P0407)</td><td class="${placaOk ? 'c' : 'e'}">${placaOk ? 'ok' : 'diferente'}</td><td>→ 1 cv, 3,0 A, 1725 rpm</td></tr></table>`;
+      <tr><td>Placa do motor (P0399 a P0407)</td><td class="${placaOk ? 'c' : 'e'}">${placaOk ? 'ok' : 'diferente'}</td><td>→ ${banc.tensao === 380 ? '380 V Y · 1,7 A' : '220 V Δ · 3,0 A'} · 1725 rpm</td></tr></table>`;
     if (box.dataset.h !== h) { box.dataset.h = h; box.innerHTML = h; }
   }
   $('#listaMissoes').onclick = (e) => {
     const li = e.target.closest('li[data-id]'); if (!li) return; const id = li.dataset.id, m = SIM.MISSOES.find((x) => x.id === id), ac = e.target.dataset.ac;
     if (e.target.closest('.cab')) { est.aberta = est.aberta === id ? null : id; return desenhaMissoes(); }
     if (ac === 'fios') { const r = banc.montagem(m.montagem); if (r.novos) cena.reconstruir(); else cena.sincFios(); gravar(); toast('Fios montados: ' + SIM.MONTAGENS[m.montagem].nome); }
-    else if (ac === 'param') { const n = banc.inv.parametrizar(SIM.PLACA_P.concat(m.id === 'motor' ? [] : (m.params || []))); atualizaResp(); toast(`Parametrizado: padrão de fábrica, placa do motor${m.params && m.id !== 'motor' ? ` e ${m.params.length} parâmetro(s) da atividade` : ''}${banc.inv.vivo ? '' : ' (gravado com o inversor desligado)'}`); }
+    else if (ac === 'param') { const n = banc.inv.parametrizar(SIM.placaP(banc).concat(m.id === 'motor' ? [] : (m.params || []))); atualizaResp(); toast(`Parametrizado: padrão de fábrica, placa do motor${m.params && m.id !== 'motor' ? ` e ${m.params.length} parâmetro(s) da atividade` : ''}${banc.inv.vivo ? '' : ' (gravado com o inversor desligado)'}`); }
     else if (ac === 'refazer') { delete est.feitas[id]; est.mem[id] = {}; gravar(); desenhaMissoes(); }
   };
   function confereMissoes() {
@@ -2912,7 +3328,7 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
   // ---------------------------------------------------------------- aba Parâmetros
   function filtro() {
     const q = $('#pBusca').value.trim().toLowerCase(), gp = $('#pGrupo').value, P = banc.inv.P;
-    return LISTA.filter((p) => (gp === 'PARAM' || (gp === 'SIM' ? !p.guardado : gp === 'MODIF' ? !p.ro && p.n !== 0 && P[p.n] !== p.def : p.grupos.includes(gp))) &&
+    return LISTA.filter((p) => (gp === 'PARAM' || (gp === 'SIM' ? !p.guardado : gp === 'MODIF' ? !p.ro && p.n !== 0 && P[p.n] !== banc.inv.padrao(p.n) : p.grupos.includes(gp))) &&
       (!q || nomeP(p.n).toLowerCase().includes(q) || String(p.n) === q || p.nome.toLowerCase().includes(q)));
   }
   const textoValor = (p, v) => fmt(p.n, v, true) + (p.opc && p.opc[v] !== undefined ? ' · ' + p.opc[v] : '');
@@ -2922,7 +3338,7 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
   }
   function atualizaParams() {
     const P = banc.inv.P;
-    for (const tr of $$('#pCorpo tr')) { const p = MAPA[tr.dataset.n], c = tr.lastChild; if (c.firstElementChild) continue; const t = (p.n === 1 || p.n === 2) ? banc.inv.hmi._fmt(p.n, P[p.n]).txt.replace('.', ',') + ' ' + banc.inv.hmi._fmt(p.n, 0).un : textoValor(p, P[p.n]); if (c.textContent !== t) c.textContent = t; tr.classList.toggle('mod', !p.ro && P[p.n] !== p.def); }
+    for (const tr of $$('#pCorpo tr')) { const p = MAPA[tr.dataset.n], c = tr.lastChild; if (c.firstElementChild) continue; const t = (p.n === 1 || p.n === 2) ? banc.inv.hmi._fmt(p.n, P[p.n]).txt.replace('.', ',') + ' ' + banc.inv.hmi._fmt(p.n, 0).un : textoValor(p, P[p.n]); if (c.textContent !== t) c.textContent = t; tr.classList.toggle('mod', !p.ro && P[p.n] !== banc.inv.padrao(p.n)); }
   }
   $('#pBusca').oninput = desenhaParams; $('#pGrupo').onchange = desenhaParams;
   $('#pCorpo').onclick = (e) => {
@@ -2975,7 +3391,7 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
     ln.push([`DO2 transistor · ${OPC[276][P[276]]}`, inv.vivo && inv.sai.do2 ? 'fechado' : 'aberto', inv.vivo && inv.sai.do2 ? '<span class="on">conduz ao GND</span>' : '<span class="off">desligado</span>']);
     $('#tabIO').innerHTML = ln.map((l) => `<tr><td>${esc(l[0])}</td><td>${l[1]}</td><td>${l[2]}</td></tr>`).join('');
     const m = banc.motor, al = banc.alim;
-    $('#tabMotor').innerHTML = [['Rotação', br(m.rpm, 0), 'rpm ' + (m.rpm > 1 ? '(horário)' : m.rpm < -1 ? '(anti-horário)' : '')], ['Corrente', br(m.i, 2), 'A (placa 2,98 A)'], ['Conjugado', br(m.torque / 4.152 * 100, 0), '% do nominal'],
+    $('#tabMotor').innerHTML = [['Rotação', br(m.rpm, 0), 'rpm ' + (m.rpm > 1 ? '(horário)' : m.rpm < -1 ? '(anti-horário)' : '')], ['Corrente de linha', br(banc.iLinha, 2), `A (placa: Δ 2,98 A · Y 1,72 A)`], ['Fechamento', al.lig === 'Y' ? 'estrela Y' : al.lig === 'Δ' ? 'triângulo Δ' : al.via ? 'incompleto' : 'aberto', al.via ? `${br(banc.vEnrol, 0)} V em cada enrolamento (nominal 220 V)` : 'sem caminho para a corrente'], ['Conjugado', br(m.torque / 4.152 * 100, 0), '% do nominal'],
       ['Alimentação', al.via === 'inv' ? 'inversor' : al.via === 'rede' ? 'REDE' : 'nenhuma', al.fases === 2 ? '<span class="f">só 2 fases!</span>' : al.via === 'rede' ? 'partida direta' : al.fases === 3 ? '3 fases' : '']].map((l) => `<tr><td>${l[0]}</td><td>${l[1]}</td><td>${l[2]}</td></tr>`).join('');
   }
 
@@ -2986,6 +3402,12 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
   $('#bMontar').onclick = () => { const r = banc.montagem($('#bMontagem').value); if (r.novos) cena.reconstruir(); else cena.sincFios(); gravar(); toast('Fios montados'); };
   $('#bLimpar').onclick = () => { banc.limparFios(); cena.sincFios(); toast('Todos os fios foram removidos'); };
   $('#bAdd').onclick = () => { const [t, cor] = SIM.PALETA[+$('#bTipo').value]; acrescenta(t, cor); };
+  // ---- rede 220/380 V e atalho do fechamento do motor
+  function sincRede() { $('#bRede').innerHTML = [[220, '127 V fase-neutro · motor em triângulo'], [380, '220 V fase-neutro · motor em estrela']].map(([v, t]) => `<button data-rede="${v}" class="${banc.tensao === v ? 'ativa' : ''}">${v} V<small>${t}</small></button>`).join('');
+    $$('#bFecho button').forEach((b) => b.classList.toggle('ativa', (b.dataset.fecho === 'D' ? 'Δ' : b.dataset.fecho) === (banc.alim.lig || '') && (b.dataset.fecho !== '' || !banc.fios.some((f) => f.a.startsWith('M1.') && f.b.startsWith('M1.'))))); }
+  $('#bRede').onclick = (e) => { const b = e.target.closest('button[data-rede]'); if (!b) return; const v = +b.dataset.rede; if (!banc.tensaoRede(v)) return; cena.reconstruir(); gravar(); sincRede();
+    toast(`Rede em ${v} V: inversor ${v === 380 ? '380-480 V' : '200-240 V'} no padrão de fábrica. Feche o motor em ${v === 380 ? 'estrela' : 'triângulo'} e religue a chave geral.`); };
+  $('#bFecho').onclick = (e) => { const b = e.target.closest('button[data-fecho]'); if (!b) return; banc.fechamento(b.dataset.fecho); cena.sincFios(); banc.resolver(); sincRede(); toast(b.dataset.fecho === 'Y' ? 'Motor fechado em estrela (W2–U2–V2)' : b.dataset.fecho === 'D' ? 'Motor fechado em triângulo (U1–W2, V1–U2, W1–V2)' : 'Fechamento do motor aberto'); };
   $('#bCarga').oninput = (e) => { banc.motor.carga = e.target.value / 100; $('#bCargaV').textContent = e.target.value + ' %'; gravar(); };
   $('#bVolante').onchange = (e) => { banc.motor.volante = e.target.checked; gravar(); };
   $('#bTravado').onchange = (e) => { banc.motor.travado = e.target.checked; };
@@ -3008,7 +3430,7 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
   addEventListener('pagehide', () => { if (tGravar) gravarJa(); });
   if (avisoSessao) setTimeout(() => toast(avisoSessao), 800);
   SIM.sessao = SID;
-  function sincControles() { sincPainel(); $('#bCarga').value = Math.round(banc.motor.carga * 100); $('#bCargaV').textContent = Math.round(banc.motor.carga * 100) + ' %'; $('#bVolante').checked = banc.motor.volante; $('#bS1').checked = !!banc.porTipo('cfw').st.s1; }
+  function sincControles() { sincPainel(); sincRede(); $('#bCarga').value = Math.round(banc.motor.carga * 100); $('#bCargaV').textContent = Math.round(banc.motor.carga * 100) + ' %'; $('#bVolante').checked = banc.motor.volante; $('#bS1').checked = !!banc.porTipo('cfw').st.s1; }
 
   // ---------------------------------------------------------------- bip de continuidade
   let ac = null, osc = null, ganho = null;
@@ -3021,10 +3443,10 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
     const inv = banc.inv, r = banc.porTipo('rede'), P = inv.P;
     chip('#chRede', r.st.desarmada ? 'Bancada DESARMADA' : r.st.ligada ? 'Rede ligada' : 'Rede desligada', r.st.desarmada ? 'er' : r.st.ligada ? 'ok' : '');
     chip('#chEstado', !inv.vivo ? 'Inversor apagado' : inv.falhaCod ? `Falha F${String(inv.falhaCod).padStart(4, '0')}` : P[47] ? `CONF ${P[47]}` : `${OPC[6][inv.estado].split(' ')[0]} · ${inv.loc ? 'LOC' : 'REM'}`, !inv.vivo ? '' : inv.falhaCod ? 'er' : P[47] || inv.estado === 2 || inv.alarme ? 'al' : 'ok');
-    chip('#chHz', br(inv.vivo ? Math.abs(inv.fOut) : 0, 1) + ' Hz'); chip('#chA', br(banc.motor.i, 1) + ' A'); chip('#chRpm', br(banc.motor.rpm, 0) + ' rpm');
+    chip('#chHz', br(inv.vivo ? Math.abs(inv.fOut) : 0, 1) + ' Hz'); chip('#chA', br(banc.iLinha, 1) + ' A'); chip('#chRpm', br(banc.motor.rpm, 0) + ' rpm');
     const al = $('#alerta'); if (r.st.desarmada && banc.erros.length) { al.hidden = false; al.className = 'alerta'; al.innerHTML = `<b>A proteção da bancada desarmou</b>${esc(banc.erros[0])}<br>Corrija a ligação e gire a chave geral de novo.`; }
     else if (banc.avisos.length) { al.hidden = false; al.className = 'alerta av'; al.innerHTML = `<b>Atenção</b>${esc(banc.avisos[0])}`; } else al.hidden = true;
-    const mt = banc.porTipo('motor'), p = cena.tela(mt.x - 0.06, 0.80 + 0.31, mt.y), rot = $('#rotMotor'); rot.style.left = p.x + 'px'; rot.style.top = p.y + 'px'; rot.textContent = `${mt.id} · ${br(banc.motor.rpm, 0)} rpm · ${br(banc.motor.i, 1)} A`; rot.hidden = !p.visivel;
+    const mt = banc.porTipo('motor'), p = cena.tela(mt.x - 0.06, 0.80 + 0.31, mt.y), rot = $('#rotMotor'); rot.style.left = p.x + 'px'; rot.style.top = p.y + 'px'; rot.textContent = `${mt.id} · ${br(banc.motor.rpm, 0)} rpm · ${br(banc.iLinha, 1)} A${banc.alim.lig ? ' · ' + banc.alim.lig : ''}`; rot.hidden = !p.visivel;
     if (ganho) ganho.gain.value = banc.leitura.bip ? 0.05 : 0;
     confereMissoes();
     if (est.aba === 'inversor') atualizaInversor(); else if (est.aba === 'parametros') atualizaParams(); else if (est.aba === 'medicoes') atualizaMedicoes(); else if (est.aba === 'missoes' && est.aberta) atualizaResp();
@@ -3034,7 +3456,8 @@ kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius:
   function quadro(agora) {
     const dt = Math.min(0.25, (agora - ult) / 1000); ult = agora; acum += dt; let n = 0;          // PC lento: a simulação continua em tempo real até ~4 quadros/s
     while (acum >= 0.002 && n < 140) { banc.passo(0.002); acum -= 0.002; n++; } if (n >= 140) acum = 0;
-    cena.quadro(dt);
+    if (!campo.aberto || campo.popup) cena.quadro(dt);            // em tela cheia a bancada não precisa ser redesenhada
+    if (campo.aberto) campo.quadro(dt);
     if (est.aba === 'inversor') SIM.desenhaHMI(hmiCtx, 648, 400, banc.inv.hmi.display());
     tUI += dt; if (tUI >= 0.1) { tUI = 0; atualiza(false); }
     requestAnimationFrame(quadro);

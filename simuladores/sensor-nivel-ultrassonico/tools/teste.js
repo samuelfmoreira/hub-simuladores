@@ -91,6 +91,92 @@ function programaContraNucleo() {
   ok(al() === 'LL L', `tanque em 0,10 m = 4 %: é alarme de nível, não é falha (bruto ${n.m.bruto} ≥ −410): ${al()}`);
 }
 
+function nucleoParametros() {
+  console.log('\n1b. Parâmetros do menu do aparelho');
+  const P = (n, id, v) => n.comando({ tipo: 'param', id, v });
+  let n = new Nucleo(); P(n, 'calMinPct', 10); P(n, 'calMaxPct', 90); rodar(n, 2);
+  ok(perto(n.m.pct, 42, 0.05) && perto(n.m.mA, 10.72, 0.01), `calibração por dois pontos (10 % = 3,000 m; 90 % = 0,500 m) com 1,00 m: ${f(n.m.pct, 1)} %, ${f(n.m.mA, 2)} mA`);
+  n = new Nucleo(); P(n, 'caracteristica', 1); rodar(n, 2);
+  ok(perto(n.m.mA, 13.6, 0.01), `curva característica 20-4 mA com 40 %: ${f(n.m.mA, 2)} mA`);
+  n = new Nucleo(); P(n, 'linearizacao', 1); n.comando({ tipo: 'proc', campo: 'nivel', v: 1.25 }); rodar(n, 3);
+  ok(perto(n.m.pct, 50, 0.1), `linearização cilindro deitado: metade da altura = ${f(n.m.pct, 1)} % do volume`);
+  n.comando({ tipo: 'proc', campo: 'nivel', v: 0.625 }); rodar(n, 3);
+  ok(perto(n.m.pct, 19.55, 0.2) && perto(n.m.pctNivel, 25, 0.1), `linearização cilindro deitado: 25 % da altura = ${f(n.m.pct, 1)} % do volume`);
+  P(n, 'linearizacao', 2); rodar(n, 0.1); ok(perto(n.m.pct, 15.6, 0.2), `linearização tanque esférico: 25 % da altura = ${f(n.m.pct, 1)} % do volume`);
+  n = new Nucleo(); P(n, 'iMinSel', 1); P(n, 'iMaxSel', 0); n.comando({ tipo: 'proc', campo: 'nivel', v: 2.7 }); rodar(n, 3);
+  ok(perto(n.m.mA, 20, 0.001), `corrente máx. 20 mA: com 108 % a saída para em ${f(n.m.mA, 2)} mA`);
+  n = new Nucleo(); rodar(n, 1); const rs = n.comando({ tipo: 'simular', modo: 'pct', v: 75 }); rodar(n, 0.1);
+  ok(rs.ok && perto(n.m.mA, 16, 0.001) && n.m.bruto === 24575 && perto(n.m.D, 2, 0.001), `simulação 75 %: saída ${f(n.m.mA, 2)} mA (bruto ${n.m.bruto}) com o nível real em 40 %`);
+  n.comando({ tipo: 'simular', modo: 'mA', v: 4 }); rodar(n, 0.1); ok(perto(n.m.mA, 4, 0.001), 'simulação em corrente: 4,00 mA');
+  rodar(n, 601); ok(!n.sim.ativa && perto(n.m.mA, 10.4, 0.01), 'a simulação termina sozinha depois de 10 min e a saída volta a seguir o nível');
+  n = new Nucleo(); n.comando({ tipo: 'proc', campo: 'obstaculo', v: 1 }); n.comando({ tipo: 'proc', campo: 'nivel', v: 0.8 }); rodar(n, 2);
+  let r = n.comando({ tipo: 'supressao', acao: 'criar', dist: 2.2 }); rodar(n, 2);
+  ok(r.ok && r.n === 1 && !r.pegouNivel && n.m.status === 'ok' && perto(n.m.D, 2.2, 0.002), `supressão criada com a distância certa (2,200 m): ${r.n} eco gravado e a medição volta ao nível`);
+  r = n.comando({ tipo: 'supressao', acao: 'criar', dist: 3.0 }); rodar(n, 6);
+  ok(r.pegouNivel && n.m.erro === 'E013', 'supressão com distância grande demais (3,000 m): o nível é gravado como sinal falso e a medição se perde (E013)');
+  r = n.comando({ tipo: 'supressao', acao: 'apagar' }); rodar(n, 2); ok(n.falsos.length === 0 && n.m.status === 'falso', 'apagar a supressão: o eco falso volta a mandar');
+  n = new Nucleo(); P(n, 'hartMulti', 1); rodar(n, 1); ok(n.m.mA === 4 && n.m.bruto === 0, 'HART Multidrop: saída fixa em 4 mA');
+  n = new Nucleo(); P(n, 'modoFalha', 1); P(n, 'sil', 1);
+  ok(n.p.modoFalha === 0 && P(n, 'modoFalha', 2).ok === false && P(n, 'hartMulti', 1).ok === false, 'SIL ativado: Manter valor e 20,5 mA bloqueados (volta para < 3,6 mA) e Multidrop bloqueado');
+  n = new Nucleo(); P(n, 'atenuacao', 12); P(n, 'idioma', 1); n.comando({ tipo: 'tag', v: 'tq-99' }); n.comando({ tipo: 'reset', qual: 'basico' }); rodar(n, 2);
+  ok(n.p.calMin === 5 && n.p.calMax === 0 && n.p.atenuacao === 0 && n.p.iMinSel === 1 && n.p.iMaxSel === 0 && n.p.valorExibido === 1 && n.tag === 'Sensor' && n.p.idioma === 1, 'Reset: valores da tabela do manual (5,000 m / 0,000 m, 4 e 20 mA, valor exibido Distância, TAG Sensor); o idioma não muda');
+  ok(perto(n.m.pct, 60, 0.05), `depois do Reset o tanque com 1,00 m indica ${f(n.m.pct, 1)} %: é preciso calibrar de novo`);
+  n = new Nucleo(); n.comando({ tipo: 'proc', campo: 'nivel', v: 2.0 }); rodar(n, 2); n.comando({ tipo: 'proc', campo: 'nivel', v: 0.5 }); rodar(n, 2);
+  ok(perto(n.picos.dMin, 1.0, 0.01) && perto(n.picos.dMax, 2.5, 0.01), `valores de pico: distância mín. ${f(n.picos.dMin, 2)} m, máx. ${f(n.picos.dMax, 2)} m`);
+  n.comando({ tipo: 'reset', qual: 'picos' }); ok(perto(n.picos.dMin, n.m.D, 0.001) && n.p.calMin === 3, 'reset dos valores de pico não mexe na calibração');
+  const s2 = new Nucleo({ salvos: n.paraGravar() }); const n3 = new Nucleo(); n3.comando({ tipo: 'proc', campo: 'obstaculo', v: 1 }); n3.comando({ tipo: 'proc', campo: 'nivel', v: 0.8 }); rodar(n3, 2); n3.comando({ tipo: 'supressao', acao: 'criar', dist: 2.2 }); n3.comando({ tipo: 'tag', v: 'TQ-01A' });
+  const n4 = new Nucleo({ salvos: JSON.parse(JSON.stringify(n3.paraGravar())) }); ok(s2.p.calMin === 3 && n4.falsos.length === 1 && n4.tag === 'TQ-01A', 'a TAG e a supressão de sinais falsos ficam gravadas com a sessão');
+}
+
+async function moduloTeclas() {
+  console.log('\n6. Módulo de configuração: as teclas como no aparelho ([ESC] [+] [->] [OK])');
+  const { criarModulo, arvore } = await import('../public/js/modulo-ajuste.mjs');
+  const n = new Nucleo(); rodar(n, 2);
+  let relogio = 1e6;
+  const mod = criarModulo({ enviar: (c) => n.comando(c), estado: () => n.retrato(), agora: () => relogio });
+  const T = () => mod.tela();
+  const ap = async (seq) => { for (const k of seq.split(' ')) { const [tecla, q] = k.split('*'); for (let i = 0; i < (q ? +q : 1); i++) await mod.tecla(tecla); } };
+  const digitar = async (alvo) => {            // como o aluno faz: [+] até o dígito certo, [->] para a próxima casa
+    const dig = alvo.replace(/[^0-9]/g, '');
+    for (let i = 0; i < dig.length; i++) { for (let g = 0; g < 10; g++) { const l = T().linhas.find((x) => x.cur !== undefined); if (l.t[l.cur] === dig[i]) break; await mod.tecla('mais'); } if (i < dig.length - 1) await mod.tecla('seta'); }
+  };
+  const linhas = () => T().linhas.map((l) => l.t).join(' | ');
+  const a = arvore(); ok(a.length === 5 && a.map((m) => m.pt).join(', ') === 'Ajuste básico, Display, Diagnóstico, Serviço, Info' && a.reduce((s, m) => s + m.filhos.length, 0) === 30, `plano de menus: ${a.map((m) => m.pt + ' (' + m.filhos.length + ')').join(', ')}`);
+  ok(T().titulo === 'LT-01' && T().linhas[0].t === '40.0 %', `tela de medição: TAG "${T().titulo}", valor "${T().linhas[0].t}"`);
+  await ap('ok'); ok(T().lista && T().lista.itens.length === 5 && T().lista.sel === 0, '[OK] abre o menu principal, com "Ajuste básico" marcado');
+  await ap('ok'); ok(T().titulo === 'Calibrar mín.' && T().num === '1.1' && linhas() === '0.00 % | = | 3.000 m(d) | 2.000 m(d)', `1.1 ${T().titulo}: ${linhas()}`);
+  await ap('ok mais esc'); ok(n.p.calMinPct === 0 && !T().linhas.some((l) => l.cur !== undefined), '[ESC] durante a edição: nada é salvo');
+  await ap('ok ok'); await digitar('2.800'); await ap('ok');
+  ok(n.p.calMin === 2.8 && linhas().includes('2.800 m(d)'), `1.1 editado pelas teclas: 0.00 % = ${n.p.calMin.toFixed(3)} m(d)`);
+  await ap('seta'); ok(T().num === '1.2' && T().titulo === 'Calibração Máx.', '[->] passa para 1.2 Calibração Máx.');
+  await ap('seta*3'); ok(T().num === '1.5' && T().titulo === 'Atenuação', '1.5 Atenuação');
+  await ap('ok'); await digitar('005'); await ap('ok'); ok(n.p.atenuacao === 5 && linhas() === '5 s', `atenuação pelas teclas: ${linhas()}`);
+  await ap('esc seta*3 ok'); ok(T().num === '4.1' && T().titulo === 'Supressão de sinais de interferência' && linhas() === 'Alterar agora?', `4.1 ${T().titulo}: ${linhas()}`);
+  await ap('seta*2'); ok(T().num === '4.3' && linhas().includes('Modo de falha: < 3.6 mA'), `4.3 Saída de corrente: ${linhas()}`);
+  await ap('ok ok'); ok(T().lista && T().lista.itens.join(', ') === 'Manter valor, 20.5 mA, 22 mA, < 3.6 mA' && T().lista.sel === 3, 'modo de falha: as quatro opções do manual, com "< 3.6 mA" marcado');
+  await ap('mais ok ok ok'); ok(n.p.modoFalha === 1 && n.p.iMinSel === 0 && n.p.iMaxSel === 1, 'modo de falha trocado para "Manter valor" pelas teclas; correntes mín. e máx. mantidas');
+  // supressão de sinais falsos pelo menu, com o obstáculo no feixe
+  n.comando({ tipo: 'proc', campo: 'obstaculo', v: 1 }); n.comando({ tipo: 'proc', campo: 'nivel', v: 0.8 }); n.comando({ tipo: 'param', id: 'calMin', v: 3 }); n.comando({ tipo: 'param', id: 'atenuacao', v: 0 }); rodar(n, 2);
+  await ap('seta*9 ok'); ok(T().lista.itens.join(', ') === 'Criar novo, Atualizar, Apagar', '4.1 [OK]: Criar novo, Atualizar, Apagar');
+  await ap('ok'); const sug = T().linhas.find((l) => l.cur !== undefined).t; await digitar('2.200'); await ap('ok');
+  ok(sug.startsWith('1.200') && n.falsos.length === 1 && /salvos: 1/.test(linhas()), `"Criar novo": o visor sugere a distância medida (${sug}, que é o obstáculo); digitando a real, 2.200: ${linhas()}`);
+  await ap('ok'); rodar(n, 2); ok(n.m.status === 'ok' && perto(n.m.D, 2.2, 0.002), 'depois da supressão, a medição volta ao nível');
+  // simulação da saída
+  await ap('seta*3'); ok(T().num === '4.4' && linhas() === 'Iniciar a simulação?', `4.4 Simulação: ${linhas()}`);
+  await ap('ok ok'); await digitar('050.0'); await ap('ok'); rodar(n, 0.1);
+  ok(n.sim.ativa && perto(n.m.mA, 12, 0.001) && n.m.bruto === 16384 && /Simulação em curso/.test(linhas()), `simulação 50 % pelas teclas: ${f(n.m.mA, 2)} mA, bruto ${n.m.bruto}`);
+  await ap('esc'); rodar(n, 0.1); ok(!n.sim.ativa && T().num === '4.4', '[ESC] encerra a simulação');
+  // idioma, reset e retorno automático
+  await ap('seta*3 ok mais ok'); ok(n.p.idioma === 1 && T().titulo === 'Language', '4.7 Idioma: English (os menus passam para os nomes do manual em inglês)');
+  await ap('ok mais ok'); ok(n.p.idioma === 0 && T().titulo === 'Idioma', 'de volta para português');
+  await ap('seta*9 ok'); ok(T().num === '4.5' && T().lista.itens.join(', ') === 'Reset, Ajuste de fábrica, Indicador de valor de pico', '4.5 Reset: três opções');
+  await ap('ok'); ok(/Executar reset agora\?/.test(linhas()), 'pede confirmação antes do reset');
+  await ap('ok'); ok(n.p.calMin === 5 && n.p.calMax === 0 && n.tag === 'Sensor' && linhas() === 'Reset executado', 'reset feito pelas teclas');
+  await ap('ok'); relogio += 61 * 60 * 1000; ok(T().titulo === 'Sensor' && T().num === '', '60 minutos sem tecla: volta sozinho para a tela de medição');
+  n.comando({ tipo: 'proc', campo: 'espuma', v: 95 }); rodar(n, 5); ok(T().linhas[0].t === 'E013' && T().linhas[1].t === 'Sem valor de medição', `falha na tela de medição: ${linhas()}`);
+  n.comando({ tipo: 'proc', campo: 'cabo', v: 1 }); rodar(n, 0.1); ok(T().apagado === true, 'cabo rompido: o módulo apaga junto com o transmissor');
+}
+
 async function fila() {
   console.log('\n3. Fila do cliente Modbus');
   const clp = criarClpDemo({ port: 15502, programa: false }); const u = await clp.iniciar();
@@ -121,6 +207,8 @@ async function redeComSessoes() {
   const tk = setInterval(() => { g.passo(0.02, 0.002); g.tick(Date.now()); }, 20);
   const a = g.criar('Ana'), b = g.criar('Bruno');
   ok(a.id !== b.id && g.criar('Ana').nome === 'Ana 2', 'cada sessão tem o seu código; nome repetido ganha um número');
+  ok(g.criar('').nome === 'Bancada 1' && g.criar('').nome === 'Bancada 2', 'sessão criada sem nome (entrada automática): Bancada 1, Bancada 2...');
+  { const g9 = new Gerente({ pastaDados: pasta + '-lim' }); for (let i = 0; i < 60; i++) g9.criar(''); const primeira = g9.lista()[0]; g9.obter(primeira.id).ultimoUso = 1; const nova = g9.criar('Extra'); ok(g9.sessoes.size === 60 && !g9.obter(primeira.id) && !!g9.obter(nova.id), 'no limite de 60 sessões, a que está parada há mais tempo dá lugar à nova'); clearTimeout(g9.timerGravar); }
   await a.ligarDemo(); await b.ligarDemo();
   ok(a.rede.conectado && b.rede.conectado && a.conexao.host !== b.conexao.host && a.conexao.port === 502 && b.conexao.port === 502 && /^127\./.test(a.conexao.host) && /^127\./.test(b.conexao.host),
     `cada sessão liga o seu CLP de demonstração, sempre na porta 502 do Modbus, num endereço próprio só deste PC (${a.conexao.host}:${a.conexao.port} e ${b.conexao.host}:${b.conexao.port})`);
@@ -187,6 +275,9 @@ async function missoes() {
   proc('cabo', 1); por(1); proc('cabo', 0); por(1);                                     // cabo rompido
   proc('nivel', 0.8); proc('obstaculo', 1); por(2); par('supressao', 1); por(2); proc('obstaculo', 0);   // eco falso
   proc('nivel', 1.0); par('modoFalha', 3); proc('espuma', 95); por(6);                  // armadilha do 22 mA
+  proc('espuma', 0); par('modoFalha', 0); por(1.5);
+  n.comando({ tipo: 'reset', qual: 'basico' }); por(0.5); par('calMin', 3); par('calMax', 0.5); por(0.5);        // comissionar depois do Reset
+  n.comando({ tipo: 'simular', modo: 'pct', v: 50 }); por(0.5); n.comando({ tipo: 'simular', modo: 'parar' });       // simular a saída
   for (const m of MISSOES) ok(feitas.has(m.id), `missão "${m.titulo}"`);
   // sem CLP, nenhuma missão que precisa de CLP pode fechar
   const m2 = {}; const r2 = avaliar(Object.assign(new Nucleo().retrato(), { rede: { conectado: false, clpRodando: false } }), m2, 0.1);
@@ -195,7 +286,7 @@ async function missoes() {
 
 (async () => {
   const alvo = process.argv[2] || 'tudo';
-  if (alvo === 'tudo' || alvo === 'nucleo') { nucleoBasico(); programaContraNucleo(); }
+  if (alvo === 'tudo' || alvo === 'nucleo') { nucleoBasico(); nucleoParametros(); programaContraNucleo(); await moduloTeclas(); }
   if (alvo === 'tudo' || alvo === 'nucleo') await missoes();
   if (alvo === 'tudo' || alvo === 'rede') { await fila(); await redeComSessoes(); }
   console.log(`\n${falhas} falha(s)`);

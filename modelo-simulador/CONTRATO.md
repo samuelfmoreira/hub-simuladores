@@ -139,12 +139,12 @@ recusar o endereço de loopback, o CLP de teste volta para 127.0.0.1 numa porta 
 | Keyence CV-X400 | 3001 | — |
 | Estação de bombeamento | 3050 | 127.0.0.50 (OPC UA de demonstração: 127.0.0.1:4841–4850; a 4840 é do CODESYS) |
 | Servomotor SCA06 | 3060 | IHM: 127.0.0.60 |
-| Sistema de Incêndio | 3070 (fora do HUB, alternativas 3071–3099) | 127.0.0.70, .71… (um por sessão) |
-| Sensor ultrassônico VEGA | 3320 | 127.0.0.80, .81… (um por sessão) |
-| Bancada didática WEG CFW500 | 3051 | — |
+| Sistema de Incêndio | 3070 (fora do HUB, alternativas 3071–3099) | 127.0.0.100 a .149 (um por sessão) |
+| Sensor ultrassônico VEGA | 3320 | 127.0.0.150 a .199 (um por sessão) |
+| Bancada didática WEG CFW500 | 3053 | — |
 | Inversor CFW500 | 8080 | — |
 | Remoto TBEN-L | 8081 | — |
 
 Simulador novo: porta de tela livre nesta tabela (de preferência entre 3400 e 3999) e, se tiver CLP de teste Modbus,
-um bloco de loopback livre (ex.: 127.0.0.90) sempre na porta 502. Ao adicionar um simulador cuja porta de tela já é de
+um bloco de loopback livre que não cruze com os de cima (ex.: 127.0.0.200 a .229), sempre na porta 502. Ao adicionar um simulador cuja porta de tela já é de
 outro, o HUB avisa.

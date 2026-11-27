@@ -15,7 +15,7 @@
     _avisa(m) { this.msg = m; this.tMsg = 4; }
     _montaLista() {
       const nome = MENUS[this.menu], P = this.inv.P;
-      this.lista = nome === 'PARAM' ? LISTA : nome === 'MODIF' ? LISTA.filter((p) => !p.ro && p.n !== 0 && P[p.n] !== p.def) : LISTA.filter((p) => p.grupos.includes(nome));
+      this.lista = nome === 'PARAM' ? LISTA : nome === 'MODIF' ? LISTA.filter((p) => !p.ro && p.n !== 0 && P[p.n] !== this.inv.padrao(p.n)) : LISTA.filter((p) => p.grupos.includes(nome));
       this.i = Math.min(this.idx[nome] || 0, Math.max(0, this.lista.length - 1));
     }
     /** nome: esc · enter · up · down · i · o · giro · locrem · jog */

@@ -7,16 +7,19 @@
   const rem = (b) => !b.inv.loc && b.inv.vivo;
 
   /** dados de placa do motor: a parametrização automática grava em todas as atividades */
-  SIM.PLACA_P = [[399, 82.6], [401, 3], [402, 1725], [403, 60], [404, 5], [407, 0.8]];
+  SIM.PLACA_P = [[399, 82.6], [400, 220], [401, 3], [402, 1725], [403, 60], [404, 5], [407, 0.8]];
+  /** ajusta uma lista de parâmetros à rede da bancada: em 380 V o motor fecha em estrela (P0400 = 380 V, P0401 = 1,7 A) */
+  SIM.porRede = (lista, b) => (b.tensao === 380 ? lista.map(([n, v]) => (n === 400 ? [400, 380] : n === 401 ? [401, 1.7] : [n, v])) : lista);
+  SIM.placaP = (b) => SIM.porRede(SIM.PLACA_P, b);
   SIM.MISSOES = [
     { id: 'energizar', titulo: 'Energizar o inversor', montagem: 'forca',
       texto: 'Leve a rede até o inversor passando pelo disjuntor Q1 e aterre o inversor. Depois feche Q1 e ligue a chave geral da bancada.',
       passos: ['X1 L1, L2, L3 → Q1 bornes 1, 3, 5', 'Q1 bornes 2, 4, 6 → inversor R/L1, S/L2, T/L3', 'X1 PE → PE do inversor', 'Feche Q1 e ligue a chave geral: o display acende'],
       check: (b) => { const q = b.comp('Q1'); return b.inv.vivo && b.inv.boot <= 0 && b.inv.ent.fases >= 2 && !!q && q.st.fechado && ['2', '4', '6'].some((t) => ['R', 'S', 'T'].some((r) => mesmoNo(b, 'Q1.' + t, 'A1.' + r))) && mesmoNo(b, 'X1.PE', 'A1.PEi'); } },
-    { id: 'motor', titulo: 'Ligar o motor e informar a placa', montagem: 'forca', params: [[401, 3.0], [402, 1725], [403, 60], [404, 5], [399, 82.6], [407, 0.80]],
-      texto: 'Ligue U, V, W e PE do inversor ao motor. Leia a placa do motor (clique nele com o botão direito) e grave os dados no grupo MOTOR.',
-      passos: ['U → U1, V → V1, W → W1 e PE → PE', 'P0401 = 3,0 A (placa: 2,98 A)', 'P0402 = 1725 rpm · P0403 = 60 Hz', 'P0404 = 5 (1 HP / 0,75 kW)', 'P0399 = 82,6 % · P0407 = 0,80'],
-      check: (b) => { const P = b.inv.P; return b.inv.ent.motor.fases === 3 && mesmoNo(b, 'A1.PEo', 'M1.PE') && P[401] === 3 && P[402] === 1725 && P[403] === 60 && P[404] === 5 && P[399] === 82.6 && P[407] === 0.8; } },
+    { id: 'motor', titulo: 'Fechar e ligar o motor, informar a placa', montagem: 'forca', params: [[400, 220], [401, 3.0], [402, 1725], [403, 60], [404, 5], [399, 82.6], [407, 0.80]],
+      texto: 'O motor tem 6 pontas: feche os enrolamentos conforme a rede da bancada (triângulo em 220 V, estrela em 380 V), ligue U, V, W e PE do inversor ao motor e grave os dados da placa no grupo MOTOR. A placa aparece clicando no motor (Explicação).',
+      passos: ['Rede 220 V: triângulo, com U1–W2, V1–U2 e W1–V2', 'Rede 380 V: estrela, com W2–U2–V2 juntos', 'U → U1, V → V1, W → W1 e PE → PE', 'P0400 = tensão do motor nesse fechamento (220 ou 380 V) · P0401 = corrente (3,0 ou 1,7 A)', 'P0402 = 1725 rpm · P0403 = 60 Hz · P0404 = 5 (1 HP) · P0399 = 82,6 % · P0407 = 0,80'],
+      check: (b) => { const P = b.inv.P; return b.inv.ent.motor.fases === 3 && b.alim.lig === (b.tensao === 380 ? 'Y' : 'Δ') && mesmoNo(b, 'A1.PEo', 'M1.PE') && SIM.porRede(SIM.MISSOES.find((x) => x.id === 'motor').params, b).every(([n, v]) => P[n] === v); } },
     { id: 'hmi', titulo: 'Comando local pela HMI', montagem: 'forca',
       texto: 'Em modo LOCAL (fábrica), gire o motor pela tecla I, leve a referência a 30,0 Hz com as setas, inverta o sentido pela tecla de giro e pare com a tecla O.',
       passos: ['Tecla I: o motor parte na velocidade mínima (P0133)', 'Setas ▲▼ na tela de monitoração: 30,0 Hz', 'Tecla de sentido de giro: desacelera, inverte e volta a 30 Hz', 'Tecla O: para por rampa'],

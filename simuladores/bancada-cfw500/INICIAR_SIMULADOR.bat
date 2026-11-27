@@ -8,7 +8,7 @@ if errorlevel 1 if exist "%ProgramFiles%\nodejs\node.exe" set "PATH=%ProgramFile
 where node >nul 2>nul
 if errorlevel 1 goto semnode
 
-set "PORT=3051"
+set "PORT=3053"
 set "OPEN_BROWSER=1"
 echo.
 echo  Iniciando o simulador... o navegador abre sozinho em instantes.

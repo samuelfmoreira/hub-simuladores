@@ -67,20 +67,138 @@ Na aba **CLP** há a chave **Sinaleiros no painel (retorno do CLP)**. Ela vale s
 
 Use desligada quando os alarmes ficam só no CLP (lâmpadas na visualização do CODESYS, por exemplo). Use ligada quando quiser ver o resultado no painel do simulador ou cumprir as missões de alarme. O botão **Ligar CLP de demonstração** liga a chave sozinho.
 
-## Lista de parâmetros do transmissor
+## Parametrizar pelo módulo do transmissor
 
-Ficam na aba **Bancada**, em "Parâmetros do transmissor". As duas calibrações são distâncias medidas a partir da borda inferior do transdutor (o plano de referência).
+Na aba **Bancada** fica o **módulo de visualização e configuração**, com o visor e as quatro teclas do aparelho. Os menus, os números e os nomes seguem o plano de menus do guia rápido do VEGASON 61 (51852-PT) e o capítulo 6 do manual (28775).
 
-| Parâmetro | Fábrica | Faixa | O que faz |
+![Módulo na tela de medição](guia/modulo-medicao.png)
+
+| Tecla | Na tela de medição | Num menu | Editando um valor |
 | --- | --- | --- | --- |
-| Calibração mín. | 3,000 m | 0,250 a 5,000 m | Distância que corresponde a 0 % (4 mA) |
-| Calibração máx. | 0,500 m | 0,250 a 5,000 m | Distância que corresponde a 100 % (20 mA) |
-| Atenuação | 0 s | 0 a 999 s | Filtro da medição, em segundos |
-| Modo de falha | < 3,6 mA | < 3,6 mA · Manter valor · 20,5 mA · 22 mA | Corrente de saída quando não há valor de medição |
-| Supressão de sinal falso | Desligada | Desligada · Ligada | Ignora os ecos fixos gravados (obstáculos do tanque) |
-| Correção de temperatura | Ligada | Desligada · Ligada | Didático: no aparelho real é fixa, sempre ligada |
+| **[OK]** | Abre o menu principal | Entra no item; num parâmetro, começa a edição | Salva o valor |
+| **[->]** | Troca a apresentação do valor | Vai para o próximo item | Vai para a próxima casa |
+| **[+]** | — | — | Muda o dígito ou a opção |
+| **[ESC]** | — | Volta um nível | Cancela sem salvar |
 
-Se a calibração mín. e a máx. ficarem a menos de 10 mm uma da outra, o transmissor acusa **E017** (faixa de calibração pequena demais).
+Valor que não for confirmado com [OK] não é salvo. Segurar [+] ou [->] por mais de 1 s muda continuamente. Depois de 60 minutos sem tecla, o visor volta sozinho para a tela de medição.
+
+O mesmo módulo está na tampa do sensor, na cena 3D. Clique em **Câmera → Visor** (ou no quadro de detalhe do sensor, no canto) e use as teclas com o mouse, direto no aparelho. É a mesma tela da Bancada: o que você faz em um aparece no outro.
+
+![O módulo na tampa do sensor, na cena 3D](guia/visor-3d.png)
+
+### Calibrar (menus 1.1 e 1.2)
+
+![Calibrar mín. em edição](guia/modulo-calibrar.png)
+
+1. [OK] abre o menu principal. Com **Ajuste básico** marcado, [OK] de novo: aparece **1.1 Calibrar mín.**
+2. [OK] começa a edição da porcentagem. [->] escolhe a casa, [+] muda o dígito, [OK] salva. O cursor passa para a distância.
+3. Digite a distância em m(d) do sensor até o fundo (tanque vazio) e salve com [OK]. No TQ-01: **0.00 % = 3.000 m(d)**.
+4. [->] vai para **1.2 Calibração Máx.** Repita: **100.00 % = 0.500 m(d)**. O nível máximo tem de ficar abaixo da zona morta (0,25 m).
+
+A linha pequena embaixo, à direita, é a distância que o sensor está medindo agora. O nível atual não interfere: a calibração pode ser feita com o tanque vazio.
+
+### Supressão de sinais falsos (menu 4.1)
+
+1. Menu principal → **Serviço** → [OK]: aparece **4.1 Supressão de sinais de interferência**, "Alterar agora?".
+2. [OK] → **Criar novo** → [OK].
+3. Digite a **distância real** do sensor até a superfície do produto e confirme com [OK].
+
+Todos os ecos que estiverem antes dessa distância são gravados como falsos. Faça com o nível baixo. **Cuidado:** o visor sugere a distância que o sensor está medindo, e com um obstáculo no feixe esse valor já é o do obstáculo. Se você informar uma distância grande demais, o próprio nível é gravado como sinal falso e a medição se perde (E013). Para desfazer: 4.1 → **Apagar**.
+
+### Saída de corrente (menu 4.3)
+
+![Saída de corrente](guia/modulo-corrente.png)
+
+[OK] percorre os quatro campos, um de cada vez: curva característica (4-20 ou 20-4 mA), modo de falha (Manter valor, 20.5 mA, 22 mA, < 3.6 mA), corrente mínima (3.8 ou 4 mA) e corrente máxima (20 ou 20.5 mA).
+
+### Simulação (menu 4.4)
+
+![Simulação em curso](guia/modulo-simulacao.png)
+
+Força a saída para testar o laço e a escala no CLP sem mexer no processo. [OK] em "Iniciar a simulação?", escolha **Percentual** ou **Corrente**, ajuste o valor e confirme. Com 50 %, o transmissor manda 12,00 mA e o CLP lê 16384. [ESC] encerra. Sem tecla por 10 minutos, ela termina sozinha.
+
+### Reset (menu 4.5)
+
+"Selecionar reset?" → **Reset**, **Ajuste de fábrica** ou **Indicador de valor de pico** → confirmar. O Reset devolve a calibração para **0 % = 5,000 m(d)** e **100 % = 0,000 m(d)**: o tanque passa a indicar um nível errado e precisa ser calibrado de novo. Idioma, iluminação e modo HART não mudam.
+
+### Diagnóstico (menus 3.1 a 3.4)
+
+![Curva do eco no visor](guia/modulo-curva.png)
+
+Valores de pico (distância e temperatura mínimas e máximas), segurança de medição em dB com o status do dispositivo, e a curva do eco ou a curva de sinais falsos, escolhida em 3.3.
+
+### Plano de menus
+
+| Nº | No visor (português) | No visor (inglês) |
+| --- | --- | --- |
+| **1** | **Ajuste básico** | **Basic adjustment** |
+| 1.1 | Calibrar mín. | Min. adjustment |
+| 1.2 | Calibração Máx. | Max. adjustment |
+| 1.3 | Produto | Medium |
+| 1.4 | Forma do reservatório | Vessel form |
+| 1.5 | Atenuação | Damping |
+| 1.6 | Curva de linearização | Linearisation curve |
+| 1.7 | TAG do sensor | Sensor-TAG |
+| **2** | **Display** | **Display** |
+| 2.1 | Valor exibido | Displayed value |
+| 2.2 | Unidade de leitura | Display unit |
+| 2.3 | Escalação | Scaling |
+| 2.4 | Iluminação | Backlight |
+| **3** | **Diagnóstico** | **Diagnostics** |
+| 3.1 | Indicador de valor de pico | Peak value indicator |
+| 3.2 | Segurança de medição | Meas. reliability |
+| 3.3 | Seleção de curva | Curve selection |
+| 3.4 | Curva do eco | Echo curve |
+| **4** | **Serviço** | **Service** |
+| 4.1 | Supressão de sinais de interferência | False signal suppression |
+| 4.2 | Ajuste avançado | Extended setting |
+| 4.3 | Saída de corrente | Current output |
+| 4.4 | Simulação | Simulation |
+| 4.5 | Reset | Reset |
+| 4.6 | Unidade de calibração | Unit of measurement |
+| 4.7 | Idioma | Language |
+| 4.8 | SIL | SIL |
+| 4.9 | Modo operacional HART | HART mode |
+| 4.10 | Copiar dados do sensor | Copy sensor data |
+| 4.11 | PIN | PIN |
+| **5** | **Info** | **Info** |
+| 5.1 | Tipo de dispositivo | Instrument type |
+| 5.2 | Data de calibração | Date of manufacture |
+| 5.3 | Última alteração através do PC | Last change using PC |
+| 5.4 | Características do sensor | Sensor characteristics |
+
+### Lista de parâmetros
+
+"No simulador" é o valor com que a sessão começa, já comissionada para o TQ-01. "Depois do Reset" é a tabela do manual.
+
+| Menu | Parâmetro | No simulador | Depois do Reset | Faixa ou opções | O que faz |
+| --- | --- | --- | --- | --- | --- |
+| 1.1 | Min. adjustment (%) | 0,00 % | 0,00 % | 0,00 a 100,00 % | Porcentagem do ponto de mínimo |
+| 1.1 | Min. adjustment (distância) | 3,000 m(d) | 5,000 m(d) | 0,000 a 5,000 m(d) | Distância que corresponde à porcentagem de mínimo (tanque vazio) |
+| 1.2 | Max. adjustment (%) | 100,00 % | 100,00 % | 0,00 a 100,00 % | Porcentagem do ponto de máximo |
+| 1.2 | Max. adjustment (distância) | 0,500 m(d) | 0,000 m(d) | 0,000 a 5,000 m(d) | Distância que corresponde à porcentagem de máximo (tanque cheio) |
+| 1.3 | Medium | Liquid | Liquid | Liquid · Solid: Powder/Dust · Solid: Granular/Pellets · Solid: Ballast/Pebbels | Tipo de produto (guardado; não muda a simulação) |
+| 1.4 | Vessel form | Storage tank | não muda | Storage tank · Stilling tube · Open vessel · Stirred vessel · Silo · Bunker | Forma do reservatório (guardado; não muda a simulação) |
+| 1.5 | Damping | 0 s | 0 s | 0 a 999 s | Filtro da medição, em segundos |
+| 1.6 | Linearisation curve | Linear | Linear | Linear · Horiz. cylinder · Spherical tank | Converte nível em volume para tanque cilíndrico deitado ou esférico |
+| 2.1 | Displayed value | Percent | Distance | Height · Distance · Current · Scaled · Percent · Lin. percent | O que o visor mostra na tela de medição |
+| 2.2 | Display unit | m³ | não muda | m³ · l · m · (sem unidade) | Unidade do valor escalonado |
+| 2.3 | Scaling 0 % | 0,0 | não muda | 0,0 a 9999,9  | Valor escalonado em 0 % |
+| 2.3 | Scaling 100 % | 100,0 | não muda | 0,0 a 9999,9  | Valor escalonado em 100 % |
+| 2.4 | Backlight | Switched off | não muda | Switched off · Switched on | Iluminação do visor |
+| 4.2 | Extended setting | None | não muda | None · Quick level change | Variação rápida de nível (> 1 m/min): menos média, resposta mais rápida e mais ruído |
+| 4.3 | Current output: characteristic | 4-20 mA | 4-20 mA | 4-20 mA · 20-4 mA | Sentido da saída |
+| 4.3 | Current output: failure mode | < 3,6 mA | < 3,6 mA | < 3,6 mA · Manter valor · 20,5 mA · 22 mA | Corrente de saída quando não há valor de medição |
+| 4.3 | Current output: min. current | 3,8 mA | 4 mA | 3,8 mA · 4 mA | Corrente mínima em operação |
+| 4.3 | Current output: max. current | 20,5 mA | 20 mA | 20 mA · 20,5 mA | Corrente máxima em operação |
+| 4.7 | Idioma | Português | não muda | Português · English | Idioma do visor: os textos em português seguem o guia rápido 51852-PT; os em inglês, o manual 28775-EN |
+| 4.8 | SIL | Not activated | não muda | Not activated · Activated | Com SIL ativado, os modos de falha Hold value e 20.5 mA e o Multidrop ficam bloqueados |
+| 4.9 | HART mode | Standard | não muda | Standard · Multidrop | Multidrop fixa a saída em 4 mA: a medição só sai pelo HART |
+| — | Correção de temperatura | Ligada | não muda | Desligada · Ligada | Didático: no aparelho real é fixa, sempre ligada (não existe no menu) |
+
+Se a calibração mín. e a máx. ficarem a menos de 10 mm uma da outra, o transmissor acusa **E017** (faixa de calibração muito pequena).
+
+Para ir rápido em aula, a seção **Ajuste rápido (atalho do instrutor)** tem os principais parâmetros em campos diretos, sem passar pelos menus.
 
 ## Escalonamento na prática
 
@@ -143,7 +261,7 @@ Sem a histerese de 2 %, o alarme fica piscando quando o nível para em cima do l
 | Situação na Bancada | O que acontece | O que o CLP enxerga |
 | --- | --- | --- |
 | Nível 0,80 m com obstáculo no feixe | O eco do tubo (a 1,20 m) chega antes: indicação presa em 1,80 m | 72 % fixos, sem falha. O CLP não tem como saber |
-| O mesmo, com supressão de sinal falso | O limiar cobre o eco fixo: volta a 0,80 m | 32 % |
+| O mesmo, com supressão de sinal falso | O limiar cobre o eco fixo: volta a 1,80 m | 72 % |
 | 50 °C com a correção de temperatura desligada | Distância sai 5 % menor: erro de +101 mm com 1,00 m reais | 44,0 % em vez de 40,0 % |
 | Nível 2,85 m (dentro da zona morta) | O eco some no pulso de emissão e o sensor agarra o 2º eco: indica 2,70 m | 100 % com o tanque quase transbordando |
 
@@ -154,12 +272,12 @@ Este é o motivo de a proteção contra transbordo usar uma chave de nível sepa
 ## Parte 1: abrir o simulador e entrar na sua sessão
 
 1. No HUB: **Dispositivos** → **Sensor ultrassônico VEGA** → **Iniciar**. Fora do HUB: clique duas vezes em `INICIAR_SIMULADOR.bat`.
-2. A tela pede a **sua sessão**. Digite o seu nome ou a bancada e clique em **Criar e entrar**.
-3. Para voltar depois, a sessão fica lembrada neste navegador. Para trocar, clique no chip **Sessão**, no topo.
+2. A tela abre direto, sem pedir nada: cada navegador ganha sozinho uma sessão própria (Bancada 1, Bancada 2...), que fica lembrada nele.
+3. Para dar um nome à sessão, trocar de sessão ou excluir uma, clique no chip **Sessão**, no topo.
 
-![Escolha da sessão](guia/sessao.png)
+![Janela do chip Sessão: renomear, criar outra ou trocar](guia/sessao.png)
 
-**Vários alunos:** o professor inicia o simulador em um PC e os alunos abrem pelo navegador, no endereço que aparece na janela do simulador e no rodapé da tela de sessões (por exemplo `http://192.168.0.15:3320`). Cada aluno cria a sua sessão: o tanque, o transmissor e a conexão com o CLP são só dele. O limite é de 60 sessões.
+**Vários alunos:** o professor inicia o simulador em um PC e os alunos abrem pelo navegador, no endereço que aparece na janela do simulador e no rodapé da tela de sessões (por exemplo `http://192.168.0.15:3320`). Cada navegador entra na sua sessão: o tanque, o transmissor e a conexão com o CLP são só dele. O limite é de 60 sessões.
 
 Confira: o chip **Sessão** mostra o seu nome e o chip do transmissor mostra `LT-01 10,40 mA · 13107`.
 
@@ -318,7 +436,7 @@ Na aba **CLP**, digite o IP do **seu** CLP e clique em **Conectar**. A tarja log
 
 ## Missões
 
-Na aba **Missões** há dez tarefas, da comunicação até a armadilha do 22 mA. Elas fecham sozinhas quando o seu CLP faz o que foi pedido. As de alarme leem os sinaleiros do CLP, então precisam do **retorno do CLP ligado**. Com o CLP de demonstração elas acendem, mas não ficam gravadas.
+Na aba **Missões** há 12 tarefas, da comunicação até a armadilha do 22 mA, incluindo comissionar o transmissor pelas teclas e simular a saída. Elas fecham sozinhas quando o seu CLP faz o que foi pedido. As de alarme leem os sinaleiros do CLP, então precisam do **retorno do CLP ligado**. Com o CLP de demonstração elas acendem, mas não ficam gravadas.
 
 ![Aba Missões](guia/missoes.png)
 
@@ -353,7 +471,10 @@ Na aba **Missões** há dez tarefas, da comunicação até a armadilha do 22 mA.
 
 ## O que é modelo didático
 
-- Os dados técnicos (zona morta 0,25 m, 70 kHz, feixe de 11°, faixa de 5 m, modos de falha, E013 e E017) e as cotas do sensor em 3D vêm do manual de operação (28775) e da folha de especificação (34584) do VEGASON 61. O acabamento do sensor em 3D é genérico. Simulador independente, sem vínculo com o fabricante.
+- Os dados técnicos (zona morta 0,25 m, 70 kHz, feixe de 11°, faixa de 5 m, modos de falha, E013 e E017), as cotas do sensor em 3D e o plano de menus vêm do manual de operação (28775), da folha de especificação (34584) e do guia rápido em português (51852-PT) do VEGASON 61, versão dois condutores. O acabamento do sensor e do módulo é genérico. Simulador independente, sem vínculo com o fabricante.
+- No módulo, vêm do guia em português os nomes dos menus e das telas mostradas nele. São tradução do simulador, por não aparecerem nesse guia: as opções de sólidos, as formas de reservatório além de "Tanque de armazenamento", as curvas de linearização, os valores exibidos além de "Escalado", e as opções "Atualizar" e "Apagar" da supressão.
+- Produto, forma do reservatório, unidade de leitura e unidade de calibração são guardados, mas não mudam a simulação. Zoom da curva, curva de tendência, copiar dados do sensor e PIN aparecem no menu e respondem "Não simulado".
+- A segurança de medição em dB é a margem do eco sobre o limiar do modelo, não o cálculo do aparelho.
 - A escolha do eco ("primeiro eco acima do limiar"), as amplitudes da curva e os 4 s até o E013 são um modelo simplificado. O aparelho real mede a cada 2 s ou mais e usa processamento próprio.
 - A correção de temperatura é fixa no aparelho real; a chave existe só para mostrar o erro.
 - O roteiro do CODESYS e os programas ST foram conferidos contra o CLP de demonstração interno e os testes automáticos, **não em um CODESYS real**. Os nomes dos campos são os do CODESYS V3.5 e podem variar com a versão.

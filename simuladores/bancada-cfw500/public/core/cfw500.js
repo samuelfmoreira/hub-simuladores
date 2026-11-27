@@ -14,17 +14,18 @@
   const RS = 3.4;                       // ohm por fase (equivalente em estrela): 6,8 ohm medidos entre dois bornes
   const WN = PLACA.rpm * 2 * Math.PI / 60, TN = PLACA.kw * 1000 / WN;   // 180,6 rad/s · 4,15 N·m
   const TMAX = 2.8 * TN, FK = 13.54;    // conjugado máximo e escorregamento (Hz) em que ele ocorre -> 4,15 N·m com 2,5 Hz de escorregamento
+  const BP = 1.33, CP = 9;              // barra profunda da gaiola: conjugado de partida de 2,3 x o nominal com tensão plena (sem isso a fórmula de Kloss daria 1,2 x)
   const IM0 = 1.8, CR = 13.08;          // corrente de magnetização e constante da corrente do rotor -> 2,98 A na carga nominal
   const EN = PLACA.v / R3 - RS * PLACA.i * 0.85;
 
   class Motor {
     constructor() { this.placa = PLACA; this.w = 0; this.ang = 0; this.carga = 0.3; this.volante = false; this.travado = false; this.zera(); this.iF = 0; }
-    zera() { this.i = 0; this.ia = 0; this.torque = 0; this.pe = 0; }
+    zera() { this.i = 0; this.ia = 0; this.torque = 0; this.pe = 0; this.phi = 0; this.fe = 0; this.fs = 0; }
     get rpm() { return this.w * 60 / (2 * Math.PI); }
     get hzRotor() { return this.w / Math.PI; }               // 4 polos: f = w·(p/2)/(2π)
     /** s = { f (Hz ≥ 0), v (V eficaz fase-fase), seq (+1 horário / -1), fases (0, 2 ou 3), cc (0..1 frenagem CC) } */
     passo(dt, s) {
-      const fr = this.hzRotor; let te = 0, i = 0, ia = 0, pe = 0;
+      const fr = this.hzRotor; let te = 0, i = 0, ia = 0, pe = 0, fluxo = 0, fEst = 0;
       if (s.cc > 0 && s.fases >= 2) {                         // corrente contínua no estator: freia proporcional à velocidade
         i = s.cc * PLACA.v / (2 * RS);
         te = -TN * 0.5 * (i / PLACA.i) ** 2 * Math.tanh(this.w / 12); pe = 2 * RS * i * i;
@@ -34,9 +35,9 @@
         const sat = (p) => (p <= 1 ? p : p + 5 * (p - 1) ** 2);                // saturação: boost demais vira corrente
         let phi = vph / (0.85 * RS * Math.hypot(IM0, CR * gx) + s.f * kE);
         for (let k = 0; k < 4 && phi > 1; k++) phi = 0.5 * phi + 0.5 * vph / (0.85 * RS * Math.hypot(IM0 * sat(phi) / phi, CR * gx) + s.f * kE);
-        const im = IM0 * sat(phi);
+        const im = IM0 * sat(phi); fluxo = phi; fEst = fe;
         let ir = phi * CR * gx;
-        te = 2 * TMAX * phi * phi * x / (1 + x * x);
+        te = 2 * TMAX * phi * phi * x / (1 + x * x) * (1 + BP * x * x / (CP + x * x));   // Kloss + efeito de barra profunda (só pesa com escorregamento alto: partida)
         if (s.fases === 2) { te *= Math.abs(this.w) < 8 ? 0 : 0.45; ir *= 1.9; }   // falta de fase: não parte, ronca e a corrente sobe
         ia = ir * sg(x); i = Math.sqrt(im * im + ir * ir);
         pe = te * (2 * Math.PI * fe / 2) + 3 * RS * i * i + 25;
@@ -52,17 +53,22 @@
       }
       this.ang += this.w * dt;
       this.i = i; this.ia = ia; this.torque = te; this.pe = pe;
+      this.phi = fluxo; this.fe = fEst; this.fs = fEst ? fEst - fr : 0;      // fluxo (pu), frequência do estator e de escorregamento (Hz, com sinal): usados na tela do campo girante
     }
   }
 
   // =================================================================== INVERSOR
-  const UD_SUB = 200, UD_SOBRE = 410, C_LINK = 940e-6, I_F70 = 2.3 * INOM;
+  const C_LINK = 940e-6, I_F70 = 2.3 * INOM;
+  // classe de tensão do inversor: 220 = CFW500A04P3B2 (200-240 V) · 380 = CFW500A04P3T4 (380-480 V). Muda os níveis do link DC e alguns padrões de fábrica.
+  const CLASSE = { 220: { sub: 200, sobre: 410, liga: 170, desliga: 110, faixaUd: 40, def: { 29: 3 } },
+    380: { sub: 360, sobre: 810, liga: 300, desliga: 200, faixaUd: 80, def: { 29: 9, 296: 1, 151: 800, 153: 750, 185: 800, 190: 380, 321: 436, 322: 423, 323: 462, 400: 380 } } };
   const DEF50 = { 125: 5, 126: 10, 127: 20, 128: 30, 129: 40, 130: 50, 131: 55, 134: 55, 145: 50, 146: 33.3, 147: 16.7, 208: 500, 402: 1425, 403: 50 };
   const HIST = [50, 51, 52, 53, 54, 55, 60, 61, 62, 63, 64, 65, 70, 71, 72, 73, 74, 75];
 
   class CFW500 {
     constructor(o = {}) {
-      this.P = {}; LISTA.forEach((p) => { this.P[p.n] = p.def; });
+      this.classe = o.salvo && CLASSE[o.salvo.classe] ? o.salvo.classe : 220;
+      this.P = {}; LISTA.forEach((p) => { this.P[p.n] = p.def; }); Object.assign(this.P, CLASSE[this.classe].def);
       this.usuario = { 1: null, 2: null }; this.senha = 5; this.acesso = false;
       this.aoGravar = o.aoGravar || (() => {}); this.aoEvento = o.aoEvento || (() => {});
       if (o.salvo) this.carregar(o.salvo);
@@ -84,10 +90,10 @@
     }
     paraGravar() {
       const P = {}; LISTA.forEach((p) => { if ((!p.ro && this.P[p.n] !== p.def && p.n !== 0) || HIST.includes(p.n) || [42, 43, 44].includes(p.n)) P[p.n] = this.P[p.n]; });
-      return { P, usuario: this.usuario, senha: this.senha };
+      return { P, usuario: this.usuario, senha: this.senha, classe: this.classe };
     }
     _fabrica(hz50) {
-      LISTA.forEach((p) => { if (!p.ro) this.P[p.n] = p.def; }); if (hz50) Object.assign(this.P, DEF50);
+      LISTA.forEach((p) => { if (!p.ro) this.P[p.n] = p.def; }); Object.assign(this.P, CLASSE[this.classe].def); if (hz50) Object.assign(this.P, DEF50);
       this.acesso = false; this.locHMI = true; this.giroHMI = 1; this.runHMI = false;
     }
     /** Parametrização automática: padrão de fábrica e depois a lista [[n, valor], ...]. Grava mesmo com o inversor desligado. */
@@ -98,6 +104,11 @@
       this.aoGravar(); this.aoEvento(`Parametrização automática: padrão de fábrica e ${n} parâmetro(s).`); return n;
     }
     get rodando() { return this.pwm; }
+    get niveis() { return CLASSE[this.classe]; }
+    /** valor de fábrica de um parâmetro neste inversor (alguns dependem da classe de tensão) */
+    padrao(n) { const d = CLASSE[this.classe].def; return n in d ? d[n] : MAPA[n].def; }
+    /** Troca o inversor pelo de outra classe de tensão (220 ou 380 V): volta ao padrão de fábrica daquele modelo. */
+    trocaClasse(v) { if (!CLASSE[v] || v === this.classe) return false; this.classe = v; this._fabrica(false); this.ud = 0; this.falhaCod = 0; this.aoGravar(); this.aoEvento(`Inversor da classe ${v === 380 ? '380-480 V (CFW500A04P3T4)' : '200-240 V (CFW500A04P3B2)'}, no padrão de fábrica.`); return true; }
 
     /** Altera um parâmetro pela HMI ou pela aba Parâmetros, com as mesmas recusas do inversor real. */
     set(n, v) {
@@ -192,7 +203,7 @@
       this.ud -= ((this.vivo ? 14 : 3) + u0 * u0 / 60000) * dt / (C_LINK * u0);
       if (this.ud < udRet) this.ud += (udRet - this.ud) * Math.min(1, dt / 0.008);
       if (this.ud < 0) this.ud = 0;
-      if (!this.vivo && this.ud > 170) this._energizar(); else if (this.vivo && this.ud < 110) this._desenergizar();
+      if (!this.vivo && this.ud > this.niveis.liga) this._energizar(); else if (this.vivo && this.ud < this.niveis.desliga) this._desenergizar();
       if (!this.vivo) { Object.assign(s, { vivo: false, pwm: false, f: 0, v: 0, cc: 0, do1: false, do2: false, ao1: 0 }); return; }
       s.vivo = true; P[42] += dt / 3600; P[4] = Math.round(this.ud);
       if (this.boot > 0) { this.boot -= dt; if (this.hmi) this.hmi.passo(dt); return; }
@@ -210,7 +221,7 @@
 
       // ---- situação geral
       const conf = P[47] = this._config();
-      const sub = this.ud < UD_SUB * P[639] / 100;
+      const sub = this.ud < this.niveis.sub * P[639] / 100;
       const loc = this.loc, pwmAnt = this.pwm;
       if (this._bordaFn(20)) this.reset();
       if (this.falhaCod && P[340] > 0) { this.tReset += dt; if (this.tReset >= P[340]) this.reset(); }
@@ -310,7 +321,7 @@
         // o regulador olha a tensão e a velocidade com que ela sobe (antecipa a energia que ainda volta do motor)
         this.dUd += ((this.ud - this.udAnt) / dt - this.dUd) * Math.min(1, dt / 0.006); this.udAnt = this.ud;
         const udPrev = this.ud + Math.max(0, this.dUd) * 0.09;
-        const kUd = lim((P[151] - udPrev) / 40, 0, 1), kI = lim((P[135] - iNow) / (0.1 * P[135] + 0.01), 0, 1);
+        const kUd = lim((P[151] - udPrev) / this.niveis.faixaUd, 0, 1), kI = lim((P[135] - iNow) / (0.1 * P[135] + 0.01), 0, 1);
         const d = alvo - this.fr, acel = this.fr === 0 || sg(d) === sg(this.fr);
         if (Math.abs(d) > 1e-6) {
           if (acel && kI < 1) this.limit = 'corrente'; if (!acel && kUd < 1) this.limit = 'link DC';
@@ -368,7 +379,7 @@
         else if (P[202] === 4) this._falha(79);
         if ((P[343] & 0x10) && fa > 0.1 * P[403] && e.motor.fases === 2 && e.i > 0.2 * P[401]) { this.t76 += dt; if (this.t76 > 2) this._falha(76); } else this.t76 = 0;
       }
-      if (this.ud > UD_SOBRE) this._falha(22);
+      if (this.ud > this.niveis.sobre) this._falha(22);
       // sobrecarga do motor Ixt (P0156/P0157/P0158 conforme a velocidade; 60 s em 1,5x)
       const rel = fa / (P[403] || 60);
       const iol = P[406] === 1 || rel >= 1 ? P[156] : rel >= 0.5 ? P[157] + (P[156] - P[157]) * (rel - 0.5) / 0.5 : rel >= 0.2 ? P[158] + (P[157] - P[158]) * (rel - 0.2) / 0.3 : P[158];
@@ -415,6 +426,6 @@
     _desenergizar() { this.vivo = false; this.pwm = false; this.fr = this.fS = this.fOut = 0; if (this.hmi) this.hmi.desligar(); this.aoGravar(); this.aoEvento('Inversor desenergizado.'); }
   }
 
-  SIM.Motor = Motor; SIM.CFW500 = CFW500; SIM.PLACA = PLACA; SIM.RS_MOTOR = RS;
+  SIM.Motor = Motor; SIM.CFW500 = CFW500; SIM.PLACA = PLACA; SIM.RS_MOTOR = RS; SIM.MOTOR_K = { TN, TMAX, FK, IM0, CR, RS, EN, BP, CP };
   if (typeof module !== 'undefined') module.exports = SIM;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

@@ -98,7 +98,7 @@
     const FAB = {
       rede(c) {
         const gr = baseModulo(c, (x) => {
-          txt(x, '3~ 220 V  60 Hz', 11, 0, -86, '#c62828'); txt(x, 'CHAVE GERAL COM PROTEÇÃO', 6.5, 30, -62, '#3a4753');
+          txt(x, `3~ ${c.st.tensao === 380 ? 380 : 220} V  60 Hz`, 11, 0, -86, '#c62828'); txt(x, `fase-neutro ${c.st.tensao === 380 ? 220 : 127} V`, 6, -70, -70, '#3a4753', 400); txt(x, 'CHAVE GERAL COM PROTEÇÃO', 6.5, 30, -62, '#3a4753');
           x.fillStyle = '#f3c300'; x.beginPath(); x.roundRect(-8, -52, 76, 76, 6); x.fill(); txt(x, '0', 12, -1, -40); txt(x, 'I', 12, 60, -14);
           ['L1', 'L2', 'L3'].forEach((l, i) => txt(x, l, 7, -92, -52 + i * 26 + 12, '#3a4753')); txt(x, 'DESARMADO', 5.5, -76, 36, '#c62828');
         });
@@ -246,10 +246,15 @@
         const tampaT = poe(gr, new T.Mesh(new T.CircleGeometry(0.072, 48), new T.MeshStandardMaterial({ map: grade, roughness: 0.5, metalness: 0.15 })), -0.2465, cy, 0); tampaT.rotation.y = -Math.PI / 2;
         for (const x of [-0.14, 0.02]) poe(gr, caixa(0.03, 0.045, 0.19, azul), x, 0.036, 0);
         // caixa de ligação com os bornes no topo
-        const cl = poe(gr, caixa(0.13, 0.05, 0.085, azul), -0.06, cy + 0.092, 0);
-        const tampa = placaTex(130, 85, (x) => { x.fillStyle = '#e9ebe6'; x.beginPath(); x.roundRect(-63, -40, 126, 80, 4); x.fill(); txt(x, c.id + ' · LIGAÇÃO Δ 220 V', 7.5, 0, -30, '#1c2530'); for (const t of d.term) txt(x, t.nome, 9, t.x, 26, '#1c2530'); });
-        const tp = poe(gr, plano(0.13, 0.085, tampa), -0.06, cy + 0.1175, 0); tp.rotation.x = -Math.PI / 2; tp.userData = { kind: 'corpo', id: c.id }; alvos.push(tp); cl.userData = tp.userData; alvos.push(cl);
-        for (const t of d.term) borne(gr, c.id + '.' + t.id, t, -0.06 + t.x / 1000, cy + 0.117, 0, new V3(0, 1, 0));
+        const cl = poe(gr, caixa(0.16, 0.05, 0.09, azul), -0.05, cy + 0.092, 0);
+        // placa de bornes de 6 pontas, como no motor: U1 V1 W1 atrás, W2 U2 V2 na frente. O fechamento (triângulo ou estrela) é do aluno.
+        const tampa = placaTex(160, 90, (x) => {
+          x.fillStyle = '#e9ebe6'; x.beginPath(); x.roundRect(-78, -43, 156, 86, 4); x.fill(); x.fillStyle = '#d3d7d1'; x.beginPath(); x.roundRect(-62, -33, 96, 66, 3); x.fill();
+          for (const t of d.term) { const cxm = t.x - 10; if (t.id === 'PE') txt(x, 'PE', 7.5, cxm, 15, '#2e8b3d'); else txt(x, t.nome, 7.5, cxm, t.y + (t.y < 0 ? -13.5 : 13.5), '#1c2530'); }
+          txt(x, 'Δ 220 V: U1-W2 · V1-U2 · W1-V2', 3.9, -14, -2.2, '#3a4753'); txt(x, 'Y 380 V: W2-U2-V2 juntos', 3.9, -14, 3, '#3a4753');
+        }, 5);
+        const tp = poe(gr, plano(0.16, 0.09, tampa), -0.05, cy + 0.1175, 0); tp.rotation.x = -Math.PI / 2; tp.userData = { kind: 'corpo', id: c.id }; alvos.push(tp); cl.userData = tp.userData; alvos.push(cl);
+        for (const t of d.term) borne(gr, c.id + '.' + t.id, t, -0.06 + t.x / 1000, cy + 0.117, t.y / 1000, new V3(0, 1, 0));
         const pl = placaTex(70, 44, (x) => { x.fillStyle = '#cfd3d6'; x.fillRect(-35, -22, 70, 44); txt(x, 'weg  W22 IR3 Premium', 5, 0, -16, '#111'); const P = SIM.PLACA; x.textAlign = 'left';
           [`3~  ${P.kw} kW (${P.cv} cv)  ${P.polos} polos`, `Δ ${P.v} V  ${String(P.i).replace('.', ',')} A`, `Y ${P.vY} V  ${String(P.iY).replace('.', ',')} A`, `${P.rpm} rpm   ${P.hz} Hz`, `cos φ ${P.cos.toFixed(2).replace('.', ',')}  η ${String(P.rend).replace('.', ',')} %  FS ${String(P.fs).replace('.', ',')}`].forEach((l, i) => txt(x, l, 4.6, -32, -8 + i * 6.6, '#111', 700)); }, 6);
         poe(gr, plano(0.07, 0.044, pl, { metalness: 0.5, roughness: 0.4 }), -0.06, cy - 0.005, 0.0735).castShadow = false;
@@ -480,7 +485,7 @@
     const camS = { alvo: new V3(-0.05, 1.27, 0.12), r: 2.5, az: 0, el: 0.17 }, camD = { alvo: camS.alvo.clone(), r: camS.r, az: camS.az, el: camS.el };
     const VISTAS = { geral: () => [new V3(PW > 2 ? 0 : -0.05, 1.27 + (PH - 1.02) / 2, 0.12), 2.5 * Math.max(1, (PW + 0.3) / 2.16, (PH + 0.5) / 1.52), 0, 0.17], inversor: () => { const c = banc.porTipo('cfw'); return [new V3(c.x, MESA_Y + c.y + 0.05, 0.1), 0.75, 0, 0.05]; },
       bornes: () => { const c = banc.porTipo('cfw'); return [new V3(c.x, MESA_Y + c.y - 0.18, 0.02), 0.5, 0, 0.12]; }, comando: () => [new V3(0.12, MESA_Y + 0.57, 0.02), 1.25, 0, 0.06],
-      motor: () => { const c = banc.porTipo('motor'); return [new V3(c.x, MESA_Y + 0.12, c.y), 0.95, 0.35, 0.42]; }, motorTras: () => { const c = banc.porTipo('motor'); return [new V3(c.x - 0.2, MESA_Y + 0.12, c.y), 0.7, -1.2, 0.3]; }, osciloscopio: () => { const c = banc.porTipo('osc'); return [new V3(c.x + 0.02, MESA_Y + 0.1, c.y + 0.05), 0.62, 0, 0.42]; }, multimetro: () => { const c = banc.porTipo('multi'); return [new V3(c.x, MESA_Y + 0.1, c.y), 0.55, 0, 0.75]; } };
+      motor: () => { const c = banc.porTipo('motor'); return [new V3(c.x - 0.02, MESA_Y + 0.16, c.y), 0.85, 0.3, 0.72]; }, caixa: () => { const c = banc.porTipo('motor'); return [new V3(c.x - 0.05, MESA_Y + 0.23, c.y), 0.34, 0, 1.38]; }, motorTras: () => { const c = banc.porTipo('motor'); return [new V3(c.x - 0.2, MESA_Y + 0.12, c.y), 0.7, -1.2, 0.3]; }, osciloscopio: () => { const c = banc.porTipo('osc'); return [new V3(c.x + 0.02, MESA_Y + 0.1, c.y + 0.05), 0.62, 0, 0.42]; }, multimetro: () => { const c = banc.porTipo('multi'); return [new V3(c.x, MESA_Y + 0.1, c.y), 0.55, 0, 0.75]; } };
     function vista(n) { const v = VISTAS[n] && VISTAS[n](); if (!v) return; camD.alvo.copy(v[0]); camD.r = v[1]; camD.az = v[2]; camD.el = v[3]; }
     function aplicaCam(k) {
       camS.alvo.lerp(camD.alvo, k); camS.r += (camD.r - camS.r) * k; camS.az += (camD.az - camS.az) * k; camS.el += (camD.el - camS.el) * k;
